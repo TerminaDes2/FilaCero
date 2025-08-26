@@ -1,0 +1,17 @@
+{
+  "name": "FilaCero Backend (DevContainer)",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "backend",
+  "workspaceFolder": "/app",
+  "remoteUser": "node",
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  }
+}

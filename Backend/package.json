@@ -1,17 +1,30 @@
 {
   "name": "filacero-backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "type": "module",
+  "description": "API FilaCero con Nest.js",
+  "license": "MIT",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon --inspect=0.0.0.0:9229 src/index.js"
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "build": "nest build",
+    "start:prod": "node dist/main.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "@nestjs/common": "^10.3.9",
+    "@nestjs/core": "^10.3.9",
+    "@nestjs/platform-express": "^10.3.9",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "@nestjs/cli": "^10.3.2",
+    "@nestjs/schematics": "^10.1.3",
+    "@nestjs/testing": "^10.3.9",
+    "typescript": "^5.4.5",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.11.30"
   }
 }
+
