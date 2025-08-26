@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Docker/backend.Dockerfile
+    container_name: filacero-backend
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    volumes:
+      - ./Backend:/app
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Docker/frontend.Dockerfile
+    container_name: filacero-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Frontend:/app
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: filacero-net

@@ -46,3 +46,66 @@ Have ideas or feedback? Let’s collaborate!
 ---
 
 ⭐ If you like this project, don’t forget to **star** it on GitHub!
+
+---
+
+## 🚀 Desarrollo local con Node.js vía Docker
+
+Hemos agregado configuración mínima para un backend Express y un frontend Vite usando sólo contenedores.
+
+### Estructura añadida
+```
+Backend/
+	package.json
+	src/index.js
+Frontend/
+	package.json
+	index.html
+	src/main.js
+Docker/
+	backend.Dockerfile
+	frontend.Dockerfile
+docker-compose.yml
+```
+
+### Requisitos
+* Docker Desktop (o Docker Engine)
+
+### Levantar entorno de desarrollo
+```powershell
+docker compose up --build
+```
+Visita:
+* Backend: http://localhost:3000/api/health
+* Frontend: http://localhost:5173/
+
+Los cambios en código se recargan automáticamente (nodemon / Vite) gracias a los volúmenes.
+
+### Comandos útiles
+```powershell
+# Reconstruir solo backend si cambia package.json
+docker compose build backend
+
+# Ver logs en vivo
+docker compose logs -f backend
+
+# Entrar al contenedor backend
+docker compose exec backend sh
+```
+
+### Subir estos cambios a GitHub
+```powershell
+git add .
+git commit -m "feat: inicializa backend Express y frontend Vite con Docker"
+git push origin main
+```
+
+### Próximos pasos sugeridos
+* Variables de entorno (.env + dotenv)
+* Tests (Jest para backend, Vitest para frontend)
+* Linter & formatter (ESLint + Prettier)
+* Pipeline CI (GitHub Actions) para instalar, testear y build
+* Configurar build de producción multistage (sirviendo frontend estático con nginx)
+
+¿Necesitas el setup de producción o CI? Pídelo y lo añadimos.
+
