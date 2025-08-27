@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   backend:
     build:
@@ -9,8 +8,8 @@ services:
       - "3000:3000"
       - "9229:9229"
     volumes:
-      - ./Backend:/app
-      - /app/node_modules
+      - ./Backend/src:/app/src
+      - ./Backend/public:/app/public
     environment:
       - PORT=3000
       - MONGO_URI=mongodb://mongo:27017/filacero
@@ -26,8 +25,8 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./Frontend:/app
-      - /app/node_modules
+      - ./Frontend/src:/app/src
+      - ./Frontend/public:/app/public
     depends_on:
       - backend
     restart: unless-stopped
