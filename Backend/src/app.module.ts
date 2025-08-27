@@ -1,19 +1,27 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProductModule } from './products/product.module';
-import { Product, ProductSchema } from './products/product.schema';
+import { Product } from './products/product.schema';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // Connection string desde MONGO_URI o por defecto a mongodb://mongo:27017/filacero
-  MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://mongo:27017/filacero'),
-  // Registrar también el modelo Product aquí para que AppService pueda inyectarlo
-  MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
-  ProductModule,
+  TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        url: configService.get('DATABASE_URL'),
+        autoLoadEntities: true,
+        synchronize: true, // Nota: Desactiva esto en producción
+      }),
+    }),
+  // Repositorio disponible también en AppService
+  TypeOrmModule.forFeature([Product]),
+    ProductModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,37 +1,38 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Product } from './product.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductService {
-  constructor(@InjectModel(Product.name) private model: Model<Product>) {}
+  constructor(@InjectRepository(Product) private repo: Repository<Product>) {}
 
   create(data: CreateProductDto) {
-    return this.model.create(data);
+    const product = this.repo.create(data);
+    return this.repo.save(product);
   }
 
   findAll() {
-    return this.model.find().sort({ createdAt: -1 }).lean();
+    return this.repo.find({ order: { createdAt: 'DESC' } });
   }
 
   async findOne(id: string) {
-    const doc = await this.model.findById(id).lean();
-    if (!doc) throw new NotFoundException('Producto no encontrado');
-    return doc;
+    const product = await this.repo.findOneBy({ id });
+    if (!product) throw new NotFoundException('Producto no encontrado');
+    return product;
   }
 
   async update(id: string, data: UpdateProductDto) {
-    const doc = await this.model.findByIdAndUpdate(id, data, { new: true, lean: true });
-    if (!doc) throw new NotFoundException('Producto no encontrado');
-    return doc;
+    const product = await this.findOne(id);
+    this.repo.merge(product, data);
+    return this.repo.save(product);
   }
 
   async remove(id: string) {
-    const doc = await this.model.findByIdAndDelete(id).lean();
-    if (!doc) throw new NotFoundException('Producto no encontrado');
+    const product = await this.findOne(id);
+    await this.repo.remove(product);
     return { deleted: true };
   }
 }

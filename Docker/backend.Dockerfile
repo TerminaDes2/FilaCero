@@ -7,15 +7,18 @@ COPY Backend/tsconfig.json ./
 COPY Backend/tsconfig.build.json ./
 COPY Backend/nest-cli.json ./
 
-# Instalar dependencias (todas, incluidas dev para modo watch)
-RUN npm install
+# Instalar dependencias
+RUN npm install --production=false && npm cache clean --force
 
 # Copiar el código fuente
 COPY Backend/src ./src
 COPY Backend/public ./public
 
-EXPOSE 3000 9229
+# Compilar a dist
+RUN npx nest build
 
-# Comando por defecto: desarrollo con watch
-CMD ["npm", "run", "start:dev"]
+EXPOSE 3000
+
+# Ejecutar versión compilada (estable)
+CMD ["node", "dist/main.js"]
 

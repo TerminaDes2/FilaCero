@@ -12,36 +12,43 @@ services:
       - ./Backend/public:/app/public
     environment:
       - PORT=3000
-      - MONGO_URI=mongodb://mongo:27017/filacero
+      - DATABASE_URL=postgres://user:password@postgres:5432/filacero
     restart: unless-stopped
     depends_on:
-      - mongo
+      - postgres
 
   frontend:
     build:
-      context: .
-      dockerfile: Docker/frontend.Dockerfile
+      context: ./Frontend
+      dockerfile: ../Docker/frontend.Dockerfile
     container_name: filacero-frontend
     ports:
-      - "5173:5173"
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://localhost:3000/api
     volumes:
-      - ./Frontend/src:/app/src
-      - ./Frontend/public:/app/public
+      - ./Frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       - backend
     restart: unless-stopped
 
-  mongo:
-    image: mongo:7
-    container_name: filacero-mongo
+  postgres:
+    image: postgres:13
+    container_name: filacero-postgres
     ports:
-      - "27017:27017"
+      - "5432:5432"
     volumes:
-      - mongo_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=filacero
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     restart: unless-stopped
 
 networks:
   default:
     name: filacero-net
 volumes:
-  mongo_data:
+  postgres_data:

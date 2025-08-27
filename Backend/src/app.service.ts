@@ -1,23 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Product } from './products/product.schema';
 
 @Injectable()
 export class AppService {
-  constructor(@InjectModel(Product.name) private productModel: Model<Product>) {}
+  constructor(@InjectRepository(Product) private repo: Repository<Product>) {}
 
   async getHealth() {
     let productCount = -1;
+    let db = 'error';
     try {
-      productCount = await this.productModel.estimatedDocumentCount();
-    } catch (e) {
+      productCount = await this.repo.count();
+      db = 'connected';
+    } catch {
       // ignore
     }
     return {
       status: 'ok',
       framework: 'nest',
-      mongo: productCount >= 0 ? 'connected' : 'error',
+      db,
       products: productCount,
       time: new Date().toISOString(),
     };
