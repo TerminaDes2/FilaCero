@@ -111,25 +111,6 @@ git push origin main
 * Pipeline CI (GitHub Actions) para instalar, testear y build
 * Configurar build de producción multistage (sirviendo frontend estático con nginx)
 
-### 🗄️ Base de datos MongoDB
-Se añadió un contenedor `mongo` (imagen oficial) expuesto en `localhost:27017` y el backend se conecta usando la variable `MONGO_URI`.
-
-Health endpoint ahora incluye estado de Mongo y número de documentos del esquema de ejemplo.
-
-Ejemplo de override de conexión:
-```powershell
-docker compose up -d
-# Luego (si quieres otra DB temporal)
-docker compose exec backend sh -c "export MONGO_URI='mongodb://mongo:27017/otra' && npm run start:dev"
-```
-
-Para conectarte con MongoDB Compass:
-```
-mongodb://localhost:27017/filacero
-```
-
-Volumen persistente: `mongo_data`.
-
 ### ✨ CRUD de Example
 Endpoints disponibles ahora:
 ```
@@ -139,16 +120,6 @@ GET    /api/examples/:id
 PATCH  /api/examples/:id    { name? }
 DELETE /api/examples/:id
 ```
-
-Seeder:
-```powershell
-docker compose exec backend npm run seed
-```
-Usa `MONGO_URI` para apuntar a otra instancia si lo deseas.
-
-¿Necesitas el setup de producción o CI? Pídelo y lo añadimos.
-
----
 
 ## 🧩 VS Code: Resolver "No se encuentra el módulo '@nestjs/common'"
 
