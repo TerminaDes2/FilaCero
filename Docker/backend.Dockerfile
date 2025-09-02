@@ -12,7 +12,7 @@ RUN npm install --production=false && npm cache clean --force
 
 # Copiar el código fuente
 COPY Backend/src ./src
-COPY Backend/public ./public
+## (Opcional) carpeta public eliminada porque no existe actualmente
 
 # Compilar a dist
 RUN npx nest build
