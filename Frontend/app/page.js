@@ -3,6 +3,16 @@ import { useEffect, useState } from 'react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
 
+function formatPrice(val) {
+  const num = typeof val === 'number' ? val : parseFloat(val);
+  if (isNaN(num)) return '-';
+  try {
+    return num.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 });
+  } catch {
+    return `$${num.toFixed(2)}`;
+  }
+}
+
 export default function Home() {
   const [health, setHealth] = useState(null);
   const [products, setProducts] = useState([]);
@@ -102,7 +112,7 @@ export default function Home() {
           {products.map(p => (
             <li key={p.id || p._id} className="py-2 flex justify-between text-sm">
               <span className="font-medium">{p.name}</span>
-              <span>${p.price} · Stock: {p.stock}</span>
+              <span>{formatPrice(p.price)} · Stock: {p.stock}</span>
             </li>
           ))}
           {!loadingProducts && products.length === 0 && <li className="text-sm text-gray-500">Sin productos</li>}
