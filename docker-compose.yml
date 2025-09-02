@@ -21,6 +21,7 @@ services:
     build:
       context: ./Frontend
       dockerfile: ../Docker/frontend.Dockerfile
+      target: dev
     container_name: filacero-frontend
     ports:
       - "3001:3000"
