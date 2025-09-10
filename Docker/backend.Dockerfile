@@ -8,7 +8,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY Backend/package*.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 # 2. Etapa build (compila TypeScript a dist)
 FROM node:20-alpine AS build
@@ -26,7 +26,7 @@ RUN npm run build
 FROM node:20-alpine AS prod-deps
 WORKDIR /app
 COPY Backend/package*.json ./
-RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
 
 # 4. Runner final
 FROM node:20-alpine AS runner

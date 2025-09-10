@@ -7,9 +7,11 @@ services:
     ports:
       - "3000:3000"
       - "9229:9229"
-    volumes:
-      - ./Backend/src:/app/src
-      - ./Backend/public:/app/public
+  # Volúmenes deshabilitados temporalmente por error de montaje read-only en /opt/lampp
+  # Para desarrollo con hot-reload cambiar comando a start:dev y reactivar estos volúmenes fuera de /opt
+  # volumes:
+  #   - ./Backend/src:/app/src
+  #   - ./Backend/public:/app/public
     environment:
       - PORT=3000
       - DATABASE_URL=postgres://user:password@postgres:5432/filacero
