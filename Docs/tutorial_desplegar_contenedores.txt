@@ -1,0 +1,194 @@
+Tutorial: Crear y desplegar contenedores (Frontend, Backend, PostgreSQL) - Proyecto FilaCero
+
+Requisitos previos
+- Tener Docker y Docker Compose instalados en tu máquina.
+- Estar en la carpeta del proyecto: /home/dominic/proyectos/FilaCero
+- Puertos libres: 3000 (backend), 3001 (frontend), 5432 (Postgres)
+- (Opcional) Permisos suficientes para ejecutar Docker.
+
+Estructura relevante del repositorio
+- `docker-compose.yml` - define servicios: backend, frontend y postgres.
+- `Docker/backend.Dockerfile` - Dockerfile del backend (NestJS).
+- `Frontend/` - código del frontend (Next.js) y `Docker/frontend.Dockerfile`.
+- `Backend/` - código fuente del backend.
+
+Paso 1 — Preparar variables de entorno
+1. Revisa `Backend/.env` o `Backend/.env.example` y ajusta si es necesario.
+2. En `docker-compose.yml` el `DATABASE_URL` se pasa al servicio `backend` como:
+   postgres://user:password@postgres:5432/filacero
+   - Si cambias usuario/clave/DB, actualiza aquí y en el servicio postgres del compose.
+
+Paso 2 — Construir y levantar los contenedores (modo producción/desarrollo)
+- Desde la raíz del proyecto ejecuta:
+  docker compose up -d --build
+
+Comando alternativo (si usa docker-compose v1):
+  docker-compose up -d --build
+
+Esto hará:
+- Construir las imágenes de `filacero-backend` y `filacero-frontend` usando los Dockerfiles.
+- Crear/levantar un contenedor `filacero-postgres` con la DB `filacero`.
+
+Paso 3 — Verificar que los contenedores estén corriendo
+- Comprobar estado:
+  docker compose ps
+  docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+
+Salida esperada (ejemplo):
+- filacero-backend  Up  (puerto 3000:3000)
+- filacero-frontend Up  (puerto 3001:3000)
+- filacero-postgres Up (puerto 5432:5432)
+
+Paso 4 — Ver logs si algo falla
+- Logs en tiempo real:
+  docker compose logs --follow backend
+  docker compose logs --follow frontend
+  docker compose logs --follow postgres
+
+- Ver las últimas 200 líneas de todos los servicios:
+  docker compose logs --tail=200
+
+- Últimas 200 líneas:
+  docker compose logs --tail=200 backend
+
+Puntos comunes a revisar en logs:
+- Backend: errores de conexión a la base de datos (revisa `DATABASE_URL`).
+- Frontend: errores de compilación o faltan dependencias (revisa `npm install` en la imagen).
+- Postgres: permisos o datos corruptos en el volumen si migras DB.
+
+Paso 5 — Comandos útiles de mantenimiento
+- Parar y eliminar contenedores, redes y volúmenes creados por compose:
+  docker compose down
+
+- Reconstruir desde cero y levantar:
+  docker compose up -d --build
+
+- Entrar al shell del contenedor (por ejemplo backend):
+  docker exec -it filacero-backend /bin/sh
+
+- Si la imagen tiene bash disponible:
+  docker exec -it filacero-backend /bin/bash
+
+- Ver puertos y procesos locales (debug conflictos):
+  ss -ltnp | grep -E '3000|3001|5432|9229' || true
+
+Paso 6 — Desarrollo con hot-reload (opcional)
+- Enfocado al backend (NestJS):
+  - En `docker-compose.yml` puedes habilitar volúmenes para montar `Backend/src` dentro del contenedor y usar `npm run start:dev`.
+  - Nota: en este repo los volúmenes están comentados por un error de montaje read-only en `/opt/lampp`. Si trabajas en otra ruta, reactiva los volúmenes.
+
+Comandos sugeridos para desarrollo (desde la raíz del proyecto):
+
+- Levantar solo postgres en background:
+  docker compose up -d postgres
+
+- Construir y levantar backend en modo desarrollo (si activas el volumen en compose):
+  docker compose up --build backend
+
+- Ejecutar solo el frontend en modo desarrollo local (fuera de contenedor):
+  cd Frontend && npm install && npm run dev
+
+Paso 7 — Verificar endpoints básicos
+- Backend (ejemplo): http://localhost:3000/ (o http://localhost:3000/api si está enrutado)
+- Frontend: http://localhost:3001/
+- Comprobar la conexión desde el backend a Postgres revisando logs del backend para confirmar que la conexión fue exitosa.
+
+Comandos para probar endpoints desde la máquina host:
+
+- Probar root del backend con curl:
+  curl -v http://localhost:3000/
+
+- Probar un endpoint JSON (ajusta la ruta según la API):
+  curl -sS http://localhost:3000/api/products | jq '.'
+
+- Probar que Postgres responde (desde el host, con psql instalado):
+  PGPASSWORD=password psql -h localhost -U user -d filacero -c "\dt"
+
+Solución de problemas (rápida)
+- Si backend muestra `health: starting` indefinidamente:
+  1. Ver logs: docker compose logs backend
+  2. Asegúrate que Postgres esté `Up` y accesible.
+  3. Revisa `DATABASE_URL` y credenciales en `docker-compose.yml`.
+- Si el frontend no compila:
+  1. Revisa que `package.json` y `node_modules` estén correctos.
+  2. Rebuild de la imagen: docker compose build frontend
+
+Notas finales
+- Los comandos mostrados asumen que usas `docker compose` (v2). Si tu sistema aún usa `docker-compose`, cambia los comandos a `docker-compose`.
+- Mantén los puertos y credenciales consistentes entre `docker-compose.yml` y cualquier archivo `.env` que uses.
+
+Compatibilidad por sistema operativo
+----------------------------------
+A continuación encontrarás comandos específicos para Ubuntu (Linux), macOS y Windows 11 (PowerShell). Si usas WSL2 en Windows, puedes ejecutar los comandos de Linux dentro de la distro WSL.
+
+1) Linux (Ubuntu / distribuciones similares)
+
+- Instalar Docker (si no está instalado):
+  sudo apt update
+  sudo apt install -y ca-certificates curl gnupg lsb-release
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  echo \"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" |
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  sudo apt update
+  sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+  sudo usermod -aG docker $USER    # cierra sesión / reinicia para aplicar
+
+- Levantar proyecto:
+  cd /home/dominic/proyectos/FilaCero
+  docker compose up -d --build
+
+- Ver puertos escuchando (Linux):
+  ss -ltnp | grep -E '3000|3001|5432|9229' || true
+
+2) macOS (con Docker Desktop)
+
+- Instalar Docker Desktop (Homebrew cask):
+  brew install --cask docker
+  # Abre Docker Desktop desde Spotlight o Aplicaciones y espera a que esté 'Running'
+
+- Levantar proyecto (igual que Linux):
+  cd /home/dominic/proyectos/FilaCero
+  docker compose up -d --build
+
+- Ver puertos escuchando (macOS):
+  lsof -iTCP -sTCP:LISTEN -n -P | grep -E '3000|3001|5432|9229' || true
+
+- Nota para Apple Silicon (M1/M2): algunas imágenes basadas en x86 pueden necesitar reconstrucción o variantes arm64. Si hay errores de arquitectura, revisa los Dockerfiles o usa plataformas multi-arch.
+
+3) Windows 11 (PowerShell) — Docker Desktop o WSL2
+
+- Usando Docker Desktop (recomendado):
+  1. Instala Docker Desktop para Windows desde https://www.docker.com/get-started y actívalo.
+  2. Asegúrate de que está integrado con WSL2 si usas WSL.
+
+- Comandos en PowerShell (ejecutar como usuario):
+  # Levantar los servicios
+  cd C:\ruta\a\proyectos\FilaCero   # ajusta la ruta si es necesario
+  docker compose up -d --build
+
+  # Ver estado
+  docker compose ps
+
+  # Ver puertos en uso (PowerShell):
+  netstat -aon | Select-String "3000|3001|5432|9229" || Write-Host 'No matching ports'
+
+- Comandos para probar endpoints en PowerShell:
+  # Usar curl.exe si está presente (evita el alias curl de PowerShell)
+  curl.exe -v http://localhost:3000/
+  # O con PowerShell nativo
+  Invoke-RestMethod -Uri http://localhost:3000/ -Verbose
+
+- Usar psql en PowerShell (si instalaste PostgreSQL client):
+  # Establecer variable temporalmente y ejecutar
+  $env:PGPASSWORD = 'password'
+  psql -h localhost -U user -d filacero -c "\dt"
+  Remove-Item Env:PGPASSWORD
+
+- Si usas WSL2: abre tu distro WSL (Ubuntu) y ejecuta los comandos de Linux dentro de ella. Docker Desktop con integración WSL hace que `docker` funcione desde WSL.
+
+Consejos generales
+- Si trabajas con WSL2, ejecuta los comandos inside WSL para evitar diferencias de permisos/volúmenes con Windows mounts.
+- Siempre inicia Docker Desktop (Windows/macOS) antes de ejecutar `docker compose up`.
+- Si hay diferencias de línea de comando (p.ej. comillas en PowerShell), usa la variante recomendada para cada shell.
+
+Fin del tutorial.
