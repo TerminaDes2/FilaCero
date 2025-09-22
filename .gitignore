@@ -7,5 +7,30 @@ coverage/
 /.vscode/
 Docker/*.log
 
+
 Backend/generated/prisma
 Backend/.env
+
+# Next.js y frameworks modernos
+.next/
+out/
+build/
+cache/
+server/
+static/
+
+# Archivos de entorno
+.env.local
+.env.*
+
+# Sistema operativo
+*.DS_Store
+Thumbs.db
+
+# Otros generados
+yarn-error.log
+npm-debug.log
+
+# Reportes
+reports/
+
