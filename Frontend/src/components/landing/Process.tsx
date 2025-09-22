@@ -1,3 +1,4 @@
+import { SectionHeading } from "../../components/SectionHeading";
 type Step = {
   number: number;
   title: string;
@@ -24,8 +25,8 @@ const steps: Step[] = [
   },
   {
     number: 3,
-    title: "POS lo recibe.",
-    text: "El pedido llega al sistema POS donde el personal lo gestiona.",
+    title: "Equipo lo prepara.",
+    text: "El pedido entra al panel operativo listo para producirse sin pasos extra.",
     colors: { primary: "#148987", dark: "#002E2F", light: "#B7FCFB" },
   },
   {
@@ -41,11 +42,12 @@ export function Process() {
     <section id="process" className="relative py-24 bg-gradient-to-b from-white via-brand-50/30 to-white dark:from-slate-950 dark:via-slate-900/30 dark:to-slate-950">
       <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.08) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mb-14 text-center mx-auto">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/70 mb-3">¿Cómo funciona?</span>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Cómo funciona nuestra <span style={{ color: '#D55D7B' }}>Fila</span><span style={{ color: '#4CC1AD' }}>Cero</span></h2>
-          <p className="text-gray-600 dark:text-slate-300">Un flujo sencillo para que empieces a operar en minutos.</p>
-        </div>
+        <SectionHeading
+          align="center"
+          badge="¿Cómo funciona?"
+          badgeTone="sun"
+          title={<span>Cómo funciona nuestra <span className="text-gradient">FilaCero</span></span> as any}
+          subtitle="Un flujo sencillo para que empieces a operar en minutos." />
         <ol className="grid gap-8 md:grid-cols-4">
           {steps.map(s => (
             <li key={s.number} className="relative group">
@@ -69,28 +71,28 @@ export function Process() {
                   >
                     {/* Icon per step */}
                     {s.number === 1 && (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
+                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18M4 5l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14" />
                         <rect x="7" y="9" width="10" height="6" rx="1" />
                         <path strokeLinecap="round" d="M9 3h6" />
                       </svg>
                     )}
                     {s.number === 2 && (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
+                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18" />
                         <rect x="4" y="7" width="16" height="13" rx="2" />
                         <path strokeLinecap="round" d="M8 12h8M8 16h6" />
                       </svg>
                     )}
                     {s.number === 3 && (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
+                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
                         <rect x="3" y="4" width="18" height="14" rx="2" />
                         <path strokeLinecap="round" d="M7 20h10" />
                         <circle cx="12" cy="11" r="3" />
                       </svg>
                     )}
                     {s.number === 4 && (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
+                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l4 4L19 6" />
                       </svg>
                     )}

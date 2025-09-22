@@ -11,7 +11,7 @@ export function CTA() {
           Configura tu catálogo y realiza tus primeras ventas en minutos. Sin riesgos, sin tarjetas, solo productividad.
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Link href="/registro" className="bg-white text-brand-700 font-semibold px-8 py-3 rounded-full shadow-sm hover:shadow-md transition">
+          <Link href="/auth/register" className="bg-white text-brand-700 font-semibold px-8 py-3 rounded-full shadow-sm hover:shadow-md transition">
             Crear cuenta gratis
           </Link>
           <Link href="#pricing" className="bg-white/10 border border-white/30 backdrop-blur px-8 py-3 rounded-full font-semibold hover:bg-white/15 transition">

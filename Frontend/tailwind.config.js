@@ -24,6 +24,19 @@ module.exports = {
           700: '#C12249', // hover CTA
           800: '#931836', // pressed / dark accent
           900: '#5D0F23'  // extremo oscuro (raro uso)
+        },
+        // Escala cálida (acentos suaves / contraste de marca)
+        sun: {
+          50: '#FFFAF2',
+          100: '#FFF3E0',
+          200: '#FCE8B7', // referencia dada
+          300: '#F9D98A',
+          400: '#F5C65C',
+          500: '#E8AE2E',
+          600: '#C88716',
+          700: '#9E6511',
+          800: '#6B440E',
+          900: '#3C2609'
         }
       },
       backgroundImage: {

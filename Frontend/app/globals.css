@@ -8,6 +8,74 @@ body.dark, .dark body { background-color: #0f172a; color: #f1f5f9; }
 ::selection { background: #b9ddff; color: #0b1220; }
 h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 
+/* === Design Tokens (Color) === */
+:root {
+	/* Brand primary (raspberry scale) */
+	--fc-brand-50: #fff5f7;
+	--fc-brand-100: #ffe1e7;
+	--fc-brand-200: #ffb9c8;
+	--fc-brand-300: #ff90a7;
+	--fc-brand-400: #ff6b8d;
+	--fc-brand-500: #e94a6f; /* primary accent */
+	--fc-brand-600: #de355f; /* used currently in gradients */
+	--fc-brand-700: #c12249;
+	--fc-brand-800: #911935;
+	--fc-brand-900: #5a0f20;
+
+	/* Teal / Mint secondary */
+	--fc-teal-50: #effaf8;
+	--fc-teal-100: #d8f3ee;
+	--fc-teal-200: #b3e7df;
+	--fc-teal-300: #89d9ce;
+	--fc-teal-400: #5cccbb;
+	--fc-teal-500: #4cc1ad; /* secondary accent */
+	--fc-teal-600: #3faf9c;
+	--fc-teal-700: #2f8d7d;
+	--fc-teal-800: #1f5f55;
+	--fc-teal-900: #133d37;
+
+	/* Sun (warm accent) */
+	--fc-sun-50: #fff8e5;
+	--fc-sun-100: #ffefc2;
+	--fc-sun-200: #ffe190;
+	--fc-sun-300: #ffd05a;
+	--fc-sun-400: #ffc030;
+	--fc-sun-500: #e2a81b; /* warm accent */
+	--fc-sun-600: #c08613;
+	--fc-sun-700: #8d5e0e;
+	--fc-sun-800: #5c3a07;
+	--fc-sun-900: #2e1b02;
+
+	/* Semantic (placeholders for future) */
+	--fc-success: #2e7d32;
+	--fc-danger: #dc2626;
+	--fc-warning: var(--fc-sun-500);
+	--fc-info: var(--fc-teal-500);
+
+	/* Composite tokens */
+	--fc-bg-soft: var(--fc-brand-50);
+	--fc-bg-alt: #ffffff;
+	--fc-border-soft: rgba(0,0,0,0.08);
+	--fc-border-strong: rgba(0,0,0,0.16);
+	--fc-text-primary: #111827;
+	--fc-text-secondary: #4b5563;
+	--fc-text-inverse: #ffffff;
+
+	/* Legacy mapping for migration */
+	--brand-accent: var(--fc-brand-500);
+	--brand-teal: var(--fc-teal-500);
+	--brand-sun: var(--fc-sun-500);
+}
+
+.dark {
+	--fc-bg-soft: #121b2b;
+	--fc-bg-alt: #0f172a;
+	--fc-border-soft: rgba(255,255,255,0.12);
+	--fc-border-strong: rgba(255,255,255,0.28);
+	--fc-text-primary: #f1f5f9;
+	--fc-text-secondary: #cbd5e1;
+}
+
 /* Utilidad gradiente fondo */
 .bg-app-gradient {
 	/* suaves halos rosados/menta, sin azules */
@@ -41,4 +109,61 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: linear-gradient(#E94A6F,#4CC1AD); border-radius: 20px; }
 ::-webkit-scrollbar-thumb:hover { background: linear-gradient(#DE355F,#3FAF9C); }
+
+/* === Auth background animations === */
+@keyframes authGradientShift {
+	0% { filter: hue-rotate(0deg) brightness(1); }
+	50% { filter: hue-rotate(8deg) brightness(1.02); }
+	100% { filter: hue-rotate(0deg) brightness(1); }
+}
+@keyframes blobLazy {
+	0%,100% { transform: scale(1) translateY(0); }
+	50% { transform: scale(1.08) translateY(-18px); }
+}
+@keyframes floatBubble {
+	0% { transform: translateY(0) translateZ(0) scale(1); opacity: 0; }
+	10% { opacity: .55; }
+	90% { opacity: .4; }
+	100% { transform: translateY(-120vh) translateZ(0) scale(1.15); opacity: 0; }
+}
+@keyframes particleDrift {
+	0% { transform: translate3d(0,0,0) scale(1); opacity: 0; }
+	10% { opacity: .18; }
+	50% { transform: translate3d(20px,-40px,0) scale(1.1); }
+	90% { opacity: .15; }
+	100% { transform: translate3d(-10px,-80px,0) scale(1); opacity: 0; }
+}
+@keyframes sqFloat {
+	0% { transform: translate3d(0,0,0) rotate(var(--sq-rot,0deg)); }
+	25% { transform: translate3d(6px,-8px,0) rotate(calc(var(--sq-rot,0deg) + 2deg)); }
+	50% { transform: translate3d(0,-14px,0) rotate(calc(var(--sq-rot,0deg) - 1deg)); }
+	75% { transform: translate3d(-5px,-6px,0) rotate(calc(var(--sq-rot,0deg) + 1deg)); }
+	100% { transform: translate3d(0,0,0) rotate(var(--sq-rot,0deg)); }
+}
+@keyframes routeDashKF { to { stroke-dashoffset: -400; } }
+@keyframes pingSoftKF {
+	0% { transform: scale(0.4); opacity: .65; }
+	60% { transform: scale(1.8); opacity: 0; }
+	100% { transform: scale(2.1); opacity: 0; }
+}
+
+.animate-authGradient { animation: authGradientShift 28s linear infinite; }
+.animate-blob-lazy { animation: blobLazy 32s ease-in-out infinite; }
+.animate-floatBubble { animation: floatBubble linear infinite; }
+.animate-particle { animation: particleDrift linear infinite; }
+.animate-routeDash { animation: routeDashKF 18s linear infinite; }
+.animate-pingSoft { animation: pingSoftKF 3.2s ease-out infinite; }
+
+/* Provide class for square float if needed elsewhere */
+.sq-float { will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-authGradient,
+	.animate-blob-lazy,
+	.animate-floatBubble,
+		.animate-particle,
+		.animate-routeDash,
+			.animate-pingSoft,
+			.sq-float { animation: none !important; }
+}
 
