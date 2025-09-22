@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo } from 'react';
+import { LegalModal } from '../../components/legal/LegalModal';
 import { FancyInput } from './FancyInput';
 
 interface SignupFormProps {
@@ -24,13 +25,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const [showConfirm, setShowConfirm] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
+	const [acceptedTerms, setAcceptedTerms] = useState(false);
+	const [showLegal, setShowLegal] = useState<null | 'terminos' | 'privacidad'>(null);
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordStrength = computeStrength(password);
 	const passwordStrongEnough = passwordStrength >= 3; // must hit 3 of 4
 	const confirmValid = confirm.length > 0 && confirm === password;
 	const nameValid = name.trim().length >= 2;
-	const formValid = emailValid && passwordStrongEnough && confirmValid && nameValid;
+	const baseValid = emailValid && passwordStrongEnough && confirmValid && nameValid;
+	const formValid = baseValid && acceptedTerms;
 
 	const suggestions = useMemo(() => {
 		const s: string[] = [];
@@ -43,7 +47,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
 	const submit = (e: React.FormEvent) => {
 		e.preventDefault();
-		setTouched({ name: true, email: true, password: true, confirm: true });
+		setTouched({ name: true, email: true, password: true, confirm: true, terms: true });
 		if(!formValid) return;
 		setSubmitting(true);
 		setTimeout(()=>{
@@ -53,7 +57,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	};
 
 	return (
-		<form onSubmit={submit} className="space-y-6">
+		<form onSubmit={submit} className="space-y-6" noValidate>
 
 			<FancyInput
 				label="Nombre"
@@ -118,22 +122,49 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				onTogglePassword={()=>setShowConfirm(c=>!c)}
 				hint={!confirm ? 'Repite la contraseña' : undefined}
 			/>
-			<button
-				type="submit"
-				disabled={!formValid || submitting}
-				className="relative w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 shadow-sm hover:shadow-md transition active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-400"
-			>
-				{submitting && (
-					<span className="absolute left-4 inline-flex">
-						<svg className='animate-spin h-4 w-4 text-white' viewBox='0 0 24 24'>
-							<circle className='opacity-30' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none'/>
-							<path className='opacity-90' fill='currentColor' d='M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z' />
-						</svg>
-					</span>
+			<div className="space-y-4">
+				<div className="flex items-start gap-3 rounded-md bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3">
+					<input
+						id="terms"
+						type="checkbox"
+						checked={acceptedTerms}
+						onChange={e=>setAcceptedTerms(e.target.checked)}
+						className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:bg-slate-800 dark:border-white/20"
+					/>
+						<label htmlFor="terms" className="text-xs leading-relaxed text-gray-600 dark:text-slate-300">
+							Acepto los {' '}
+							<button type="button" onClick={()=>setShowLegal('terminos')} className="font-medium text-brand-600 dark:text-brand-400 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
+								Términos de Servicio
+							</button>{' '}y la{' '}
+							<button type="button" onClick={()=>setShowLegal('privacidad')} className="font-medium text-brand-600 dark:text-brand-400 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
+								Política de Privacidad
+							</button>.
+						</label>
+				</div>
+				{touched.terms && !acceptedTerms && (
+					<p className="text-[11px] text-rose-600 dark:text-rose-400">Debes aceptar los términos para continuar.</p>
 				)}
-				{submitting ? 'Creando...' : 'Crear cuenta'}
-			</button>
-			<p className="text-[11px] text-gray-500 dark:text-slate-400 text-center">Al crear tu cuenta aceptas nuestros <a href="#" className='underline hover:text-brand-600 dark:hover:text-brand-300'>Términos</a>.</p>
+				<button
+				type="submit"
+					disabled={!formValid || submitting}
+					className="relative w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 shadow-sm hover:shadow-md transition active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-400"
+				>
+					{submitting && (
+						<span className="absolute left-4 inline-flex">
+							<svg className='animate-spin h-4 w-4 text-white' viewBox='0 0 24 24'>
+								<circle className='opacity-30' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none'/>
+								<path className='opacity-90' fill='currentColor' d='M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z' />
+							</svg>
+						</span>
+					)}
+					{submitting ? 'Creando...' : 'Crear cuenta'}
+				</button>
+				<LegalModal
+					open={!!showLegal}
+					initialTab={showLegal === 'terminos' ? 'terminos' : 'privacidad'}
+					onClose={()=>setShowLegal(null)}
+				/>
+			</div>
 		</form>
 	);
 };

@@ -7,14 +7,21 @@ import { BrandLogo } from '../../../src/components/BrandLogo';
 
 export default function LoginPage() {
   return (
-    <AuthCard
-      title="Inicia sesión"
-      subtitle="Accede a tu panel de control"
-      brandMark={<BrandLogo withWordmark size={48} />}
-      brandFull
-      footer={<div>¿No tienes cuenta? <Link href="/auth/register" className="text-brand-600 hover:underline dark:text-brand-400">Regístrate</Link></div>}
-    >
-      <LoginForm />
-    </AuthCard>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden px-4 py-6">
+      <div className="absolute top-4 left-4 flex items-center gap-3 text-sm">
+        <BrandLogo withWordmark size={40} />
+        <div className="hidden sm:flex flex-col leading-tight">
+          <span className="font-semibold text-slate-800 dark:text-white text-[13px]">Inicia sesión</span>
+          <span className="text-[11px] text-gray-500 dark:text-slate-400">Accede a tu panel</span>
+        </div>
+      </div>
+      <div className="absolute top-4 right-4 text-[11px] text-gray-600 dark:text-slate-300">
+        ¿No tienes cuenta?{' '}
+        <Link href="/auth/register" className="font-medium text-brand-600 dark:text-brand-400 hover:underline">Regístrate</Link>
+      </div>
+      <AuthCard compact>
+        <LoginForm />
+      </AuthCard>
+    </div>
   );
 }
