@@ -1,4 +1,6 @@
 import { Reveal } from "../../components/Reveal";
+import { SectionHeading } from "../../components/SectionHeading";
+import Link from "next/link";
 
 const plans = [
   {
@@ -20,7 +22,7 @@ const plans = [
       "Exportación de datos",
       "Soporte prioritario",
     ],
-    cta: "Probar Pro",
+    cta: "Pasar a Pro",
   },
   {
     name: "Institucional",
@@ -42,15 +44,17 @@ export function Pricing() {
     <section id="pricing" className="py-32 relative overflow-hidden bg-gradient-to-b from-white via-brand-50/40 to-white dark:from-slate-950 dark:via-slate-900/40 dark:to-slate-950">
       <div className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-30" style={{ background: "radial-gradient(circle at 70% 30%, rgba(233,74,111,0.25), transparent 70%)" }} />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Reveal className="max-w-2xl mb-16 text-center mx-auto">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Precios simples</h2>
-          <p className="text-gray-600 dark:text-slate-300">Elige el plan que más se adapta al tamaño de tu operación.</p>
-        </Reveal>
+        <SectionHeading
+          align="center"
+          badge="Planes"
+          badgeTone="brand"
+          title="Precios simples"
+          subtitle="Elige el plan que más se adapta al tamaño de tu operación." />
         <div className="grid gap-10 md:grid-cols-3">
           {plans.map((p,i) => (
             <Reveal key={p.name} delay={90*i} className={`relative group flex flex-col rounded-3xl border backdrop-blur-xl overflow-hidden ${
-              p.highlight ? 'bg-white/80 dark:bg-slate-900/70 border-brand-400/50 shadow-glow scale-[1.025]' : 'bg-white/70 dark:bg-slate-900/50 border-gray-200/60 dark:border-white/10'
-            } transition`}>              
+              p.highlight ? 'bg-white/85 dark:bg-slate-900/70 border-brand-400/40 shadow-glow' : 'bg-white/70 dark:bg-slate-900/50 border-gray-200/60 dark:border-white/10'
+            } transition`}>
               {p.highlight && (
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600" />
               )}
@@ -67,14 +71,33 @@ export function Pricing() {
                     </li>
                   ))}
                 </ul>
-                <button className={`w-full font-semibold py-3 rounded-xl transition relative overflow-hidden ${
-                  p.highlight ? 'bg-brand-600 text-white hover:bg-brand-500' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'
-                }`}>
-                  {p.cta}
-                </button>
+                {p.name === 'Gratis' && (
+                  <Link
+                    href="/auth/register?plan=free"
+                    className={`w-full text-center font-semibold py-3 rounded-xl transition relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20`}
+                  >
+                    {p.cta}
+                  </Link>
+                )}
+                {p.name === 'Pro' && (
+                  <Link
+                    href="/auth/register?plan=pro"
+                    className={`w-full text-center font-semibold py-3 rounded-xl transition relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 bg-brand-600 text-white hover:bg-brand-500`}
+                  >
+                    {p.cta}
+                  </Link>
+                )}
+                {p.name === 'Institucional' && (
+                  <Link
+                    href="/auth/register?contact=institucional"
+                    className={`w-full text-center font-semibold py-3 rounded-xl transition relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20`}
+                  >
+                    {p.cta}
+                  </Link>
+                )}
               </div>
               {p.highlight && (
-                <div className="absolute -z-10 inset-0 opacity-30 animate-pulse" style={{ background: "radial-gradient(circle at 30% 30%, rgba(233,74,111,0.55), transparent 70%)" }} />
+                <div className="absolute -z-10 inset-0 opacity-25" style={{ background: "radial-gradient(circle at 30% 30%, rgba(233,74,111,0.45), transparent 70%)" }} />
               )}
             </Reveal>
           ))}

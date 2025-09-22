@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 // Decorative background with rotated squares in two pastel colors.
 // Colors: #FFD9D9 and #FFF9D9
@@ -30,6 +30,50 @@ const SQUARES: SquareSpec[] = [
 ];
 
 export function BackgroundSquares() {
+  const layerRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const target = useRef({ x: 0, y: 0 });
+  const current = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return; // no parallax if reduced motion
+
+    const handlePointer = (e: PointerEvent) => {
+      const { innerWidth, innerHeight } = window;
+      // target shift range ~ 18px
+      const shiftX = (e.clientX / innerWidth - 0.5) * 18;
+      const shiftY = (e.clientY / innerHeight - 0.5) * 18;
+      target.current.x = shiftX;
+      target.current.y = shiftY;
+      if (!frameRef.current) raf();
+    };
+
+    const raf = () => {
+      frameRef.current = requestAnimationFrame(() => {
+        // springy interpolation
+        current.current.x += (target.current.x - current.current.x) * 0.06;
+        current.current.y += (target.current.y - current.current.y) * 0.06;
+        if (layerRef.current) {
+          layerRef.current.style.transform = `translate3d(${current.current.x.toFixed(2)}px, ${current.current.y.toFixed(2)}px, 0)`;
+        }
+        const dx = Math.abs(target.current.x - current.current.x);
+        const dy = Math.abs(target.current.y - current.current.y);
+        if (dx < 0.2 && dy < 0.2) {
+          frameRef.current = null;
+          return;
+        }
+        raf();
+      });
+    };
+
+    window.addEventListener('pointermove', handlePointer);
+    return () => {
+      window.removeEventListener('pointermove', handlePointer);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
+
   return (
     <div
       aria-hidden
@@ -42,30 +86,34 @@ export function BackgroundSquares() {
       {/* grid background subtle */}
       <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0)", backgroundSize: "16px 16px" }} />
 
-      {SQUARES.map((sq, i) => (
-        <div
-          key={i}
-          className="absolute rounded-md shadow-sm"
-          style={{
-            width: sq.size,
-            height: sq.size,
-            top: sq.top,
-            left: sq.left,
-            backgroundColor: sq.color,
-            opacity: sq.opacity ?? 1,
-            transform: `rotate(${sq.rotate}deg)`
-          }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              boxShadow: "0 10px 25px rgba(0,0,0,0.07)",
-              filter: sq.blur ? `blur(${sq.blur}px)` : undefined,
-              border: "1px solid rgba(0,0,0,0.06)",
-            }}
-          />
-        </div>
-      ))}
+      <div ref={layerRef} className="absolute inset-0 will-change-transform">
+        {SQUARES.map((sq, i) => {
+          const duration = 24 + (i % 5) * 4; // stagger
+            const delay = -(i * 2); // negative for distributed phase
+          return (
+            <div
+              key={i}
+              className="absolute rounded-md"
+              style={{
+                width: sq.size,
+                height: sq.size,
+                top: sq.top,
+                left: sq.left,
+                opacity: sq.opacity ?? 1,
+                transform: `rotate(${sq.rotate}deg)`,
+              }}
+            >
+              <div
+                className="absolute inset-0 rounded-md bg-[var(--sq-color)] border border-black/5 dark:border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.07)] sq-float"
+                style={{
+                  ['--sq-color' as any]: sq.color,
+                  animation: `sqFloat ${duration}s ease-in-out ${delay}s infinite`,
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

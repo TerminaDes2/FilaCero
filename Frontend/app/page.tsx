@@ -6,6 +6,7 @@ import { Benefits } from "../src/components/landing/Benefits";
 import { Pricing } from "../src/components/landing/Pricing";
 import { Testimonials } from "../src/components/landing/Testimonials";
 import { CTA } from "../src/components/landing/CTA";
+import { FAQ } from "../src/components/landing/FAQ";
 import { Footer } from "../src/components/landing/Footer";
 
 export const metadata = {
@@ -33,8 +34,9 @@ export default function Landing() {
                 <Features />
                 <Process />
                 <Benefits />
-                <Pricing />
                 <Testimonials />
+                <Pricing />
+                <FAQ />
                 <CTA />
             </main>
             <Footer />

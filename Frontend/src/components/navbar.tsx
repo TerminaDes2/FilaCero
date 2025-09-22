@@ -39,7 +39,7 @@ export default function Navbar() {
 				<Link href="/" className="flex items-center gap-2 font-semibold text-gray-800">
 					<Image src="/LogoFilaCero.svg" alt="FilaCero" width={36} height={36} className="drop-shadow-sm" />
 					<span className="hidden sm:inline text-[2rem] font-extrabold select-none">
-						<span style={{ color: '#D55D7B' }}>Fila</span><span style={{ color: '#4CC1AD' }}>Cero</span>
+						<span style={{ color: 'var(--fc-brand-600)' }}>Fila</span><span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
 					</span>
 				</Link>
 				<div className="hidden md:flex gap-8">

@@ -7,59 +7,68 @@ export function Hero() {
   return (
     <section
       id="hero"
+      aria-labelledby="hero-heading"
       className="relative min-h-screen md:min-h-[100dvh] pt-32 md:pt-40 pb-20 flex items-center overflow-hidden bg-app-gradient"
     >
-      {/* Decorative blobs */}
-      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-        {/* Main soft halo */}
-        <div className="absolute top-[-18rem] left-1/2 -translate-x-1/2 w-[60rem] h-[60rem] rounded-full bg-gradient-to-br from-brand-100 via-brand-200 to-brand-300 opacity-40 blur-3xl animate-pulse" />
-        {/* Left ambient blob */}
-        <div className="absolute -bottom-40 -left-24 w-[30rem] h-[30rem] rounded-full bg-gradient-to-tr from-brand-50 via-brand-200/70 to-brand-400/0 opacity-50 blur-3xl animate-blob" />
-        {/* Right accent blob */}
-        <div className="absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-gradient-to-tr from-brand-200 via-brand-500/40 to-brand-700/10 opacity-40 blur-3xl animate-blob" />
-      </div>
       {/* Background rotated squares within hero */}
       <BackgroundSquares />
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-14 items-center">
           <Reveal className="space-y-7" >
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
-              Sin filas, sin prisas. Tus órdenes <span className="text-gradient">en segundos</span>.
+            <h1 id="hero-heading" className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+              Plataforma POS + pedidos QR para <span className="text-gradient">cafeterías escolares</span>.
             </h1>
             <p className="text-lg text-gray-600 dark:text-slate-300 leading-relaxed max-w-xl">
-              Escanea el código, realiza el pedido y recoge. Gestión moderna de pedidos para puntos de venta con foco en velocidad.
+              Reduce filas y atiende más pedidos en cada receso. Sin apps nativas, sin hardware propietario, listo en minutos.
             </p>
-            {/* Quick metrics */}
-            <div className="flex flex-wrap gap-3 pt-1">
+            {/* Social proof inline */}
+            <p className="text-sm font-medium text-gray-700 dark:text-slate-300 flex items-center gap-2">
+              <span className="inline-flex -space-x-2">
+                <span className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 border border-white dark:border-slate-900" aria-hidden="true" />
+                <span className="w-6 h-6 rounded-full bg-amber-400 border border-white dark:border-slate-900" aria-hidden="true" />
+                <span className="w-6 h-6 rounded-full bg-teal-500 border border-white dark:border-slate-900" aria-hidden="true" />
+              </span>
+              <span className="text-xs sm:text-sm">Escuelas piloto ya operando sin filas</span>
+            </p>
+            {/* Metrics semantic list */}
+            <ul className="flex flex-wrap gap-2 pt-1" aria-label="Indicadores clave">
               {[
-                { label: "< 5s por orden", desc: "flujo optimizado" },
+                { label: "< 5s orden", desc: "flujo optimizado" },
                 { label: "100% responsive", desc: "móvil primero" },
                 { label: "Sin descargas", desc: "solo escanear" }
               ].map(item => (
-                <div key={item.label} className="group relative rounded-full px-4 py-1.5 bg-white/70 dark:bg-white/5 backdrop-blur border border-white/60 dark:border-white/10 text-xs font-medium text-gray-700 dark:text-slate-200 flex items-center gap-2 shadow-sm">
-                  <span className="text-brand-600">●</span>
+                <li key={item.label} className="group relative rounded-full px-4 py-1.5 bg-white/70 dark:bg-white/5 backdrop-blur border border-white/60 dark:border-white/10 text-[11px] font-medium text-gray-700 dark:text-slate-200 flex items-center gap-2 shadow-sm">
+                  <span className="text-brand-600" aria-hidden="true">●</span>
                   <span>{item.label}</span>
                   <span className="sr-only">{item.desc}</span>
-                </div>
+                </li>
               ))}
+            </ul>
+            <div className="flex flex-wrap gap-4 items-center">
+              <Link href="/auth/register" className="group relative inline-flex items-center gap-2 bg-brand-600 text-white px-7 py-3 rounded-full font-semibold shadow-glow hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
+                <span>Crear cuenta gratis</span>
+                <span className="translate-x-0 group-hover:translate-x-1 transition" aria-hidden="true">→</span>
+              </Link>
+              <Link href="#process" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold border border-gray-300/70 text-gray-700 hover:border-brand-500 hover:text-brand-600 dark:text-gray-200 dark:border-white/15 dark:hover:border-brand-400 dark:hover:text-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
+                Ver cómo funciona
+              </Link>
+              <Link href="#pricing" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">
+                Planes
+              </Link>
             </div>
-            <div className="flex flex-wrap gap-4">
-              <Link href="#cta" className="group relative inline-flex items-center gap-2 bg-brand-600 text-white px-7 py-3 rounded-full font-semibold shadow-glow hover:bg-brand-500 transition">
-                <span>Probar ahora</span>
-                <span className="translate-x-0 group-hover:translate-x-1 transition">→</span>
-              </Link>
-              <Link href="#features" className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold border border-gray-300/70 text-gray-700 hover:border-brand-500 hover:text-brand-600 dark:text-gray-200 dark:border-white/15 dark:hover:border-brand-400 dark:hover:text-brand-300 transition">
-                Ver características
-              </Link>
+            <div className="flex flex-col sm:flex-row gap-6 pt-2">
+              <ul className="text-sm text-gray-600 dark:text-slate-400 space-y-1" aria-label="Ventajas principales">
+                <li className="flex items-start gap-2"><span className="text-brand-600" aria-hidden="true">✔</span><span>Implementación sin fricción</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand-600" aria-hidden="true">✔</span><span>Funciona en cualquier dispositivo</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand-600" aria-hidden="true">✔</span><span>Optimizado para recreos cortos</span></li>
+              </ul>
+              <p className="text-xs text-gray-500 dark:text-slate-500 max-w-xs">
+                <strong className="font-semibold text-gray-700 dark:text-slate-300">Sin tarjeta</strong> en el inicio. Migra a módulos avanzados cuando lo necesites.
+              </p>
             </div>
             <p className="text-sm text-gray-600 dark:text-slate-400 pt-1">
               ¿Ya tienes cuenta? <Link href="/auth/login" className="font-medium text-brand-600 hover:underline dark:text-brand-400">Inicia sesión</Link>
             </p>
-            <ul className="mt-5 text-sm text-gray-600 dark:text-slate-400 space-y-2">
-              <li className="flex items-start gap-2"><span className="text-brand-600" aria-hidden="true">✔</span><span>Implementación sin fricción</span></li>
-              <li className="flex items-start gap-2"><span className="text-brand-600" aria-hidden="true">✔</span><span>Funciona en cualquier dispositivo</span></li>
-              <li className="flex items-start gap-2"><span className="text-brand-600" aria-hidden="true">✔</span><span>Velocidad y simplicidad primero</span></li>
-            </ul>
           </Reveal>
           <Reveal delay={120} className="relative">
             <div className="absolute -inset-4 bg-white/50 dark:bg-white/5 backdrop-blur-xl rounded-3xl border border-white/60 dark:border-white/10" />
