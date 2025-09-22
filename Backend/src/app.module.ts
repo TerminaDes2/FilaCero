@@ -1,29 +1,19 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { ProductModule } from './products/product.module';
-import { Product } from './products/product.schema';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-  TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        url: configService.get('DATABASE_URL'),
-        autoLoadEntities: true,
-        synchronize: true, // Nota: Desactiva esto en producción
-      }),
-    }),
-  // Repositorio disponible también en AppService
-  TypeOrmModule.forFeature([Product]),
-    ProductModule,
+    PrismaModule,   // acceso a la DB
+    UsersModule,    // módulo de usuarios
+    AuthModule,     // módulo de auth (login/signup)
+    RolesModule,    // módulo de roles
+    // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
+    // ProductModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

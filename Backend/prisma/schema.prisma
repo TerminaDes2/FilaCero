@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model roles {
+  id_rol     BigInt     @id @default(autoincrement()) @map("id_rol")
+  nombre_rol String     @unique @map("nombre_rol")
+  usuarios   usuarios[] 
+
+  @@map("roles")
+}
+
+model usuarios {
+  id_usuario        BigInt    @id @default(autoincrement()) @map("id_usuario")
+  id_rol            BigInt?   @map("id_rol")
+  nombre            String    @map("nombre")
+  correo_electronico String   @unique @map("correo_electronico")
+  password_hash     String    @map("password_hash")
+  numero_telefono   String?   @map("numero_telefono")
+  fecha_nacimiento  DateTime? @map("fecha_nacimiento")
+  fecha_registro    DateTime? @map("fecha_registro")
+  estado            String?   @map("estado")
+
+  role roles? @relation(fields: [id_rol], references: [id_rol])
+
+  @@map("usuarios")
+}
+
+
+model product {
+  id        String   @id(map: "PK_bebc9158e480b949565b4dc7a82") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  price     Float
+  stock     Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+}
