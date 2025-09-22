@@ -7,6 +7,10 @@ coverage/
 /.vscode/
 Docker/*.log
 
+
+Backend/generated/prisma
+Backend/.env
+
 # Next.js y frameworks modernos
 .next/
 out/
@@ -29,3 +33,4 @@ npm-debug.log
 
 # Reportes
 reports/
+
