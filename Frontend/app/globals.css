@@ -1,3 +1,44 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html { scroll-behavior: smooth; }
+body { background-color: #ffffff; color: #111827; -webkit-font-smoothing: antialiased; }
+body.dark, .dark body { background-color: #0f172a; color: #f1f5f9; }
+::selection { background: #b9ddff; color: #0b1220; }
+h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
+
+/* Utilidad gradiente fondo */
+.bg-app-gradient {
+	/* suaves halos rosados/menta, sin azules */
+	background: radial-gradient(circle at 20% 20%, rgba(249,105,138,0.14), transparent 60%),
+							radial-gradient(circle at 80% 40%, rgba(76,193,173,0.12), transparent 65%),
+							linear-gradient(180deg, #ffffff 0%, #fff5f7 100%);
+}
+.dark .bg-app-gradient {
+	background: radial-gradient(circle at 15% 20%, rgba(233,74,111,0.28), transparent 60%),
+							radial-gradient(circle at 85% 35%, rgba(76,193,173,0.18), transparent 65%),
+							linear-gradient(180deg, #0f172a 0%, #111827 100%);
+}
+
+.glass { background: rgba(255,255,255,0.6); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 0 0 1px rgba(255,255,255,0.1),0 4px 40px -8px rgba(233,74,111,0.40); }
+.dark .glass { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); }
+
+.card-hover { transition: .35s ease; }
+.card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 32px -8px rgba(233,74,111,0.35); }
+
+:focus-visible { outline: none; box-shadow: 0 0 0 2px #DE355F, 0 0 0 4px #ffffff; }
+.dark :focus-visible { box-shadow: 0 0 0 2px #E94A6F, 0 0 0 4px #0f172a; }
+
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+.text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.dark .text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#E94A6F,#4CC1AD); border-radius: 20px; }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(#DE355F,#3FAF9C); }
+
