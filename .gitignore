@@ -7,4 +7,5 @@ coverage/
 /.vscode/
 Docker/*.log
 
-/generated/prisma
+Backend/generated/prisma
+Backend/.env
