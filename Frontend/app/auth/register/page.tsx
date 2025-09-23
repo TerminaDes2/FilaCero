@@ -10,21 +10,34 @@ import { RoleSelector } from '../../../src/components/auth/RoleSelector';
 export default function RegisterPage() {
   return (
     <UserProvider>
-      <AuthCard
-        title="Crea tu cuenta"
-        subtitle="Configura tu cafetería en minutos"
-        brandMark={<BrandLogo withWordmark size={48} />}
-        brandFull
-        footer={<div>¿Ya tienes cuenta? <Link href="/auth/login" className="text-brand-600 hover:underline dark:text-brand-400">Inicia sesión</Link></div>}
-      >
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-[11px] font-medium tracking-wide text-gray-600 dark:text-slate-300">Selecciona tu rol</p>
-            <RoleSelector compact />
-          </div>
-          <SignupForm />
+      <div className="min-h-screen w-full flex flex-col items-center justify-center overflow-hidden px-4 py-6">
+        {/* Floating brand & meta (extracted) */}
+        <div className="absolute top-4 left-4 flex-col items-center gap-3 text-sm">
+          <BrandLogo withWordmark size={40} />
+          
         </div>
-      </AuthCard>
+        <div className="absolute bottom-4 left-4 hidden sm:flex flex-col leading-tight pt-10">
+            <span className="font-semibold text-slate-800 dark:text-white text-[20px]">Crea tu cuenta</span>
+            <span className="text-[14px] text-gray-500 dark:text-slate-400">Configura tu cafetería en minutos</span>
+          </div>
+        <div className="absolute bottom-4 right-4 text-[12px] text-gray-600 dark:text-slate-300">
+          ¿Ya tienes cuenta?{' '}
+          <Link href="/auth/login" className="font-medium text-brand-600 dark:text-brand-400 hover:underline">Inicia sesión</Link>
+        </div>
+        <AuthCard compact>
+          <div className="space-y-1">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="col-span-2">
+                <p className="text-[11px] font-medium tracking-wide text-gray-600 dark:text-slate-300">Rol</p>
+              </div>
+              <div className="col-span-2">
+                <RoleSelector compact />
+              </div>
+            </div>
+            <SignupForm />
+          </div>
+        </AuthCard>
+      </div>
     </UserProvider>
   );
 }
