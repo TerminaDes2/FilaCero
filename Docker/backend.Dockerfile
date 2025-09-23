@@ -1,44 +1,20 @@
-###############################
-# Dockerfile Backend (NestJS)
-# build: docker build -f Docker/backend.Dockerfile -t terminatordes/filacero-backend:latest .
-# multi-arch (ejemplo): docker buildx build --platform linux/amd64,linux/arm64 -f Docker/backend.Dockerfile -t terminatordes/filacero-backend:latest --push .
-###############################
+# Dockerfile - Backend (solo desarrollo)
+# Contexto esperado: ./Backend
 
-# 1. Etapa deps (instala TODAS las dependencias para compilar)
-FROM node:20-alpine AS deps
+FROM node:20-alpine
 WORKDIR /app
-COPY Backend/package*.json ./
-RUN npm install --no-audit --no-fund
 
-# 2. Etapa build (compila TypeScript a dist)
-FROM node:20-alpine AS build
-WORKDIR /app
 ENV NODE_ENV=development
-COPY Backend/package*.json ./
-COPY Backend/tsconfig.json ./
-COPY Backend/tsconfig.build.json ./
-COPY Backend/nest-cli.json ./
-COPY --from=deps /app/node_modules ./node_modules
-COPY Backend/src ./src
-RUN npm run build
 
-# 3. Etapa prod-deps (solo dependencias de producción)
-FROM node:20-alpine AS prod-deps
-WORKDIR /app
-COPY Backend/package*.json ./
-RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
+# Copiar dependencias y instalarlas directo
+COPY package*.json ./
+RUN npm install --silent --no-audit --no-fund
 
-# 4. Runner final
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production \
-		PORT=3000
-COPY --from=prod-deps /app/node_modules ./node_modules
-COPY Backend/package*.json ./
-# (Opcional) si hubiera archivos públicos/estáticos descomentar:
-# COPY Backend/public ./public
-COPY --from=build /app/dist ./dist
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "require('http').get({host:'localhost',port:3000,path:'/'},r=>{if(r.statusCode!==200)process.exit(1)}).on('error',()=>process.exit(1))" || exit 1
-CMD ["node", "dist/main.js"]
+# Copiar el resto del proyecto
+COPY . .
 
+# Exponer API y puerto debug si lo usas
+EXPOSE 3000 9229
+
+# Para desarrollo en caliente (nest start --watch, nodemon, etc.)
+CMD ["npm", "run", "start:dev"]
