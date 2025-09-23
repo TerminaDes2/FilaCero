@@ -1,39 +1,39 @@
+version: '3.8'
+
 services:
   backend:
     build:
       context: ./Backend
       dockerfile: ../Docker/backend.Dockerfile
-    container_name: filacero-backend
+    container_name: filacero-backend-dev
     ports:
       - "3000:3000"
-      - "9229:9229"
-  # Volúmenes deshabilitados temporalmente por error de montaje read-only en /opt/lampp
-  # Para desarrollo con hot-reload cambiar comando a start:dev y reactivar estos volúmenes fuera de /opt
-  # volumes:
-  #   - ./Backend/src:/app/src
-  #   - ./Backend/public:/app/public
+      - "9229:9229"  # puerto debug si lo usas
     environment:
+      - NODE_ENV=development
       - PORT=3000
       - DATABASE_URL=postgres://user:password@postgres:5432/filacero
-    restart: unless-stopped
+    volumes:
+      - ./Backend:/app          # bind mount para editar código y que se refleje inmediatamente
+      - /app/node_modules       # volumen anónimo para proteger node_modules del host
+    command: ["npm","run","start:dev"]
     depends_on:
       - postgres
+    restart: unless-stopped
 
   frontend:
     build:
       context: ./Frontend
       dockerfile: ../Docker/frontend.Dockerfile
-      target: dev
-    container_name: filacero-frontend
+    container_name: filacero-frontend-dev
     ports:
       - "3001:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE=http://localhost:3000/api
+      - NEXT_PUBLIC_API_BASE=http://host.docker.internal:3000/api
       - NODE_ENV=development
     volumes:
       - ./Frontend:/app
       - /app/node_modules
-      - /app/.next
     command: ["npm","run","dev"]
     depends_on:
       - backend
@@ -41,7 +41,7 @@ services:
 
   postgres:
     image: postgres:13
-    container_name: filacero-postgres
+    container_name: filacero-postgres-dev
     ports:
       - "5432:5432"
     volumes:
@@ -53,8 +53,5 @@ services:
       - POSTGRES_PASSWORD=password
     restart: unless-stopped
 
-networks:
-  default:
-    name: filacero-net
 volumes:
   postgres_data:
