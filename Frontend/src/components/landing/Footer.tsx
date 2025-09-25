@@ -34,18 +34,18 @@ export function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4 text-sm tracking-wide">LEGAL</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-brand-300">Términos</a></li>
-              <li><a href="#" className="hover:text-brand-300">Privacidad</a></li>
-              <li><a href="#" className="hover:text-brand-300">Contacto</a></li>
+              <li><Link href="/legal/terminos" className="hover:text-brand-300">Términos</Link></li>
+              <li><Link href="/legal/privacidad" className="hover:text-brand-300">Privacidad</Link></li>
+              <li><a href="mailto:contacto@filacero.app" className="hover:text-brand-300">Contacto</a></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">© {year} FilaCero. Todos los derechos reservados.</p>
           <div className="flex gap-4 text-xs text-gray-500">
-            <a href="#" className="hover:text-brand-300">Soporte</a>
-            <a href="#" className="hover:text-brand-300">Estado</a>
-            <a href="#" className="hover:text-brand-300">Roadmap</a>
+            <a href="mailto:soporte@filacero.app" className="hover:text-brand-300">Soporte</a>
+            <a href="https://status.filacero.app" target="_blank" rel="noopener noreferrer" className="hover:text-brand-300">Estado</a>
+            <a href="https://roadmap.filacero.app" target="_blank" rel="noopener noreferrer" className="hover:text-brand-300">Roadmap</a>
           </div>
         </div>
       </div>
