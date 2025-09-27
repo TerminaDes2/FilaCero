@@ -1,41 +1,66 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from '../auth/dto/update-user.dto'; 
+import * as bcrypt from 'bcryptjs'; // Necesario si permites cambiar la contraseña
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findByEmail(email: string) {
-    return this.prisma.usuarios.findUnique({ where: { correo_electronico: email } });
-  }
-
-  async create(data: { nombre: string; correo_electronico: string; password: string; numero_telefono?: string }) {
-    const existing = await this.findByEmail(data.correo_electronico);
-    if (existing) throw new ConflictException('Email already registered');
-
-    const hashed = await bcrypt.hash(data.password, 10);
-
-    const created = await this.prisma.usuarios.create({
-      data: {
-        nombre: data.nombre,
-        correo_electronico: data.correo_electronico,
-        password_hash: hashed,
-        numero_telefono: data.numero_telefono ?? null,
-        fecha_registro: new Date(),
-        estado: 'activo',
-      },
+  // --- R (Read) - Obtener por ID ---
+  // Útil para que el controlador pueda obtener el perfil completo si es necesario.
+  async findOne(id: bigint) {
+    const user = await this.prisma.usuarios.findUnique({ 
+        where: { id_usuario: id },
+        // Excluir la contraseña al leer el perfil
+        select: { id_usuario: true, nombre: true, correo_electronico: true, numero_telefono: true, id_rol: true }
     });
-
-    // opcional: eliminar password antes de devolver
-    // @ts-ignore
-    delete created.password_hash;
-    return created;
+    if (!user) {
+        throw new NotFoundException('Usuario no encontrado.');
+    }
+    return user;
   }
 
-  async findById(id: bigint | number | string) {
-    // Acepta BigInt/string/number — prisma usa BigInt
-    const idBigInt = typeof id === 'bigint' ? id : BigInt(Number(id));
-    return this.prisma.usuarios.findUnique({ where: { id_usuario: idBigInt } as any });
+  // --- U (Update) - Actualizar Perfil ---
+  async update(id: bigint, updateUserDto: UpdateUserDto) {
+    const dataToUpdate: any = {};
+    
+    // 1. Manejar campos normales (nombre, teléfono)
+    if (updateUserDto.name) {
+        dataToUpdate.nombre = updateUserDto.name;
+    }
+    if (updateUserDto.phoneNumber) {
+        dataToUpdate.numero_telefono = updateUserDto.phoneNumber;
+    }
+
+    // 2. Manejar la contraseña (si se proporciona, debe hashearse)
+    if (updateUserDto.newPassword) {
+        const salt = await bcrypt.genSalt(10);
+        dataToUpdate.password_hash = await bcrypt.hash(updateUserDto.newPassword, salt);
+    }
+
+    try {
+        return await this.prisma.usuarios.update({
+            where: { id_usuario: id },
+            data: dataToUpdate,
+            select: { id_usuario: true, nombre: true, correo_electronico: true },
+        });
+    } catch (error) {
+        // Manejar errores de Prisma si el ID no existe
+        throw new NotFoundException('Usuario no encontrado o error de actualización.');
+    }
+  }
+
+  // --- D (Delete) - Eliminar Cuenta ---
+  async delete(id: bigint) {
+    try {
+        await this.prisma.usuarios.delete({
+            where: { id_usuario: id },
+        });
+        return { message: 'Cuenta eliminada exitosamente' };
+    } catch (error) {
+        // Manejar errores de Prisma si el ID no existe
+        throw new NotFoundException('Usuario no encontrado para eliminar.');
+    }
   }
 }
