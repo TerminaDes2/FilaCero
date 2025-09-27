@@ -1,9 +1,10 @@
 import { 
     BadRequestException, 
     Injectable, 
-    UnauthorizedException 
+    UnauthorizedException,
+    ConflictException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service'; // Asegura la ruta correcta
 import { RegisterDto } from './dto/register.dto'; // Importación necesaria para el método register
@@ -11,8 +12,8 @@ import { LoginDto } from './dto/login.dto'; // Importación necesaria para el m�
 
 // Interfaz para el Payload del JWT
 interface JwtPayload {
-  id: bigint; 
-  email: string;
+    id: string; 
+    email: string;
 }
 
 @Injectable()
@@ -30,7 +31,7 @@ export class AuthService {
         });
 
         if (existingUser) {
-            throw new BadRequestException('El usuario ya existe con ese correo.');
+            throw new ConflictException('El usuario ya existe con ese correo.');
         }
 
         // 2. Hashear la contraseña
@@ -49,7 +50,7 @@ export class AuthService {
 
             // 4. Generar Token JWT
             const payload: JwtPayload = { 
-                id: user.id_usuario, 
+                id: user.id_usuario.toString(), 
                 email: user.correo_electronico 
             };
             
@@ -87,7 +88,7 @@ export class AuthService {
 
         // 3. Generar y devolver el Token JWT
         const payload: JwtPayload = { 
-            id: user.id_usuario, 
+            id: user.id_usuario.toString(), 
             email: user.correo_electronico 
         };
         
@@ -100,7 +101,7 @@ export class AuthService {
         return { 
             token, 
             user: { 
-                id: payload.id.toString(), 
+                id: payload.id, 
                 email: payload.email 
             } 
         };
