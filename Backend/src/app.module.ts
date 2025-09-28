@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { RolesModule } from './roles/roles.module';
 import { HealthController } from './health.controller';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { HealthController } from './health.controller';
     UsersModule,    // módulo de usuarios
     AuthModule,     // módulo de auth (login/signup)
     RolesModule,    // módulo de roles
+    ProductsModule, // módulo de productos (Prisma)
     // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
     // ProductModule,
   ],

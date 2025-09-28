@@ -1,18 +1,33 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
 
 export class CreateProductDto {
   @IsNotEmpty()
-  name: string;
+  @MaxLength(200)
+  nombre!: string;
+
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  codigo_barras?: string;
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
-  price: number;
-
-  @IsInt()
-  @Min(0)
-  stock: number;
+  precio!: number;
 
   @IsOptional()
-  @IsBoolean()
-  active?: boolean;
+  @IsString()
+  imagen?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  estado?: string;
+
+  @IsOptional()
+  @IsString()
+  id_categoria?: string; // BigInt id as string
 }
