@@ -5,7 +5,7 @@ import { UpdateUserDto } from '../auth/dto/update-user.dto';
 
 // Proteger todas las rutas del controlador de usuarios
 @UseGuards(AuthGuard('jwt')) 
-@Controller('users')
+@Controller('api/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { RolesModule } from './roles/roles.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -15,5 +16,6 @@ import { RolesModule } from './roles/roles.module';
     // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
     // ProductModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

@@ -4,7 +4,7 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface JwtPayload {
-  id: bigint; 
+  id: string; 
   email: string;
 }
 
@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     // 1. Busca el usuario para confirmar que sigue activo
     const user = await this.prisma.usuarios.findUnique({
-      where: { id_usuario: payload.id },
+      where: { id_usuario: BigInt(payload.id) },
       select: { id_usuario: true, nombre: true, correo_electronico: true, id_rol: true }, 
     });
 
