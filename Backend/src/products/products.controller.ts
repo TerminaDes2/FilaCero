@@ -1,11 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { ProductService } from './product.service';
+import { ProductsService } from './index';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('api/products')
-export class ProductController {
-  constructor(private readonly service: ProductService) {}
+export class ProductsController {
+  constructor(private readonly service: ProductsService) {}
 
   @Post()
   create(@Body() dto: CreateProductDto) {
