@@ -18,6 +18,8 @@ function isPrismaDecimalLike(val: any): boolean {
 function convertScalars(value: any): any {
   // BigInt -> string
   if (typeof value === 'bigint') return value.toString();
+  // Date -> ISO string
+  if (value instanceof Date) return value.toISOString();
   // Prisma Decimal / Decimal-like -> string (mantiene precisión para dinero)
   if (isPrismaDecimalLike(value)) return value.toString();
   // Array / Object recursivo
