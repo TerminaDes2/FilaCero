@@ -65,6 +65,28 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 	--brand-accent: var(--fc-brand-500);
 	--brand-teal: var(--fc-teal-500);
 	--brand-sun: var(--fc-sun-500);
+
+	/* === POS Mockup Specific Palette === */
+	/* Soft sand / crema background */
+	--pos-bg-sand: #f6e4b8; /* main panel background (productos) */
+	--pos-bg-sand-soft: #f9edcd; /* lighter variant for sections */
+	--pos-bg-sidebar: #E88693; /* sidebar base (pink) */
+	--pos-bg-sidebar-accent: #f6b3be; /* lighter tint for hover/active backgrounds */
+	--pos-border-soft: #e2cfa4; /* subtle border inside sand panel */
+	--pos-border-strong: #d6b67b;
+	--pos-text-heading: #5a2d2f; /* dark accent for product titles */
+	--pos-text-muted: #775f54; /* muted captions */
+	--pos-accent-green: #2cac8d; /* add button & action confirm */
+	--pos-accent-green-hover: #239c7f;
+	--pos-badge-price-bg: #f4e2b5; /* price chip */
+	--pos-badge-stock-bg: #efe4c9; /* stock chip */
+	--pos-card-bg: #FFFCF0; /* product card surface */
+	--pos-card-border: #ead9b6;
+	--pos-summary-bg: #f8e6bb; /* resumen compra panel */
+	--pos-summary-border: #dec792;
+	--pos-tab-bg: #f5dab1;
+	--pos-tab-active-bg: #f8e6bb;
+	--pos-warning: #f0b24a;
 }
 
 .dark {
@@ -104,11 +126,11 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 .text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .dark .text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-/* Scrollbar */
+/* Scrollbar (POS flat style, sin gradiente) */
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: linear-gradient(#E94A6F,#4CC1AD); border-radius: 20px; }
-::-webkit-scrollbar-thumb:hover { background: linear-gradient(#DE355F,#3FAF9C); }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.28); border-radius: 20px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.38); }
 
 /* === Auth background animations === */
 @keyframes authGradientShift {
@@ -156,6 +178,20 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 
 /* Provide class for square float if needed elsewhere */
 .sq-float { will-change: transform; }
+
+/* === POS Background Pattern === */
+.pos-pattern {
+	/* Base background under the pattern */
+	background-color: #ffffff;
+	background-image: url('/patterns/pos-bg.svg');
+	background-repeat: repeat;
+	background-size: 96px 96px; /* adjust tile size as needed */
+	background-position: top left;
+}
+.dark .pos-pattern {
+	background-color: #0f172a; /* match dark body bg */
+	/* use same pattern; if too strong in dark, consider a darker variant */
+}
 
 @media (prefers-reduced-motion: reduce) {
 	.animate-authGradient,
