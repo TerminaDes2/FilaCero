@@ -1,10 +1,18 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '../../../pos/cartContext';
+import { PaymentSuccessPanel } from '../payments/PaymentSuccessPanel';
+import { PaymentPanel } from '../payments/PaymentPanel';
+import { AddToCartPanel } from '../products/AddToCartPanel';
 
 export const CartPanel: React.FC = () => {
-  const { items, subtotal, iva, total, discount, remove, inc, dec, setDiscount, clear } = useCart();
+  const { items, subtotal, total, remove, inc, dec, clear } = useCart();
   const hasItems = items.length > 0;
+  const [showPayment, setShowPayment] = useState(false); // show PaymentPanel
+  const [showSuccess, setShowSuccess] = useState(false); // show PaymentSuccessPanel
+  const [successData, setSuccessData] = useState<{ method: 'efectivo'|'credito'|'debito'; amountReceived: number; change: number }|null>(null);
+  const [paidTotal, setPaidTotal] = useState<number|null>(null);
+  const [editLineId, setEditLineId] = useState<string|null>(null);
 
   return (
     <div className='flex flex-col h-full overflow-hidden' style={{color:'var(--pos-text-heading)'}}>
@@ -31,15 +39,33 @@ export const CartPanel: React.FC = () => {
               <div className='flex-1'>
                 <p className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>{item.product.name}</p>
                 <p className='text-[11px] mt-0.5' style={{color:'var(--pos-text-muted)'}}>${item.product.price.toFixed(2)}</p>
+                {item.note && (
+                  <p className='text-[11px] mt-0.5 italic' style={{ color: 'var(--pos-text-muted)' }}>Nota: {item.note}</p>
+                )}
                 <div className='flex items-center gap-1.5 mt-2'>
-                  <button onClick={()=> dec(item.product.id)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>−</button>
+                  <button onClick={()=> dec(item.lineId)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>−</button>
                   <span className='text-[12px] font-medium w-6 text-center tabular-nums' style={{color:'var(--pos-text-heading)'}}>{item.qty}</span>
-                  <button onClick={()=> inc(item.product.id)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>+</button>
+                  <button onClick={()=> inc(item.lineId)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>+</button>
                 </div>
               </div>
               <div className='text-right'>
                 <p className='text-[12px] font-semibold tabular-nums' style={{color:'#4a3327'}}>${(item.product.price * item.qty).toFixed(2)}</p>
-                <button onClick={()=> remove(item.product.id)} className='opacity-0 group-hover:opacity-100 transition-opacity text-[11px] mt-2 focus:outline-none rounded px-1' style={{color:'#8c2e3b'}}>Quitar</button>
+                <div className='flex items-center gap-2 justify-end mt-2'>
+                  <button onClick={()=> setEditLineId(item.lineId)} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'var(--pos-text-muted)'}}>
+                    <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
+                      <path d='M12 20h9' /><path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z' />
+                    </svg>
+                    Editar
+                  </button>
+                  <button onClick={()=> remove(item.lineId)} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'#8c2e3b'}}>
+                  <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
+                    <path d='M3 6h18' />
+                    <path d='M8 6V4h8v2' />
+                    <path d='M19 6l-1 14H6L5 6' />
+                  </svg>
+                  Quitar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -47,32 +73,7 @@ export const CartPanel: React.FC = () => {
       </div>
 
   <div className='mt-1 pt-2 border-t border-transparent flex-none space-y-3'>
-        <div className='flex items-center justify-between'>
-          <label htmlFor='discount' className='text-[12px] font-medium' style={{color:'var(--pos-text-heading)'}}>Descuento</label>
-          {discount > 0 && (
-            <button onClick={()=> setDiscount(0)} className='text-[11px] focus:outline-none' style={{color:'#8c2e3b'}}>Limpiar</button>
-          )}
-        </div>
-        <div className='relative'>
-          <input
-            id='discount'
-            type='number'
-            value={discount || ''}
-            onChange={e=> setDiscount(Number(e.target.value) || 0)}
-            className='w-full h-9 rounded-lg text-[13px] px-3 focus:outline-none focus:ring-2'
-            style={{
-              background:'var(--pos-card-bg)',
-              border:'1px solid var(--pos-card-border)',
-              color:'var(--pos-text-heading)'
-            }}
-            placeholder='0.00'
-            min={0}
-            step='0.01'
-          />
-          <span className='absolute right-3 top-1/2 -translate-y-1/2 text-[11px]' style={{color:'var(--pos-text-muted)'}}>MXN</span>
-        </div>
-
-        {/* Minimalist summary section */}
+        {/* Resumen */}
         <div className='mt-2 relative'>
           <div
             className='rounded-xl p-2.5 text-[12px] shadow-sm'
@@ -87,15 +88,9 @@ export const CartPanel: React.FC = () => {
                 <dd className='tabular-nums font-medium' style={{color:'var(--pos-text-heading)'}}>${subtotal.toFixed(2)}</dd>
               </div>
               <div className='flex justify-between'>
-                <dt>IVA 16%</dt>
-                <dd className='tabular-nums font-medium' style={{color:'var(--pos-text-heading)'}}>${iva.toFixed(2)}</dd>
+                <dt>Productos</dt>
+                <dd className='tabular-nums font-medium' style={{color:'var(--pos-text-heading)'}}>{items.length}</dd>
               </div>
-              {discount > 0 && (
-                <div className='flex justify-between' style={{color:'var(--pos-accent-green)'}}>
-                  <dt>Descuento</dt>
-                  <dd className='tabular-nums'>−${discount.toFixed(2)}</dd>
-                </div>
-              )}
               <div className='pt-2 mt-1 flex justify-between items-baseline'>
                 <dt className='text-[11px] uppercase tracking-wide font-medium' style={{color:'var(--pos-text-muted)'}}>Total</dt>
                 <dd
@@ -124,6 +119,7 @@ export const CartPanel: React.FC = () => {
               transition-shadow hover:shadow-md
               focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-teal-500)]
             '
+            onClick={()=> setShowPayment(true)}
           >
             {/* Fondo expansible (círculo turquesa que se expande a todo el botón) */}
             <span
@@ -163,6 +159,47 @@ export const CartPanel: React.FC = () => {
           </button>
           <button disabled={!hasItems} onClick={clear} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>Limpiar</button>
         </div>
+        {showPayment && (
+          <PaymentPanel
+            totalDue={total}
+            onClose={()=> setShowPayment(false)}
+            onConfirm={(data)=>{
+              // After confirm: capture total, close payment, open success with details, and clear cart
+              const t = total;
+              setPaidTotal(t);
+              setShowPayment(false);
+              setSuccessData({ method: data.method, amountReceived: data.amountReceived, change: data.change });
+              setShowSuccess(true);
+              // clear cart after successful payment
+              clear();
+            }}
+          />
+        )}
+
+        {showSuccess && successData && (
+          <PaymentSuccessPanel
+            total={paidTotal ?? total}
+            method={successData.method}
+            received={successData.amountReceived}
+            onClose={()=> { setShowSuccess(false); setSuccessData(null); setPaidTotal(null); }}
+            onShare={()=>{/* TODO: share receipt */}}
+            onPrint={()=>{/* TODO: print receipt */}}
+          />
+        )}
+        {editLineId && (()=>{
+          const line = items.find(i => i.lineId === editLineId);
+          if (!line) return null;
+          return (
+            <AddToCartPanel
+              key={line.lineId}
+              product={line.product}
+              lineId={line.lineId}
+              initialQty={line.qty}
+              initialNote={line.note}
+              onClose={()=> setEditLineId(null)}
+            />
+          );
+        })()}
       </div>
     </div>
   );

@@ -110,16 +110,29 @@ export default function ProductsAdminPage() {
 
           {/* Grid view */}
           {view === 'grid' ? (
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 min-h-0 overflow-y-auto pr-1 custom-scroll-area'>
-              {/* Select all card */}
-              <label className='rounded-xl p-3 flex items-center gap-3 bg-[var(--pos-card-bg)] border border-[var(--pos-card-border)] cursor-pointer sticky top-0 z-10'>
-                <input type='checkbox' className='accent-[var(--pos-accent-green)]' checked={allSelected} onChange={toggleAll} />
-                <span className='text-sm font-medium' style={{ color: 'var(--pos-text-heading)' }}>Seleccionar todo</span>
-              </label>
+            <div className='min-h-0 overflow-y-auto pr-1 custom-scroll-area'>
+              {/* Select all inline sticky bar (not a grid card) */}
+              <div className='sticky top-0 z-10 mb-2'>
+                <label className='w-full rounded-lg px-3 py-2 flex items-center gap-3 bg-[var(--pos-card-bg)] border border-[var(--pos-card-border)] cursor-pointer shadow-sm'>
+                  <input type='checkbox' className='accent-[var(--pos-accent-green)]' checked={allSelected} onChange={toggleAll} />
+                  <span className='text-sm font-medium' style={{ color: 'var(--pos-text-heading)' }}>Seleccionar todos ({filtered.length})</span>
+                </label>
+              </div>
+
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
               {filtered.map(p => {
                 const selected = selection.includes(p.id);
                 return (
-                  <div key={p.id} className={`group relative rounded-xl p-3 transition shadow-sm hover:shadow-md ${selected ? 'ring-2' : 'ring-0'} ring-[var(--pos-accent-green)]`} style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>
+                  <div
+                    key={p.id}
+                    className={'group relative rounded-xl p-3 transition shadow-sm hover:shadow-md'}
+                    style={{
+                      background: 'var(--pos-card-bg)',
+                      border: '1px solid var(--pos-card-border)',
+                      color: 'var(--pos-text-heading)',
+                      boxShadow: selected ? 'inset 0 0 0 2px var(--pos-accent-green)' : undefined
+                    }}
+                  >
                     <div className='flex items-start gap-2'>
                       <input type='checkbox' className='mt-0.5 accent-[var(--pos-accent-green)]' checked={selected} onChange={() => toggle(p.id)} />
                       <div className='flex-1 min-w-0'>
@@ -142,6 +155,7 @@ export default function ProductsAdminPage() {
                   </div>
                 );
               })}
+              </div>
             </div>
           ) : (
             // List view (table)
