@@ -30,17 +30,35 @@ export default function ProductsAdminPage() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [category, setCategory] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [selection, setSelection] = useState<string[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<Product | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const categories = useMemo(() => Array.from(new Set(MOCK.map(p => p.category))), []);
-  const filtered = useMemo(() =>
-    MOCK.filter(p => (category === 'all' || p.category === category) &&
-      (p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()))
-    )
-  , [search, category]);
+  const filtered = useMemo(() => {
+    const s = search.toLowerCase();
+    let list = MOCK.filter(p =>
+      (category === 'all' || p.category === category) &&
+      (statusFilter === 'all' || (statusFilter === 'active' ? p.active : !p.active)) &&
+      (p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s))
+    );
+    list = list.sort((a, b) => {
+      let av: number | string = a[sortBy as keyof Product] as any;
+      let bv: number | string = b[sortBy as keyof Product] as any;
+      if (sortBy === 'name') {
+        av = (av as string).toLowerCase();
+        bv = (bv as string).toLowerCase();
+      }
+      const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return list;
+  }, [search, category, statusFilter, sortBy, sortDir]);
 
   const toggle = (id: string) => setSelection(sel => sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]);
   const allSelected = selection.length > 0 && selection.length === filtered.length;
@@ -51,6 +69,10 @@ export default function ProductsAdminPage() {
   };
   const startEdit = (p: Product) => {
     setDraft({ ...p });
+    setEditorOpen(true);
+  };
+  const startClone = (p: Product) => {
+    setDraft({ id: 'new', name: `${p.name} (copia)`, sku: '', price: p.price, stock: p.stock, category: p.category, active: p.active });
     setEditorOpen(true);
   };
   const closeEditor = () => setEditorOpen(false);
@@ -111,14 +133,47 @@ export default function ProductsAdminPage() {
           {/* Panel header: search + view + actions (import/new) */}
           <header className='space-y-3 mb-3 flex-none'>
             <div className='flex flex-col md:flex-row md:items-center gap-3'>
-              <SearchBox value={search} onChange={setSearch} />
-              <div className='flex items-center gap-2'>
+              <div className='flex-1 min-w-0'>
+                <SearchBox value={search} onChange={(v)=> { setHasInteracted(true); setSearch(v); }} />
+              </div>
+              <div className='flex items-center flex-wrap gap-2'>
                 <ViewToggle value={view} onChange={setView} />
-                <div className='ml-0 md:ml-2 flex items-center gap-2'>
-                  <button className='h-9 px-3 rounded-lg text-sm font-medium focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Importar CSV</button>
+                {/* Filtro de estado */}
+                <div className='hidden sm:flex items-center rounded-lg overflow-hidden border border-[var(--pos-card-border)]'>
+                  {(['all','active','inactive'] as const).map(v => (
+                    <button key={v} onClick={() => setStatusFilter(v)} className={`appearance-none h-9 px-3 text-xs font-semibold ${statusFilter===v ? 'text-white' : ''}`} style={statusFilter===v ? { background: 'var(--pos-accent-green)' } : { background: 'var(--pos-card-bg)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
+                      {v==='all' ? 'Todos' : v==='active' ? 'Activos' : 'Inactivos'}
+                    </button>
+                  ))}
+                </div>
+                {/* Ordenar */}
+                <div className='hidden sm:flex items-center gap-1 ml-1'>
+                  <label className='text-xs text-[var(--pos-text-muted)]'>Ordenar</label>
+                  <div className='relative'>
+                    <select value={sortBy} onChange={e=> setSortBy(e.target.value as any)} className='appearance-none h-9 pl-2 pr-8 rounded-md text-xs' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
+                      <option value='name'>Nombre</option>
+                      <option value='price'>Precio</option>
+                      <option value='stock'>Stock</option>
+                    </select>
+                    <svg aria-hidden viewBox='0 0 24 24' className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{ color: 'var(--pos-text-muted)' }}>
+                      <path d='M6 9l6 6 6-6' />
+                    </svg>
+                  </div>
+                  <button aria-label='Cambiar dirección' onClick={()=> setSortDir(d=> d==='asc'?'desc':'asc')} className='appearance-none h-9 w-9 rounded-md flex items-center justify-center' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
+                    {sortDir==='asc' ? '↑' : '↓'}
+                  </button>
+                </div>
+                <div className='ml-0 md:ml-2 flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start'>
                   <button onClick={startNew} className='h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-accent-green)', color: '#fff' }}>Nuevo producto</button>
                 </div>
               </div>
+            </div>
+            {/* Info de resultados y limpiar filtros */}
+            <div className='flex items-center justify-between text-xs'>
+              <div aria-live='polite' className='text-[var(--pos-text-muted)]'>Resultados: <span className='font-semibold' style={{ color: 'var(--pos-text-heading)' }}>{filtered.length}</span></div>
+              {(search || category !== 'all' || statusFilter !== 'all') && (
+                <button onClick={()=> { setSearch(''); setCategory('all'); setStatusFilter('all'); }} className='h-7 px-2 rounded-md border' style={{ background: 'var(--pos-card-bg)', borderColor: 'var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>Limpiar filtros</button>
+              )}
             </div>
           </header>
           {/* Bulk bar when selecting */}
@@ -129,13 +184,14 @@ export default function ProductsAdminPage() {
                 <button className='h-8 px-3 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Activar</button>
                 <button className='h-8 px-3 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Desactivar</button>
                 <button className='h-8 px-3 rounded-md text-xs font-medium' style={{ background: 'var(--pos-accent-green)', color: '#fff' }}>Aplicar descuento</button>
+                <button onClick={()=> setSelection([])} className='h-8 px-3 rounded-md text-xs font-medium border' style={{ background: 'var(--pos-card-bg)', borderColor: 'var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>Deseleccionar</button>
               </div>
             </div>
           )}
 
           {/* Grid view */}
           {view === 'grid' ? (
-            <div className='flex-1 min-h-0 overflow-y-auto pr-1 pb-2 custom-scroll-area'>
+            <div className='flex-1 min-h-0 overflow-y-auto pr-1 pb-4 custom-scroll-area'>
               {/* Select all inline sticky bar (not a grid card) */}
               <div className='sticky top-0 z-[5] mb-2'>
                 <label className='w-full rounded-lg px-3 py-2 flex items-center gap-3 bg-[var(--pos-card-bg)] border border-[var(--pos-card-border)] cursor-pointer shadow-sm'>
@@ -144,6 +200,18 @@ export default function ProductsAdminPage() {
                 </label>
               </div>
 
+              {filtered.length === 0 ? (
+                <div className='h-[60vh] min-h-[340px] flex items-center justify-center'>
+                  <div className='text-center max-w-sm'>
+                    <div className='text-[11px] font-semibold uppercase tracking-wide mb-1' style={{ color: 'var(--pos-text-muted)' }}>Sin resultados</div>
+                    <p className='text-sm mb-3' style={{ color: 'var(--pos-text-heading)' }}>No encontramos productos que coincidan con tu búsqueda o filtros.</p>
+                    <div className='flex items-center gap-2 justify-center'>
+                      <button onClick={()=> { setSearch(''); setCategory('all'); setStatusFilter('all'); }} className='h-9 px-3 rounded-md text-xs font-semibold' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>Limpiar filtros</button>
+                      <button onClick={startNew} className='h-9 px-3 rounded-full text-xs font-semibold text-white' style={{ background: 'var(--fc-brand-600)' }}>Crear producto</button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
               {filtered.map(p => {
                 const selected = selection.includes(p.id);
@@ -155,7 +223,8 @@ export default function ProductsAdminPage() {
                       background: 'var(--pos-card-bg)',
                       border: '1px solid var(--pos-card-border)',
                       color: 'var(--pos-text-heading)',
-                      boxShadow: selected ? 'inset 0 0 0 2px var(--pos-accent-green)' : undefined
+                      boxShadow: selected ? 'inset 0 0 0 2px var(--pos-accent-green)' : undefined,
+                      opacity: p.active ? 1 : 0.8
                     }}
                   >
                     <div className='flex items-start gap-2'>
@@ -163,7 +232,18 @@ export default function ProductsAdminPage() {
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-center justify-between gap-2'>
                           <h3 className='text-sm font-semibold truncate'>{p.name}</h3>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${p.active ? '' : 'opacity-60'}`} style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.category}</span>
+                          <div className='flex items-center gap-1'>
+                            {p.stock === 0 && (
+                              <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Agotado</span>
+                            )}
+                            {p.stock > 0 && p.stock < 5 && (
+                              <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#fff6e5', color: '#7a4a1f' }}>Bajo stock</span>
+                            )}
+                            {!p.active && (
+                              <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#e6e6f7', color: '#34346b' }}>Inactivo</span>
+                            )}
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${p.active ? '' : 'opacity-60'}`} style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.category}</span>
+                          </div>
                         </div>
                         <div className='mt-1 text-[11px] text-[var(--pos-text-muted)] truncate'>SKU: {p.sku}</div>
                         <div className='mt-2 flex items-center justify-between'>
@@ -175,16 +255,29 @@ export default function ProductsAdminPage() {
                     <div className='mt-2 flex items-center gap-2'>
                       <button onClick={() => startEdit(p)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Editar</button>
                       <button className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
-                      <button className='ml-auto h-8 px-2 rounded-md text-xs font-semibold' style={{ background: 'var(--pos-accent-green)', color: '#fff' }}>Clonar</button>
+                      <button onClick={()=> startClone(p)} className='ml-auto h-8 px-2 rounded-md text-xs font-semibold' style={{ background: 'var(--pos-accent-green)', color: '#fff' }}>Clonar</button>
                     </div>
                   </div>
                 );
               })}
               </div>
+              )}
             </div>
           ) : (
             // List view (table)
             <div className='flex-1 min-h-0 overflow-auto rounded-lg border border-[var(--pos-card-border)] bg-[var(--pos-card-bg)]'>
+              {filtered.length === 0 ? (
+                <div className='h-[60vh] min-h-[340px] flex items-center justify-center'>
+                  <div className='text-center max-w-sm'>
+                    <div className='text-[11px] font-semibold uppercase tracking-wide mb-1' style={{ color: 'var(--pos-text-muted)' }}>Sin resultados</div>
+                    <p className='text-sm mb-3' style={{ color: 'var(--pos-text-heading)' }}>No encontramos productos que coincidan con tu búsqueda o filtros.</p>
+                    <div className='flex items-center gap-2 justify-center'>
+                      <button onClick={()=> { setSearch(''); setCategory('all'); setStatusFilter('all'); }} className='h-9 px-3 rounded-md text-xs font-semibold' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>Limpiar filtros</button>
+                      <button onClick={startNew} className='h-9 px-3 rounded-full text-xs font-semibold text-white' style={{ background: 'var(--fc-brand-600)' }}>Crear producto</button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
               <table className='w-full text-[13px]'>
                 <thead className='sticky top-0 bg-[var(--pos-badge-stock-bg)] text-left'>
                   <tr>
@@ -208,7 +301,9 @@ export default function ProductsAdminPage() {
                         <td className='px-3 py-2 text-[var(--pos-text-muted)]'>{p.sku}</td>
                         <td className='px-3 py-2'><span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.category}</span></td>
                         <td className='px-3 py-2 text-right tabular-nums' style={{ color: 'var(--pos-text-heading)' }}>${p.price.toFixed(2)}</td>
-                        <td className='px-3 py-2 text-right text-[var(--pos-text-muted)]'>{p.stock}</td>
+                        <td className='px-3 py-2 text-right text-[var(--pos-text-muted)]'>
+                          {p.stock === 0 ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Agotado</span> : p.stock < 5 ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#fff6e5', color: '#7a4a1f' }}>Bajo stock</span> : p.stock}
+                        </td>
                         <td className='px-3 py-2 text-right'><span className={`text-xs font-medium ${p.active ? 'text-[var(--pos-accent-green)]' : 'text-[var(--pos-text-muted)]'}`}>{p.active ? 'Activo' : 'Inactivo'}</span></td>
                         <td className='px-3 py-2 text-right'>
                           <div className='inline-flex items-center gap-2'>
@@ -221,6 +316,7 @@ export default function ProductsAdminPage() {
                   })}
                 </tbody>
               </table>
+              )}
             </div>
           )}
         </section>
@@ -267,11 +363,16 @@ export default function ProductsAdminPage() {
                     </div>
                     <div>
                       <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Categoría</label>
-                      <select value={draft?.category ?? 'bebidas'} onChange={e=> setDraft(d => d ? { ...d, category: e.target.value as Product['category'] } : d)} className='w-full h-10 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>
-                        <option value='bebidas'>Bebidas</option>
-                        <option value='alimentos'>Alimentos</option>
-                        <option value='postres'>Postres</option>
-                      </select>
+                      <div className='relative'>
+                        <select value={draft?.category ?? 'bebidas'} onChange={e=> setDraft(d => d ? { ...d, category: e.target.value as Product['category'] } : d)} className='appearance-none w-full h-10 rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
+                          <option value='bebidas'>Bebidas</option>
+                          <option value='alimentos'>Alimentos</option>
+                          <option value='postres'>Postres</option>
+                        </select>
+                        <svg aria-hidden viewBox='0 0 24 24' className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{ color: 'var(--pos-text-muted)' }}>
+                          <path d='M6 9l6 6 6-6' />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </section>
