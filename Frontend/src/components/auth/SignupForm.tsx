@@ -53,13 +53,23 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
 		const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setTouched({ name: true, email: true, password: true, confirm: true, terms: true });
-		if(!formValid) return;
+			setTouched({ name: true, email: true, password: true, confirm: true, terms: true });
+			if(!formValid) return;
+			// Exigir selección de rol explícita
+			if (!role) {
+				setError('Selecciona un rol (Cliente o Dueño) antes de continuar.');
+				return;
+			}
 			setSubmitting(true);
 			setError(null);
 			try {
-						const roleName: 'usuario' | 'admin' = role === 'OWNER' ? 'admin' : 'usuario';
-						const res = await api.register(name.trim(), email.trim().toLowerCase(), password, roleName);
+												const roleName: 'usuario' | 'admin' = role === 'OWNER' ? 'admin' : 'usuario';
+												const res = await api.register(
+													name.trim(),
+													email.trim().toLowerCase(),
+													password,
+													roleName
+												);
 						if (typeof window !== 'undefined') {
 							window.localStorage.setItem('auth_token', res.token);
 							window.localStorage.setItem('auth_user', JSON.stringify(res.user));
