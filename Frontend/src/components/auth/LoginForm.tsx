@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
+import { api } from '../../lib/api';
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -12,20 +14,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [showPassword, setShowPassword] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
+	const [error, setError] = useState<string | null>(null);
+	const router = useRouter();
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordValid = password.length >= 6;
 	const formValid = emailValid && passwordValid;
 
-	const submit = (e: React.FormEvent) => {
+		const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setTouched({ email: true, password: true });
 		if(!formValid) return;
-		setSubmitting(true);
-		setTimeout(() => {
-			setSubmitting(false);
-			onSuccess?.();
-		}, 1200);
+			setSubmitting(true);
+			setError(null);
+			try {
+						const res = await api.login(email.trim().toLowerCase(), password);
+						if (typeof window !== 'undefined') {
+							window.localStorage.setItem('auth_token', res.token);
+							window.localStorage.setItem('auth_user', JSON.stringify(res.user));
+						}
+				onSuccess?.();
+				// Redirige a POS o home; ajusta según flujo
+				router.push('/pos');
+			} catch (err: any) {
+				setError(err?.message || 'Error al iniciar sesión');
+			} finally {
+				setSubmitting(false);
+			}
 	};
 
 	return (
@@ -41,7 +56,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					Acceso seguro a tu panel. Tus credenciales se envían cifradas. <span className="hidden sm:inline">¿Nuevo aquí? Regístrate desde el enlace inferior.</span>
 				</p>
 			</div>
-			<FancyInput
+					{error && (
+						<div className="text-[12px] text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-900/30 border border-rose-200/70 dark:border-rose-800 rounded-md px-3 py-2">
+							{error}
+						</div>
+					)}
+					<FancyInput
 				label="Correo electrónico"
 				type="email"
 				value={email}

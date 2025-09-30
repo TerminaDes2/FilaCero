@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 1. Busca el usuario para confirmar que sigue activo
     const user = await this.prisma.usuarios.findUnique({
       where: { id_usuario: BigInt(payload.id) },
-      select: { id_usuario: true, nombre: true, correo_electronico: true, id_rol: true }, 
+      select: { id_usuario: true, nombre: true, correo_electronico: true, id_rol: true, role: { select: { nombre_rol: true } } },
     });
 
     if (!user) {
@@ -31,6 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // 2. Si es válido, 'user' se adjunta a req.user
-    return user; 
+    // Adjuntamos también el nombre del rol (si existe) para evitar otra consulta en Guards
+    return { ...user, role_name: user.role?.nombre_rol ?? 'usuario' } as any;
   }
 }

@@ -16,14 +16,17 @@ export class RolesGuard implements CanActivate {
     if (!required || required.length === 0) return true; // no roles required
 
     const req = context.switchToHttp().getRequest();
-    const user = req.user as { id_usuario: bigint; id_rol: bigint | null } | undefined;
+    const user = req.user as { id_usuario: bigint; id_rol: bigint | null; role_name?: string } | undefined;
     if (!user) return false;
 
-    // Obtener el nombre del rol del usuario (una consulta ligera)
-    const role = user.id_rol
-      ? await this.prisma.roles.findUnique({ where: { id_rol: user.id_rol }, select: { nombre_rol: true } })
-      : null;
-    const name = (role?.nombre_rol || 'usuario') as RoleName;
+    // Reusar role_name si viene del JwtStrategy; si no, consulta ligera
+    const name = (user.role_name
+      ? user.role_name
+      : (
+          user.id_rol
+            ? (await this.prisma.roles.findUnique({ where: { id_rol: user.id_rol }, select: { nombre_rol: true } }))?.nombre_rol
+            : 'usuario'
+        ) || 'usuario') as RoleName;
     return required.includes(name);
   }
 }
