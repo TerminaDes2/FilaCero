@@ -1,7 +1,10 @@
 "use client";
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { LegalModal } from '../../components/legal/LegalModal';
 import { FancyInput } from './FancyInput';
+import { api } from '../../lib/api';
+import { useUserStore } from '../../state/userStore';
 
 interface SignupFormProps {
 	onSuccess?: () => void;
@@ -27,6 +30,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
 	const [acceptedTerms, setAcceptedTerms] = useState(false);
 	const [showLegal, setShowLegal] = useState<null | 'terminos' | 'privacidad'>(null);
+	const [error, setError] = useState<string | null>(null);
+	const router = useRouter();
+	const { role } = useUserStore();
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordStrength = computeStrength(password);
@@ -45,21 +51,47 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		return s;
 	}, [password]);
 
-	const submit = (e: React.FormEvent) => {
+		const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setTouched({ name: true, email: true, password: true, confirm: true, terms: true });
-		if(!formValid) return;
-		setSubmitting(true);
-		setTimeout(()=>{
-			setSubmitting(false);
-			onSuccess?.();
-		}, 1400);
+			setTouched({ name: true, email: true, password: true, confirm: true, terms: true });
+			if(!formValid) return;
+			// Exigir selección de rol explícita
+			if (!role) {
+				setError('Selecciona un rol (Cliente o Dueño) antes de continuar.');
+				return;
+			}
+			setSubmitting(true);
+			setError(null);
+			try {
+												const roleName: 'usuario' | 'admin' = role === 'OWNER' ? 'admin' : 'usuario';
+												const res = await api.register(
+													name.trim(),
+													email.trim().toLowerCase(),
+													password,
+													roleName
+												);
+						if (typeof window !== 'undefined') {
+							window.localStorage.setItem('auth_token', res.token);
+							window.localStorage.setItem('auth_user', JSON.stringify(res.user));
+						}
+				onSuccess?.();
+				router.push('/onboarding/owner');
+			} catch (err: any) {
+				setError(err?.message || 'Error al crear la cuenta');
+			} finally {
+				setSubmitting(false);
+			}
 	};
 
 	return (
 		<form onSubmit={submit} className="space-y-6" noValidate>
 
-			<FancyInput
+					{error && (
+						<div className="text-[12px] text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-900/30 border border-rose-200/70 dark:border-rose-800 rounded-md px-3 py-2">
+							{error}
+						</div>
+					)}
+					<FancyInput
 				label="Nombre"
 				value={name}
 				onChange={e=>setName(e.target.value)}

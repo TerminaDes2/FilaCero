@@ -40,11 +40,15 @@ export class AuthService {
 
         // 3. Crear y guardar en la base de datos
         try {
+            // Determinar rol solicitado (admin/usuario) o usar 'usuario' por defecto
+            const desiredRoleName = registerDto.role ?? 'usuario';
+            const desiredRole = await this.prisma.roles.findUnique({ where: { nombre_rol: desiredRoleName } });
             const user = await this.prisma.usuarios.create({
                 data: {
-                    nombre: registerDto.name,                  
-                    correo_electronico: registerDto.email,     
-                    password_hash: hashedPassword,             
+                    nombre: registerDto.name,
+                    correo_electronico: registerDto.email,
+                    password_hash: hashedPassword,
+                    ...(desiredRole ? { id_rol: desiredRole.id_rol } : {}),
                 },
             });
 
@@ -66,9 +70,7 @@ export class AuthService {
         
         // 1. Buscar usuario por 'correo_electronico'
         const user = await this.prisma.usuarios.findUnique({ 
-            where: { 
-                correo_electronico: loginDto.correo_electronico 
-            } 
+            where: { correo_electronico: loginDto.correo_electronico },
         });
         
         // Si no se encuentra el usuario
