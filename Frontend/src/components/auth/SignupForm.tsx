@@ -66,7 +66,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				onBlur={()=>setTouched(t=>({...t,name:true}))}
 				error={touched.name && !nameValid ? 'Mínimo 2 caracteres' : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5Zm0 2c-4 0-7 2-7 4v1h14v-1c0-2-3-4-7-4Z' /></svg>}
-				hint={!name ? 'Nombre de tu cafetería o tuyo' : undefined}
+				hint={!name ? 'Ingresa tu nombre' : undefined}
 			/>
 			<FancyInput
 				label="Correo electrónico"
@@ -165,6 +165,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 					onClose={()=>setShowLegal(null)}
 				/>
 			</div>
+
+
 		</form>
+
 	);
 };

@@ -13,16 +13,33 @@ interface BrandLogoProps {
 export const BrandLogo: React.FC<BrandLogoProps> = ({ withWordmark = true, className = '', size = 36, asLink }) => {
   const logo = (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Image src="/LogoFilaCero.svg" alt="FilaCero" width={size} height={size} className="drop-shadow-sm" />
+      <Image 
+        src="/LogoFilaCero.svg" 
+        alt="FilaCero" 
+        width={size} 
+        height={size} 
+        className="drop-shadow-sm" 
+      />
       {withWordmark && (
         <span className="hidden sm:inline text-[2rem] font-extrabold leading-none select-none">
-          <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span><span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
+          <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
+          <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
         </span>
       )}
     </div>
   );
+  
   if (asLink) {
-    return <Link href="/" aria-label="Inicio" className="inline-flex">{logo}</Link>;
+    return (
+      <Link 
+        href="/" 
+        aria-label="Inicio - FilaCero" 
+        className="inline-flex hover:opacity-80 transition-opacity"
+      >
+        {logo}
+      </Link>
+    );
   }
+  
   return logo;
 };

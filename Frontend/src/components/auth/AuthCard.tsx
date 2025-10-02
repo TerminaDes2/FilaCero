@@ -6,54 +6,51 @@ interface AuthCardProps {
   subtitle?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  brandMark?: React.ReactNode; // optional small logo/icon
+  brandMark?: React.ReactNode;
   compact?: boolean;
-  brandFull?: boolean; // if true, render brandMark as-is (wordmark + icon)
+  brandFull?: boolean;
 }
 
-export function AuthCard({ title, subtitle, children, footer, brandMark, compact, brandFull }: AuthCardProps) {
+export function AuthCard({ children }: AuthCardProps) {
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      {/* Outer ambient glow */}
-      <div className="pointer-events-none absolute -inset-0.5 rounded-3xl opacity-50 blur-2xl" style={{background:"radial-gradient(circle at 30% 30%, rgba(233,74,111,0.28), transparent 60%), radial-gradient(circle at 70% 70%, rgba(76,193,173,0.30), transparent 65%)"}} />
-      <div className="relative group rounded-3xl bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 overflow-hidden transition">        {/* Removed previous color wash focus overlay to preserve contrast */}
-        <div className={`relative ${compact ? 'p-6' : 'p-8'} z-10`}> 
-          {(brandMark || title || subtitle) && (
-            <div className="mb-6">
-              {brandMark && (
-                brandFull ? (
-                  <div className="mb-5">
-                    {brandMark}
-                  </div>
-                ) : (
-                  <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-400 text-white shadow-md">
-                    {brandMark}
-                  </div>
-                )
-              )}
-              {title && (
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight mb-1">
-                  {title}
-                </h1>
-              )}
-              {subtitle && (
-                <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          )}
+    <div className="min-h-screen w-full grid grid-cols-1 md:grid-cols-2">
+      {/* Izquierda: puntos clave */}
+      <div className="flex flex-col justify-center items-center bg-gradient-to-br from-brand-100 to-brand-50 px-8">
+        <div className="max-w-xs">
+          <h2 className="text-2xl font-bold mb-6 text-brand-700">¡Te damos la bienvenida a FilaCero!</h2>
+          <ul className="space-y-6 text-lg text-gray-700">
+            <li>
+              <span className="font-semibold text-brand-600">⏱️ Ahorra tiempo:</span> Haz tu pedido y recógelo sin filas.
+            </li>
+            <li>
+              <span className="font-semibold text-brand-600">📱 Todo desde tu móvil:</span> Gestiona tu experiencia en cafeterías fácilmente.
+            </li>
+            <li>
+              <span className="font-semibold text-brand-600">🔒 Seguro y rápido:</span> Tus datos protegidos, tu pedido listo.
+            </li>
+          </ul>
+        </div>
+      </div>
+      {/* Derecha: AuthCard */}
+      <div className="flex flex-col justify-center items-center px-4">
+        <div className="w-full max-w-md mx-auto">
+          <div className="mb-8">
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight mb-2 text-center">
+              Inicia sesión o regístrate
+            </h1>
+          </div>
           <div className="space-y-5">
             {children}
+            <button
+              type="button"
+              className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow hover:bg-gray-50 transition text-gray-700 font-medium"
+              onClick={() => {/* lógica de Google Auth */}}
+            >
+              <img src="/images/google.svg" alt="Google" className="w-5 h-5" />
+              Continuar con Google
+            </button>
           </div>
         </div>
-        {footer && (
-          <div className="relative px-8 pb-6 pt-4 border-t border-black/5 dark:border-white/10 bg-white/65 dark:bg-slate-900/55 text-sm text-gray-600 dark:text-slate-300 backdrop-blur-md">
-            {footer}
-          </div>
-        )}
-        {/* Inner subtle ring */}
-        <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/40 dark:ring-white/5" />
       </div>
     </div>
   );

@@ -25,6 +25,11 @@ const roles: { key: Exclude<AppRole, null>; title: string; desc: string; icon: R
 export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange }) => {
   const { role, setRole } = useUserStore();
 
+  const handleRoleSelect = (selectedRole: AppRole) => {
+    setRole(selectedRole);
+    onChange?.(selectedRole); // Llama al callback cuando se selecciona un rol
+  };
+
   return (
     <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${compact ? 'mt-2' : 'mt-4'}`}>
       {roles.map(r => {
@@ -34,7 +39,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange })
           <button
             key={r.key}
             type="button"
-            onClick={() => { setRole(r.key); onChange?.(r.key); }}
+            onClick={() => handleRoleSelect(r.key)}
             className={`relative rounded-xl border text-left p-4 group transition focus:outline-none focus:ring-2 focus:ring-brand-400/60
               ${active ? 'border-transparent ' + activeGradient + ' text-white shadow-md shadow-brand-500/30' : 'border-gray-300/60 dark:border-slate-600/60 bg-white/70 dark:bg-slate-800/60 hover:border-brand-400/60'}
             `}
@@ -42,7 +47,6 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange })
           >
             <div className="flex items-start gap-3">
               <span className={`inline-flex items-center justify-center rounded-lg w-9 h-9 shadow transition-colors ${active ? activeGradient + ' text-white ring-2 ring-white/60' : 'bg-[#FCE8B7] text-[#664625] dark:text-[#FCE8B7]'} `}>
-                {/* Clone icon to ensure stroke picks up currentColor */}
                 {React.cloneElement(r.icon as React.ReactElement, { className: 'w-5 h-5', stroke: 'currentColor' })}
               </span>
               <div className="flex-1 min-w-0">
@@ -50,7 +54,6 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange })
                 <p className={`text-[11px] mt-0.5 leading-tight ${active ? 'text-white/90' : 'text-gray-700 dark:text-slate-400'}`}>{r.desc}</p>
               </div>
             </div>
-            {/* Active outline overlay */}
             {active && (
               <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-white/50 dark:ring-white/20" />
             )}

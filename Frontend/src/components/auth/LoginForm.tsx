@@ -85,7 +85,37 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				)}
 				{submitting ? 'Ingresando...' : 'Entrar'}
 			</button>
-			<p className="text-xs text-gray-500 dark:text-slate-400 text-center">Al continuar aceptas nuestros <a href="#" className='underline hover:text-brand-600 dark:hover:text-brand-300'>Términos</a>.</p>
-		</form>
+			          <button
+            type="button"
+          //  onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-white border border-gray-300 shadow-sm hover:bg-gray-50 transition-all duration-200 text-gray-700 font-medium"
+          >
+            <img 
+              src="/google.svg" 
+              alt="Google" 
+              className="w-5 h-5"
+              onError={(e) => {
+                // Fallback si el SVG no carga
+                console.error('Error cargando SVG de Google');
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+            Continuar con Google
+          </button>
+		  
+          <div className="text-center pt-1">
+            <div className="border-t border-gray-200 pt-3">
+              <p className="text-xs text-gray-600">
+                ¿Eres nuevo en FilaCero?{' '}
+                <a 
+                  href="/auth/register"
+                  className="text-brand-600 font-medium hover:underline"
+                > 
+                  Crea una cuenta
+                </a>
+              </p>
+            </div>
+          </div>		
+		  </form>
 	);
 };
