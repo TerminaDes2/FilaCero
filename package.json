@@ -1,5 +1,13 @@
 {
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^24.5.2",
     "prisma": "^6.16.2"
+  },
+  "dependencies": {
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/typeorm": "^11.0.0",
+    "bcrypt": "^6.0.0",
+    "typeorm": "^0.3.27"
   }
 }

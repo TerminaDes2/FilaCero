@@ -48,5 +48,5 @@ COPY --from=build /app/prisma ./prisma
 RUN npx prisma generate --schema=/app/prisma/schema.prisma
 
 EXPOSE 3000 9229
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "require('http').get({host:'localhost',port:3000,path:'/'},r=>{if(r.statusCode!==200)process.exit(1)}).on('error',()=>process.exit(1))" || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "require('http').get({host:'localhost',port:3000,path:'/api/health'},r=>{if(r.statusCode!==200)process.exit(1)}).on('error',()=>process.exit(1))" || exit 1
 CMD ["node", "dist/main.js"]

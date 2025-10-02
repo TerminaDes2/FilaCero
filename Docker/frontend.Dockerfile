@@ -1,7 +1,7 @@
 # Dockerfile - Frontend (solo desarrollo)
 # Contexto esperado: ./Frontend
 
-FROM node:20-alpine
+FROM node:20-alpine AS dev
 WORKDIR /app
 
 ENV NODE_ENV=development

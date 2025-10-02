@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+import { UsersService } from './users.service';
+import { PrismaModule } from '../prisma/prisma.module'; // Necesario para el servicio
 
 @Module({
-  imports: [PrismaModule],
-  providers: [UsersService],
+  imports: [PrismaModule], // Aseguramos que Prisma esté disponible
   controllers: [UsersController],
-  exports: [UsersService],
+  providers: [UsersService], // 👈 Esto le dice al controlador dónde encontrarlo
+  exports: [UsersService], // Opcional, pero útil si otros módulos lo necesitan
 })
 export class UsersModule {}
