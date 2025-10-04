@@ -1,4 +1,5 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
+// --- Tu código original (sin cambios) ---
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
 
 export interface ApiError {
   status: number;
@@ -40,7 +41,9 @@ export interface LoginResponse {
   user: { id: string; email: string };
 }
 
+// --- Objeto 'api' con las nuevas funciones añadidas ---
 export const api = {
+  // --- Tus funciones de Auth (SIN CAMBIOS) ---
   login: (correo_electronico: string, password: string) =>
     apiFetch<LoginResponse>('auth/login', {
       method: 'POST',
@@ -52,4 +55,32 @@ export const api = {
       body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
     }),
   me: () => apiFetch<any>('auth/me'),
+
+  // --- 👇 NUEVAS Funciones de Productos ---
+
+  // Obtener la lista de productos (con filtros opcionales)
+  getProducts: (params?: { search?: string; status?: string }) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiFetch<any[]>(`products?${query}`);
+  },
+
+  // Crear un nuevo producto
+  createProduct: (productData: any) =>
+    apiFetch<any>('products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    }),
+  
+  // Actualizar un producto
+  updateProduct: (id: string, productData: any) =>
+    apiFetch<any>(`products/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(productData),
+    }),
+
+  // Eliminar un producto
+  deleteProduct: (id: string) =>
+    apiFetch<any>(`products/${id}`, {
+      method: 'DELETE',
+    }),
 };
