@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Query } from '@nestjs/common'; // <-- 1. Asegúrate de importar Query
 import { ProductsService } from './index';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -18,8 +18,12 @@ export class ProductsController {
   }
 
   @Get()
-  list() {
-    return this.service.findAll();
+  list(
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    // 2. Ahora pasamos un objeto al servicio, como él espera.
+    return this.service.findAll({ search, status });
   }
 
   @Get(':id')

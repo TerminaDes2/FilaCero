@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -7,52 +8,75 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  create(data: CreateProductDto) {
-    const prisma = this.prisma as any;
-    return prisma.producto.create({
+  // ✅ Más simple y seguro, sin 'as any'.
+  create(createProductDto: CreateProductDto) {
+    const { id_categoria, ...rest } = createProductDto;
+
+    return this.prisma.producto.create({
       data: {
-        nombre: data.nombre,
-        descripcion: data.descripcion,
-        codigo_barras: data.codigo_barras,
-        precio: data.precio as any,
-        imagen: data.imagen,
-        estado: data.estado,
-        id_categoria: data.id_categoria ? BigInt(data.id_categoria) : undefined,
+        ...rest, // Usamos todas las demás propiedades del DTO
+        // Convertimos id_categoria solo si existe
+        ...(id_categoria && { id_categoria: BigInt(id_categoria) }),
       },
     });
   }
 
-  findAll() {
-    const prisma = this.prisma as any;
-    return prisma.producto.findMany({ orderBy: { id_producto: 'desc' } });
+  findAll(params: { search?: string; status?: string }) {
+  const { search, status } = params;
+  const where: Prisma.productoWhereInput = {};
+
+  if (search) {
+    where.nombre = { contains: search, mode: 'insensitive' };
   }
+  if (status) {
+    where.estado = status;
+  }
+
+  return this.prisma.producto.findMany({
+    where,
+    orderBy: { id_producto: 'desc' },
+  });
+}
 
   async findOne(id: string) {
-    const prisma = this.prisma as any;
-    const prod = await prisma.producto.findUnique({ where: { id_producto: BigInt(id) } });
-    if (!prod) throw new NotFoundException('Producto no encontrado');
-    return prod;
+    // Convertimos el ID a BigInt para la consulta
+    const productId = BigInt(id);
+
+    const product = await this.prisma.producto.findUnique({
+      where: { id_producto: productId },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Producto con ID #${id} no encontrado`);
+    }
+    return product;
   }
 
-  update(id: string, data: UpdateProductDto) {
-    const prisma = this.prisma as any;
-    return prisma.producto.update({
-      where: { id_producto: BigInt(id) },
+  // ✅ Lógica de actualización corregida.
+  update(id: string, updateProductDto: UpdateProductDto) {
+    const { id_categoria, ...rest } = updateProductDto;
+    const productId = BigInt(id);
+
+    return this.prisma.producto.update({
+      where: { id_producto: productId },
       data: {
-        nombre: data.nombre,
-        descripcion: data.descripcion,
-        codigo_barras: data.codigo_barras,
-        precio: data.precio as any,
-        imagen: data.imagen,
-        estado: data.estado,
-        id_categoria: data.id_categoria ? BigInt(data.id_categoria) : undefined,
+        ...rest,
+        // Actualizamos id_categoria solo si se proporciona en el DTO
+        ...(id_categoria && { id_categoria: BigInt(id_categoria) }),
       },
     });
   }
 
   async remove(id: string) {
-    const prisma = this.prisma as any;
-    await prisma.producto.delete({ where: { id_producto: BigInt(id) } });
-    return { deleted: true };
+    const productId = BigInt(id);
+    
+    // Es buena práctica verificar que el producto existe antes de borrarlo.
+    await this.findOne(id);
+
+    await this.prisma.producto.delete({
+      where: { id_producto: productId },
+    });
+    
+    return { message: `Producto con ID #${id} eliminado correctamente.`, deleted: true };
   }
 }
