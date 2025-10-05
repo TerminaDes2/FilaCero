@@ -26,13 +26,11 @@ export function RegisterLayout({
       ? "fixed inset-0 w-screen h-screen grid grid-cols-1 lg:grid-cols-2"
       : "min-h-screen w-full flex flex-col items-center justify-center overflow-hidden px-0 py-0"}>
       
-      {/* Logo */}
-      <div className="absolute top-4 left-4 flex-col items-center gap-3 text-sm z-10">
-        <BrandLogo withWordmark 
-        size={40}
-        asLink={true}
-        
-        />  
+      {/* Brand badge (centrado arriba, chip translúcido) */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+        <div className="px-3 py-1.5 rounded-full bg-white/70 dark:bg-white/10 backdrop-blur-md ring-1 ring-black/5 dark:ring-white/10 shadow-sm">
+          <BrandLogo withWordmark size={44} asLink={true} />
+        </div>
       </div>
 
       {/* Botón Volver - Solo en paso form */}

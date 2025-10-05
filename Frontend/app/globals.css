@@ -126,6 +126,10 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 .text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .dark .text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
+/* Keyboard hint chip */
+.kbd-hint { font-size: 11px; line-height: 1; padding: 6px 8px; border-radius: 9999px; background: rgba(255,255,255,0.85); color: #374151; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.dark .kbd-hint { background: rgba(15,23,42,0.75); color: #e5e7eb; border-color: rgba(255,255,255,0.12); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
 /* Scrollbar (POS flat style, sin gradiente) */
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
