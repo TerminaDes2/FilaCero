@@ -4,7 +4,7 @@ import  StepSignup  from '../StepSignup';
 import { BenefitsSection } from './BenefitsSection';
 import { AuthFormSection } from './AuthFormSection';
 import { BackButton } from './BackButton';
-import { StepType, AccountType } from '../RegisterHooks';
+import { StepType, AccountType } from '../registerHooks';
 
 interface RegisterLayoutProps {
   step: StepType;

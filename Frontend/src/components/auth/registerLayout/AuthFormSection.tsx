@@ -1,6 +1,6 @@
 import React from 'react';
 import { SignupForm } from '../../auth/SignupForm';
-import { AccountType } from '../RegisterHooks';
+import { AccountType } from '../registerHooks';
 
 interface AuthFormSectionProps {
   accountType: AccountType;
@@ -34,7 +34,7 @@ export function AuthFormSection({ accountType, onBackToSelection }: AuthFormSect
         <div className="space-y-3 lg:space-y-4">
           {/* Formulario más compacto */}
           <div className="scale-95 transform origin-top">
-            <SignupForm accountType={accountType} />
+            <SignupForm />
           </div>
           
           {/* Separador más pequeño
