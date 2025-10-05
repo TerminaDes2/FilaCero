@@ -10,6 +10,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
+    "lucide-react": "^0.544.0",
     "react-router-dom": "^7.9.3",
     "typeorm": "^0.3.27",
     "zustand": "^5.0.8"
