@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 export type AppRole = 'CUSTOMER' | 'OWNER' | null;
 
@@ -14,20 +14,58 @@ interface UserState {
 const UserContext = createContext<UserState | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRole] = useState<AppRole>(null);
+  const [role, setRoleState] = useState<AppRole>(null);
   const [tempData, setTemp] = useState<Record<string, unknown>>({});
+
+  // Cargar rol desde localStorage al inicializar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedRole = localStorage.getItem('userRole') as AppRole;
+      console.log('🔄 UserStore: Loading role from localStorage:', storedRole);
+      if (storedRole) {
+        setRoleState(storedRole);
+      }
+    }
+  }, []);
+
+  const setRole = useCallback((newRole: AppRole) => {
+    console.log('💾 UserStore: Setting role to:', newRole);
+    setRoleState(newRole);
+    
+    // Persistir en localStorage
+    if (typeof window !== 'undefined') {
+      if (newRole) {
+        localStorage.setItem('userRole', newRole);
+        console.log('💾 UserStore: Saved role to localStorage:', newRole);
+      } else {
+        localStorage.removeItem('userRole');
+        console.log('💾 UserStore: Removed role from localStorage');
+      }
+    }
+  }, []);
 
   const setTempData = useCallback((k: string, v: unknown) => {
     setTemp(prev => ({ ...prev, [k]: v }));
   }, []);
 
   const reset = useCallback(() => {
-    setRole(null);
+    console.log('🔄 UserStore: Resetting all data');
+    setRoleState(null);
     setTemp({});
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('selectedRole');
+    }
   }, []);
 
   return (
-    <UserContext.Provider value={{ role, setRole, tempData, setTempData, reset }}>
+    <UserContext.Provider value={{ 
+      role, 
+      setRole, 
+      tempData, 
+      setTempData, 
+      reset 
+    }}>
       {children}
     </UserContext.Provider>
   );

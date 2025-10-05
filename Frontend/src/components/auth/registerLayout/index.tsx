@@ -1,14 +1,14 @@
 import React from 'react';
 import { BrandLogo } from '../../BrandLogo';
-import  StepSignup  from '../StepSignup';
+import StepSignup from '../StepSignup';
 import { BenefitsSection } from './BenefitsSection';
 import { AuthFormSection } from './AuthFormSection';
 import { BackButton } from './BackButton';
-import { StepType, AccountType } from '../registerHooks';
+import { StepType } from '../registerHooks';
+import { useUserStore } from '../../../state/userStore'; // Importar el store
 
 interface RegisterLayoutProps {
   step: StepType;
-  accountType: AccountType;
   onOwnerSelect: () => void;
   onCustomerSelect: () => void;
   onBackToSelection: () => void;
@@ -16,11 +16,11 @@ interface RegisterLayoutProps {
 
 export function RegisterLayout({
   step,
-  accountType,
   onOwnerSelect,
   onCustomerSelect,
   onBackToSelection
 }: RegisterLayoutProps) {
+
   return (
     <div className={step === 'form'
       ? "fixed inset-0 w-screen h-screen grid grid-cols-1 lg:grid-cols-2"
@@ -39,7 +39,7 @@ export function RegisterLayout({
       {step === 'form' && <BackButton onBackToSelection={onBackToSelection} />}
 
       {/* Paso 1: Selección de tipo de cuenta */}
-      {step === 'owner' && (
+      {step === 'role_selection' && (
         <StepSignup
           onOwnerSelect={onOwnerSelect}
           onCustomerSelect={onCustomerSelect}
@@ -49,10 +49,9 @@ export function RegisterLayout({
       {/* Paso 2: Formulario de registro */}
       {step === 'form' && (
         <>
-          <BenefitsSection accountType={accountType} />
+          <BenefitsSection />
           <AuthFormSection 
-            accountType={accountType} 
-            onBackToSelection={onBackToSelection}
+            onBackToSelection={onBackToSelection} 
           />
         </>
       )}
