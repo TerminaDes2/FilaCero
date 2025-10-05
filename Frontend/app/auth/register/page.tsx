@@ -2,7 +2,7 @@
 import React from 'react';
 import { UserProvider } from '../../../src/state/userStore';
 import { RegisterLayout } from '../../../src/components/auth/registerLayout';
-import { useRegisterFlow } from '../../../src/components/auth/RegisterHooks';
+import { useRegisterFlow } from '../../../src/components/auth/registerHooks';
 
 export default function RegisterPage() {
   const {

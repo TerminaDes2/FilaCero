@@ -70,7 +70,7 @@ export default function POSPage() {
                   </div>
                 </header>
                 <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
-                  <ProductGrid products={MOCK_PRODUCTS} category={category} search={search} view={view} />
+                  <ProductGrid category={category} search={search} view={view} />
                 </div>
               </section>
             </div>

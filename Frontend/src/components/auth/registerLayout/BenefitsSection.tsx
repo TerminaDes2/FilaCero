@@ -1,5 +1,5 @@
 import React from 'react';
-import { AccountType } from '../RegisterHooks';
+import { AccountType } from '../registerHooks';
 
 interface BenefitsSectionProps {
   accountType: AccountType;
