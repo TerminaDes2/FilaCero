@@ -1,11 +1,13 @@
 import React from 'react';
-import { AccountType } from '../registerHooks';
+import { useUserStore} from '../../../state/userStore';
 
 interface BenefitsSectionProps {
-  accountType: AccountType;
+  // accountType ya no es necesario como prop
 }
 
-export function BenefitsSection({ accountType }: BenefitsSectionProps) {
+export function BenefitsSection({ }: BenefitsSectionProps) {
+  const { role } = useUserStore();
+
   // Puntos clave para Clientes
   const clientBenefits = [
     {
@@ -54,8 +56,11 @@ export function BenefitsSection({ accountType }: BenefitsSectionProps) {
     }
   ];
 
-  const benefits = accountType === 'dueño' ? ownerBenefits : clientBenefits;
-  const welcomeTitle = accountType === 'dueño' 
+  // Convertir AppRole a formato compatible
+  // const accountType = role === 'OWNER' ? 'dueño' : 'cliente';
+  
+  const benefits = role === 'OWNER' ? ownerBenefits : clientBenefits;
+  const welcomeTitle = role === 'OWNER' 
     ? "¡Impulsa tu cafetería con FilaCero!" 
     : "¡Te damos la bienvenida a FilaCero!";
 
@@ -80,7 +85,6 @@ export function BenefitsSection({ accountType }: BenefitsSectionProps) {
             </li>
           ))}
         </ul>
-        
       </div>
     </div>
   );

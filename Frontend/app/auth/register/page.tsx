@@ -7,7 +7,6 @@ import { useRegisterFlow } from '../../../src/components/auth/registerHooks';
 export default function RegisterPage() {
   const {
     step,
-    accountType,
     handleOwnerSelect,
     handleCustomerSelect,
     handleBackToSelection
@@ -17,7 +16,6 @@ export default function RegisterPage() {
     <UserProvider>
       <RegisterLayout
         step={step}
-        accountType={accountType}
         onOwnerSelect={handleOwnerSelect}
         onCustomerSelect={handleCustomerSelect}
         onBackToSelection={handleBackToSelection}

@@ -1,22 +1,38 @@
 import React from 'react';
 import { SignupForm } from '../../auth/SignupForm';
-import { AccountType } from '../registerHooks';
+import { useUserStore } from '../../../state/userStore';
 
 interface AuthFormSectionProps {
-  accountType: AccountType;
   onBackToSelection: () => void;
 }
 
-export function AuthFormSection({ accountType, onBackToSelection }: AuthFormSectionProps) {
-  const subtitle = accountType === 'dueño' 
+export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
+  const { role } = useUserStore();
+  // Si no hay rol seleccionado, mostrar mensaje de error
+  if (!role) {
+    return (
+      <div className="h-full flex flex-col justify-center items-center px-4 sm:px-6 py-4 lg:py-8">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            Error: Tipo de cuenta no seleccionado
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Por favor, vuelve a seleccionar tu tipo de cuenta
+          </p>
+          <button
+            onClick={onBackToSelection}
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+          >
+            Volver a seleccionar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const subtitle = role === 'OWNER' 
     ? 'Comienza a gestionar tu cafetería de manera eficiente' 
     : 'Disfruta de una experiencia sin filas en tus cafeterías favoritas';
-
-  const handleGoogleSignup = () => {
-    // Lógica de autenticación con Google
-    console.log('Registro con Google para:', accountType);
-    // Aquí iría la integración con Google OAuth
-  };
 
   return (
     <div className="h-full flex flex-col justify-center items-center px-4 sm:px-6 py-4 lg:py-8 overflow-y-auto">
@@ -24,7 +40,9 @@ export function AuthFormSection({ accountType, onBackToSelection }: AuthFormSect
         {/* Header más compacto */}
         <div className="mb-4 lg:mb-6">
           <h1 className="text-lg lg:text-xl font-semibold text-gray-900 tracking-tight mb-1 text-center">
-            Crea tu cuenta de <span className="text-brand-600 font-bold">{accountType}</span>
+            Crea tu cuenta de <span className="text-brand-600 font-bold"> 
+              {role === 'OWNER' ? 'Dueño' : 'Cliente'}
+            </span>
           </h1>
           <p className="text-xs text-gray-500 text-center">
             {subtitle}
@@ -37,33 +55,6 @@ export function AuthFormSection({ accountType, onBackToSelection }: AuthFormSect
             <SignupForm />
           </div>
           
-          {/* Separador más pequeño
-          <div className="relative my-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-white text-gray-500">o</span>
-            </div>
-          </div>
-
-          Botón de Google más compacto
-          <button
-            type="button"
-            onClick={handleGoogleSignup}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-          >
-            <img 
-              src="/images/google.svg" 
-              alt="Google" 
-              className="w-4 h-4"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            Crea tu cuenta con Google
-          </button>
-           */}
           {/* Sección "¿Ya tienes una cuenta?" más compacta */}
           <div className="text-center pt-1">
             <div className="border-t border-gray-200 pt-3">
