@@ -101,11 +101,15 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({ categories, value, o
               tabIndex={active ? 0 : -1}
               onKeyDown={onKeyNav}
               onClick={() => onChange(cat)}
-              className="relative z-20 h-9 px-3 rounded-t-xl text-[12px] font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2"
+              className={`relative z-20 h-9 px-3 rounded-t-xl text-[12px] font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 transition-opacity hover:opacity-100 ${
+                active
+                  ? ''
+                  : 'hover:bg-[var(--pos-badge-stock-bg)] after:content-[""] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[var(--pos-card-border)] after:transition-opacity after:opacity-0 hover:after:opacity-100'
+              }`}
               style={
                 active
                   ? { color: 'var(--pos-text-heading)' }
-                  : { color: 'var(--pos-text-muted)' }
+                  : { color: 'var(--pos-text-heading)', opacity: 0.85 }
               }
             >
               {cat === 'all' ? 'Todas' : cat}
