@@ -7,6 +7,7 @@ import { RolesModule } from './roles/roles.module';
 import { HealthController } from './health.controller';
 import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { InventoryModule } from './inventory/inventory.module';
     AuthModule,     // módulo de auth (login/signup)
     RolesModule,    // módulo de roles
     ProductsModule, // módulo de productos (Prisma)
-  InventoryModule, // módulo de inventario (Prisma)
+    InventoryModule, // módulo de inventario (Prisma)
+    CategoriesModule, // módulo de categorías (Prisma)
     // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
     // ProductModule,
   ],

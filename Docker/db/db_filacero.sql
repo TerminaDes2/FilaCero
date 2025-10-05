@@ -376,3 +376,18 @@ INSERT INTO tipo_pago (tipo, descripcion) VALUES
 ON CONFLICT (tipo) DO NOTHING;
 
 -- Fin de bloque de hardening
+
+-- =============================================================
+-- Semillas iniciales de catálogo (categorías)
+-- =============================================================
+INSERT INTO categoria (nombre) VALUES
+  ('Bebidas'),
+  ('Alimentos'),
+  ('Postres'),
+  ('Snacks'),
+  ('Otros')
+ON CONFLICT (nombre) DO NOTHING;
+
+-- Índice simple por nombre (búsqueda)
+CREATE INDEX IF NOT EXISTS idx_categoria_nombre ON categoria (nombre);
+

@@ -9,7 +9,6 @@ function RegisterPageWithRole() {
   const { setRole, reset } = useUserStore();
   const {
     step,
-    accountType,
     handleOwnerSelect,
     handleCustomerSelect,
     handleBackToSelection
@@ -34,7 +33,6 @@ function RegisterPageWithRole() {
   return (
     <RegisterLayout
       step={step}
-      accountType={accountType}
       onOwnerSelect={onOwner}
       onCustomerSelect={onCustomer}
       onBackToSelection={onBack}
