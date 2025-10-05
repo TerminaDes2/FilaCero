@@ -44,9 +44,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	};
 
 	return (
-		<form onSubmit={submit} className="space-y-6">
+		<form onSubmit={submit} className="space-y-6" aria-describedby="login-hint">
 			{/* Supportive microcopy / context */}
-			<div className="text-[11px] leading-relaxed -mb-1 rounded-lg border border-white/60 dark:border-white/10 bg-gradient-to-r from-brand-50/70 to-emerald-50/60 dark:from-white/5 dark:to-white/5 px-3 py-2 text-gray-600 dark:text-slate-300 flex items-start gap-3">
+			<div id="login-hint" className="text-[11px] leading-relaxed -mb-1 rounded-lg border border-white/60 dark:border-white/10 bg-gradient-to-r from-brand-50/70 to-emerald-50/60 dark:from-white/5 dark:to-white/5 px-3 py-2 text-gray-600 dark:text-slate-300 flex items-start gap-3">
 				<svg className='w-5 h-5 mt-0.5 text-brand-600 dark:text-brand-400' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
 					<rect x='3' y='10' width='18' height='11' rx='2' />
 					<path strokeLinecap='round' strokeLinejoin='round' d='M8 10V8a4 4 0 0 1 8 0v2' />
@@ -85,16 +85,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			/>
 			<div className="flex items-center justify-between text-xs text-gray-600 dark:text-slate-400">
 				<label className="inline-flex items-center gap-2 cursor-pointer select-none">
-					<input type='checkbox' className='h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500' />
+					<input type='checkbox' className='appearance-none h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:bg-brand-600 checked:border-brand-600' />
 					<span>Recordarme</span>
 				</label>
-				<button type='button' className='font-medium text-brand-600 dark:text-brand-400 hover:underline'>¿Olvidaste tu contraseña?</button>
+				<button type='button' className='font-medium text-brand-600 dark:text-brand-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>¿Olvidaste tu contraseña?</button>
 			</div>
 			<button
 				type="submit"
 				disabled={!formValid || submitting}
-				className="relative w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 shadow-sm hover:shadow-md transition active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-400"
+				className="group relative w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 shadow-sm hover:shadow-md transition active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-400"
 			>
+				<span className="absolute -top-2 right-2 kbd-hint opacity-0 group-focus-visible:opacity-100">Enter para entrar</span>
 				{submitting && (
 					<span className="absolute left-4 inline-flex">
 						<svg className='animate-spin h-4 w-4 text-white' viewBox='0 0 24 24'>
