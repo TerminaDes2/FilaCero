@@ -1,24 +1,24 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: ./Backend
-      dockerfile: ../Docker/backend.Dockerfile
+      dockerfile: ../Docker/backend.Dockerfile 
     container_name: filacero-backend-dev
     ports:
       - "3000:3000"
-      - "9229:9229"  # puerto debug si lo usas
+      - "9229:9229"
     environment:
       - NODE_ENV=development
       - PORT=3000
       - DATABASE_URL=postgres://user:password@postgres:5432/filacero
     volumes:
-      - ./Backend:/app          # bind mount para editar código y que se refleje inmediatamente
-      - /app/node_modules       # volumen anónimo para proteger node_modules del host
-    command: ["npm","run","start:dev"]
+      - ./Backend:/app            # bind mount para ver cambios en tiempo real (incluye nuevos/removed files)
+      - /app/node_modules        # volumen anónimo para node_modules dentro del contenedor
+    command: ["npm","run","dev"] # script dev que genera prisma y arranca ts-node-dev
     depends_on:
       - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # para que host.docker.internal funcione en linux
     restart: unless-stopped
 
   frontend:
@@ -37,6 +37,8 @@ services:
     command: ["npm","run","dev"]
     depends_on:
       - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   postgres:

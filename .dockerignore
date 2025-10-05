@@ -1,4 +1,6 @@
 node_modules
+Backend/node_modules
+Frontend/node_modules
 npm-debug.log
 Docker/*.log
 dist
@@ -6,3 +8,5 @@ coverage
 .git
 .idea
 .vscode
+Backend/.next
+Frontend/.next
