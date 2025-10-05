@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useUserStore } from '../../state/userStore';
 
 type StepSignupProps = {
@@ -10,6 +10,8 @@ type StepSignupProps = {
 
 export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSignupProps) {
   const { setRole } = useUserStore();
+  const [hovered, setHovered] = useState<null | 'customer' | 'owner'>(null);
+  const [focused, setFocused] = useState<null | 'customer' | 'owner'>(null);
 
   const handleOwnerClick = () => {
     console.log('🟢 StepSignup: Setting role to OWNER');
@@ -53,15 +55,19 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
         onClick={handleCustomerClick}
         aria-label="Seleccionar tipo de cuenta: Cliente"
         aria-describedby="desc-cliente"
+        onMouseEnter={() => setHovered('customer')}
+        onMouseLeave={() => setHovered(curr => (curr === 'customer' ? null : curr))}
+        onFocus={() => setFocused('customer')}
+        onBlur={() => setFocused(curr => (curr === 'customer' ? null : curr))}
       >
         {/* Overlay base */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#D55D7B]/30 to-[#D55D7B]/50 opacity-70 group-hover:opacity-80 transition-opacity duration-500" />
+  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#D55D7B]/30 to-[#D55D7B]/50 opacity-70 group-hover:opacity-80 transition-opacity duration-500" />
         {/* Blob decorativo */}
         <div className="pointer-events-none absolute -top-24 -right-24 w-[55vw] md:w-[32vw] aspect-square rounded-full blur-3xl opacity-40" style={{ background: 'radial-gradient(closest-side, #D55D7B55, transparent)' }} />
         <img
           src="/images/clienteprueba.jpg"
           alt="Persona disfrutando de un café como cliente"
-          className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
+          className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
           loading="lazy"
           decoding="async"
           sizes="(min-width: 768px) 50vw, 100vw"
@@ -79,7 +85,7 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
             </svg>
             <span>Cliente</span>
           </span>
-          <p id="desc-cliente" className="text-gray-900 text-lg md:text-xl max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          <p id="desc-cliente" className={`text-gray-900 text-lg md:text-xl max-w-xs transition-opacity duration-500 pointer-events-none select-none ${hovered === 'customer' ? 'opacity-100' : 'opacity-0'}`}>
             Ordena y recoge sin hacer fila
           </p>
         </div>
@@ -110,15 +116,19 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
         onClick={handleOwnerClick}
         aria-label="Seleccionar tipo de cuenta: Dueño de cafetería"
         aria-describedby="desc-dueno"
+        onMouseEnter={() => setHovered('owner')}
+        onMouseLeave={() => setHovered(curr => (curr === 'owner' ? null : curr))}
+        onFocus={() => setFocused('owner')}
+        onBlur={() => setFocused(curr => (curr === 'owner' ? null : curr))}
       >
         {/* Overlay base */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#4CC1AD]/30 to-[#4CC1AD]/50 opacity-70 group-hover:opacity-80 transition-opacity duration-500" />
+  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#4CC1AD]/30 to-[#4CC1AD]/50 opacity-70 group-hover:opacity-80 transition-opacity duration-500" />
         {/* Blob decorativo */}
         <div className="pointer-events-none absolute -bottom-24 -left-24 w-[55vw] md:w-[32vw] aspect-square rounded-full blur-3xl opacity-40" style={{ background: 'radial-gradient(closest-side, #4CC1AD55, transparent)' }} />
         <img
           src="/images/dueñoprueba.jpg"
           alt="Dueño de cafetería atendiendo a clientes"
-          className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
+          className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
           loading="lazy"
           decoding="async"
           sizes="(min-width: 768px) 50vw, 100vw"
@@ -136,7 +146,7 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
             </svg>
             <span>Dueño</span>
           </span>
-          <p id="desc-dueno" className="text-gray-900 text-lg md:text-xl max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          <p id="desc-dueno" className={`text-gray-900 text-lg md:text-xl max-w-xs transition-opacity duration-500 pointer-events-none select-none ${hovered === 'owner' ? 'opacity-100' : 'opacity-0'}`}>
             Gestiona tu cafetería eficientemente
           </p>
         </div>
