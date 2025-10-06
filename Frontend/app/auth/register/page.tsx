@@ -15,7 +15,7 @@ function RegisterPageWithRole() {
   } = useRegisterFlow();
 
   // Wrap de handlers para sincronizar el rol global
-  const onOwner = useCallback(() => {
+  const onBusiness = useCallback(() => {
     handleOwnerSelect();
     setRole('OWNER');
   }, [handleOwnerSelect, setRole]);
@@ -33,7 +33,7 @@ function RegisterPageWithRole() {
   return (
     <RegisterLayout
       step={step}
-      onOwnerSelect={onOwner}
+      onBusinessSelect={onBusiness}
       onCustomerSelect={onCustomer}
       onBackToSelection={onBack}
     />

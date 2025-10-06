@@ -57,7 +57,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 			if(!formValid) return;
 			// Exigir selección de rol explícita
 			if (!role) {
-				setError('Selecciona un rol (Cliente o Dueño) antes de continuar.');
+				setError('Selecciona un rol (Cliente o Negocio) antes de continuar.');
 				return;
 			}
 			setSubmitting(true);
@@ -75,7 +75,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 							window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 						}
 				onSuccess?.();
-				router.push('/onboarding/owner');
+				router.push(role === 'OWNER' ? '/onboarding/negocio' : '/onboarding/customer');
 			} catch (err: any) {
 				setError(err?.message || 'Error al crear la cuenta');
 			} finally {

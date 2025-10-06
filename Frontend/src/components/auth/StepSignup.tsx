@@ -4,11 +4,11 @@ import React, { useState } from 'react'
 import { useUserStore } from '../../state/userStore';
 
 type StepSignupProps = {
-  onOwnerSelect?: () => void
+  onBusinessSelect?: () => void
   onCustomerSelect?: () => void
 }
 
-export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSignupProps) {
+export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepSignupProps) {
   const { setRole } = useUserStore();
   const [hovered, setHovered] = useState<null | 'customer' | 'owner'>(null);
   const [focused, setFocused] = useState<null | 'customer' | 'owner'>(null);
@@ -23,7 +23,7 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
       console.log('💾 StepSignup: Backup saved to localStorage: OWNER');
     }
     
-    onOwnerSelect?.();
+    onBusinessSelect?.();
   };
 
   const handleCustomerClick = () => {
@@ -109,17 +109,17 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/50 to-transparent" />
       </button>
 
-      {/* DUEÑO */}
+  {/* NEGOCIO */}
       <button
         type="button"
         className="relative flex flex-col items-center justify-center w-full h-full overflow-hidden group bg-emerald-50 hover:bg-emerald-100 transition-colors duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-600)] focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.995]"
-        onClick={handleOwnerClick}
-        aria-label="Seleccionar tipo de cuenta: Dueño de cafetería"
-        aria-describedby="desc-dueno"
-        onMouseEnter={() => setHovered('owner')}
-        onMouseLeave={() => setHovered(curr => (curr === 'owner' ? null : curr))}
-        onFocus={() => setFocused('owner')}
-        onBlur={() => setFocused(curr => (curr === 'owner' ? null : curr))}
+  onClick={handleOwnerClick}
+  aria-label="Seleccionar tipo de cuenta: Negocio"
+  aria-describedby="desc-negocio"
+  onMouseEnter={() => setHovered('owner')}
+  onMouseLeave={() => setHovered(curr => (curr === 'owner' ? null : curr))}
+  onFocus={() => setFocused('owner')}
+  onBlur={() => setFocused(curr => (curr === 'owner' ? null : curr))}
       >
         {/* Overlay base */}
   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#4CC1AD]/30 to-[#4CC1AD]/50 opacity-70 group-hover:opacity-80 transition-opacity duration-500" />
@@ -127,7 +127,7 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
         <div className="pointer-events-none absolute -bottom-24 -left-24 w-[55vw] md:w-[32vw] aspect-square rounded-full blur-3xl opacity-40" style={{ background: 'radial-gradient(closest-side, #4CC1AD55, transparent)' }} />
         <img
           src="/images/dueñoprueba.jpg"
-          alt="Dueño de cafetería atendiendo a clientes"
+          alt="Negocio atendiendo a clientes"
           className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
           loading="lazy"
           decoding="async"
@@ -144,10 +144,10 @@ export default function StepSignup({ onOwnerSelect, onCustomerSelect }: StepSign
               <path d="M3 7h18l-2 5H5L3 7z"/>
               <path d="M5 12v7h14v-7"/>
             </svg>
-            <span>Dueño</span>
+            <span>Negocio</span>
           </span>
-          <p id="desc-dueno" className={`text-gray-900 text-lg md:text-xl max-w-xs transition-opacity duration-500 pointer-events-none select-none ${hovered === 'owner' ? 'opacity-100' : 'opacity-0'}`}>
-            Gestiona tu cafetería eficientemente
+          <p id="desc-negocio" className={`text-gray-900 text-lg md:text-xl max-w-xs transition-opacity duration-500 pointer-events-none select-none ${hovered === 'owner' ? 'opacity-100' : 'opacity-0'}`}>
+            Gestiona tu negocio eficientemente
           </p>
         </div>
 
