@@ -9,14 +9,14 @@ import { useUserStore } from '../../../state/userStore'; // Importar el store
 
 interface RegisterLayoutProps {
   step: StepType;
-  onOwnerSelect: () => void;
+  onBusinessSelect: () => void;
   onCustomerSelect: () => void;
   onBackToSelection: () => void;
 }
 
 export function RegisterLayout({
   step,
-  onOwnerSelect,
+  onBusinessSelect,
   onCustomerSelect,
   onBackToSelection
 }: RegisterLayoutProps) {
@@ -39,7 +39,7 @@ export function RegisterLayout({
       {/* Paso 1: Selección de tipo de cuenta */}
       {step === 'role_selection' && (
         <StepSignup
-          onOwnerSelect={onOwnerSelect}
+          onBusinessSelect={onBusinessSelect}
           onCustomerSelect={onCustomerSelect}
         />
       )}

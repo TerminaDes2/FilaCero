@@ -31,7 +31,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
   }
 
   const subtitle = role === 'OWNER' 
-    ? 'Comienza a gestionar tu cafetería de manera eficiente' 
+    ? 'Comienza a gestionar tu negocio de manera eficiente' 
     : 'Disfruta de una experiencia sin filas en tus cafeterías favoritas';
 
   return (
@@ -41,7 +41,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
         <div className="mb-4 lg:mb-6">
           <h1 className="text-lg lg:text-xl font-semibold text-gray-900 tracking-tight mb-1 text-center">
             Crea tu cuenta de <span className="text-brand-600 font-bold"> 
-              {role === 'OWNER' ? 'Dueño' : 'Cliente'}
+              {role === 'OWNER' ? 'Negocio' : 'Cliente'}
             </span>
           </h1>
           <p className="text-xs text-gray-500 text-center">
