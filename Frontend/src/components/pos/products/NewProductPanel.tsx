@@ -44,6 +44,11 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
   };
 
   const handleSubmit = async () => {
+
+  console.log('🔍 Usuario actual:', {
+    token: localStorage.getItem('auth_token'),
+    user: localStorage.getItem('auth_user'),
+  });
     setError('');
     if (!nombre.trim() || precio <= 0) {
       setError('El nombre y el precio son obligatorios.');

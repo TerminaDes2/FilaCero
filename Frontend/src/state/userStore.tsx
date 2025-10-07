@@ -29,17 +29,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setRole = useCallback((newRole: AppRole) => {
-    console.log('💾 UserStore: Setting role to:', newRole);
     setRoleState(newRole);
     
     // Persistir en localStorage
     if (typeof window !== 'undefined') {
       if (newRole) {
         localStorage.setItem('userRole', newRole);
-        console.log('💾 UserStore: Saved role to localStorage:', newRole);
       } else {
         localStorage.removeItem('userRole');
-        console.log('💾 UserStore: Removed role from localStorage');
       }
     }
   }, []);
@@ -49,7 +46,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const reset = useCallback(() => {
-    console.log('🔄 UserStore: Resetting all data');
     setRoleState(null);
     setTemp({});
     if (typeof window !== 'undefined') {
