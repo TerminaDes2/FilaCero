@@ -7,10 +7,12 @@ import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { AdminProductGrid } from '../../../src/components/pos/products/AdminProductGrid';
 import { NewProductPanel } from '../../../src/components/pos/products/NewProductPanel';
 import { CartProvider } from '../../../src/pos/cartContext';
+import { useSettingsStore } from '../../../src/state/settingsStore';
 
 export default function ProductsAdminPage() {
+  const settings = useSettingsStore();
   const [search, setSearch] = useState('');
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [view, setView] = useState<'grid' | 'list'>(settings.defaultView);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -35,7 +37,7 @@ export default function ProductsAdminPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' />
+            <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' showLogout />
           </div>
 
           {/* Panel area */}
