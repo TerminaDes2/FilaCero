@@ -74,7 +74,7 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const benefits = role === 'OWNER' ? ownerBenefits : clientBenefits;
   const welcomeTitle =
     role === 'OWNER'
-      ? '¡Impulsa tu cafetería con FilaCero!'
+      ? '¡Impulsa tu negocio con FilaCero!'
       : '¡Te damos la bienvenida a FilaCero!';
 
   return (
