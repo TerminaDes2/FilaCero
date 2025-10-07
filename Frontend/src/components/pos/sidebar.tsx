@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useCategoriesStore } from '../../pos/categoriesStore';
 
 interface NavItem {
 	key: string;
@@ -46,6 +47,16 @@ const items: NavItem[] = [
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
 				<path strokeLinecap="round" strokeLinejoin="round" d="M3 12a9 9 0 1 1 2.64 6.36" />
 				<path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2" />
+			</svg>
+		)
+	},
+	{
+		key: 'categories',
+		label: 'Categorías',
+		href: '/pos/categories',
+		icon: (
+			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M7 10h13M10 14h10M13 18h7" />
 			</svg>
 		)
 	},
@@ -108,6 +119,8 @@ const settingsItem: NavItem = {
 export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = true }) => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+	const { categories, selected, setSelected } = useCategoriesStore();
+	const showCategories = useMemo(()=> categories.length > 0, [categories.length]);
 
   // Derived classes
   const widthClass = collapsed ? 'w-16' : 'w-56';
@@ -155,6 +168,32 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
             </Link>
           );
         })}
+
+				{showCategories && (
+					<div className="pt-3 mt-3 border-t border-white/30 dark:border-white/5">
+						{!collapsed && <div className="px-2.5 pb-1 text-[11px] uppercase tracking-wide font-semibold text-[rgba(255,255,255,0.75)]">Categorías</div>}
+						<div className="space-y-1">
+							<button
+								onClick={()=> setSelected('all')}
+								className={`group w-full flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13px] font-medium tracking-tight transition-colors focus:outline-none focus-visible:ring-2 ring-white/60 ${selected==='all' ? 'bg-[rgba(255,255,255,0.85)] text-[rgb(80,32,38)] shadow-sm' : 'text-[rgba(255,255,255,0.92)] hover:bg-[rgba(255,255,255,0.28)]'}`}
+							>
+								<span className={`relative flex items-center justify-center w-8 h-8 rounded-md ${selected==='all' ? 'bg-white/90' : 'bg-white/50 group-hover:bg-white/65'} shadow-inner shadow-white/30`}>
+									<svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+								</span>
+								{!collapsed && <span className="truncate">Todas</span>}
+							</button>
+							{categories.map(c => (
+								<button key={c.id} onClick={()=> setSelected(c.name)} className={`group w-full flex items-center gap-3 rounded-lg px-2.5 py-2 text-[13px] font-medium tracking-tight transition-colors focus:outline-none focus-visible:ring-2 ring-white/60 ${selected===c.name ? 'bg-[rgba(255,255,255,0.85)] text-[rgb(80,32,38)] shadow-sm' : 'text-[rgba(255,255,255,0.92)] hover:bg-[rgba(255,255,255,0.28)]'}`}>
+									<span className={`relative flex items-center justify-center w-8 h-8 rounded-md ${selected===c.name ? 'bg-white/90' : 'bg-white/50 group-hover:bg-white/65'} shadow-inner shadow-white/30`}>
+										<span className={`absolute -left-1 top-1 w-1 h-1 rounded-full ${selected===c.name ? 'opacity-100' : 'opacity-60'}`} style={{ background: 'var(--pos-accent-green)' }} />
+										<span className="text-[11px] font-semibold">{c.icon || '·'}</span>
+									</span>
+									{!collapsed && <span className="truncate">{c.name}</span>}
+								</button>
+							))}
+						</div>
+					</div>
+				)}
       </div>
       {/* Footer action */}
       <div className="px-2 pb-3 pt-2 border-t border-white/30 dark:border-white/5 relative z-10">

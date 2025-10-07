@@ -196,7 +196,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
           <div className='text-[11px] text-[var(--pos-text-muted)] hidden sm:block'>Esc para cerrar</div>
           <div className='ml-auto flex items-center gap-2'>
             <button onClick={onClose} className='h-11 px-4 rounded-lg text-sm font-semibold transition-colors' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>Cancelar</button>
-            <button onClick={handleSubmit} className='h-11 px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60' style={{ background: 'var(--fc-brand-600)' }} disabled={saving}>
+            <button onClick={handleSubmit} className='h-11 px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2' style={{ background: 'var(--fc-brand-600)' }} disabled={saving}>
               {saving ? 'Creando…' : 'Crear →'}
             </button>
           </div>

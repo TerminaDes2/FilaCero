@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 export interface TopRightInfoProps {
   employeeName?: string;
@@ -16,10 +16,18 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
   date,
   onNotificationsClick
 }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const today = useMemo(() => date ?? new Date(), [date]);
-  const formatted = useMemo(() =>
-    new Intl.DateTimeFormat('es-MX', { dateStyle: 'full' }).format(today)
-  , [today]);
+  const formatted = useMemo(() => {
+    // Avoid hydration mismatch by rendering date only on client after mount
+    if (!mounted) return '';
+    try {
+      return new Intl.DateTimeFormat('es-MX', { dateStyle: 'full' }).format(today);
+    } catch {
+      return '';
+    }
+  }, [today, mounted]);
 
   return (
     <aside className="flex flex-col items-end gap-1 select-none" aria-label="Información superior derecha">
@@ -52,7 +60,7 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
       {/* Nivel 2 */}
       <div className="text-right">
         <div className="font-semibold tracking-tight text-lg md:text-xl" style={{ color: 'var(--pos-text-heading)' }}>{businessName}</div>
-        <div className="text-[11px] md:text-xs" style={{ color: 'var(--pos-text-muted)' }}>{formatted}</div>
+  <div className="text-[11px] md:text-xs" style={{ color: 'var(--pos-text-muted)' }}>{mounted ? formatted : '\u00A0'}</div>
       </div>
     </aside>
   );
