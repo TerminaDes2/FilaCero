@@ -24,7 +24,7 @@ export default function POSCategoriesPage() {
             <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
             <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </h1>
-          <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' />
+          <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' showLogout />
         </div>
 
         <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>

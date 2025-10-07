@@ -56,7 +56,7 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ seed
           <button
             onClick={onNewCategory}
             className="h-9 px-3 rounded-lg text-sm font-semibold text-white"
-            style={{ background: 'var(--fc-teal-500)', textShadow: '0 1px 0 rgba(0,0,0,0.25)' }}
+            style={{ background: 'var(--pos-accent-green)', textShadow: '0 1px 0 rgba(0,0,0,0.25)' }}
           >
             Nueva categoría
           </button>
