@@ -76,3 +76,14 @@ npm i @tanstack/react-table
 
 ## Deploy / Build
 En Docker (frontend) se expone el puerto 3000 y se monta el código para desarrollo. Para producción se recomienda build multistage y servir sólo `.next` + `node_modules` mínimos.
+
+## Atajos de teclado (POS)
+
+- Buscar: Ctrl/Cmd + K o `/` (enfoca la caja de búsqueda)
+- Cambiar vista: V (alterna grid/list)
+- Nuevo producto (admin productos): N
+- Ir a inicio POS: P
+- Ir a configuración: S
+- Cerrar sesión: Ctrl/Cmd + L (pide confirmación)
+- Confirmar en diálogos: Enter
+- Cancelar/cerrar panel o diálogo: Escape

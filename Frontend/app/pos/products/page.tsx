@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { SearchBox } from '../../../src/components/pos/controls/SearchBox';
 import { ViewToggle } from '../../../src/components/pos/controls/ViewToggle';
@@ -15,6 +15,42 @@ export default function ProductsAdminPage() {
   const [view, setView] = useState<'grid' | 'list'>(settings.defaultView);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Keyboard: 'v' toggles view (grid/list) when not typing in input
+  useEffect(() => {
+    const isEditable = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      return !!(el.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select');
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!isEditable(e.target) && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        setView(v => v === 'grid' ? 'list' : 'grid');
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Keyboard: 'n' opens New Product panel when not typing in input
+  useEffect(() => {
+    const isEditable = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      return !!(el.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select');
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!isEditable(e.target) && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setIsPanelOpen(true);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   const onProductCreated = () => {
     setRefreshKey(k => k + 1);
@@ -37,7 +73,7 @@ export default function ProductsAdminPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' showLogout />
+            <TopRightInfo businessName='Punto de Venta' showLogout />
           </div>
 
           {/* Panel area */}

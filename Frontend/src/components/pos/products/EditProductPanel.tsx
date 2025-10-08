@@ -29,10 +29,24 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
 
   useEffect(() => {
     const t = setTimeout(() => nameInputRef.current?.focus(), 60);
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
     window.addEventListener('keydown', onKey);
     return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
-  }, [onClose]);
+  }, [onClose, saving]);
 
   const handleSave = async () => {
     setError(null);
