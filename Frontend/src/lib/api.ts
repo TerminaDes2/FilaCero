@@ -136,6 +136,24 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
   updateInventory: (id: string, data: Partial<{ cantidad_actual: number; stock_minimo: number }>) =>
     apiFetch<any>(`inventory/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
+  
+  // --- 👇 Ventas ---
+  createSale: (data: { id_negocio: string; id_tipo_pago?: string; items: Array<{ id_producto: string; cantidad: number; precio_unitario?: number }>; cerrar?: boolean }) =>
+    apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Historial de ventas
+  getSales: (params?: { id_negocio?: string; id_usuario?: string; estado?: string; desde?: string; hasta?: string }) => {
+    const merged = { ...(params || {}) } as Record<string, string | undefined>;
+    if (!merged.id_negocio) {
+      let negocioId: string | undefined;
+      try { negocioId = typeof window !== 'undefined' ? localStorage.getItem('active_business_id') || undefined : undefined; } catch {}
+      if (!negocioId) negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID as string | undefined;
+      if (negocioId) merged.id_negocio = negocioId;
+    }
+    const query = new URLSearchParams(Object.entries(merged).filter(([_,v]) => v != null && v !== '') as any).toString();
+    return apiFetch<any[]>(`sales${query ? `?${query}` : ''}`);
+  },
+  getSale: (id: string) => apiFetch<any>(`sales/${id}`),
 };
 
 // Helpers para negocio activo en el cliente

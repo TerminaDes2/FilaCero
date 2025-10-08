@@ -12,7 +12,7 @@ export class InventoryController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin')
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
   create(@Body() dto: CreateInventoryDto) {
     return this.service.create(dto);
   }
@@ -34,14 +34,14 @@ export class InventoryController {
 
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin')
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
   update(@Param('id') id: string, @Body() dto: UpdateInventoryDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin')
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
