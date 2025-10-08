@@ -22,6 +22,7 @@ type ApiProduct = {
   imagen: string | null;
   estado: string | null; // 'activo' | 'inactivo' | null
   codigo_barras?: string | null;
+  stock?: number | string | null;
 };
 
 export interface AdminProductGridProps {
@@ -44,31 +45,43 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
     setError(null);
     try {
       const apiProducts: ApiProduct[] = await api.getProducts({ search });
-      // Inventario opcional
+      // Inventario opcional (se mantiene para panel de edición)
       const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
       let invList: any[] = [];
+      let stockByProduct: Map<string, number> | undefined;
       if (negocioId) {
         try {
           invList = await api.getInventory({ id_negocio: negocioId });
+          stockByProduct = new Map();
+          for (const inv of invList) {
+            if (inv.id_producto && inv.cantidad_actual != null) {
+              stockByProduct.set(String(inv.id_producto), Number(inv.cantidad_actual));
+            }
+          }
         } catch (e) {
           console.warn('Inventario no disponible para AdminProductGrid:', e);
-        }
-      }
-      const stockByProduct = new Map<string, number>();
-      for (const inv of invList) {
-        if (inv.id_producto && inv.cantidad_actual != null) {
-          stockByProduct.set(String(inv.id_producto), Number(inv.cantidad_actual));
         }
       }
       const adapted: AdminProduct[] = apiProducts.map(p => {
         const id = String(p.id_producto);
         const priceNum = typeof p.precio === 'number' ? p.precio : parseFloat(String(p.precio));
-          return {
+        let stockValue: number | null = null;
+        if (p.stock !== undefined) {
+          if (p.stock === null) {
+            stockValue = null;
+          } else {
+            const parsed = typeof p.stock === 'number' ? p.stock : parseFloat(String(p.stock));
+            stockValue = Number.isNaN(parsed) ? null : parsed;
+          }
+        } else if (stockByProduct?.has(id)) {
+          stockValue = stockByProduct.get(id) ?? null;
+        }
+        return {
           id,
           name: p.nombre,
           sku: (p.codigo_barras as any) || '',
           price: isNaN(priceNum) ? 0 : priceNum,
-            stock: stockByProduct.has(id) ? (stockByProduct.get(id) as number) : null,
+          stock: stockValue,
           category: 'General',
           active: (p.estado ?? 'activo') === 'activo',
         };

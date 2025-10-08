@@ -11,7 +11,7 @@ interface ApiProduct {
   precio: string;
   imagen: string | null;
   estado: string | null;
-  stock?: number;
+  stock?: number | string | null;
   category?: string;
 }
 
@@ -32,33 +32,25 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
       setLoading(true);
       try {
         const apiProducts: ApiProduct[] = await api.getProducts({ search });
-        // Obtener inventario si tenemos NEGOCIO (no-fatal)
-        const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
-        let inventory: any[] = [];
-        if (negocioId) {
-          try {
-            inventory = await api.getInventory({ id_negocio: negocioId });
-          } catch (invErr) {
-            console.warn('Inventario no disponible, mostrando productos sin stock fusionado:', invErr);
-          }
-        }
-        const stockByProduct = new Map<string, number>();
-        for (const inv of inventory) {
-          if (inv.id_producto && inv.cantidad_actual != null) {
-            stockByProduct.set(String(inv.id_producto), Number(inv.cantidad_actual));
-          }
-        }
-
         const adaptedProducts: POSProduct[] = apiProducts.map(p => {
           const idStr = String(p.id_producto);
           const priceNum = typeof (p as any).precio === 'number' ? (p as any).precio : parseFloat(String((p as any).precio ?? 0));
+          let stockValue: number | null = null;
+          if (p.stock !== undefined) {
+            if (p.stock === null) {
+              stockValue = null;
+            } else {
+              const parsed = typeof p.stock === 'number' ? p.stock : parseFloat(String(p.stock));
+              stockValue = Number.isNaN(parsed) ? null : parsed;
+            }
+          }
           return {
             id: idStr,
             name: p.nombre,
             price: isNaN(priceNum) ? 0 : priceNum,
             description: p.descripcion || undefined,
             image: p.imagen || undefined,
-            stock: stockByProduct.get(idStr) ?? p.stock ?? 0,
+            stock: stockValue ?? 0,
             category: p.category || 'General',
           };
         });

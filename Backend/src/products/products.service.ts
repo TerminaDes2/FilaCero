@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -51,22 +51,58 @@ export class ProductsService {
     });
   }
 
-  findAll(params: { search?: string; status?: string }) {
-  const { search, status } = params;
-  const where: Prisma.productoWhereInput = {};
+  async findAll(params: { search?: string; status?: string; id_negocio?: string }) {
+    const { search, status, id_negocio } = params;
+    const where: Prisma.productoWhereInput = {};
 
-  if (search) {
-    where.nombre = { contains: search, mode: 'insensitive' };
-  }
-  if (status) {
-    where.estado = status;
-  }
+    if (search) {
+      where.nombre = { contains: search, mode: 'insensitive' };
+    }
+    if (status) {
+      where.estado = status;
+    }
 
-  return this.prisma.producto.findMany({
-    where,
-    orderBy: { id_producto: 'desc' },
-  });
-}
+    let negocioIdFilter: bigint | undefined;
+    if (id_negocio) {
+      try {
+        negocioIdFilter = BigInt(id_negocio);
+      } catch {
+        throw new BadRequestException('id_negocio inválido');
+      }
+    }
+
+    const [products, inventoryByProduct] = await Promise.all([
+      this.prisma.producto.findMany({
+        where,
+        orderBy: { id_producto: 'desc' },
+      }),
+      this.prisma.inventario.groupBy({
+        by: ['id_producto'],
+        where: {
+          ...(negocioIdFilter !== undefined && { id_negocio: negocioIdFilter }),
+        },
+        _sum: { cantidad_actual: true },
+      }),
+    ]);
+
+    const stockMap = new Map<string, number>();
+    for (const row of inventoryByProduct) {
+      const id = row.id_producto?.toString();
+      if (!id) continue;
+      const amount = row._sum.cantidad_actual ?? 0;
+      stockMap.set(id, Number(amount));
+    }
+
+    return products.map((product) => {
+      const id = product.id_producto.toString();
+      const hasStockInfo = stockMap.has(id);
+      const stockValue = stockMap.get(id);
+      return {
+        ...product,
+        stock: hasStockInfo ? (stockValue ?? 0) : null,
+      };
+    });
+  }
 
   async findOne(id: string) {
     // Convertimos el ID a BigInt para la consulta
@@ -79,7 +115,15 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Producto con ID #${id} no encontrado`);
     }
-    return product;
+    const stockAgg = await this.prisma.inventario.aggregate({
+      _sum: { cantidad_actual: true },
+      where: { id_producto: productId },
+    });
+    const stockValue = stockAgg._sum.cantidad_actual;
+    return {
+      ...product,
+      stock: stockValue == null ? null : Number(stockValue),
+    };
   }
 
   // ✅ Lógica de actualización corregida.
