@@ -63,15 +63,12 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
     
     setSaving(true);
     try {
-      // Usamos 'await' para esperar la respuesta de la API
-      // y un try/catch para capturar errores del servidor.
       await add(n, color, icon || undefined);
-      
       onCreated?.();
       onClose();
-    } catch (e: any) {
-      // Si la API devuelve un error (ej: duplicado), lo mostramos.
-      setError(e.message || 'Ocurrió un error inesperado.');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Ocurrió un error inesperado.';
+      setError(message);
     } finally {
       setSaving(false);
     }
