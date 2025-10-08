@@ -5,6 +5,7 @@ import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useUserStore } from '../../../src/state/userStore';
 import { useSettingsStore } from '../../../src/state/settingsStore';
+import { useConfirm } from '../../../src/components/system/ConfirmProvider';
 
 type SectionKey =
   | 'business'
@@ -56,6 +57,7 @@ export default function POSSettingsPage() {
   const router = useRouter();
   const { reset } = useUserStore();
   const settings = useSettingsStore();
+  const confirm = useConfirm();
   const [active, setActive] = useState<SectionKey>('business');
   const [filter, setFilter] = useState('');
 
@@ -67,7 +69,15 @@ export default function POSSettingsPage() {
     );
   }, [filter]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: 'Cerrar sesión',
+      description: '¿Seguro que quieres cerrar sesión en este dispositivo?',
+      confirmText: 'Cerrar sesión',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
+    if (!ok) return;
     try { reset(); } catch {}
     router.push('/');
   };
@@ -161,8 +171,8 @@ export default function POSSettingsPage() {
                           style={{ background:'rgba(0,0,0,0.06)', color:'var(--pos-text-heading)', boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}}>
                     Descartar
                   </button>
-                  <button className='px-3 py-2 text-[13px] rounded-lg font-semibold'
-                          style={{ background:'var(--fc-brand-600)', color:'white', boxShadow:'0 1px 0 rgba(0,0,0,0.05)'}}>
+      <button className='px-3 py-2 text-[13px] rounded-lg font-semibold'
+        style={{ background:'var(--pos-accent-green)', color:'white', boxShadow:'0 1px 0 rgba(0,0,0,0.05)'}}>
                     Guardar cambios
                   </button>
                 </div>
@@ -234,7 +244,7 @@ const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean)=>void }> = ({ 
   <button
     type='button'
     onClick={()=> onChange(!checked)}
-    className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${checked ? 'bg-[var(--fc-teal-500)]' : 'bg-[rgba(0,0,0,0.15)]'}`}
+    className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${checked ? 'bg-[var(--pos-accent-green)]' : 'bg-[rgba(0,0,0,0.15)]'}`}
   >
     <span className={`inline-block w-5 h-5 transform bg-white rounded-full transition ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
   </button>
@@ -320,8 +330,8 @@ function PosPrefsSection() {
       <Card title='Operación'>
         <Row label='Vista predeterminada'>
           <div className='flex items-center gap-2'>
-            <button onClick={()=> set({defaultView:'grid'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='grid'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Grid</button>
-            <button onClick={()=> set({defaultView:'list'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='list'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Lista</button>
+            <button onClick={()=> set({defaultView:'grid'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='grid'?'bg-[var(--pos-accent-green)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Grid</button>
+            <button onClick={()=> set({defaultView:'list'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='list'?'bg-[var(--pos-accent-green)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Lista</button>
           </div>
         </Row>
         <Row label='Mostrar inventario'>
@@ -374,7 +384,7 @@ function ReceiptsSection() {
 function DevicesSection() {
   return (
     <div className='space-y-4'>
-      <Card title='Impresoras' right={<button className='px-3 py-2 text-[13px] rounded-lg font-medium' style={{background:'var(--fc-teal-500)', color:'#fff'}}>Registrar</button>}>
+  <Card title='Impresoras' right={<button className='px-3 py-2 text-[13px] rounded-lg font-medium' style={{background:'var(--pos-accent-green)', color:'#fff'}}>Registrar</button>}>
         <div className='rounded-lg p-3 flex items-center justify-between' style={{background:'rgba(0,0,0,0.04)'}}>
           <div>
             <div className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>Ninguna impresora configurada</div>
@@ -543,7 +553,7 @@ function AccountSection({ onLogout }: { onLogout: ()=>void }) {
       <Card title='Sesiones' desc='Cierra sesión de este u otros dispositivos'>
         <div className='flex flex-wrap gap-2'>
           <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Cerrar otras sesiones</button>
-          <button onClick={onLogout} className='px-3 py-2 text-[13px] rounded-lg font-semibold' style={{background:'var(--fc-brand-600)', color:'#fff'}}>Cerrar sesión</button>
+          <button onClick={onLogout} className='px-3 py-2 text-[13px] rounded-lg font-semibold' style={{background:'var(--pos-accent-green)', color:'#fff'}}>Cerrar sesión</button>
         </div>
       </Card>
     </div>

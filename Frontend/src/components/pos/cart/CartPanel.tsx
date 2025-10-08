@@ -5,8 +5,10 @@ import { PaymentSuccessPanel } from '../payments/PaymentSuccessPanel';
 import { PaymentPanel } from '../payments/PaymentPanel';
 import { AddToCartPanel } from '../products/AddToCartPanel';
 
+import { useConfirm } from '../../system/ConfirmProvider';
 export const CartPanel: React.FC = () => {
   const { items, subtotal, total, remove, inc, dec, clear } = useCart();
+  const confirm = useConfirm();
   const hasItems = items.length > 0;
   const [showPayment, setShowPayment] = useState(false); // show PaymentPanel
   const [showSuccess, setShowSuccess] = useState(false); // show PaymentSuccessPanel
@@ -58,7 +60,16 @@ export const CartPanel: React.FC = () => {
                     </svg>
                     Editar
                   </button>
-                  <button onClick={()=> remove(item.lineId)} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'var(--pos-danger-text)'}}>
+                  <button onClick={async ()=> {
+                    const ok = await confirm({
+                      title: 'Quitar del carrito',
+                      description: '¿Seguro que quieres quitar este producto? Esta acción no se puede deshacer.',
+                      confirmText: 'Quitar',
+                      cancelText: 'Cancelar',
+                      tone: 'danger'
+                    });
+                    if (ok) remove(item.lineId);
+                  }} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'var(--pos-danger-text)'}}>
                   <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
                     <path d='M3 6h18' />
                     <path d='M8 6V4h8v2' />
@@ -122,7 +133,7 @@ export const CartPanel: React.FC = () => {
               text-sm md:text-base font-semibold tracking-tight
               disabled:opacity-40 disabled:cursor-not-allowed
               transition-shadow hover:shadow-md
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-teal-500)]
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pos-accent-green)]
             '
             onClick={()=> setShowPayment(true)}
           >
@@ -130,7 +141,7 @@ export const CartPanel: React.FC = () => {
             <span
               aria-hidden='true'
               className='
-                absolute inset-0 z-0 bg-[var(--fc-teal-500)]
+                absolute inset-0 z-0 bg-[var(--pos-accent-green)]
                 [clip-path:circle(14px_at_24px_50%)]
                 group-hover:[clip-path:circle(140%_at_50%_50%)]
                 transition-[clip-path] duration-500 ease-out
@@ -162,7 +173,17 @@ export const CartPanel: React.FC = () => {
               Pagar
             </span>
           </button>
-          <button disabled={!hasItems} onClick={clear} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>Limpiar</button>
+          
+          <button disabled={!hasItems} onClick={async ()=>{
+            const ok = await confirm({
+              title: 'Limpiar carrito',
+              description: 'Vas a eliminar todos los productos del carrito. ¿Continuar?',
+              confirmText: 'Limpiar',
+              cancelText: 'Cancelar',
+              tone: 'danger'
+            });
+            if (ok) clear();
+          }} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>Limpiar</button>
         </div>
         {showPayment && (
           <PaymentPanel

@@ -54,7 +54,7 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
     onClose();
   };
 
-  const accent = 'var(--fc-brand-600)';
+  const accent = 'var(--pos-accent-green)';
   const candy = 'var(--pos-badge-stock-bg)';
 
   const notePresets = ['Sin cebolla', 'Bien cocido', 'Poco picante', 'Para llevar'];
@@ -138,7 +138,7 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
         <div className='p-5 border-t flex items-center justify-between gap-3' style={{ borderColor: 'var(--pos-card-border)' }}>
           <button onClick={onClose} className='h-11 px-4 rounded-lg text-sm font-semibold' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>Salir</button>
     <button onClick={handleAdd} className='h-11 px-5 rounded-full text-sm font-semibold text-white'
-      style={{ background: 'var(--fc-teal-500)' }}>{lineId ? 'Guardar cambios ↵' : 'Añadir al carrito ↵'}</button>
+      style={{ background: 'var(--pos-accent-green)' }}>{lineId ? 'Guardar cambios ↵' : 'Añadir al carrito ↵'}</button>
         </div>
       </aside>
     </>
