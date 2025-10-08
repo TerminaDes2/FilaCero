@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { BusinessesController } from './businesses.controller';
-import { BusinessesService } from './businesses.service';
+import { BusinessesController } from 'src/businesses/businesses.controller';
+import { BusinessesService } from 'src/businesses/businesses.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({

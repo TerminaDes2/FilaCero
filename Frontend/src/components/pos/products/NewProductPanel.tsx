@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, activeBusiness } from '../../../lib/api';
 
 interface NewProductPanelProps {
   onClose: () => void;
@@ -73,7 +73,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
       const created = await api.createProduct(productPayload);
       const productId = String(created?.id_producto ?? created?.id);
 
-      const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
       const stockInicial = Number(stock) || 0;
       if (negocioId && productId && stockInicial > 0) {
         await api.createInventory({

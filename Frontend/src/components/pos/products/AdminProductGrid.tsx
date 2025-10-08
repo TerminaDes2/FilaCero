@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, activeBusiness } from '../../../lib/api';
 import { EditProductPanel } from './EditProductPanel';
 import { EditStockPanel } from './EditStockPanel';
 import { useConfirm } from '../../system/ConfirmProvider';
@@ -51,7 +51,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
     try {
       const apiProducts: ApiProduct[] = await api.getProducts({ search });
       // Inventario opcional (se mantiene para panel de edición)
-      const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
       let invList: any[] = [];
       let stockByProduct: Map<string, number> | undefined;
       if (negocioId) {
@@ -240,7 +240,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
         {editingStockId && (() => {
           const p = items.find(i => i.id === editingStockId);
           if (!p) return null;
-          const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+          const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
           let inv: any | undefined;
           if (negocioId) {
             inv = invState.find(x => String(x.id_producto) === p.id && String(x.id_negocio) === String(negocioId));
@@ -332,7 +332,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
       {editingStockId && (() => {
         const p = items.find(i => i.id === editingStockId);
         if (!p) return null;
-        const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
         let inv: any | undefined;
         if (negocioId) {
           inv = invState.find(x => String(x.id_producto) === p.id && String(x.id_negocio) === String(negocioId));

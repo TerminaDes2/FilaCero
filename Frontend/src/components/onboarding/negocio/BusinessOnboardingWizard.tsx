@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle2, ChevronLeft, ChevronRight, Store, MapPin, Cog, ClipboardList } from 'lucide-react'
 import { useUserStore } from '../../../state/userStore'
 import { LoginCard } from '../../auth/LoginCard'
+import { api, activeBusiness } from '../../../lib/api'
 
 type Step = 'identidad' | 'ubicacion' | 'operacion' | 'revision' | 'exito'
 
@@ -92,7 +93,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
 
   const next = useCallback(() => {
     if (!stepValid) return
-    setStep(s => (s === 'identidad' ? 'ubicacion' : s === 'ubicacion' ? 'operacion' : s === 'operacion' ? 'revision' : s === 'revision' ? 'exito' : s))
+    setStep(s => (s === 'identidad' ? 'ubicacion' : s === 'ubicacion' ? 'operacion' : s === 'operacion' ? 'revision' : s))
   }, [stepValid])
 
   const back = useCallback(() => {
@@ -102,12 +103,58 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
   // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === 'Enter' || e.key === 'Return') && stepValid) next()
+      if ((e.key === 'Enter' || e.key === 'Return') && stepValid) {
+        if (step !== 'revision') {
+          e.preventDefault();
+          next();
+        }
+      }
       if (e.key === 'Escape') back()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [next, back, stepValid])
+  }, [next, back, stepValid, step])
+
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const confirmAndCreate = useCallback(async () => {
+    if (!stepValid) return
+    setSaving(true)
+    setError(null)
+    try {
+      const payload = {
+        nombre: draft.identidad.nombre.trim(),
+        direccion: draft.ubicacion.direccion || undefined,
+        telefono: draft.ubicacion.telefono || undefined,
+        correo: draft.ubicacion.web ? undefined : undefined, // no email en wizard aún
+        logo: draft.identidad.logoDataUrl || undefined,
+      }
+      const created = await api.createBusiness(payload as any)
+      const id = String((created as any)?.id_negocio ?? (created as any)?.id)
+      if (id) activeBusiness.set(id)
+      // limpiar draft y pasar a éxito
+      try { localStorage.removeItem(DRAFT_KEY) } catch {}
+      setStep('exito')
+    } catch (e: any) {
+      setError(e?.message || 'No se pudo crear el negocio')
+    } finally {
+      setSaving(false)
+    }
+  }, [draft, stepValid])
+
+  // Bind Enter to confirm when on revision step (declared after confirmAndCreate exists)
+  useEffect(() => {
+    if (step !== 'revision') return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'Enter' || e.key === 'Return') && stepValid) {
+        e.preventDefault();
+        if (!saving) confirmAndCreate();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [step, stepValid, saving, confirmAndCreate]);
 
   // Acentos fijos a la marca principal (brand)
 
@@ -124,6 +171,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
             <button onClick={() => router.push('/')} className="fc-btn-secondary">Volver al inicio</button>
             <button onClick={() => router.push('/pos')} className={`fc-btn-primary bg-brand-600 hover:bg-brand-700`}>Ir al POS</button>
           </div>
+          <div className="mt-3 text-xs text-gray-500">Tu negocio activo quedó guardado para este dispositivo.</div>
         </div>
       )
     }
@@ -267,12 +315,17 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         {/* Navegación (embed) */}
         <div className="mt-4 flex items-center justify-between">
           <button onClick={back} disabled={step==='identidad'} className="fc-btn-secondary inline-flex items-center gap-2 disabled:opacity-50"><ChevronLeft className="w-4 h-4"/> Atrás</button>
-          <button onClick={next} disabled={!stepValid} className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}>
-            {step==='revision' ? 'Confirmar y crear' : 'Siguiente'}
+          <button
+            onClick={step==='revision' ? confirmAndCreate : next}
+            disabled={!stepValid || (step==='revision' && saving)}
+            className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}
+          >
+            {step==='revision' ? (saving ? 'Creando…' : 'Confirmar y crear') : 'Siguiente'}
             <ChevronRight className="w-4 h-4"/>
           </button>
         </div>
         <div className="mt-2 text-xs text-gray-500 text-center">Pulsa Enter para continuar, Esc para volver</div>
+        {error && <div className="mt-2 text-xs text-rose-600 text-center">{error}</div>}
       </div>
     )
   }
@@ -287,8 +340,8 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         footer={(
           <div className="flex items-center justify-between">
             <button onClick={back} disabled={step==='identidad'} className="fc-btn-secondary inline-flex items-center gap-2 disabled:opacity-50"><ChevronLeft className="w-4 h-4"/> Atrás</button>
-            <button onClick={next} disabled={!stepValid} className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}>
-              {step==='revision' ? 'Confirmar y crear' : 'Siguiente'}
+              <button onClick={step==='revision' ? confirmAndCreate : next} disabled={!stepValid || (step==='revision' && saving)} className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}>
+              {step==='revision' ? (saving ? 'Creando…' : 'Confirmar y crear') : 'Siguiente'}
               <ChevronRight className="w-4 h-4"/>
             </button>
           </div>
@@ -408,6 +461,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
           </div>
         )}
       </LoginCard>
+      {error && <div className="mt-2 text-xs text-rose-600 text-center">{error}</div>}
     </div>
   )
 }

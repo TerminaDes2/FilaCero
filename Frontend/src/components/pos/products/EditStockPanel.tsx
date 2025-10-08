@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, activeBusiness } from '../../../lib/api';
 
 interface EditStockPanelProps {
   product: { id: string; name: string; sku?: string };
@@ -10,7 +10,7 @@ interface EditStockPanelProps {
 }
 
 export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, inventory, onClose, onSaved }) => {
-  const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
   const [loadedInventory, setLoadedInventory] = useState<typeof inventory | null>(inventory ?? null);
   const [cantidad, setCantidad] = useState<number>(inventory?.cantidad_actual ?? 0);
   const [minimo, setMinimo] = useState<number>(inventory?.stock_minimo ?? 0);
