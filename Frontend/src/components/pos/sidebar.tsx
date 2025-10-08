@@ -20,7 +20,7 @@ const items: NavItem[] = [
 		key: 'logo',
 		label: 'Inicio',
 		href: '/pos',
-		accent: 'from-amber-50 to-amber-100 dark:from-amber-300/20 dark:to-amber-300/5',
+		accent: 'from-amber-50 to-amber-100',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className="w-7 h-7">
 				<path strokeLinecap="round" strokeLinejoin="round" d="M4 4h7.5M4 9h9M4 14h5.5M4 19h9" />
@@ -32,7 +32,7 @@ const items: NavItem[] = [
 		key: 'home',
 		label: 'Inicio',
 		href: '/pos',
-		accent: 'from-amber-50 to-amber-100 dark:from-amber-300/20 dark:to-amber-300/5',
+		accent: 'from-amber-50 to-amber-100',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
 				<path strokeLinecap="round" strokeLinejoin="round" d="M4 11.5 12 5l8 6.5M6.5 10v8.25c0 .69.56 1.25 1.25 1.25H16.5c.69 0 1.25-.56 1.25-1.25V10" />
@@ -128,7 +128,7 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
   return (
 		<nav aria-label="Navegación principal POS" className={`h-full flex flex-col ${widthClass} relative rounded-r-2xl`} style={{background:'var(--pos-bg-sidebar)', boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.25),0 4px 14px -4px rgba(149,37,55,0.35)'}}>
       {/* Header / Brand + Toggle */}
-      <div className="flex items-center gap-2 px-3 pt-3 pb-2 relative z-10 border-b border-white/30 dark:border-white/5">
+	<div className="flex items-center gap-2 px-3 pt-3 pb-2 relative z-10 border-b border-white/30">
 		<div className="flex items-center gap-2">
 			<div className="w-10 h-10 relative rounded-md overflow-hidden bg-white/90 shadow">
 				<Image src="/LogoFilaCero.svg" alt="FilaCero" fill className="object-contain p-1" />
@@ -170,7 +170,7 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
         })}
 
 				{showCategories && (
-					<div className="pt-3 mt-3 border-t border-white/30 dark:border-white/5">
+					<div className="pt-3 mt-3 border-t border-white/30">
 						{!collapsed && <div className="px-2.5 pb-1 text-[11px] uppercase tracking-wide font-semibold text-[rgba(255,255,255,0.75)]">Categorías</div>}
 						<div className="space-y-1">
 							<button
@@ -196,7 +196,7 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 				)}
       </div>
       {/* Footer action */}
-      <div className="px-2 pb-3 pt-2 border-t border-white/30 dark:border-white/5 relative z-10">
+	<div className="px-2 pb-3 pt-2 border-t border-white/30 relative z-10">
 				<Link href={settingsItem.href} aria-label={settingsItem.label} className="flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.28)] focus:outline-none focus-visible:ring-2 ring-white/60">
 					<span className="w-8 h-8 rounded-md flex items-center justify-center bg-white/55 group-hover:bg-white/70 shadow-inner shadow-white/30">{settingsItem.icon}</span>
           {!collapsed && <span className="truncate">{settingsItem.label}</span>}

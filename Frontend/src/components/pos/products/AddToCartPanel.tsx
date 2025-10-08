@@ -81,7 +81,7 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
             <div className='flex-1 min-w-0'>
               <div className='flex items-start justify-between gap-2'>
                 <h3 className='text-lg font-extrabold leading-tight' style={{ color: 'var(--pos-text-heading)' }}>{product.name}</h3>
-                <span className='px-2 py-0.5 rounded-md text-xs font-medium' style={{ background: candy, color: '#694b3e' }}>{product.category || 'General'}</span>
+                <span className='px-2 py-0.5 rounded-md text-xs font-medium' style={{ background: candy, color: 'var(--pos-chip-text)' }}>{product.category || 'General'}</span>
               </div>
               {product.description && (
                 <p className='mt-1 text-[12px] line-clamp-2' style={{ color: 'var(--pos-text-muted)' }}>{product.description}</p>

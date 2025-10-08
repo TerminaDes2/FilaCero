@@ -32,7 +32,7 @@ export default function Navbar() {
 
 	return (
 			<header
-				className={`fixed top-0 left-0 right-0 z-40 transition ${scrolled ? "backdrop-blur-xl bg-white/70 dark:bg-slate-900/60 shadow" : "bg-transparent"}`}
+				className={`fixed top-0 left-0 right-0 z-40 transition ${scrolled ? "backdrop-blur-xl bg-white/70 shadow" : "bg-transparent"}`}
 				role="banner"
 			>
 				<nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between" aria-label="Main">
@@ -47,7 +47,7 @@ export default function Navbar() {
 						<a
 							key={item.href}
 							href={item.href}
-								className="relative text-sm font-medium text-gray-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 focus-visible:outline-none rounded after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-brand-600 dark:after:bg-brand-400 after:transition-all hover:after:w-full"
+								className="relative text-sm font-medium text-gray-600 hover:text-brand-600 focus-visible:outline-none rounded after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-brand-600 after:transition-all hover:after:w-full"
 						>
 							{item.label}
 						</a>
@@ -56,7 +56,7 @@ export default function Navbar() {
 							<div className="hidden md:flex items-center gap-3">
 								<Link
 									href="/auth/login"
-									className="text-sm font-medium px-4 py-2 rounded-full border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
+									className="text-sm font-medium px-4 py-2 rounded-full border border-gray-300/70 text-gray-700 hover:border-brand-500 hover:text-brand-600 transition"
 								>
 									Iniciar sesión
 								</Link>
@@ -69,7 +69,7 @@ export default function Navbar() {
 						</div>
 				<button
 					aria-label="Abrir menú"
-						className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded border border-gray-300 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/10 backdrop-blur"
+						className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 backdrop-blur"
 					onClick={() => setOpen(o => !o)}
 				>
 					<span className="sr-only">Menú</span>
@@ -90,13 +90,13 @@ export default function Navbar() {
 				</button>
 			</nav>
 					{open && (
-						<div className="md:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-gray-200 dark:border-white/10 px-4 pb-6 pt-2 space-y-2">
+						<div className="md:hidden bg-white/90 backdrop-blur-xl border-t border-gray-200 px-4 pb-6 pt-2 space-y-2">
 					{navItems.map(item => (
 						<a
 							key={item.href}
 							href={item.href}
 							onClick={() => setOpen(false)}
-									className="block text-sm font-medium text-gray-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400"
+									className="block text-sm font-medium text-gray-700 hover:text-brand-600"
 						>
 							{item.label}
 						</a>
@@ -104,7 +104,7 @@ export default function Navbar() {
 					<div className="pt-2 flex gap-3">
 						<Link
 							href="/auth/login"
-							className="flex-1 text-sm font-medium px-4 py-2 rounded-full border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 text-center hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
+								className="flex-1 text-sm font-medium px-4 py-2 rounded-full border border-gray-300/70 text-gray-700 text-center hover:border-brand-500 hover:text-brand-600 transition"
 							onClick={() => setOpen(false)}
 						>
 							Iniciar sesión

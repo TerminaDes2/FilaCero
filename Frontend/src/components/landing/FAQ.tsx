@@ -129,7 +129,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
   }, [isOpen, animate]);
 
   return (
-    <li className="border border-gray-200 dark:border-white/10 rounded-xl bg-white/80 dark:bg-slate-900/60 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md">
+    <li className="border border-gray-200 rounded-xl bg-white/80 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md">
       <button
         id={`faq-btn-${index}`}
         type="button"
@@ -138,12 +138,12 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
         onClick={onToggle}
         className="w-full flex items-center justify-between text-left px-5 py-4 gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
       >
-        <span className="font-medium text-sm text-gray-800 dark:text-slate-100 pr-2">
+        <span className="font-medium text-sm text-gray-800 pr-2">
           {q}
         </span>
         <span
           aria-hidden
-          className="relative w-6 h-6 flex items-center justify-center text-brand-600 dark:text-brand-400"
+          className="relative w-6 h-6 flex items-center justify-center text-brand-600"
         >
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-180 scale-x-0' : 'scale-x-100'}`} />
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-90'}`} />
@@ -158,7 +158,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
         className="px-5 pb-3"
       >
         <div ref={innerRef} className="pt-1">
-          <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed max-w-2xl">{a}</p>
+          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">{a}</p>
         </div>
       </div>
     </li>
@@ -168,7 +168,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
 export function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <section id="faq" aria-labelledby="faq-heading" className="py-28 relative overflow-hidden bg-white dark:bg-slate-950">
+    <section id="faq" aria-labelledby="faq-heading" className="py-28 relative overflow-hidden bg-white">
       <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <SectionHeading

@@ -4,7 +4,6 @@
 
 html { scroll-behavior: smooth; }
 body { background-color: #ffffff; color: #111827; -webkit-font-smoothing: antialiased; }
-body.dark, .dark body { background-color: #0f172a; color: #f1f5f9; }
 ::selection { background: #b9ddff; color: #0b1220; }
 h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 
@@ -76,6 +75,8 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 	--pos-border-strong: #d6b67b;
 	--pos-text-heading: #5a2d2f; /* dark accent for product titles */
 	--pos-text-muted: #775f54; /* muted captions */
+	/* Chips/badges text over candy backgrounds */
+	--pos-chip-text: #694b3e;
 	--pos-accent-green: #2cac8d; /* add button & action confirm */
 	--pos-accent-green-hover: #239c7f;
 	--pos-badge-price-bg: #f4e2b5; /* price chip */
@@ -87,15 +88,12 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 	--pos-tab-bg: #f5dab1;
 	--pos-tab-active-bg: #f8e6bb;
 	--pos-warning: #f0b24a;
-}
-
-.dark {
-	--fc-bg-soft: #121b2b;
-	--fc-bg-alt: #0f172a;
-	--fc-border-soft: rgba(255,255,255,0.12);
-	--fc-border-strong: rgba(255,255,255,0.28);
-	--fc-text-primary: #f1f5f9;
-	--fc-text-secondary: #cbd5e1;
+	/* Payment method accents (cash) */
+	--pos-cash-border: #EAA66A;
+	--pos-cash-text: #E1934B;
+	/* Destructive/danger accents */
+	--pos-danger-bg: #f36f5b;
+	--pos-danger-text: #8c2e3b;
 }
 
 /* Utilidad gradiente fondo */
@@ -105,30 +103,21 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 							radial-gradient(circle at 80% 40%, rgba(76,193,173,0.12), transparent 65%),
 							linear-gradient(180deg, #ffffff 0%, #fff5f7 100%);
 }
-.dark .bg-app-gradient {
-	background: radial-gradient(circle at 15% 20%, rgba(233,74,111,0.28), transparent 60%),
-							radial-gradient(circle at 85% 35%, rgba(76,193,173,0.18), transparent 65%),
-							linear-gradient(180deg, #0f172a 0%, #111827 100%);
-}
 
 .glass { background: rgba(255,255,255,0.6); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 0 0 1px rgba(255,255,255,0.1),0 4px 40px -8px rgba(233,74,111,0.40); }
-.dark .glass { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); }
 
 .card-hover { transition: .35s ease; }
 .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 32px -8px rgba(233,74,111,0.35); }
 
 :focus-visible { outline: none; box-shadow: 0 0 0 2px #DE355F, 0 0 0 4px #ffffff; }
-.dark :focus-visible { box-shadow: 0 0 0 2px #E94A6F, 0 0 0 4px #0f172a; }
 
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
 .text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.dark .text-gradient { background: linear-gradient(90deg,#FF9EB4,#E94A6F,#DE355F,#C12249); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* Keyboard hint chip */
 .kbd-hint { font-size: 11px; line-height: 1; padding: 6px 8px; border-radius: 9999px; background: rgba(255,255,255,0.85); color: #374151; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.dark .kbd-hint { background: rgba(15,23,42,0.75); color: #e5e7eb; border-color: rgba(255,255,255,0.12); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
 /* Scrollbar (POS flat style, sin gradiente) */
 ::-webkit-scrollbar { width: 10px; }
@@ -192,10 +181,7 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 	background-size: 96px 96px; /* adjust tile size as needed */
 	background-position: top left;
 }
-.dark .pos-pattern {
-	background-color: #0f172a; /* match dark body bg */
-	/* use same pattern; if too strong in dark, consider a darker variant */
-}
+ 
 
 @media (prefers-reduced-motion: reduce) {
 	.animate-authGradient,
@@ -208,8 +194,8 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 }
 
 /* Components helpers for onboarding */
-.fc-input { @apply w-full rounded-lg border border-gray-300/70 bg-white/80 dark:bg-slate-900/40 dark:border-white/10 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent; }
-.fc-select { @apply w-full rounded-lg border border-gray-300/70 bg-white/80 dark:bg-slate-900/40 dark:border-white/10 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent appearance-none bg-[right_0.6rem_center] bg-no-repeat; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px); background-size: 5px 5px, 5px 5px; }
+.fc-input { @apply w-full rounded-lg border border-gray-300/70 bg-white/80 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent; }
+.fc-select { @apply w-full rounded-lg border border-gray-300/70 bg-white/80 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent appearance-none bg-[right_0.6rem_center] bg-no-repeat; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px); background-size: 5px 5px, 5px 5px; }
 .fc-btn-primary { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition active:scale-[0.985]; }
-.fc-btn-secondary { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 dark:text-slate-100 bg-white/70 dark:bg-slate-800/50 ring-1 ring-black/5 dark:ring-white/10 hover:bg-white; }
+.fc-btn-secondary { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 bg-white/70 ring-1 ring-black/5 hover:bg-white; }
 

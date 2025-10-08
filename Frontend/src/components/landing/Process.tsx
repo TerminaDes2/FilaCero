@@ -39,7 +39,7 @@ const steps: Step[] = [
 
 export function Process() {
   return (
-    <section id="process" className="relative py-24 bg-gradient-to-b from-white via-brand-50/30 to-white dark:from-slate-950 dark:via-slate-900/30 dark:to-slate-950">
+    <section id="process" className="relative py-24 bg-gradient-to-b from-white via-brand-50/30 to-white">
       <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.08) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading

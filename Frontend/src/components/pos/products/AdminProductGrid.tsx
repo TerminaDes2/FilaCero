@@ -172,18 +172,18 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                     {p.stock == null
                       ? '—'
                       : p.stock === 0
-                        ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Agotado</span>
+                        ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Agotado</span>
                         : p.stock < 5
-                          ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#fff6e5', color: '#7a4a1f' }}>Bajo stock</span>
+                          ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-price-bg)', color: 'var(--pos-text-heading)' }}>Bajo stock</span>
                           : p.stock}
                   </td>
                   <td className='px-3 py-2 text-right'><span className={`text-xs font-medium ${p.active ? 'text-[var(--pos-accent-green)]' : 'text-[var(--pos-text-muted)]'}`}>{p.active ? 'Activo' : 'Inactivo'}</span></td>
                   <td className='px-3 py-2 text-right'>
                     <div className='inline-flex items-center gap-2'>
-                      <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Editar</button>
-                      <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Stock</button>
-                      <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
-                      <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Eliminar</button>
+                      <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Editar</button>
+                      <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Stock</button>
+                      <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
+                      <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Eliminar</button>
                     </div>
                   </td>
                 </tr>
@@ -255,15 +255,15 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                     <h3 className='text-sm font-semibold truncate'>{p.name}</h3>
                     <div className='flex items-center gap-1'>
                       {p.stock !== null && p.stock === 0 && (
-                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Agotado</span>
+                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Agotado</span>
                       )}
                       {p.stock !== null && p.stock > 0 && p.stock < 5 && (
-                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#fff6e5', color: '#7a4a1f' }}>Bajo stock</span>
+                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-price-bg)', color: 'var(--pos-text-heading)' }}>Bajo stock</span>
                       )}
                       {!p.active && (
-                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#e6e6f7', color: '#34346b' }}>Inactivo</span>
+                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-tab-bg)', color: 'var(--pos-text-muted)' }}>Inactivo</span>
                       )}
-                      <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>General</span>
+                      <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>General</span>
                     </div>
                   </div>
                   <div className='mt-1 text-[11px] text-[var(--pos-text-muted)] truncate'>SKU: {p.sku || '—'}</div>
@@ -274,10 +274,10 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                 </div>
               </div>
               <div className='mt-2 flex items-center gap-2'>
-                <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Editar</button>
-                <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Stock</button>
-                <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
-                <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Eliminar</button>
+                <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Editar</button>
+                <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Stock</button>
+                <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
+                <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Eliminar</button>
               </div>
             </div>
           );
