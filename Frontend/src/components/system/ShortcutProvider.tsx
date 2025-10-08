@@ -7,6 +7,7 @@ import ShortcutsHelpOverlay from './ShortcutsHelpOverlay';
 
 type ShortcutContextValue = {
   registerSearchInput: (el: HTMLInputElement | null) => void;
+  openHelp: () => void;
 };
 
 const ShortcutContext = createContext<ShortcutContextValue | null>(null);
@@ -50,8 +51,8 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // '/' focuses search only if not typing in another input
-      if (!targetIsEditable && e.key === '/') {
+      // '/' focuses search only if not typing in another input and without Shift (so Shift+/ can be '?')
+      if (!targetIsEditable && !e.shiftKey && e.key === '/') {
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select?.();
@@ -61,14 +62,11 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Global nav inside POS: s = settings, p = POS home
       if (!targetIsEditable && !ctrlOrMeta && !e.altKey) {
         const k = e.key.toLowerCase();
-        if (k === '?') {
-          // Some layouts report '?' as Shift + '/'; we'll handle both.
+        // Help overlay: '?' or Shift + '/'
+        if (e.key === '?' || (e.shiftKey && e.key === '/')) {
           e.preventDefault();
           setShowHelp(true);
           return;
-        }
-        if (!e.shiftKey && k === '/') {
-          // Already handled above for focusing search; skip here.
         }
         if (k === 's') {
           e.preventDefault();
@@ -105,8 +103,10 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  const openHelp = useCallback(() => setShowHelp(true), []);
+
   return (
-    <ShortcutContext.Provider value={{ registerSearchInput }}>
+    <ShortcutContext.Provider value={{ registerSearchInput, openHelp }}>
       {children}
       <ShortcutsHelpOverlay open={showHelp} onClose={() => setShowHelp(false)} />
     </ShortcutContext.Provider>

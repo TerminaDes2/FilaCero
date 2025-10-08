@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface ShortcutsHelpOverlayProps {
   open: boolean;
@@ -7,6 +8,7 @@ interface ShortcutsHelpOverlayProps {
 }
 
 export const ShortcutsHelpOverlay: React.FC<ShortcutsHelpOverlayProps> = ({ open, onClose }) => {
+  const pathname = usePathname() || '';
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -18,6 +20,24 @@ export const ShortcutsHelpOverlay: React.FC<ShortcutsHelpOverlayProps> = ({ open
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  const items = useMemo(() => {
+    const base: Array<[string, string]> = [
+      ['Ctrl/Cmd + K', 'Enfocar búsqueda'],
+      ['/', 'Enfocar búsqueda'],
+      ['V', 'Alternar vista (grid/list)'],
+      ['P', 'Ir a inicio POS'],
+      ['S', 'Ir a configuración'],
+      ['Ctrl/Cmd + L', 'Cerrar sesión'],
+      ['Enter', 'Confirmar en diálogos / Guardar en paneles'],
+      ['Escape', 'Cancelar/Cerrar diálogo o panel'],
+      ['?', 'Abrir esta ayuda'],
+    ];
+    if (pathname.startsWith('/pos/products')) {
+      base.splice(3, 0, ['N', 'Nuevo producto (admin productos)']);
+    }
+    return base;
+  }, [pathname]);
 
   if (!open) return null;
   return (
@@ -31,17 +51,7 @@ export const ShortcutsHelpOverlay: React.FC<ShortcutsHelpOverlayProps> = ({ open
           </div>
           <p className='text-sm mb-4' style={{ color: 'var(--pos-text-muted)' }}>Mejora tu velocidad con estos atajos. Presiona Escape para cerrar.</p>
           <ul className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm'>
-            {[
-              ['Ctrl/Cmd + K', 'Enfocar búsqueda'],
-              ['/', 'Enfocar búsqueda'],
-              ['V', 'Alternar vista (grid/list)'],
-              ['N', 'Nuevo producto (admin productos)'],
-              ['P', 'Ir a inicio POS'],
-              ['S', 'Ir a configuración'],
-              ['Ctrl/Cmd + L', 'Cerrar sesión'],
-              ['Enter', 'Confirmar en diálogos / Guardar en paneles'],
-              ['Escape', 'Cancelar/Cerrar diálogo o panel'],
-            ].map(([k, desc]) => (
+            {items.map(([k, desc]) => (
               <li key={k} className='flex items-start gap-3'>
                 <span className='px-2 py-1 rounded-md text-[11px] font-semibold' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{k}</span>
                 <span style={{ color: 'var(--pos-text-heading)' }}>{desc}</span>
