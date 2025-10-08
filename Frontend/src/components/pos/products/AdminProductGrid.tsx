@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../../../lib/api';
 import { EditProductPanel } from './EditProductPanel';
 import { EditStockPanel } from './EditStockPanel';
+import { useConfirm } from '../../system/ConfirmProvider';
 
 type AdminProduct = {
   id: string;
@@ -30,6 +31,7 @@ export interface AdminProductGridProps {
 }
 
 export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view }) => {
+  const confirm = useConfirm();
   const [items, setItems] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +105,14 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
 
   const handleToggleActive = async (p: AdminProduct) => {
     try {
+      const ok = await confirm({
+        title: p.active ? 'Desactivar producto' : 'Activar producto',
+        description: p.active ? 'El producto dejará de estar disponible para la venta.' : 'El producto estará disponible para la venta.',
+        confirmText: p.active ? 'Desactivar' : 'Activar',
+        cancelText: 'Cancelar',
+        tone: 'accent'
+      });
+      if (!ok) return;
       setActionBusy(p.id);
       await api.updateProduct(p.id, { estado: p.active ? 'inactivo' : 'activo' });
       await load();
@@ -115,7 +125,13 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
   };
 
   const handleDelete = async (p: AdminProduct) => {
-    const ok = window.confirm(`¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`);
+    const ok = await confirm({
+      title: 'Eliminar producto',
+      description: `¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
     if (!ok) return;
     try {
       setActionBusy(p.id);

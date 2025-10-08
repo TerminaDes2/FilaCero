@@ -18,8 +18,8 @@ export const PaymentSuccessPanel: React.FC<{
 
   useEffect(() => setMounted(true), []);
 
-  const accent = '#d66b85'; // success brand accent (rose)
-  const cardBg = '#f7e6b7'; // warm yellow for summary card
+  const accent = 'var(--pos-accent-green)';
+  const cardBg = 'var(--pos-bg-sand)';
 
   const content = (
     <>
@@ -35,7 +35,7 @@ export const PaymentSuccessPanel: React.FC<{
             onClick={onClose}
             aria-label='Cerrar'
             className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2'
-            style={{ background: 'var(--fc-brand-600)' }}
+            style={{ background: 'var(--pos-accent-green)' }}
           >
             ✕
           </button>
@@ -57,7 +57,7 @@ export const PaymentSuccessPanel: React.FC<{
           </p>
 
           {/* Summary card */}
-          <div className='rounded-2xl p-6 text-left mx-auto' style={{ background: cardBg }}>
+          <div className='rounded-2xl p-6 text-left mx-auto' style={{ background: cardBg, border: '1px solid var(--pos-border-soft)' }}>
             <div className='text-center mb-4'>
               <p className='text-sm font-semibold' style={{ color: 'var(--pos-text-muted)' }}>Monto total</p>
               <p className='text-3xl font-extrabold tabular-nums' style={{ color: accent }}>${total.toFixed(2)}</p>
@@ -80,8 +80,8 @@ export const PaymentSuccessPanel: React.FC<{
               <div className='border-t border-dotted mt-3' style={{ borderColor: 'rgba(0,0,0,0.35)' }} />
 
               <div className='flex items-center justify-between pt-2'>
-                <span className='text-base font-extrabold' style={{ color: '#1f1b16' }}>Cambio del Cliente</span>
-                <span className='text-base font-extrabold tabular-nums' style={{ color: '#1f1b16' }}>${change.toFixed(2)}</span>
+                <span className='text-base font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Cambio del Cliente</span>
+                <span className='text-base font-extrabold tabular-nums' style={{ color: 'var(--pos-text-heading)' }}>${change.toFixed(2)}</span>
               </div>
             </div>
           </div>
