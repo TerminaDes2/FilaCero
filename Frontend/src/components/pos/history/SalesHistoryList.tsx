@@ -90,7 +90,12 @@ export const SalesHistoryList: React.FC = () => {
             {filtered.map((s) => {
               const id = String(s.id_venta);
               const date = s.fecha_venta ? new Date(s.fecha_venta) : null;
-              const total = typeof s.total === 'number' ? s.total : parseFloat(String(s.total ?? 0));
+              // Calcular total de forma robusta: usar s.total si viene; si no, sumar detalle_venta
+              let total = typeof s.total === 'number' ? s.total : parseFloat(String(s.total ?? '0'));
+              const itemsForTotal = s.detalle_venta || [];
+              if (!Number.isFinite(total) || total === 0) {
+                total = itemsForTotal.reduce((acc, d) => acc + (Number(d.cantidad) || 0) * (Number(d.precio_unitario) || 0), 0);
+              }
               const estado = s.estado;
               const items = s.detalle_venta || [];
               return (
