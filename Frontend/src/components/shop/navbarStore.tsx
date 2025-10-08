@@ -1,9 +1,11 @@
-// components/navbar.tsx - VERSIÓN MEJORADA
+// components/navbarStore.tsx - NAVBAR ESPECIAL PARA TIENDA
 "use client";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useUserStore } from "../state/userStore";
+import { useUserStore } from "../../state/userStore";
+import { usePathname, useRouter } from "next/navigation";
+import { useCart } from "./CartContext";
 import { 
   User, 
   LogOut, 
@@ -11,23 +13,11 @@ import {
   LayoutDashboard, 
   ChevronDown,
   Settings,
-  CreditCard
+  CreditCard,
+  Home,
+  ShoppingCart,
+  Package
 } from "lucide-react";
-
-interface NavItem {
-  label: string;
-  href: string;
-}
-
-const navItems: NavItem[] = [
-  { label: "Inicio", href: "#hero" },
-  { label: "Compra ya", href: "shop" },
-  { label: "Características", href: "#features" },
-  { label: "Flujo", href: "#process" },
-  { label: "Beneficios", href: "#benefits" },
-  { label: "Precios", href: "#pricing" },
-  { label: "Contacto", href: "#cta" },
-];
 
 // Función para obtener color y texto del rol
 const getRoleInfo = (id_rol: number) => {
@@ -53,10 +43,12 @@ const getRoleInfo = (id_rol: number) => {
   }
 };
 
-export default function Navbar() {
-  const [open, setOpen] = useState(false);
+export default function NavbarStore() {
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const { open, toggleOpen, total, items } = useCart();
   
   const { user, isAuthenticated, logout, loading } = useUserStore();
 
@@ -89,18 +81,24 @@ export default function Navbar() {
   const handleLogout = () => {
     logout();
     setUserMenuOpen(false);
+    router.push('/');
+  };
+
+  const handleGoHome = () => {
+    router.push('/');
   };
 
   if (loading) {
     return (
-      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-white/70 dark:bg-slate-900/60 shadow">
+      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 shadow-lg border-b border-gray-200 dark:border-slate-700">
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-gray-800">
+          <div className="flex items-center gap-2 font-semibold text-gray-800">
             <Image src="/LogoFilaCero.svg" alt="FilaCero" width={36} height={36} className="drop-shadow-sm" />
-            <span className="hidden sm:inline text-[2rem] font-extrabold select-none">
+            <span className="text-[2rem] font-extrabold select-none">
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span><span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </span>
-          </Link>
+            <span className="text-sm font-medium text-gray-500 ml-2">Tienda</span>
+          </div>
         </nav>
       </header>
     );
@@ -108,32 +106,61 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition ${scrolled ? "backdrop-blur-xl bg-white/70 dark:bg-slate-900/60 shadow" : "bg-transparent"}`}
+      className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 shadow-lg border-b border-gray-200 dark:border-slate-700"
       role="banner"
     >
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between" aria-label="Main">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-gray-800">
-          <Image src="/LogoFilaCero.svg" alt="FilaCero" width={36} height={36} className="drop-shadow-sm" />
-          <span className="hidden sm:inline text-[2rem] font-extrabold select-none">
-            <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span><span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
+        {/* Logo y título de la tienda */}
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-gray-800">
+            <Image src="/LogoFilaCero.svg" alt="FilaCero" width={36} height={36} className="drop-shadow-sm" />
+            <span className="text-[2rem] font-extrabold select-none">
+              <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span><span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
+            </span>
+          </Link>
+          <div className="h-6 w-px bg-gray-300 dark:bg-slate-600"></div>
+          <span className="text-sm font-medium text-gray-600 dark:text-slate-300 flex items-center gap-1">
+            <Store className="w-4 h-4" />
+            Tienda
           </span>
-        </Link>
-        
-        <div className="hidden md:flex gap-8">
-          {navItems.map(item => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="relative text-sm font-medium text-gray-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 focus-visible:outline-none rounded after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-brand-600 dark:after:bg-brand-400 after:transition-all hover:after:w-full"
-            >
-              {item.label}
-            </a>
-          ))}
         </div>
         
-        <div className="hidden md:flex items-center gap-3">
+        {/* Navegación central - Solo botón Inicio */}
+        <div className="hidden md:flex items-center gap-6">
+          <button
+            onClick={handleGoHome}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/10 transition"
+          >
+            <Home className="w-4 h-4" />
+            Volver al Inicio
+          </button>
+        </div>
+        
+        {/* Lado derecho - Menú de usuario */}
+        <div className="flex items-center gap-4">
+          
+          {/* Botón del carrito rosa */}
+                <button 
+                    className="flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-full transition-colors"
+                    onClick={() => toggleOpen(true)}
+                    aria-expanded={open}
+                >
+                    {/* Icono del carrito */}
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="10" cy="20" r="1" />
+                    <circle cx="18" cy="20" r="1" />
+                    </svg>
+                    
+                    {/* Número de items */}
+                    {items.length > 0 && (
+                    <span className="bg-white text-pink-500 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                        {items.length}
+                    </span>
+                    )}
+                </button>        
           {isAuthenticated && user ? (
-            // 👇 MENÚ DE USUARIO AUTENTICADO MEJORADO
+            // 👇 MENÚ DE USUARIO AUTENTICADO
             <div className="relative">
               <button
                 className="user-menu-trigger flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition"
@@ -170,8 +197,8 @@ export default function Navbar() {
                   className={`w-4 h-4 text-gray-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
                 />
               </button>
-              
-              {/* Menú desplegable mejorado */}
+                      
+              {/* Menú desplegable */}
               {userMenuOpen && (
                 <div className="user-menu-content absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 py-2 z-50">
                   {/* Header del usuario */}
@@ -219,15 +246,7 @@ export default function Navbar() {
                       </Link>
                     )}
                     
-                    <Link 
-                      href="/shop" 
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
-                      onClick={() => setUserMenuOpen(false)}
-                    >
-                      <Store className="w-4 h-4 text-gray-500 dark:text-slate-400" />
-                      <span>Tienda</span>
-                    </Link>
-                   
+                    
                     <Link 
                       href="" 
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
@@ -253,137 +272,24 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            // 👇 BOTONES DE LOGIN/REGISTER (no autenticado)
-            <>
+            // 👇 BOTONES DE LOGIN/REGISTER (solo si no está autenticado)
+            <div className="flex items-center gap-3">
               <Link
                 href="/auth/login"
-                className="text-sm font-medium px-4 py-2 rounded-full border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
+                className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
               >
                 Iniciar sesión
               </Link>
               <Link
                 href="/auth/register"
-                className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-full hover:bg-brand-500 transition shadow-glow"
+                className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-500 transition shadow-glow"
               >
                 Crear cuenta
               </Link>
-            </>
+            </div>
           )}
         </div>
-        
-        <button
-          aria-label="Abrir menú"
-          className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded border border-gray-300 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/10 backdrop-blur"
-          onClick={() => setOpen(o => !o)}
-        >
-          <span className="sr-only">Menú</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            {open ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            )}
-          </svg>
-        </button>
       </nav>
-      
-      {/* Menú móvil */}
-      {open && (
-        <div className="md:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-gray-200 dark:border-white/10 px-4 pb-6 pt-2 space-y-2">
-          {navItems.map(item => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="block text-sm font-medium text-gray-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400"
-            >
-              {item.label}
-            </a>
-          ))}
-          
-          <div className="pt-2">
-            {isAuthenticated && user ? (
-              <div className="w-full space-y-3">
-                <div className="px-2 py-3 border-b border-gray-200 dark:border-slate-700">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center">
-                        <User className="w-5 h-5 text-brand-600 dark:text-brand-400" />
-                      </div>
-                      {user.id_rol && (
-                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-[10px] font-bold ${getRoleInfo(user.id_rol).color} ${getRoleInfo(user.id_rol).borderColor}`}>
-                          {user.id_rol === 2 ? "A" : "U"}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{user.nombre}</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400">{user.correo_electronico}</p>
-                      {user.id_rol && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleInfo(user.id_rol).color} ${getRoleInfo(user.id_rol).borderColor}`}>
-                          {getRoleInfo(user.id_rol).text}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                {user.id_rol === 2 && (
-                  <Link 
-                    href="/pos" 
-                    className="flex items-center gap-2 py-2 text-sm text-gray-700 dark:text-slate-200"
-                    onClick={() => setOpen(false)}
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    Panel Admin
-                  </Link>
-                )}
-                
-                <Link 
-                  href="/shop" 
-                  className="flex items-center gap-2 py-2 text-sm text-gray-700 dark:text-slate-200"
-                  onClick={() => setOpen(false)}
-                >
-                  <Store className="w-4 h-4" />
-                  Ir a Tienda
-                </Link>
-                
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 w-full py-2 text-sm font-medium text-red-600 dark:text-red-400"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Cerrar Sesión
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-3">
-                <Link
-                  href="/auth/login"
-                  className="flex-1 text-sm font-medium px-4 py-2 rounded-full border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 text-center hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
-                  onClick={() => setOpen(false)}
-                >
-                  Iniciar sesión
-                </Link>
-                <Link
-                  href="/auth/register"
-                  className="flex-1 text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-full hover:bg-brand-500 transition shadow"
-                  onClick={() => setOpen(false)}
-                >
-                  Crear cuenta
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
