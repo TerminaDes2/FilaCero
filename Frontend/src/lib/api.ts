@@ -1,4 +1,3 @@
-// --- Tu código original (sin cambios) ---
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
 
 export interface ApiError {
@@ -82,39 +81,49 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
     const path = query ? `products?${query}` : 'products';
     return apiFetch<any[]>(path);
   },
-
-  // Crear un nuevo producto
   createProduct: (productData: any) =>
     apiFetch<any>('products', {
       method: 'POST',
       body: JSON.stringify(productData),
     }),
-  
-  // Actualizar un producto
   updateProduct: (id: string, productData: any) =>
     apiFetch<any>(`products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(productData),
     }),
-
-  // Eliminar un producto
   deleteProduct: (id: string) =>
     apiFetch<any>(`products/${id}`, {
       method: 'DELETE',
     }),
 
-  // --- 👇 Inventario ---
-  // Listar inventario por negocio (opcionalmente filtrar por producto)
+  // --- 👇 CÓDIGO AÑADIDO PARA CATEGORÍAS ---
+  getCategories: () => 
+    apiFetch<any[]>('categories'),
+  getCategoryById: (id: string) =>
+    apiFetch<any>(`categories/${id}`),
+  createCategory: (categoryData: { nombre: string }) =>
+    apiFetch<any>('categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    }),
+  updateCategory: (id: string, categoryData: { nombre: string }) =>
+    apiFetch<any>(`categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(categoryData),
+    }),
+  deleteCategory: (id: string) =>
+    apiFetch<any>(`categories/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // --- Funciones de Inventario (SIN CAMBIOS) ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
     return apiFetch<any[]>(`inventory?${query}`);
   },
-  // Crear registro de inventario
   createInventory: (data: { id_negocio: string; id_producto: string; cantidad_actual?: number; stock_minimo?: number }) =>
     apiFetch<any>('inventory', { method: 'POST', body: JSON.stringify(data) }),
-  // Actualizar inventario
   updateInventory: (id: string, data: Partial<{ cantidad_actual: number; stock_minimo: number }>) =>
     apiFetch<any>(`inventory/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  // Eliminar inventario
   deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
 };
