@@ -158,7 +158,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         {step === 'identidad' && (
           <div className="space-y-4">
             {showHints && (
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-xs text-gray-600">
+              <div className="p-3 rounded-xl bg-white/70 ring-1 ring-black/5 text-xs text-gray-600">
                 Usa un nombre fácil de recordar.
                 <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">Ocultar tips</button>
               </div>
@@ -179,7 +179,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
             <Field label="Logo (opcional)" hint="SVG/PNG recomendado. No se sube, solo vista previa.">
               <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
               {draft.identidad.logoDataUrl && (
-                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
                   <img src={draft.identidad.logoDataUrl} alt="Logo preview" className="w-10 h-10 object-contain" />
                   <span className="text-xs text-gray-600">Vista previa</span>
                 </div>
@@ -301,7 +301,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         {step === 'identidad' && (
           <div className="space-y-4">
             {showHints && (
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-xs text-gray-600">
+              <div className="p-3 rounded-xl bg-white/70 ring-1 ring-black/5 text-xs text-gray-600">
                 Usa un nombre fácil de recordar.
                 <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">Ocultar tips</button>
               </div>
@@ -322,7 +322,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
             <Field label="Logo (opcional)" hint="SVG/PNG recomendado. No se sube, solo vista previa.">
               <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
               {draft.identidad.logoDataUrl && (
-                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
                   <img src={draft.identidad.logoDataUrl} alt="Logo preview" className="w-10 h-10 object-contain" />
                   <span className="text-xs text-gray-600">Vista previa</span>
                 </div>
@@ -427,17 +427,17 @@ function Progress({ step }: { step: Step }) {
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-2xl bg-white/80 dark:bg-slate-900/40 backdrop-blur ring-1 ring-black/5 dark:ring-white/10 p-5 shadow-sm">{children}</div>
+  return <div className="rounded-2xl bg-white/80 backdrop-blur ring-1 ring-black/5 p-5 shadow-sm">{children}</div>
 }
 
 function CardHeader({ icon, title, subtitle }: { icon: React.ReactNode, title: string, subtitle: string }) {
   return (
     <div className="mb-4 flex items-center gap-3">
-      <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/70 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10">
+      <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/70 ring-1 ring-black/5">
         {icon}
       </div>
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
         <p className="text-xs text-gray-500">{subtitle}</p>
       </div>
     </div>
@@ -458,7 +458,7 @@ function Field({ label, required, hint, children }: { label: string, required?: 
 
 function Summary({ title, children }: { title: string, children: React.ReactNode }) {
   return (
-    <div className="p-3 rounded-xl bg-white/60 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+    <div className="p-3 rounded-xl bg-white/60 ring-1 ring-black/5">
       <div className="text-xs font-semibold text-gray-700 mb-2">{title}</div>
       <div className="space-y-1">{children}</div>
     </div>
@@ -467,15 +467,15 @@ function Summary({ title, children }: { title: string, children: React.ReactNode
 
 function Item({ label, value }: { label: string, value: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 text-gray-700"><span className="text-xs">{label}</span><span className="text-sm font-medium text-gray-900 dark:text-slate-100">{value}</span></div>
+    <div className="flex items-center justify-between gap-3 text-gray-700"><span className="text-xs">{label}</span><span className="text-sm font-medium text-gray-900">{value}</span></div>
   )
 }
 
 function Preview({ draft }: { draft: Draft }) {
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-white/70 to-white/40 dark:from-white/5 dark:to-white/0 ring-1 ring-black/5 dark:ring-white/10 p-5 h-full">
+    <div className="rounded-2xl bg-gradient-to-br from-white/70 to-white/40 ring-1 ring-black/5 p-5 h-full">
       <div className="text-xs font-semibold text-gray-600 mb-2">Vista previa</div>
-      <div className="rounded-xl p-4 bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+      <div className="rounded-xl p-4 bg-white/80 ring-1 ring-black/5">
         <div className="flex items-center gap-3">
           {draft.identidad.logoDataUrl ? (
             <img src={draft.identidad.logoDataUrl} alt="Logo" className="w-10 h-10 rounded object-contain" />

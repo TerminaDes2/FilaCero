@@ -91,7 +91,7 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
       <button aria-label='Cerrar editor de stock' onClick={onClose} className='fixed inset-0 bg-black/35 backdrop-blur-[1px] cursor-default z-[90]' />
       <aside className='fixed right-0 top-0 h-screen w-[92vw] sm:w-[420px] md:w-[460px] shadow-2xl z-[110] flex flex-col' style={{ background: 'var(--pos-card-bg)', borderLeft: '1px solid var(--pos-card-border)' }}>
         <div className='px-5 py-4 border-b flex items-center gap-3' style={{ borderColor: 'var(--pos-card-border)' }}>
-          <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>📦</div>
+          <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>📦</div>
           <div className='flex-1 min-w-0'>
             <div className='text-[11px] font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Inventario</div>
             <h2 className='text-xl font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{product.name}</h2>

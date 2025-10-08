@@ -35,7 +35,7 @@ export function AuthCard({ children }: AuthCardProps) {
       <div className="flex flex-col justify-center items-center px-4">
         <div className="w-full max-w-md mx-auto">
           <div className="mb-8">
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight mb-2 text-center">
+            <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-2 text-center">
               Inicia sesión o regístrate
             </h1>
           </div>

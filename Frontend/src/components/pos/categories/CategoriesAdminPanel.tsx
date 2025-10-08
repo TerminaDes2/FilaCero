@@ -72,12 +72,12 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ seed
         )}
         {!loading && filtered.length === 0 && (
           <div className='col-span-full text-center py-16 px-4'>
-            <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300 dark:text-slate-600' fill='none' stroke='currentColor' strokeWidth='1.4'>
+            <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
               <circle cx='12' cy='12' r='7' />
               <path d='M8 12h8' />
             </svg>
-            <p className='text-sm font-medium text-slate-600 dark:text-slate-300 mt-3'>No hay resultados</p>
-            <p className='text-[12px] text-slate-500 dark:text-slate-400 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
+            <p className='text-sm font-medium text-slate-600 mt-3'>No hay resultados</p>
+            <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
           </div>
         )}
         {!loading && filtered.map(c => {
@@ -91,8 +91,8 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ seed
                 </div>
               </div>
               <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
-                <button onClick={()=>moveUp(c.id)} className="h-8 w-8 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center justify-center" title="Subir"><ChevronUp className="w-4 h-4"/></button>
-                <button onClick={()=>moveDown(c.id)} className="h-8 w-8 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center justify-center" title="Bajar"><ChevronDown className="w-4 h-4"/></button>
+                <button onClick={()=>moveUp(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Subir"><ChevronUp className="w-4 h-4"/></button>
+                <button onClick={()=>moveDown(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Bajar"><ChevronDown className="w-4 h-4"/></button>
                 <InlineEdit category={c} onSave={(patch)=>update(c.id, patch)} onDelete={()=>remove(c.id)} />
               </div>
             </div>
@@ -121,22 +121,22 @@ function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onS
 
   if (!editing) {
     return (
-      <div className="inline-flex items-center gap-1">
-  <button onClick={()=>setEditing(true)} className="h-8 px-2 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center gap-1" title="Editar"><Pencil className="w-4 h-4"/>Editar</button>
-        <button onClick={onDelete} className="h-8 w-8 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center justify-center text-red-600" title="Eliminar"><Trash2 className="w-4 h-4"/></button>
+  <div className="inline-flex items-center gap-1">
+  <button onClick={()=>setEditing(true)} className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center gap-1" title="Editar"><Pencil className="w-4 h-4"/>Editar</button>
+    <button onClick={onDelete} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center text-red-600" title="Eliminar"><Trash2 className="w-4 h-4"/></button>
       </div>
     );
   }
 
   return (
     <div className="inline-flex items-center gap-2">
-      <input value={name} onChange={e=>setName(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-sm" />
-      <select value={color} onChange={e=>setColor(e.target.value as CategoryColor)} className="h-8 px-2 rounded-lg bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-sm">
+      <input value={name} onChange={e=>setName(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm" />
+      <select value={color} onChange={e=>setColor(e.target.value as CategoryColor)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm">
         {Object.keys(colorTokens).map(c => <option key={c} value={c}>{colorTokens[c as CategoryColor].label}</option>)}
       </select>
-      <input value={icon} onChange={e=>setIcon(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-sm w-20" placeholder="Emoji" />
+      <input value={icon} onChange={e=>setIcon(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm w-20" placeholder="Emoji" />
   <button onClick={commit} className={`h-8 px-3 rounded-lg text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75`}>Guardar</button>
-      <button onClick={()=>setEditing(false)} className="h-8 px-2 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">Cancelar</button>
+      <button onClick={()=>setEditing(false)} className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5">Cancelar</button>
     </div>
   );
 }

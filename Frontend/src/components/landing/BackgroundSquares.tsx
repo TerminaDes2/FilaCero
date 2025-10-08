@@ -104,7 +104,7 @@ export function BackgroundSquares() {
               }}
             >
               <div
-                className="absolute inset-0 rounded-md bg-[var(--sq-color)] border border-black/5 dark:border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.07)] sq-float"
+                className="absolute inset-0 rounded-md bg-[var(--sq-color)] border border-black/5 shadow-[0_10px_25px_rgba(0,0,0,0.07)] sq-float"
                 style={{
                   ['--sq-color' as any]: sq.color,
                   animation: `sqFloat ${duration}s ease-in-out ${delay}s infinite`,

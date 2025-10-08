@@ -189,7 +189,7 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
   return (
     <div ref={wrapperRef} className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {/* Base gradient & subtle texture */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(213,93,123,0.18),transparent_65%),radial-gradient(circle_at_75%_70%,rgba(76,193,173,0.18),transparent_60%),linear-gradient(120deg,#ffffff,#fffaf7,#f4fffb)] dark:bg-[radial-gradient(circle_at_25%_30%,rgba(213,93,123,0.32),transparent_65%),radial-gradient(circle_at_75%_70%,rgba(76,193,173,0.32),transparent_60%),linear-gradient(120deg,#0f172a,#102026,#08211d)]" />
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(213,93,123,0.18),transparent_65%),radial-gradient(circle_at_75%_70%,rgba(76,193,173,0.18),transparent_60%),linear-gradient(120deg,#ffffff,#fffaf7,#f4fffb)]" />
       <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay" style={{ backgroundImage:'linear-gradient(rgba(0,0,0,0.12) 1px,transparent 0),linear-gradient(90deg,rgba(0,0,0,0.12) 1px,transparent 0)', backgroundSize:'90px 90px' }} />
 
       {/* Canvas particles + paths */}
@@ -204,21 +204,20 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
           const opacity = p < 0.8 ? 0.28 : 0.28 * (1 - (p-0.8)/0.2);
           return (
             <span key={t.id} style={{ left:t.x+'%', top:t.y+'%', transform:`translate(-50%, -50%) rotate(${t.rot}deg) scale(${scale})` }} className="absolute">
-              <span style={{opacity}} className="block w-28 h-10 rounded-md bg-white/60 dark:bg-white/5 backdrop-blur-sm shadow-sm ring-1 ring-white/50 dark:ring-white/10" />
+              <span style={{opacity}} className="block w-28 h-10 rounded-md bg-white/60 backdrop-blur-sm shadow-sm ring-1 ring-white/50" />
             </span>
           );
         })}
       </div>
 
       {/* Halo spotlight */}
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at var(--halo-x,50%) var(--halo-y,50%), rgba(255,255,255,0.0), rgba(255,255,255,0.55))' }} />
-      <div className="absolute inset-0 dark:opacity-100 opacity-0" style={{ background: 'radial-gradient(circle at var(--halo-x,50%) var(--halo-y,50%), rgba(0,0,0,0.0), rgba(15,23,42,0.55))' }} />
+  <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at var(--halo-x,50%) var(--halo-y,50%), rgba(255,255,255,0.0), rgba(255,255,255,0.55))' }} />
 
       {/* Peripheral ambient stats (optional) */}
       {showAmbientStats && !reduced && (
-        <div className="absolute top-6 right-8 hidden md:flex flex-col gap-2 text-[10px] font-medium tracking-wide text-gray-600 dark:text-slate-300">
-          <div className="px-2 py-1 rounded bg-white/60 dark:bg-white/10 backdrop-blur-sm shadow border border-white/50 dark:border-white/5 animate-pulse">Pedidos en cola: <span className="text-brand-600 dark:text-brand-400">4</span></div>
-          <div className="px-2 py-1 rounded bg-white/60 dark:bg-white/10 backdrop-blur-sm shadow border border-white/50 dark:border-white/5">Tiempo medio prep: 6m</div>
+        <div className="absolute top-6 right-8 hidden md:flex flex-col gap-2 text-[10px] font-medium tracking-wide text-gray-600">
+          <div className="px-2 py-1 rounded bg-white/60 backdrop-blur-sm shadow border border-white/50 animate-pulse">Pedidos en cola: <span className="text-brand-600">4</span></div>
+          <div className="px-2 py-1 rounded bg-white/60 backdrop-blur-sm shadow border border-white/50">Tiempo medio prep: 6m</div>
         </div>
       )}
 

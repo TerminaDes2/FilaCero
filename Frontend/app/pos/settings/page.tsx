@@ -285,17 +285,10 @@ function BusinessSection() {
 }
 
 function AppearanceSection() {
-  const { mode, density, accentTeal, set } = useSettingsStore();
+  const { density, accentTeal, set } = useSettingsStore();
   return (
     <div className='space-y-4'>
-      <Card title='Tema' desc='Elige cómo se ve la app'>
-        <Row label='Modo'>
-          <div className='grid grid-cols-3 gap-2'>
-            <button onClick={()=>set({mode:'system'})} className={`px-3 py-2 rounded-lg text-[13px] ${mode==='system'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Sistema</button>
-            <button onClick={()=>set({mode:'light'})} className={`px-3 py-2 rounded-lg text-[13px] ${mode==='light'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Claro</button>
-            <button onClick={()=>set({mode:'dark'})} className={`px-3 py-2 rounded-lg text-[13px] ${mode==='dark'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Oscuro</button>
-          </div>
-        </Row>
+      <Card title='Tema' desc='Ajustes visuales (solo modo claro)'>
         <Row label='Densidad'>
           <Select value={density} onChange={e=> set({density: e.target.value as any})}>
             <option value='comfortable'>Cómoda</option>

@@ -88,7 +88,7 @@ const features: Feature[] = [
 
 export function Features() {
   return (
-  <section id="features" className="py-28 relative overflow-hidden bg-white dark:bg-slate-950" aria-labelledby="features-heading">
+  <section id="features" className="py-28 relative overflow-hidden bg-white" aria-labelledby="features-heading">
       {/* Colored radial accents */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.10]" style={{ background: "radial-gradient(circle at 30% 30%, rgba(233,74,111,0.15), transparent 60%), radial-gradient(circle at 70% 20%, rgba(76,193,173,0.12), transparent 65%)" }} />
       {/* Subtle dot grid overlay */}
@@ -107,16 +107,16 @@ export function Features() {
             return (
               <Reveal delay={70*i} key={f.title} className="relative group">
                 <div
-                  className="relative h-full p-6 rounded-2xl bg-white/85 dark:bg-slate-900/60 backdrop-blur-xl overflow-hidden shadow-sm ring-1 ring-gray-200/60 dark:ring-white/10 hover:shadow-md transition">
+                  className="relative h-full p-6 rounded-2xl bg-white/85 backdrop-blur-xl overflow-hidden shadow-sm ring-1 ring-gray-200/60 hover:shadow-md transition">
                   <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
                   <div className="mb-5">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ring-1 ring-white/60 dark:ring-white/5 bg-gradient-to-br from-brand-500 to-brand-600 relative overflow-hidden" aria-hidden="true">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ring-1 ring-white/60 bg-gradient-to-br from-brand-500 to-brand-600 relative overflow-hidden" aria-hidden="true">
                       <div className="absolute inset-0 opacity-30 mix-blend-overlay" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.9), transparent 70%)' }} />
                       {f.icon}
                     </div>
                   </div>
-                  <h3 className="text-base font-semibold mb-1.5 text-gray-800 dark:text-slate-100 tracking-tight">{f.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">{f.description}</p>
+                  <h3 className="text-base font-semibold mb-1.5 text-gray-800 tracking-tight">{f.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{f.description}</p>
                 </div>
               </Reveal>
             );

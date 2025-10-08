@@ -3,14 +3,11 @@ import { useEffect } from 'react';
 import { useSettingsStore } from '../state/settingsStore';
 
 export default function ClientSettingsApplier() {
-  const { mode, density, accentTeal } = useSettingsStore();
+  const { density, accentTeal } = useSettingsStore();
 
   useEffect(() => {
     const root = document.documentElement;
     const apply = () => {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
-      root.classList.toggle('dark', isDark);
       root.classList.toggle('density-compact', density === 'compact');
 
       // Accent mapping: swap POS primary accent between teal and brand
@@ -24,14 +21,7 @@ export default function ClientSettingsApplier() {
     };
 
     apply();
-
-    if (mode === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = () => apply();
-      mq.addEventListener?.('change', handler);
-      return () => mq.removeEventListener?.('change', handler);
-    }
-  }, [mode, density, accentTeal]);
+  }, [density, accentTeal]);
 
   return null;
 }
