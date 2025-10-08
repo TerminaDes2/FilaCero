@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -69,14 +69,37 @@ export class ProductsService {
 
   async remove(id: string) {
     const productId = BigInt(id);
-    
-    // Es buena práctica verificar que el producto existe antes de borrarlo.
+
+    // Verificar existencia previa para devolver 404 coherente
     await this.findOne(id);
 
-    await this.prisma.producto.delete({
-      where: { id_producto: productId },
-    });
-    
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Limpiamos dependencias directas antes de eliminar el producto
+        const movimientoTable = await tx.$queryRaw<Array<{ exists: boolean }>>`
+          SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name = 'movimientos_inventario'
+          ) AS exists
+        `;
+
+        if (movimientoTable?.[0]?.exists) {
+          await tx.$executeRaw`DELETE FROM movimientos_inventario WHERE id_producto = ${productId}`;
+        }
+
+        await tx.inventario.deleteMany({ where: { id_producto: productId } });
+        await tx.producto.delete({ where: { id_producto: productId } });
+      });
+    } catch (e: any) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
+        // Existen registros dependientes (p.ej. ventas) que impiden eliminarlo
+        throw new ConflictException('No se puede eliminar el producto porque tiene dependencias activas (ventas u otros registros).');
+      }
+      throw e;
+    }
+
     return { message: `Producto con ID #${id} eliminado correctamente.`, deleted: true };
   }
 }
