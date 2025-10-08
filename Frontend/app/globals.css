@@ -67,6 +67,10 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 
 	/* === POS Mockup Specific Palette === */
 	/* Soft sand / crema background */
+	/* Controls sizing */
+	--pos-control-h: 44px; /* default control/button height */
+	--pos-control-radius: 10px; /* default rounding for controls */
+
 	--pos-bg-sand: #f6e4b8; /* main panel background (productos) */
 	--pos-bg-sand-soft: #f9edcd; /* lighter variant for sections */
 	--pos-bg-sidebar: #E88693; /* sidebar base (pink) */
@@ -94,6 +98,12 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 	/* Destructive/danger accents */
 	--pos-danger-bg: #f36f5b;
 	--pos-danger-text: #8c2e3b;
+}
+
+/* Compact density overrides (applied when html has class density-compact) */
+.density-compact {
+	--pos-control-h: 38px;
+	--pos-control-radius: 8px;
 }
 
 /* Utilidad gradiente fondo */

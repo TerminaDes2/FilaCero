@@ -90,7 +90,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
             <div className='text-[11px] font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Nueva</div>
             <h2 className='text-xl font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{icon ? `${icon} ` : ''}{name || 'Categoría'}</h2>
           </div>
-          <button onClick={onClose} className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2 transition-colors' style={{ background: 'var(--fc-brand-600)' }}>✕</button>
+          <button onClick={onClose} className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2 transition-colors' style={{ background: 'var(--pos-accent-green)' }}>✕</button>
         </div>
 
         {/* Body */}
@@ -106,13 +106,13 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
             <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Información básica</h3>
             <div>
               <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Nombre</label>
-              <input ref={nameInputRef} value={name} onChange={e => setName(e.target.value)} className='w-full h-10 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
+              <input ref={nameInputRef} value={name} onChange={e => setName(e.target.value)} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
             </div>
             <div className='grid grid-cols-2 gap-3'>
               <div>
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Color</label>
                 <div className='relative'>
-                  <select value={color} onChange={e => setColor(e.target.value as CategoryColor)} className='appearance-none w-full h-10 rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
+                  <select value={color} onChange={e => setColor(e.target.value as CategoryColor)} className='appearance-none w-full rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
                     {Object.keys(colorTokens).map(c => (
                       <option key={c} value={c}>{colorTokens[c as CategoryColor].label}</option>
                     ))}
@@ -124,7 +124,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
               </div>
               <div>
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Emoji (opcional)</label>
-                <input value={icon} onChange={e => setIcon(e.target.value)} className='w-full h-10 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' placeholder='🍹' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
+                <input value={icon} onChange={e => setIcon(e.target.value)} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' placeholder='🍹' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
               </div>
             </div>
           </section>
@@ -143,8 +143,8 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
         <div className='p-5 border-t flex items-center justify-between gap-2' style={{ borderColor: 'var(--pos-card-border)' }}>
           <div className='text-[11px] text-[var(--pos-text-muted)] hidden sm:block'>Esc para cerrar</div>
           <div className='ml-auto flex items-center gap-2'>
-            <button onClick={onClose} className='h-11 px-4 rounded-lg text-sm font-semibold transition-colors' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>Cancelar</button>
-            <button onClick={handleSubmit} className='h-11 px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2' style={{ background: 'var(--fc-brand-600)' }} disabled={saving}>
+            <button onClick={onClose} className='px-4 rounded-lg text-sm font-semibold transition-colors' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>Cancelar</button>
+            <button onClick={handleSubmit} className='px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', background: 'var(--pos-accent-green)' }} disabled={saving}>
               {saving ? 'Creando…' : 'Crear →'}
             </button>
           </div>
