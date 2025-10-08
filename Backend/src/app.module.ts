@@ -8,6 +8,8 @@ import { HealthController } from './health.controller';
 import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { CategoriesModule } from './categories/categories.module';
+import { SalesModule } from './sales/sales.module';
+import { BusinessesModule } from './businesses/businesses.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { CategoriesModule } from './categories/categories.module';
     ProductsModule, // módulo de productos (Prisma)
     InventoryModule, // módulo de inventario (Prisma)
     CategoriesModule, // módulo de categorías (Prisma)
+  SalesModule, // módulo de ventas (Prisma)
+    BusinessesModule, // módulo de negocios (Prisma)
     // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
     // ProductModule,
   ],

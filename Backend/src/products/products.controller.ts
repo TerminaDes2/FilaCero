@@ -21,9 +21,10 @@ export class ProductsController {
   list(
     @Query('search') search?: string,
     @Query('status') status?: string,
+    @Query('id_negocio') id_negocio?: string,
   ) {
     // 2. Ahora pasamos un objeto al servicio, como él espera.
-    return this.service.findAll({ search, status });
+    return this.service.findAll({ search, status, id_negocio });
   }
 
   @Get(':id')

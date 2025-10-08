@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '../../../state/userStore';
 import { useSettingsStore } from '../../../state/settingsStore';
+import { useShortcuts } from '../../system/ShortcutProvider';
 
 export interface TopRightInfoProps {
   employeeName?: string;
@@ -24,6 +25,8 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
   const router = useRouter();
   const { reset } = useUserStore();
   const { locale, dateFormat } = useSettingsStore();
+  let openHelp: (() => void) | null = null;
+  try { ({ openHelp } = useShortcuts()); } catch {}
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const today = useMemo(() => date ?? new Date(), [date]);
@@ -52,10 +55,29 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
     router.push('/');
   };
 
+  // Pull dynamic name/role from store as primary source
+  const { name: storeName, backendRole } = useUserStore();
+  const looksLikeEmail = (v?: string | null) => !!v && /.+@.+\..+/.test(v);
+  const displayName = looksLikeEmail(storeName) ? (employeeName || 'Usuario') : (storeName || employeeName);
+  const displayRole = (backendRole && typeof backendRole === 'string') ? (backendRole === 'admin' ? 'Administrador' : backendRole) : role;
+
   return (
     <aside className="flex flex-col items-end gap-1 select-none" aria-label="Información superior derecha">
       {/* Nivel 1 */}
       <div className="flex items-start gap-3">
+        {/* Botón Ayuda (atajos) */}
+        <button
+          type="button"
+          onClick={() => openHelp?.()}
+          aria-label="Ver atajos del teclado"
+          className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm focus:outline-none focus-visible:ring-2"
+          style={{ background: 'rgba(255,255,255,0.7)', color: '#6d2530', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)' }}
+          title="Atajos (?)"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8.5 9a3.5 3.5 0 1 1 5.657 2.657c-.6.5-1.157.99-1.157 1.843V14" />
+          </svg>
+        </button>
         {/* Botón Notificaciones */}
         <button
           type="button"
@@ -89,8 +111,8 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
 
         {/* Nombre y rol */}
         <div className="leading-tight text-right">
-          <div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>{employeeName}</div>
-          <div className="text-[11px]" style={{ color: 'var(--pos-text-muted)' }}>{role}</div>
+          <div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>{displayName}</div>
+          <div className="text-[11px]" style={{ color: 'var(--pos-text-muted)' }}>{displayRole}</div>
         </div>
       </div>
 

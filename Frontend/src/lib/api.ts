@@ -94,6 +94,25 @@ export const api = {
   // --- Productos generales ---
   getProducts: (params?: { search?: string; status?: string }) => {
     const query = params ? new URLSearchParams(params as any).toString() : '';
+  // Obtener la lista de productos (con filtros opcionales)
+  getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
+    const merged = { ...(params || {}) } as { [key: string]: string | undefined };
+    if (!merged.id_negocio) {
+      let negocioId: string | undefined = undefined;
+      try { negocioId = typeof window !== 'undefined' ? localStorage.getItem('active_business_id') || undefined : undefined; } catch {}
+      if (!negocioId) {
+        const negocioEnv = process.env.NEXT_PUBLIC_NEGOCIO_ID;
+        if (negocioEnv) negocioId = negocioEnv;
+      }
+      if (negocioId) merged.id_negocio = negocioId;
+    }
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(merged)) {
+      if (value != null && value !== '') {
+        queryParams.append(key, String(value));
+      }
+    }
+    const query = queryParams.toString();
     const path = query ? `products?${query}` : 'products';
     return apiFetch<any[]>(path);
   },
@@ -116,6 +135,32 @@ export const api = {
     }),
 
   // --- 👇 Inventario ---
+  // --- 👇 CÓDIGO AÑADIDO PARA CATEGORÍAS ---
+  getCategories: () => 
+    apiFetch<any[]>('categories'),
+  getCategoryById: (id: string) =>
+    apiFetch<any>(`categories/${id}`),
+  createCategory: (categoryData: { nombre: string }) =>
+    apiFetch<any>('categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    }),
+  updateCategory: (id: string, categoryData: { nombre: string }) =>
+    apiFetch<any>(`categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(categoryData),
+    }),
+  deleteCategory: (id: string) =>
+    apiFetch<any>(`categories/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // --- 👇 NEGOCIOS ---
+  createBusiness: (data: { nombre: string; direccion?: string; telefono?: string; correo?: string; logo?: string }) =>
+    apiFetch<any>('businesses', { method: 'POST', body: JSON.stringify(data) }),
+  listMyBusinesses: () => apiFetch<any[]>('businesses/my'),
+
+  // --- Funciones de Inventario (SIN CAMBIOS) ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
     return apiFetch<any[]>(`inventory?${query}`);

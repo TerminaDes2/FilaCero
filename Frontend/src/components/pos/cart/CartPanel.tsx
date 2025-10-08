@@ -5,8 +5,10 @@ import { PaymentSuccessPanel } from '../payments/PaymentSuccessPanel';
 import { PaymentPanel } from '../payments/PaymentPanel';
 import { AddToCartPanel } from '../products/AddToCartPanel';
 
+import { useConfirm } from '../../system/ConfirmProvider';
 export const CartPanel: React.FC = () => {
   const { items, subtotal, total, remove, inc, dec, clear } = useCart();
+  const confirm = useConfirm();
   const hasItems = items.length > 0;
   const [showPayment, setShowPayment] = useState(false); // show PaymentPanel
   const [showSuccess, setShowSuccess] = useState(false); // show PaymentSuccessPanel
@@ -18,19 +20,19 @@ export const CartPanel: React.FC = () => {
   return (
     <div className='flex flex-col h-full overflow-hidden' style={{color:'var(--pos-text-heading)'}}>
   <header className='pb-2 border-b mb-2 flex-none' style={{borderColor:'var(--pos-summary-border)'}}>
-        <h2 className='text-base font-semibold' style={{color:'#4a3327'}}>Carrito</h2>
+  <h2 className='text-base font-semibold' style={{color:'var(--pos-text-heading)'}}>Carrito</h2>
         <p className='text-xs mt-0.5' style={{color:'var(--pos-text-muted)'}}>Gestiona la orden actual</p>
       </header>
   <div className='flex-1 overflow-y-auto pr-1 space-y-2 pb-1 custom-scroll-area'>
         {!hasItems && (
           <div className='mt-10 text-center px-4'>
-            <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300 dark:text-slate-600' fill='none' stroke='currentColor' strokeWidth='1.4'>
+            <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
               <path strokeLinecap='round' strokeLinejoin='round' d='M3 3h2l2 13h10l2-10H6' />
               <circle cx='9' cy='19' r='1'/>
               <circle cx='16' cy='19' r='1'/>
             </svg>
-            <p className='text-sm font-medium text-slate-600 dark:text-slate-300 mt-3'>Tu carrito está vacío</p>
-            <p className='text-[12px] text-slate-500 dark:text-slate-400 mt-1'>Agrega productos para comenzar la orden.</p>
+            <p className='text-sm font-medium text-slate-600 mt-3'>Tu carrito está vacío</p>
+            <p className='text-[12px] text-slate-500 mt-1'>Agrega productos para comenzar la orden.</p>
           </div>
         )}
 
@@ -44,13 +46,13 @@ export const CartPanel: React.FC = () => {
                   <p className='text-[11px] mt-0.5 italic' style={{ color: 'var(--pos-text-muted)' }}>Nota: {item.note}</p>
                 )}
                 <div className='flex items-center gap-1.5 mt-2'>
-                  <button onClick={()=> dec(item.lineId)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>−</button>
+                  <button onClick={()=> dec(item.lineId)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>−</button>
                   <span className='text-[12px] font-medium w-6 text-center tabular-nums' style={{color:'var(--pos-text-heading)'}}>{item.qty}</span>
-                  <button onClick={()=> inc(item.lineId)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>+</button>
+                  <button onClick={()=> inc(item.lineId)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>+</button>
                 </div>
               </div>
               <div className='text-right'>
-                <p className='text-[12px] font-semibold tabular-nums' style={{color:'#4a3327'}}>${(item.product.price * item.qty).toFixed(2)}</p>
+                <p className='text-[12px] font-semibold tabular-nums' style={{color:'var(--pos-text-heading)'}}>${(item.product.price * item.qty).toFixed(2)}</p>
                 <div className='flex items-center gap-2 justify-end mt-2'>
                   <button onClick={()=> setEditLineId(item.lineId)} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'var(--pos-text-muted)'}}>
                     <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
@@ -58,7 +60,16 @@ export const CartPanel: React.FC = () => {
                     </svg>
                     Editar
                   </button>
-                  <button onClick={()=> remove(item.lineId)} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'#8c2e3b'}}>
+                  <button onClick={async ()=> {
+                    const ok = await confirm({
+                      title: 'Quitar del carrito',
+                      description: '¿Seguro que quieres quitar este producto? Esta acción no se puede deshacer.',
+                      confirmText: 'Quitar',
+                      cancelText: 'Cancelar',
+                      tone: 'danger'
+                    });
+                    if (ok) remove(item.lineId);
+                  }} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'var(--pos-danger-text)'}}>
                   <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
                     <path d='M3 6h18' />
                     <path d='M8 6V4h8v2' />
@@ -98,7 +109,7 @@ export const CartPanel: React.FC = () => {
                 <dt className='text-[11px] uppercase tracking-wide font-medium' style={{color:'var(--pos-text-muted)'}}>Total</dt>
                 <dd
                   className='tabular-nums text-[15px] font-semibold'
-                  style={{color:'#4a3327'}}
+                  style={{color:'var(--pos-text-heading)'}}
                   aria-live='polite'
                   aria-atomic='true'
                 >
@@ -122,7 +133,7 @@ export const CartPanel: React.FC = () => {
               text-sm md:text-base font-semibold tracking-tight
               disabled:opacity-40 disabled:cursor-not-allowed
               transition-shadow hover:shadow-md
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-teal-500)]
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pos-accent-green)]
             '
             onClick={()=> setShowPayment(true)}
           >
@@ -130,7 +141,7 @@ export const CartPanel: React.FC = () => {
             <span
               aria-hidden='true'
               className='
-                absolute inset-0 z-0 bg-[var(--fc-teal-500)]
+                absolute inset-0 z-0 bg-[var(--pos-accent-green)]
                 [clip-path:circle(14px_at_24px_50%)]
                 group-hover:[clip-path:circle(140%_at_50%_50%)]
                 transition-[clip-path] duration-500 ease-out
@@ -162,7 +173,17 @@ export const CartPanel: React.FC = () => {
               Pagar
             </span>
           </button>
-          <button disabled={!hasItems} onClick={clear} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'#694b3e'}}>Limpiar</button>
+          
+          <button disabled={!hasItems} onClick={async ()=>{
+            const ok = await confirm({
+              title: 'Limpiar carrito',
+              description: 'Vas a eliminar todos los productos del carrito. ¿Continuar?',
+              confirmText: 'Limpiar',
+              cancelText: 'Cancelar',
+              tone: 'danger'
+            });
+            if (ok) clear();
+          }} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>Limpiar</button>
         </div>
         {showPayment && (
           <PaymentPanel

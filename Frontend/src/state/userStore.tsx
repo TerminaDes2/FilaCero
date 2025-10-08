@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { api, UserInfo } from '../lib/api'; // Ajusta la ruta según tu estructura
 
 export type AppRole = 'CUSTOMER' | 'OWNER' | null;
+export type BackendRole = 'usuario' | 'admin' | string | null;
 
 interface UserState {
   // Estado de autenticación
@@ -17,6 +18,10 @@ interface UserState {
   // Estado existente (mantener compatibilidad)
   role: AppRole;
   setRole: (r: AppRole) => void;
+  name: string | null;
+  setName: (n: string | null) => void;
+  backendRole: BackendRole;
+  setBackendRole: (r: BackendRole) => void;
   tempData: Record<string, unknown>;
   setTempData: (k: string, v: unknown) => void;
   reset: () => void;
@@ -28,6 +33,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRoleState] = useState<AppRole>(null);
+  const [name, setNameState] = useState<string | null>(null);
+  const [backendRole, setBackendRoleState] = useState<BackendRole>(null);
   const [tempData, setTemp] = useState<Record<string, unknown>>({});
 
   // Verificar autenticación al cargar
@@ -52,6 +59,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout();
     } finally {
       setLoading(false);
+      const storedUser = localStorage.getItem('auth_user');
+      let parsedUser: any | null = null;
+      if (storedUser) {
+        try { parsedUser = JSON.parse(storedUser); } catch {}
+      }
+      const token = localStorage.getItem('auth_token');
+      // Populate from stored user first
+      if (parsedUser) {
+        setNameState(parsedUser?.name || parsedUser?.nombre || null);
+        setBackendRoleState((parsedUser?.role as BackendRole) ?? null);
+      }
+      // If we have token but no name yet, fetch me()
+      if (token && !(parsedUser?.name || parsedUser?.nombre)) {
+        import('../lib/api').then(({ api }) => {
+          api.me().then((u)=>{
+            const newName = u?.name || (u as any)?.nombre || null;
+            setNameState(newName);
+            setBackendRoleState((u?.role as BackendRole) ?? null);
+            try {
+              const merged = { ...(parsedUser || {}), ...(u || {}) };
+              localStorage.setItem('auth_user', JSON.stringify(merged));
+            } catch {}
+          }).catch(()=>{});
+        }).catch(()=>{});
+      }
     }
   };
 
@@ -77,6 +109,37 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('selectedRole');
     }
     console.log('✅ Sesión cerrada');
+      const storedRole = localStorage.getItem('userRole') as AppRole;
+      console.log('🔄 UserStore: Loading role from localStorage:', storedRole);
+      if (storedRole) {
+        setRoleState(storedRole);
+      }
+      const storedUser = localStorage.getItem('auth_user');
+      let parsedUser: any | null = null;
+      if (storedUser) {
+        try { parsedUser = JSON.parse(storedUser); } catch {}
+      }
+      const token = localStorage.getItem('auth_token');
+      // Populate from stored user first
+      if (parsedUser) {
+        setNameState(parsedUser?.name || parsedUser?.nombre || null);
+        setBackendRoleState((parsedUser?.role as BackendRole) ?? null);
+      }
+      // If we have token but no name yet, fetch me()
+      if (token && !(parsedUser?.name || parsedUser?.nombre)) {
+        import('../lib/api').then(({ api }) => {
+          api.me().then((u)=>{
+            const newName = u?.name || (u as any)?.nombre || null;
+            setNameState(newName);
+            setBackendRoleState((u?.role as BackendRole) ?? null);
+            try {
+              const merged = { ...(parsedUser || {}), ...(u || {}) };
+              localStorage.setItem('auth_user', JSON.stringify(merged));
+            } catch {}
+          }).catch(()=>{});
+        }).catch(()=>{});
+      }
+    }
   }, []);
 
   const setRole = useCallback((newRole: AppRole) => {
@@ -90,6 +153,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const setName = useCallback((n: string | null) => {
+    setNameState(n);
+  }, []);
+
+  const setBackendRole = useCallback((r: BackendRole) => {
+    setBackendRoleState(r);
+  }, []);
+
   const setTempData = useCallback((k: string, v: unknown) => {
     setTemp(prev => ({ ...prev, [k]: v }));
   }, []);
@@ -97,6 +168,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const reset = useCallback(() => {
     logout();
   }, [logout]);
+    setRoleState(null);
+    setNameState(null);
+    setBackendRoleState(null);
+    setTemp({});
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('selectedRole');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    }
+  }, []);
 
   return (
     <UserContext.Provider value={{ 
@@ -111,6 +193,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Estado existente
       role, 
       setRole, 
+      name,
+      setName,
+      backendRole,
+      setBackendRole,
       tempData, 
       setTempData, 
       reset

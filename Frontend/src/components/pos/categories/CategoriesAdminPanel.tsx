@@ -2,12 +2,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useCategoriesStore, CategoryItem, CategoryColor } from '../../../pos/categoriesStore';
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
-// Skeletons removed
 import { SearchBox } from '../../pos/controls/SearchBox';
 
 interface CategoriesAdminPanelProps {
-  seedFrom?: string[]; // optional initial categories to seed from products
-  onNewCategory?: () => void; // open side panel to create a category
+  onNewCategory?: () => void;
 }
 
 const colorTokens: Record<CategoryColor, { bg: string; fg: string; ring: string; dot: string; label: string }> = {
@@ -18,30 +16,28 @@ const colorTokens: Record<CategoryColor, { bg: string; fg: string; ring: string;
   rose: { bg: 'bg-rose-500/12', fg: 'text-rose-700', ring: 'ring-rose-500/30', dot: 'bg-rose-500', label: 'Rose' }
 };
 
-export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ seedFrom = [], onNewCategory }) => {
-  const { categories, bootstrap, add, update, remove, moveUp, moveDown } = useCategoriesStore();
+export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNewCategory }) => {
+  // --- 👇 CÓDIGO MODIFICADO ---
+  // Obtenemos 'fetchCategories' y ya no necesitamos 'bootstrap'
+  const { categories, fetchCategories, update, remove, moveUp, moveDown } = useCategoriesStore();
   const [query, setQuery] = useState('');
-  // Quick-add form removed in favor of side panel
   const [loading, setLoading] = useState(true);
 
+  // Reemplazamos el useEffect para que cargue desde la API
   useEffect(() => {
-  // Simulate load
     setLoading(true);
-    bootstrap(seedFrom);
-  const t = setTimeout(() => setLoading(false), 200);
-    return () => clearTimeout(t);
+    fetchCategories().finally(() => {
+      setLoading(false);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seedFrom.join('|')]);
-
-  // no empty delay needed
+  }, []); // El array vacío asegura que se ejecute solo una vez
+  // --- FIN DEL CÓDIGO MODIFICADO ---
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return categories;
     return categories.filter(c => c.name.toLowerCase().includes(q));
   }, [categories, query]);
-
-  // onAdd removed
 
   return (
     <div className="flex flex-col gap-4">
@@ -63,21 +59,19 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ seed
         </div>
       </div>
 
-      {/* Quick-add form moved to side panel to mirror POS forms */}
-
       {/* Grid of category chips with controls */}
-  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 rounded-2xl p-1" style={{ boxShadow:'inset 0 0 0 1px var(--pos-border-soft)' }}>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 rounded-2xl p-1" style={{ boxShadow:'inset 0 0 0 1px var(--pos-border-soft)' }}>
         {loading && (
           <div className='col-span-full text-center py-8 text-[var(--pos-text-muted)] text-sm'>Cargando categorías…</div>
         )}
         {!loading && filtered.length === 0 && (
           <div className='col-span-full text-center py-16 px-4'>
-            <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300 dark:text-slate-600' fill='none' stroke='currentColor' strokeWidth='1.4'>
+            <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
               <circle cx='12' cy='12' r='7' />
               <path d='M8 12h8' />
             </svg>
-            <p className='text-sm font-medium text-slate-600 dark:text-slate-300 mt-3'>No hay resultados</p>
-            <p className='text-[12px] text-slate-500 dark:text-slate-400 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
+            <p className='text-sm font-medium text-slate-600 mt-3'>No hay resultados</p>
+            <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
           </div>
         )}
         {!loading && filtered.map(c => {
@@ -91,8 +85,8 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ seed
                 </div>
               </div>
               <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
-                <button onClick={()=>moveUp(c.id)} className="h-8 w-8 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center justify-center" title="Subir"><ChevronUp className="w-4 h-4"/></button>
-                <button onClick={()=>moveDown(c.id)} className="h-8 w-8 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center justify-center" title="Bajar"><ChevronDown className="w-4 h-4"/></button>
+                <button onClick={()=>moveUp(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Subir"><ChevronUp className="w-4 h-4"/></button>
+                <button onClick={()=>moveDown(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Bajar"><ChevronDown className="w-4 h-4"/></button>
                 <InlineEdit category={c} onSave={(patch)=>update(c.id, patch)} onDelete={()=>remove(c.id)} />
               </div>
             </div>
@@ -103,40 +97,96 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ seed
   );
 };
 
-function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onSave:(patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>>) => void, onDelete:()=>void }) {
+// La sub-función InlineEdit no necesita cambios
+function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onSave:(patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>>) => Promise<void>, onDelete:()=>Promise<void> }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(category.name);
   const [color, setColor] = useState<CategoryColor>(category.color);
   const [icon, setIcon] = useState(category.icon || '');
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
   const t = colorTokens[color];
 
-  const commit = () => {
+  const commit = async () => {
     const patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>> = {};
     if (name.trim() && name.trim() !== category.name) patch.name = name.trim();
     if (icon.trim() !== (category.icon || '')) patch.icon = icon.trim() || undefined;
     if (color !== category.color) patch.color = color;
-    if (Object.keys(patch).length) onSave(patch);
-    setEditing(false);
+    if (!Object.keys(patch).length) {
+      setEditing(false);
+      return;
+    }
+
+    setPending(true);
+    setError(null);
+    try {
+      await onSave(patch);
+      setEditing(false);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'No se pudo guardar los cambios.';
+      setError(message);
+    } finally {
+      setPending(false);
+    }
   };
 
   if (!editing) {
     return (
       <div className="inline-flex items-center gap-1">
-  <button onClick={()=>setEditing(true)} className="h-8 px-2 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center gap-1" title="Editar"><Pencil className="w-4 h-4"/>Editar</button>
-        <button onClick={onDelete} className="h-8 w-8 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 inline-flex items-center justify-center text-red-600" title="Eliminar"><Trash2 className="w-4 h-4"/></button>
+        <button
+          onClick={()=>{ setError(null); setEditing(true); setName(category.name); setColor(category.color); setIcon(category.icon || ''); }}
+          className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center gap-1"
+          title="Editar"
+          disabled={pending}
+        >
+          <Pencil className="w-4 h-4"/>Editar
+        </button>
+        <button
+          onClick={async () => {
+            setPending(true);
+            setError(null);
+            try {
+              await onDelete();
+            } catch (e: unknown) {
+              const message = e instanceof Error ? e.message : 'No se pudo eliminar la categoría.';
+              setError(message);
+            } finally {
+              setPending(false);
+            }
+          }}
+          className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center text-red-600"
+          title="Eliminar"
+          disabled={pending}
+        >
+          <Trash2 className="w-4 h-4"/>
+        </button>
+  {error && <span className="ml-2 text-xs text-rose-600" title={error ?? undefined}>{error}</span>}
       </div>
     );
   }
 
   return (
     <div className="inline-flex items-center gap-2">
-      <input value={name} onChange={e=>setName(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-sm" />
-      <select value={color} onChange={e=>setColor(e.target.value as CategoryColor)} className="h-8 px-2 rounded-lg bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-sm">
+      <input value={name} onChange={e=>setName(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm" />
+      <select value={color} onChange={e=>setColor(e.target.value as CategoryColor)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm">
         {Object.keys(colorTokens).map(c => <option key={c} value={c}>{colorTokens[c as CategoryColor].label}</option>)}
       </select>
-      <input value={icon} onChange={e=>setIcon(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-sm w-20" placeholder="Emoji" />
-  <button onClick={commit} className={`h-8 px-3 rounded-lg text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75`}>Guardar</button>
-      <button onClick={()=>setEditing(false)} className="h-8 px-2 rounded-lg bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">Cancelar</button>
+      <input value={icon} onChange={e=>setIcon(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm w-20" placeholder="Emoji" />
+      <button onClick={commit} className={`h-8 px-3 rounded-lg text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75`} disabled={pending}>Guardar</button>
+      <button
+        onClick={() => {
+          setEditing(false);
+          setError(null);
+          setName(category.name);
+          setColor(category.color);
+          setIcon(category.icon || '');
+        }}
+        className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5"
+        disabled={pending}
+      >
+        Cancelar
+      </button>
+  {error && <span className="text-xs text-rose-600 ml-2 max-w-[160px] truncate" title={error ?? undefined}>{error}</span>}
     </div>
   );
 }

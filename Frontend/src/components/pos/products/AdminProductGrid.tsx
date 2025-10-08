@@ -1,8 +1,9 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, activeBusiness } from '../../../lib/api';
 import { EditProductPanel } from './EditProductPanel';
 import { EditStockPanel } from './EditStockPanel';
+import { useConfirm } from '../../system/ConfirmProvider';
 
 type AdminProduct = {
   id: string;
@@ -10,7 +11,8 @@ type AdminProduct = {
   sku: string;
   price: number;
   stock: number | null; // null => sin información de inventario
-  category: string;
+  categoryId: string | null;
+  categoryName: string;
   active: boolean;
 };
 
@@ -22,6 +24,9 @@ type ApiProduct = {
   imagen: string | null;
   estado: string | null; // 'activo' | 'inactivo' | null
   codigo_barras?: string | null;
+  stock?: number | string | null;
+  category?: string | null;
+  id_categoria?: string | number | null;
 };
 
 export interface AdminProductGridProps {
@@ -30,6 +35,7 @@ export interface AdminProductGridProps {
 }
 
 export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view }) => {
+  const confirm = useConfirm();
   const [items, setItems] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,32 +50,47 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
     setError(null);
     try {
       const apiProducts: ApiProduct[] = await api.getProducts({ search });
-      // Inventario opcional
-      const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+      // Inventario opcional (se mantiene para panel de edición)
+  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
       let invList: any[] = [];
+      let stockByProduct: Map<string, number> | undefined;
       if (negocioId) {
         try {
           invList = await api.getInventory({ id_negocio: negocioId });
+          stockByProduct = new Map();
+          for (const inv of invList) {
+            if (inv.id_producto && inv.cantidad_actual != null) {
+              stockByProduct.set(String(inv.id_producto), Number(inv.cantidad_actual));
+            }
+          }
         } catch (e) {
           console.warn('Inventario no disponible para AdminProductGrid:', e);
-        }
-      }
-      const stockByProduct = new Map<string, number>();
-      for (const inv of invList) {
-        if (inv.id_producto && inv.cantidad_actual != null) {
-          stockByProduct.set(String(inv.id_producto), Number(inv.cantidad_actual));
         }
       }
       const adapted: AdminProduct[] = apiProducts.map(p => {
         const id = String(p.id_producto);
         const priceNum = typeof p.precio === 'number' ? p.precio : parseFloat(String(p.precio));
-          return {
+        let stockValue: number | null = null;
+        if (p.stock !== undefined) {
+          if (p.stock === null) {
+            stockValue = null;
+          } else {
+            const parsed = typeof p.stock === 'number' ? p.stock : parseFloat(String(p.stock));
+            stockValue = Number.isNaN(parsed) ? null : parsed;
+          }
+        } else if (stockByProduct?.has(id)) {
+          stockValue = stockByProduct.get(id) ?? null;
+        }
+        const categoryId = p.id_categoria != null ? String(p.id_categoria) : null;
+        const rawCategoryName = typeof p.category === 'string' ? p.category.trim() : '';
+        return {
           id,
           name: p.nombre,
           sku: (p.codigo_barras as any) || '',
           price: isNaN(priceNum) ? 0 : priceNum,
-            stock: stockByProduct.has(id) ? (stockByProduct.get(id) as number) : null,
-          category: 'General',
+          stock: stockValue,
+          categoryId,
+          categoryName: rawCategoryName || 'Sin categoría',
           active: (p.estado ?? 'activo') === 'activo',
         };
       });
@@ -103,6 +124,14 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
 
   const handleToggleActive = async (p: AdminProduct) => {
     try {
+      const ok = await confirm({
+        title: p.active ? 'Desactivar producto' : 'Activar producto',
+        description: p.active ? 'El producto dejará de estar disponible para la venta.' : 'El producto estará disponible para la venta.',
+        confirmText: p.active ? 'Desactivar' : 'Activar',
+        cancelText: 'Cancelar',
+        tone: 'accent'
+      });
+      if (!ok) return;
       setActionBusy(p.id);
       await api.updateProduct(p.id, { estado: p.active ? 'inactivo' : 'activo' });
       await load();
@@ -115,7 +144,13 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
   };
 
   const handleDelete = async (p: AdminProduct) => {
-    const ok = window.confirm(`¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`);
+    const ok = await confirm({
+      title: 'Eliminar producto',
+      description: `¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
     if (!ok) return;
     try {
       setActionBusy(p.id);
@@ -172,18 +207,18 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                     {p.stock == null
                       ? '—'
                       : p.stock === 0
-                        ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Agotado</span>
+                        ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Agotado</span>
                         : p.stock < 5
-                          ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#fff6e5', color: '#7a4a1f' }}>Bajo stock</span>
+                          ? <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-price-bg)', color: 'var(--pos-text-heading)' }}>Bajo stock</span>
                           : p.stock}
                   </td>
                   <td className='px-3 py-2 text-right'><span className={`text-xs font-medium ${p.active ? 'text-[var(--pos-accent-green)]' : 'text-[var(--pos-text-muted)]'}`}>{p.active ? 'Activo' : 'Inactivo'}</span></td>
                   <td className='px-3 py-2 text-right'>
                     <div className='inline-flex items-center gap-2'>
-                      <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Editar</button>
-                      <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Stock</button>
-                      <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
-                      <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Eliminar</button>
+                      <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Editar</button>
+                      <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Stock</button>
+                      <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
+                      <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Eliminar</button>
                     </div>
                   </td>
                 </tr>
@@ -196,7 +231,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
           if (!p) return null;
           return (
             <EditProductPanel
-              initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.category, active: p.active }}
+              initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.categoryId ?? '', active: p.active }}
               onClose={closeEdit}
               onSaved={async () => { await load(); closeEdit(); }}
             />
@@ -205,7 +240,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
         {editingStockId && (() => {
           const p = items.find(i => i.id === editingStockId);
           if (!p) return null;
-          const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+          const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
           let inv: any | undefined;
           if (negocioId) {
             inv = invState.find(x => String(x.id_producto) === p.id && String(x.id_negocio) === String(negocioId));
@@ -255,15 +290,15 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                     <h3 className='text-sm font-semibold truncate'>{p.name}</h3>
                     <div className='flex items-center gap-1'>
                       {p.stock !== null && p.stock === 0 && (
-                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Agotado</span>
+                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Agotado</span>
                       )}
                       {p.stock !== null && p.stock > 0 && p.stock < 5 && (
-                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#fff6e5', color: '#7a4a1f' }}>Bajo stock</span>
+                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-price-bg)', color: 'var(--pos-text-heading)' }}>Bajo stock</span>
                       )}
                       {!p.active && (
-                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: '#e6e6f7', color: '#34346b' }}>Inactivo</span>
+                        <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-tab-bg)', color: 'var(--pos-text-muted)' }}>Inactivo</span>
                       )}
-                      <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>General</span>
+                      <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{p.categoryName}</span>
                     </div>
                   </div>
                   <div className='mt-1 text-[11px] text-[var(--pos-text-muted)] truncate'>SKU: {p.sku || '—'}</div>
@@ -274,10 +309,10 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                 </div>
               </div>
               <div className='mt-2 flex items-center gap-2'>
-                <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Editar</button>
-                <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Stock</button>
-                <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
-                <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: '#ffe5e5', color: '#7a1f1f' }}>Eliminar</button>
+                <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Editar</button>
+                <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Stock</button>
+                <button onClick={() => handleToggleActive(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{p.active ? 'Desactivar' : 'Activar'}</button>
+                <button onClick={() => handleDelete(p)} disabled={actionBusy === p.id} className='h-8 px-2 rounded-md text-xs font-medium disabled:opacity-60' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-danger-text)' }}>Eliminar</button>
               </div>
             </div>
           );
@@ -288,7 +323,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
         if (!p) return null;
         return (
           <EditProductPanel
-            initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.category, active: p.active }}
+            initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.categoryId ?? '', active: p.active }}
             onClose={closeEdit}
             onSaved={async () => { await load(); closeEdit(); }}
           />
@@ -297,7 +332,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
       {editingStockId && (() => {
         const p = items.find(i => i.id === editingStockId);
         if (!p) return null;
-        const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
         let inv: any | undefined;
         if (negocioId) {
           inv = invState.find(x => String(x.id_producto) === p.id && String(x.id_negocio) === String(negocioId));

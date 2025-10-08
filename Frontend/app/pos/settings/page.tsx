@@ -5,6 +5,7 @@ import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useUserStore } from '../../../src/state/userStore';
 import { useSettingsStore } from '../../../src/state/settingsStore';
+import { useConfirm } from '../../../src/components/system/ConfirmProvider';
 
 type SectionKey =
   | 'business'
@@ -56,6 +57,7 @@ export default function POSSettingsPage() {
   const router = useRouter();
   const { reset } = useUserStore();
   const settings = useSettingsStore();
+  const confirm = useConfirm();
   const [active, setActive] = useState<SectionKey>('business');
   const [filter, setFilter] = useState('');
 
@@ -67,9 +69,40 @@ export default function POSSettingsPage() {
     );
   }, [filter]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: 'Cerrar sesión',
+      description: '¿Seguro que quieres cerrar sesión en este dispositivo?',
+      confirmText: 'Cerrar sesión',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
+    if (!ok) return;
     try { reset(); } catch {}
     router.push('/');
+  };
+
+  const handleDiscard = async () => {
+    const ok = await confirm({
+      title: 'Descartar cambios',
+      description: 'Se perderán los cambios no guardados. ¿Quieres continuar?',
+      confirmText: 'Descartar',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
+    if (!ok) return;
+    // TODO: cuando haya estado local editable, revertirlo aquí
+  };
+
+  const handleSave = async () => {
+    const ok = await confirm({
+      title: 'Guardar cambios',
+      description: 'Aplicar los cambios de configuración en este dispositivo.',
+      confirmText: 'Guardar',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+    // TODO: persistir ajustes adicionales cuando estén conectados a backend
   };
 
   return (
@@ -84,7 +117,7 @@ export default function POSSettingsPage() {
             <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
             <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </h1>
-          <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Configuración' />
+          <TopRightInfo businessName='Configuración' />
         </div>
         <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
           {/* Left nav */}
@@ -157,12 +190,12 @@ export default function POSSettingsPage() {
                 </div>
                 {/* Action bar */}
                 <div className='flex items-center gap-2'>
-                  <button className='px-3 py-2 text-[13px] rounded-lg font-medium'
+                  <button onClick={handleDiscard} className='px-3 py-2 text-[13px] rounded-lg font-medium'
                           style={{ background:'rgba(0,0,0,0.06)', color:'var(--pos-text-heading)', boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}}>
                     Descartar
                   </button>
-                  <button className='px-3 py-2 text-[13px] rounded-lg font-semibold'
-                          style={{ background:'var(--fc-brand-600)', color:'white', boxShadow:'0 1px 0 rgba(0,0,0,0.05)'}}>
+      <button onClick={handleSave} className='px-3 py-2 text-[13px] rounded-lg font-semibold'
+        style={{ background:'var(--pos-accent-green)', color:'white', boxShadow:'0 1px 0 rgba(0,0,0,0.05)'}}>
                     Guardar cambios
                   </button>
                 </div>
@@ -221,20 +254,38 @@ const Row: React.FC<{ label: string; hint?: string; children: React.ReactNode }>
 );
 
 const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-  <input {...props} className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
-         style={{ background:'rgba(255,255,255,0.9)', color:'#4b1c23', boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}} />
+  <input
+    {...props}
+    className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
+    style={{
+      height: 'var(--pos-control-h)',
+      borderRadius: 'var(--pos-control-radius)',
+      background: 'rgba(255,255,255,0.9)',
+      color: '#4b1c23',
+      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)'
+    }}
+  />
 );
 
 const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => (
-  <select {...props} className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
-          style={{ background:'rgba(255,255,255,0.9)', color:'#4b1c23', boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}} />
+  <select
+    {...props}
+    className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
+    style={{
+      height: 'var(--pos-control-h)',
+      borderRadius: 'var(--pos-control-radius)',
+      background: 'rgba(255,255,255,0.9)',
+      color: '#4b1c23',
+      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)'
+    }}
+  />
 );
 
 const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean)=>void }> = ({ checked, onChange }) => (
   <button
     type='button'
     onClick={()=> onChange(!checked)}
-    className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${checked ? 'bg-[var(--fc-teal-500)]' : 'bg-[rgba(0,0,0,0.15)]'}`}
+    className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${checked ? 'bg-[var(--pos-accent-green)]' : 'bg-[rgba(0,0,0,0.15)]'}`}
   >
     <span className={`inline-block w-5 h-5 transform bg-white rounded-full transition ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
   </button>
@@ -285,22 +336,31 @@ function BusinessSection() {
 }
 
 function AppearanceSection() {
-  const { mode, density, accentTeal, set } = useSettingsStore();
+  const { density, accentTeal, set } = useSettingsStore();
   return (
     <div className='space-y-4'>
-      <Card title='Tema' desc='Elige cómo se ve la app'>
-        <Row label='Modo'>
-          <div className='grid grid-cols-3 gap-2'>
-            <button onClick={()=>set({mode:'system'})} className={`px-3 py-2 rounded-lg text-[13px] ${mode==='system'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Sistema</button>
-            <button onClick={()=>set({mode:'light'})} className={`px-3 py-2 rounded-lg text-[13px] ${mode==='light'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Claro</button>
-            <button onClick={()=>set({mode:'dark'})} className={`px-3 py-2 rounded-lg text-[13px] ${mode==='dark'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Oscuro</button>
+      <Card title='Tema' desc='Ajustes visuales (solo modo claro)'>
+        <Row label='Densidad' hint='Se aplica inmediatamente a todos los controles'>
+          <div className='inline-flex items-center rounded-lg p-0.5' style={{background:'rgba(0,0,0,0.06)'}} role='group' aria-label='Selector de densidad'>
+            <button
+              type='button'
+              aria-pressed={density==='comfortable'}
+              onClick={()=> set({ density: 'comfortable' })}
+              className={`px-3 text-[13px] font-medium rounded-md transition-colors ${density==='comfortable' ? 'text-white' : ''}`}
+              style={{ height: 'var(--pos-control-h)', background: density==='comfortable' ? 'var(--pos-accent-green)' : 'transparent' }}
+            >
+              Cómoda
+            </button>
+            <button
+              type='button'
+              aria-pressed={density==='compact'}
+              onClick={()=> set({ density: 'compact' })}
+              className={`px-3 text-[13px] font-medium rounded-md transition-colors ${density==='compact' ? 'text-white' : ''}`}
+              style={{ height: 'var(--pos-control-h)', background: density==='compact' ? 'var(--pos-accent-green)' : 'transparent' }}
+            >
+              Compacta
+            </button>
           </div>
-        </Row>
-        <Row label='Densidad'>
-          <Select value={density} onChange={e=> set({density: e.target.value as any})}>
-            <option value='comfortable'>Cómoda</option>
-            <option value='compact'>Compacta</option>
-          </Select>
         </Row>
         <Row label='Acento'>
           <div className='flex items-center gap-3'>
@@ -310,10 +370,45 @@ function AppearanceSection() {
         </Row>
       </Card>
       <Card title='Vista previa'>
-        <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
-          {[1,2,3,4,5,6].map(i=> (
-            <div key={i} className='rounded-xl h-24' style={{background:'linear-gradient(135deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06))'}} />
-          ))}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
+          <div className='rounded-xl p-3 space-y-2' style={{background:'rgba(0,0,0,0.03)'}}>
+            <Input placeholder='Campo de entrada' />
+            <Select defaultValue='op1'>
+              <option value='op1'>Opción A</option>
+              <option value='op2'>Opción B</option>
+            </Select>
+            <div className='flex gap-2'>
+              <button className='px-3 rounded-lg text-[13px] font-medium' style={{ height: 'var(--pos-control-h)', background:'rgba(0,0,0,0.06)' }}>Secundario</button>
+              <button className='px-3 rounded-full text-[13px] font-semibold text-white' style={{ height: 'var(--pos-control-h)', background:'var(--pos-accent-green)' }}>Primario</button>
+            </div>
+          </div>
+          <div className='rounded-xl p-3 space-y-2' style={{background:'rgba(0,0,0,0.03)'}}>
+            <div className='rounded-lg p-3 flex items-center justify-between' style={{background:'var(--pos-card-bg)', border:'1px solid var(--pos-card-border)'}}>
+              <div>
+                <div className='text-[13px] font-semibold' style={{color:'var(--pos-text-heading)'}}>Elemento</div>
+                <div className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Descripción</div>
+              </div>
+              <span className='px-2 rounded-full text-[12px]' style={{height:'calc(var(--pos-control-h) - 12px)', display:'inline-flex', alignItems:'center', background:'var(--pos-badge-price-bg)', color:'var(--pos-chip-text)'}}>MXN 120</span>
+            </div>
+            <div className='rounded-lg p-3 flex items-center justify-between' style={{background:'var(--pos-card-bg)', border:'1px solid var(--pos-card-border)'}}>
+              <div>
+                <div className='text-[13px] font-semibold' style={{color:'var(--pos-text-heading)'}}>Elemento</div>
+                <div className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Descripción</div>
+              </div>
+              <button className='px-3 rounded-full text-[12px] font-semibold text-white' style={{ height: 'var(--pos-control-h)', background:'var(--pos-accent-green)' }}>Agregar</button>
+            </div>
+          </div>
+          <div className='rounded-xl p-3 flex flex-col gap-2' style={{background:'rgba(0,0,0,0.03)'}}>
+            <div className='rounded-lg p-3 flex-1' style={{background:'var(--pos-summary-bg)', border:'1px solid var(--pos-summary-border)'}}>
+              <div className='text-[13px] font-semibold mb-2' style={{color:'var(--pos-text-heading)'}}>Resumen</div>
+              <div className='space-y-1 text-[12px]'>
+                <div className='flex justify-between'><span>Subtotal</span><span>$ 100.00</span></div>
+                <div className='flex justify-between'><span>Impuestos</span><span>$ 16.00</span></div>
+                <div className='flex justify-between font-semibold'><span>Total</span><span>$ 116.00</span></div>
+              </div>
+            </div>
+            <button className='px-3 rounded-full text-[13px] font-semibold text-white' style={{ height: 'var(--pos-control-h)', background:'var(--pos-accent-green)' }}>Cobrar</button>
+          </div>
         </div>
       </Card>
     </div>
@@ -327,8 +422,8 @@ function PosPrefsSection() {
       <Card title='Operación'>
         <Row label='Vista predeterminada'>
           <div className='flex items-center gap-2'>
-            <button onClick={()=> set({defaultView:'grid'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='grid'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Grid</button>
-            <button onClick={()=> set({defaultView:'list'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='list'?'bg-[var(--fc-teal-500)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Lista</button>
+            <button onClick={()=> set({defaultView:'grid'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='grid'?'bg-[var(--pos-accent-green)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Grid</button>
+            <button onClick={()=> set({defaultView:'list'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='list'?'bg-[var(--pos-accent-green)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Lista</button>
           </div>
         </Row>
         <Row label='Mostrar inventario'>
@@ -379,15 +474,24 @@ function ReceiptsSection() {
 }
 
 function DevicesSection() {
+  const confirm = useConfirm();
+  const handleRegister = async () => {
+    const ok = await confirm({ title: 'Registrar impresora', description: '¿Deseas registrar una nueva impresora?', confirmText: 'Registrar', cancelText: 'Cancelar' });
+    if (!ok) return;
+  };
+  const handleSearch = async () => {
+    const ok = await confirm({ title: 'Buscar dispositivos', description: 'Iniciar búsqueda de dispositivos cercanos.', confirmText: 'Buscar', cancelText: 'Cancelar' });
+    if (!ok) return;
+  };
   return (
     <div className='space-y-4'>
-      <Card title='Impresoras' right={<button className='px-3 py-2 text-[13px] rounded-lg font-medium' style={{background:'var(--fc-teal-500)', color:'#fff'}}>Registrar</button>}>
+  <Card title='Impresoras' right={<button onClick={handleRegister} className='px-3 py-2 text-[13px] rounded-lg font-medium' style={{background:'var(--pos-accent-green)', color:'#fff'}}>Registrar</button>}>
         <div className='rounded-lg p-3 flex items-center justify-between' style={{background:'rgba(0,0,0,0.04)'}}>
           <div>
             <div className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>Ninguna impresora configurada</div>
             <div className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Agrega una para imprimir tickets</div>
           </div>
-          <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Buscar dispositivos</button>
+          <button onClick={handleSearch} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Buscar dispositivos</button>
         </div>
       </Card>
     </div>
@@ -415,9 +519,14 @@ function PaymentsSection() {
 }
 
 function TaxesSection() {
+  const confirm = useConfirm();
+  const handleNewTax = async () => {
+    const ok = await confirm({ title: 'Nueva tasa de impuesto', description: 'Crear una nueva tasa de impuesto para el POS.', confirmText: 'Crear', cancelText: 'Cancelar' });
+    if (!ok) return;
+  };
   return (
     <div className='space-y-4'>
-      <Card title='Tasas de impuesto' right={<button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Nueva tasa</button>}>
+      <Card title='Tasas de impuesto' right={<button onClick={handleNewTax} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Nueva tasa</button>}>
         <div className='rounded-lg p-3' style={{background:'rgba(0,0,0,0.04)'}}>
           <div className='text-[13px]' style={{color:'var(--pos-text-muted)'}}>Sin tasas definidas</div>
         </div>
@@ -427,17 +536,26 @@ function TaxesSection() {
 }
 
 function StaffSection() {
+  const confirm = useConfirm();
+  const handleInvite = async () => {
+    const ok = await confirm({ title: 'Invitar miembro', description: 'Enviar invitación a un nuevo miembro del equipo.', confirmText: 'Invitar', cancelText: 'Cancelar' });
+    if (!ok) return;
+  };
+  const handleManage = async () => {
+    const ok = await confirm({ title: 'Gestionar miembro', description: 'Abrir gestión del miembro seleccionado.', confirmText: 'Continuar', cancelText: 'Cancelar' });
+    if (!ok) return;
+  };
   return (
     <div className='space-y-4'>
-      <Card title='Miembros del equipo' right={<button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Invitar</button>}>
+      <Card title='Miembros del equipo' right={<button onClick={handleInvite} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Invitar</button>}>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
           {[1,2,3].map(i=> (
             <div key={i} className='rounded-lg p-3 flex items-center justify-between' style={{background:'rgba(0,0,0,0.04)'}}>
               <div>
                 <div className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>Miembro {i}</div>
-                <div className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Rol: Cajero</div>
+                {/* Rol dinámico mostrado arriba via TopRightInfo */}
               </div>
-              <button className='px-3 py-1.5 text-[12px] rounded-md' style={{background:'rgba(0,0,0,0.06)'}}>Gestionar</button>
+              <button onClick={handleManage} className='px-3 py-1.5 text-[12px] rounded-md' style={{background:'rgba(0,0,0,0.06)'}}>Gestionar</button>
             </div>
           ))}
         </div>
@@ -477,16 +595,29 @@ function ShortcutsSection() {
 }
 
 function DataSection() {
+  const confirm = useConfirm();
+  const handleExport = async () => {
+    const ok = await confirm({ title: 'Exportar datos', description: 'Exportarás los datos visibles del POS en formato JSON.', confirmText: 'Exportar', cancelText: 'Cancelar' });
+    if (!ok) return;
+  };
+  const handleImport = async () => {
+    const ok = await confirm({ title: 'Importar datos', description: 'Importar sobrescribirá datos existentes. ¿Deseas continuar?', confirmText: 'Importar', cancelText: 'Cancelar', tone: 'danger' });
+    if (!ok) return;
+  };
+  const handleReset = async () => {
+    const ok = await confirm({ title: 'Resetear datos locales', description: 'Esta acción es irreversible y borrará datos locales.', confirmText: 'Resetear', cancelText: 'Cancelar', tone: 'danger' });
+    if (!ok) return;
+  };
   return (
     <div className='space-y-4'>
       <Card title='Datos'>
         <div className='flex items-center gap-2'>
-          <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Exportar (.json)</button>
-          <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Importar</button>
+          <button onClick={handleExport} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Exportar (.json)</button>
+          <button onClick={handleImport} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Importar</button>
         </div>
       </Card>
       <Card title='Zona de peligro' desc='Acciones destructivas'>
-        <button className='px-3 py-2 text-[13px] rounded-lg font-semibold' style={{background:'rgba(220,38,38,0.12)', color:'#7f1d1d'}}>Resetear datos locales</button>
+        <button onClick={handleReset} className='px-3 py-2 text-[13px] rounded-lg font-semibold' style={{background:'rgba(220,38,38,0.12)', color:'#7f1d1d'}}>Resetear datos locales</button>
       </Card>
     </div>
   );
@@ -531,6 +662,15 @@ function LocaleSection() {
 }
 
 function AccountSection({ onLogout }: { onLogout: ()=>void }) {
+  const confirm = useConfirm();
+  const handleChangePassword = async () => {
+    const ok = await confirm({ title: 'Cambiar contraseña', description: 'Se te pedirá la contraseña actual y una nueva.', confirmText: 'Continuar', cancelText: 'Cancelar' });
+    if (!ok) return;
+  };
+  const handleCloseOthers = async () => {
+    const ok = await confirm({ title: 'Cerrar otras sesiones', description: 'Se cerrarán todas las sesiones activas excepto esta.', confirmText: 'Cerrar sesiones', cancelText: 'Cancelar', tone: 'danger' });
+    if (!ok) return;
+  };
   return (
     <div className='space-y-4'>
       <Card title='Seguridad'>
@@ -540,7 +680,7 @@ function AccountSection({ onLogout }: { onLogout: ()=>void }) {
         <Row label='Contraseña'>
           <div className='flex items-center gap-2'>
             <Input type='password' placeholder='••••••••' />
-            <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Cambiar</button>
+            <button onClick={handleChangePassword} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Cambiar</button>
           </div>
         </Row>
         <Row label='2FA'>
@@ -549,8 +689,8 @@ function AccountSection({ onLogout }: { onLogout: ()=>void }) {
       </Card>
       <Card title='Sesiones' desc='Cierra sesión de este u otros dispositivos'>
         <div className='flex flex-wrap gap-2'>
-          <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Cerrar otras sesiones</button>
-          <button onClick={onLogout} className='px-3 py-2 text-[13px] rounded-lg font-semibold' style={{background:'var(--fc-brand-600)', color:'#fff'}}>Cerrar sesión</button>
+          <button onClick={handleCloseOthers} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Cerrar otras sesiones</button>
+          <button onClick={onLogout} className='px-3 py-2 text-[13px] rounded-lg font-semibold' style={{background:'var(--pos-accent-green)', color:'#fff'}}>Cerrar sesión</button>
         </div>
       </Card>
     </div>

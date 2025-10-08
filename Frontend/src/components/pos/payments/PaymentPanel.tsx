@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useConfirm } from '../../system/ConfirmProvider';
 
 type Method = 'efectivo' | 'credito' | 'debito';
 type AccountType = 'normal' | 'dividida';
@@ -20,6 +21,7 @@ export interface PaymentPanelProps {
 const quickAmounts = [10, 20, 50, 100];
 
 export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency = 'MXN', onClose, onConfirm }) => {
+  const confirmDialog = useConfirm();
   const [mounted, setMounted] = useState(false);
   const [accountType, setAccountType] = useState<AccountType>('normal');
   const [method, setMethod] = useState<Method>('efectivo');
@@ -78,8 +80,16 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
   const clear = () => setInput('');
   const setQuick = (val: number) => setInput(val.toFixed(2));
 
-  const confirm = () => {
+  const confirm = async () => {
     if (!canPay) return;
+    const ok = await confirmDialog({
+      title: 'Confirmar pago',
+      description: `Se cobrará ${currency} $${totalDue.toFixed(2)}${accountType==='dividida' ? ' (cuenta dividida)' : ''}. ¿Deseas continuar?`,
+      confirmText: 'Pagar ahora',
+      cancelText: 'Cancelar',
+      tone: 'accent'
+    });
+    if (!ok) return;
     onConfirm?.({ method, accountType, amountReceived, change });
     onClose();
   };
@@ -106,8 +116,8 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
               </button>
             ))}
           </div>
-          <button onClick={onClose} className='ml-2 w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2'
-                  style={{ background: 'var(--fc-brand-600)' }}>
+    <button onClick={onClose} className='ml-2 w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2'
+      style={{ background: 'var(--pos-accent-green)' }}>
             <span aria-hidden>✕</span>
           </button>
         </div>
@@ -122,8 +132,8 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
               { key: 'debito', label: 'Débito' }
             ] as const).map(m => {
               const active = method === m.key;
-              const selectedBorder = m.key === 'efectivo' && active ? '#EAA66A' : (active ? 'var(--pos-accent-green)' : 'var(--pos-card-border)');
-              const textColor = m.key === 'efectivo' && active ? '#E1934B' : 'var(--pos-text-heading)';
+              const selectedBorder = m.key === 'efectivo' && active ? 'var(--pos-cash-border)' : (active ? 'var(--pos-accent-green)' : 'var(--pos-card-border)');
+              const textColor = m.key === 'efectivo' && active ? 'var(--pos-cash-text)' : 'var(--pos-text-heading)';
               return (
                 <button key={m.key}
                         onClick={()=> setMethod(m.key)}
@@ -164,7 +174,7 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
               <div>
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Ingresa cantidad</label>
                 <div className='relative'>
-                  <span className='absolute left-2 top-1/2 -translate-y-1/2 text-sm px-1.5 py-0.5 rounded-md' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>$</span>
+                  <span className='absolute left-2 top-1/2 -translate-y-1/2 text-sm px-1.5 py-0.5 rounded-md' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>$</span>
                   <input
                     inputMode='decimal'
                     disabled={method!=='efectivo'}
@@ -180,7 +190,7 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
                 <div className='flex items-center justify-between'>
                   <span className='text-xs font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Cambio del Cliente</span>
                   {amountReceived === totalDue && method!=='credito' && (
-                    <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>Exacto</span>
+                    <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Exacto</span>
                   )}
                 </div>
                 <div className='mt-1 text-lg font-semibold tabular-nums' style={{ color: 'var(--pos-text-heading)' }}>
@@ -229,7 +239,7 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
                             onClick={() => isDel ? backspace() : append(key)}
                             className='h-16 text-base font-semibold'
                             style={{
-                              background: isDel ? '#f36f5b' : 'var(--pos-badge-stock-bg)',
+                              background: isDel ? 'var(--pos-danger-bg)' : 'var(--pos-badge-stock-bg)',
                               color: isDel ? '#fff' : 'var(--pos-text-heading)'
                             }}>
                       {key}
@@ -243,8 +253,8 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
 
         {/* Footer actions */}
         <div className='p-5 border-t flex items-center justify-end gap-3' style={{ borderColor: 'var(--pos-card-border)' }}>
-          <button onClick={onClose} className='h-11 px-4 rounded-lg text-sm font-semibold' style={{ background: 'var(--fc-teal-500)', color: '#fff' }}>Cancelar</button>
-          <button onClick={confirm} disabled={!canPay} className='h-11 px-5 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed' style={{ background: 'var(--fc-brand-600)', color: '#fff' }}>Pagar ahora →</button>
+          <button onClick={onClose} className='h-11 px-4 rounded-lg text-sm font-semibold text-white' style={{ background: 'var(--pos-accent-green)' }}>Cancelar</button>
+          <button onClick={confirm} disabled={!canPay} className='h-11 px-5 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed text-white' style={{ background: 'var(--pos-accent-green)' }}>Pagar ahora →</button>
         </div>
       </aside>
     </>

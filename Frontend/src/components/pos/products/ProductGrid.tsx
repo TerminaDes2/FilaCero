@@ -11,8 +11,9 @@ interface ApiProduct {
   precio: string;
   imagen: string | null;
   estado: string | null;
-  stock?: number;
-  category?: string;
+  stock?: number | string | null;
+  category?: string | null;
+  id_categoria?: string | number | null;
 }
 
 interface ProductGridProps {
@@ -32,34 +33,27 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
       setLoading(true);
       try {
         const apiProducts: ApiProduct[] = await api.getProducts({ search });
-        // Obtener inventario si tenemos NEGOCIO (no-fatal)
-        const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
-        let inventory: any[] = [];
-        if (negocioId) {
-          try {
-            inventory = await api.getInventory({ id_negocio: negocioId });
-          } catch (invErr) {
-            console.warn('Inventario no disponible, mostrando productos sin stock fusionado:', invErr);
-          }
-        }
-        const stockByProduct = new Map<string, number>();
-        for (const inv of inventory) {
-          if (inv.id_producto && inv.cantidad_actual != null) {
-            stockByProduct.set(String(inv.id_producto), Number(inv.cantidad_actual));
-          }
-        }
-
         const adaptedProducts: POSProduct[] = apiProducts.map(p => {
           const idStr = String(p.id_producto);
           const priceNum = typeof (p as any).precio === 'number' ? (p as any).precio : parseFloat(String((p as any).precio ?? 0));
+          let stockValue: number | null = null;
+          if (p.stock !== undefined) {
+            if (p.stock === null) {
+              stockValue = null;
+            } else {
+              const parsed = typeof p.stock === 'number' ? p.stock : parseFloat(String(p.stock));
+              stockValue = Number.isNaN(parsed) ? null : parsed;
+            }
+          }
+          const categoryLabel = (p.category ?? '').trim();
           return {
             id: idStr,
             name: p.nombre,
             price: isNaN(priceNum) ? 0 : priceNum,
             description: p.descripcion || undefined,
             image: p.imagen || undefined,
-            stock: stockByProduct.get(idStr) ?? p.stock ?? 0,
-            category: p.category || 'General',
+            stock: stockValue ?? 0,
+            category: categoryLabel || 'Sin categoría',
           };
         });
 
@@ -80,8 +74,13 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
   }, [loading]);
 
   const filtered = useMemo(() => {
-    // Temporal: no filtramos por categoría hasta que el backend envíe categorías reales
-    return allProducts;
+    if (!category || category === 'all') return allProducts;
+    const normalized = category.trim().toLowerCase();
+    if (!normalized) return allProducts;
+    if (normalized === 'uncategorized') {
+      return allProducts.filter(p => !p.category || p.category.toLowerCase() === 'sin categoría');
+    }
+    return allProducts.filter(p => p.category && p.category.trim().toLowerCase() === normalized);
   }, [allProducts, category]);
 
   if (loading) {
@@ -91,12 +90,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
   if (filtered.length === 0) {
     return (
       <div className='text-center py-16 px-4'>
-        <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300 dark:text-slate-600' fill='none' stroke='currentColor' strokeWidth='1.4'>
+        <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
           <circle cx='12' cy='12' r='7' />
           <path d='M8 12h8' />
         </svg>
-        <p className='text-sm font-medium text-slate-600 dark:text-slate-300 mt-3'>No hay resultados</p>
-        <p className='text-[12px] text-slate-500 dark:text-slate-400 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
+        <p className='text-sm font-medium text-slate-600 mt-3'>No hay resultados</p>
+        <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
       </div>
     );
   }

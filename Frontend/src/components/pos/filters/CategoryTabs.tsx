@@ -73,7 +73,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({ categories, value, o
             width: indicator.width,
             transition: ready ? 'transform 260ms cubic-bezier(.2,.8,.2,1), width 260ms cubic-bezier(.2,.8,.2,1)' : 'none',
             background: 'var(--pos-tab-active-bg)',
-            boxShadow: 'inset 0 0 0 1px var(--pos-border-soft)'
+            // removed border stroke for a cleaner look
 
           }}
           aria-hidden="true"

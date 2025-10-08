@@ -101,9 +101,9 @@ export const LegalModal: React.FC<LegalModalProps> = ({ open, initialTab = 'term
         role="dialog"
         aria-modal="true"
         aria-label={doc.label}
-        className={`relative w-full md:w-[960px] xl:w-[1040px] max-w-[96vw] mt-8 md:mt-0 rounded-2xl border border-white/15 bg-gradient-to-br from-white/95 to-white/80 dark:from-slate-900/95 dark:to-slate-900/85 shadow-[0_4px_40px_-4px_rgba(0,0,0,0.45)] backdrop-blur-2xl overflow-hidden flex flex-col transition-all duration-200 ${open? 'data-open' : ''}`}
+        className={`relative w-full md:w-[960px] xl:w-[1040px] max-w-[96vw] mt-8 md:mt-0 rounded-2xl border border-white/15 bg-gradient-to-br from-white/95 to-white/80 shadow-[0_4px_40px_-4px_rgba(0,0,0,0.45)] backdrop-blur-2xl overflow-hidden flex flex-col transition-all duration-200 ${open? 'data-open' : ''}`}
       >
-        <header className="flex items-center gap-3 px-5 py-4 border-b border-black/5 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md">
+        <header className="flex items-center gap-3 px-5 py-4 border-b border-black/5 bg-white/60 backdrop-blur-md">
           <nav aria-label="Documentos legales" className="flex gap-1">
             {(['terminos','privacidad'] as LegalSlug[]).map(slug => {
               const activeTab = active === slug;
@@ -112,7 +112,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ open, initialTab = 'term
                 <button
                   key={slug}
                   onClick={()=>switchTab(slug)}
-                  className={`relative px-3.5 py-1.5 rounded-md text-xs font-semibold tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/70 ${activeTab ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-600 dark:text-slate-300 hover:bg-gray-200/70 dark:hover:bg-white/10'}`}
+                  className={`relative px-3.5 py-1.5 rounded-md text-xs font-semibold tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/70 ${activeTab ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-200/70'}`}
                 >
                   {label}
                   {activeTab && <span className="absolute inset-x-0 -bottom-px h-[2px] bg-gradient-to-r from-brand-400/0 via-brand-200 to-brand-400/0" />}
@@ -123,7 +123,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ open, initialTab = 'term
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={onClose}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-gray-200/60 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:text-slate-900 hover:bg-gray-200/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
               aria-label="Cerrar"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" stroke="currentColor" strokeWidth="2" fill="none"><path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M6 18L18 6" /></svg>
@@ -131,13 +131,13 @@ export const LegalModal: React.FC<LegalModalProps> = ({ open, initialTab = 'term
           </div>
         </header>
         <div className="flex flex-col md:flex-row min-h-[560px] max-h-[80vh]">
-          <aside className="hidden md:block w-52 flex-shrink-0 border-r border-black/5 dark:border-white/10 px-4 py-5 overflow-y-auto" data-legal-scroll>
-            <p className="text-[11px] font-semibold tracking-wide uppercase text-gray-400 dark:text-slate-500 mb-3">Índice</p>
+          <aside className="hidden md:block w-52 flex-shrink-0 border-r border-black/5 px-4 py-5 overflow-y-auto" data-legal-scroll>
+            <p className="text-[11px] font-semibold tracking-wide uppercase text-gray-400 mb-3">Índice</p>
             <ul className="space-y-1.5 text-[12px]">
               {doc.sections.map((s: LegalSection) => (
                 <li key={s.id}>
-                  <a href={`#modal-${s.id}`} className="group flex items-start gap-2 rounded px-2 py-1 hover:bg-brand-50 dark:hover:bg-white/5 text-gray-600 dark:text-slate-300 hover:text-brand-700 dark:hover:text-brand-300 focus:outline-none focus:ring-1 focus:ring-brand-400/60">
-                    <span className="mt-[2px] h-1.5 w-1.5 rounded-full bg-gray-300/70 dark:bg-white/20 group-hover:bg-brand-500" />
+                  <a href={`#modal-${s.id}`} className="group flex items-start gap-2 rounded px-2 py-1 hover:bg-brand-50 text-gray-600 hover:text-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-400/60">
+                    <span className="mt-[2px] h-1.5 w-1.5 rounded-full bg-gray-300/70 group-hover:bg-brand-500" />
                     <span>{s.title}</span>
                   </a>
                 </li>
@@ -146,22 +146,22 @@ export const LegalModal: React.FC<LegalModalProps> = ({ open, initialTab = 'term
           </aside>
           <div className="flex-1 overflow-y-auto px-5 py-6 space-y-8 text-sm leading-relaxed" data-legal-scroll>
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">{doc.label}</h2>
-              <p className="text-[11px] text-gray-500 dark:text-slate-400">Actualizado: {doc.updated}</p>
-              <div className="prose dark:prose-invert prose-xs max-w-none">
+              <h2 className="text-lg font-semibold tracking-tight text-slate-800">{doc.label}</h2>
+              <p className="text-[11px] text-gray-500">Actualizado: {doc.updated}</p>
+              <div className="prose prose-xs max-w-none">
                 {doc.intro}
               </div>
             </div>
             <div className="space-y-8">
               {doc.sections.map((section: LegalSection) => (
-                <section key={section.id} id={`modal-${section.id}`} className="prose dark:prose-invert prose-xs max-w-none scroll-mt-20">
+                <section key={section.id} id={`modal-${section.id}`} className="prose prose-xs max-w-none scroll-mt-20">
                   <h3 className="!mt-0">{section.title}</h3>
                   {section.body}
                 </section>
               ))}
             </div>
             <div className="border-t pt-5 mt-4">
-              <div className="prose dark:prose-invert prose-xs max-w-none">
+              <div className="prose prose-xs max-w-none">
                 {doc.disclaimer}
               </div>
             </div>

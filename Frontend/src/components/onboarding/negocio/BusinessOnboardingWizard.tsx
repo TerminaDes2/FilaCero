@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle2, ChevronLeft, ChevronRight, Store, MapPin, Cog, ClipboardList } from 'lucide-react'
 import { useUserStore } from '../../../state/userStore'
 import { LoginCard } from '../../auth/LoginCard'
+import { api, activeBusiness } from '../../../lib/api'
 
 type Step = 'identidad' | 'ubicacion' | 'operacion' | 'revision' | 'exito'
 
@@ -92,7 +93,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
 
   const next = useCallback(() => {
     if (!stepValid) return
-    setStep(s => (s === 'identidad' ? 'ubicacion' : s === 'ubicacion' ? 'operacion' : s === 'operacion' ? 'revision' : s === 'revision' ? 'exito' : s))
+    setStep(s => (s === 'identidad' ? 'ubicacion' : s === 'ubicacion' ? 'operacion' : s === 'operacion' ? 'revision' : s))
   }, [stepValid])
 
   const back = useCallback(() => {
@@ -102,12 +103,58 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
   // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === 'Enter' || e.key === 'Return') && stepValid) next()
+      if ((e.key === 'Enter' || e.key === 'Return') && stepValid) {
+        if (step !== 'revision') {
+          e.preventDefault();
+          next();
+        }
+      }
       if (e.key === 'Escape') back()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [next, back, stepValid])
+  }, [next, back, stepValid, step])
+
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const confirmAndCreate = useCallback(async () => {
+    if (!stepValid) return
+    setSaving(true)
+    setError(null)
+    try {
+      const payload = {
+        nombre: draft.identidad.nombre.trim(),
+        direccion: draft.ubicacion.direccion || undefined,
+        telefono: draft.ubicacion.telefono || undefined,
+        correo: draft.ubicacion.web ? undefined : undefined, // no email en wizard aún
+        logo: draft.identidad.logoDataUrl || undefined,
+      }
+      const created = await api.createBusiness(payload as any)
+      const id = String((created as any)?.id_negocio ?? (created as any)?.id)
+      if (id) activeBusiness.set(id)
+      // limpiar draft y pasar a éxito
+      try { localStorage.removeItem(DRAFT_KEY) } catch {}
+      setStep('exito')
+    } catch (e: any) {
+      setError(e?.message || 'No se pudo crear el negocio')
+    } finally {
+      setSaving(false)
+    }
+  }, [draft, stepValid])
+
+  // Bind Enter to confirm when on revision step (declared after confirmAndCreate exists)
+  useEffect(() => {
+    if (step !== 'revision') return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'Enter' || e.key === 'Return') && stepValid) {
+        e.preventDefault();
+        if (!saving) confirmAndCreate();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [step, stepValid, saving, confirmAndCreate]);
 
   // Acentos fijos a la marca principal (brand)
 
@@ -124,6 +171,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
             <button onClick={() => router.push('/')} className="fc-btn-secondary">Volver al inicio</button>
             <button onClick={() => router.push('/pos')} className={`fc-btn-primary bg-brand-600 hover:bg-brand-700`}>Ir al POS</button>
           </div>
+          <div className="mt-3 text-xs text-gray-500">Tu negocio activo quedó guardado para este dispositivo.</div>
         </div>
       )
     }
@@ -158,7 +206,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         {step === 'identidad' && (
           <div className="space-y-4">
             {showHints && (
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-xs text-gray-600">
+              <div className="p-3 rounded-xl bg-white/70 ring-1 ring-black/5 text-xs text-gray-600">
                 Usa un nombre fácil de recordar.
                 <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">Ocultar tips</button>
               </div>
@@ -179,7 +227,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
             <Field label="Logo (opcional)" hint="SVG/PNG recomendado. No se sube, solo vista previa.">
               <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
               {draft.identidad.logoDataUrl && (
-                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
                   <img src={draft.identidad.logoDataUrl} alt="Logo preview" className="w-10 h-10 object-contain" />
                   <span className="text-xs text-gray-600">Vista previa</span>
                 </div>
@@ -267,12 +315,17 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         {/* Navegación (embed) */}
         <div className="mt-4 flex items-center justify-between">
           <button onClick={back} disabled={step==='identidad'} className="fc-btn-secondary inline-flex items-center gap-2 disabled:opacity-50"><ChevronLeft className="w-4 h-4"/> Atrás</button>
-          <button onClick={next} disabled={!stepValid} className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}>
-            {step==='revision' ? 'Confirmar y crear' : 'Siguiente'}
+          <button
+            onClick={step==='revision' ? confirmAndCreate : next}
+            disabled={!stepValid || (step==='revision' && saving)}
+            className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}
+          >
+            {step==='revision' ? (saving ? 'Creando…' : 'Confirmar y crear') : 'Siguiente'}
             <ChevronRight className="w-4 h-4"/>
           </button>
         </div>
         <div className="mt-2 text-xs text-gray-500 text-center">Pulsa Enter para continuar, Esc para volver</div>
+        {error && <div className="mt-2 text-xs text-rose-600 text-center">{error}</div>}
       </div>
     )
   }
@@ -287,8 +340,8 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         footer={(
           <div className="flex items-center justify-between">
             <button onClick={back} disabled={step==='identidad'} className="fc-btn-secondary inline-flex items-center gap-2 disabled:opacity-50"><ChevronLeft className="w-4 h-4"/> Atrás</button>
-            <button onClick={next} disabled={!stepValid} className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}>
-              {step==='revision' ? 'Confirmar y crear' : 'Siguiente'}
+              <button onClick={step==='revision' ? confirmAndCreate : next} disabled={!stepValid || (step==='revision' && saving)} className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}>
+              {step==='revision' ? (saving ? 'Creando…' : 'Confirmar y crear') : 'Siguiente'}
               <ChevronRight className="w-4 h-4"/>
             </button>
           </div>
@@ -301,7 +354,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         {step === 'identidad' && (
           <div className="space-y-4">
             {showHints && (
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10 text-xs text-gray-600">
+              <div className="p-3 rounded-xl bg-white/70 ring-1 ring-black/5 text-xs text-gray-600">
                 Usa un nombre fácil de recordar.
                 <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">Ocultar tips</button>
               </div>
@@ -322,7 +375,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
             <Field label="Logo (opcional)" hint="SVG/PNG recomendado. No se sube, solo vista previa.">
               <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
               {draft.identidad.logoDataUrl && (
-                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+                <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
                   <img src={draft.identidad.logoDataUrl} alt="Logo preview" className="w-10 h-10 object-contain" />
                   <span className="text-xs text-gray-600">Vista previa</span>
                 </div>
@@ -408,6 +461,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
           </div>
         )}
       </LoginCard>
+      {error && <div className="mt-2 text-xs text-rose-600 text-center">{error}</div>}
     </div>
   )
 }
@@ -427,17 +481,17 @@ function Progress({ step }: { step: Step }) {
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-2xl bg-white/80 dark:bg-slate-900/40 backdrop-blur ring-1 ring-black/5 dark:ring-white/10 p-5 shadow-sm">{children}</div>
+  return <div className="rounded-2xl bg-white/80 backdrop-blur ring-1 ring-black/5 p-5 shadow-sm">{children}</div>
 }
 
 function CardHeader({ icon, title, subtitle }: { icon: React.ReactNode, title: string, subtitle: string }) {
   return (
     <div className="mb-4 flex items-center gap-3">
-      <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/70 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10">
+      <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/70 ring-1 ring-black/5">
         {icon}
       </div>
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
         <p className="text-xs text-gray-500">{subtitle}</p>
       </div>
     </div>
@@ -458,7 +512,7 @@ function Field({ label, required, hint, children }: { label: string, required?: 
 
 function Summary({ title, children }: { title: string, children: React.ReactNode }) {
   return (
-    <div className="p-3 rounded-xl bg-white/60 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+    <div className="p-3 rounded-xl bg-white/60 ring-1 ring-black/5">
       <div className="text-xs font-semibold text-gray-700 mb-2">{title}</div>
       <div className="space-y-1">{children}</div>
     </div>
@@ -467,15 +521,15 @@ function Summary({ title, children }: { title: string, children: React.ReactNode
 
 function Item({ label, value }: { label: string, value: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 text-gray-700"><span className="text-xs">{label}</span><span className="text-sm font-medium text-gray-900 dark:text-slate-100">{value}</span></div>
+    <div className="flex items-center justify-between gap-3 text-gray-700"><span className="text-xs">{label}</span><span className="text-sm font-medium text-gray-900">{value}</span></div>
   )
 }
 
 function Preview({ draft }: { draft: Draft }) {
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-white/70 to-white/40 dark:from-white/5 dark:to-white/0 ring-1 ring-black/5 dark:ring-white/10 p-5 h-full">
+    <div className="rounded-2xl bg-gradient-to-br from-white/70 to-white/40 ring-1 ring-black/5 p-5 h-full">
       <div className="text-xs font-semibold text-gray-600 mb-2">Vista previa</div>
-      <div className="rounded-xl p-4 bg-white/80 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
+      <div className="rounded-xl p-4 bg-white/80 ring-1 ring-black/5">
         <div className="flex items-center gap-3">
           {draft.identidad.logoDataUrl ? (
             <img src={draft.identidad.logoDataUrl} alt="Logo" className="w-10 h-10 rounded object-contain" />

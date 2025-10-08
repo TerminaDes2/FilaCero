@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, activeBusiness } from '../../../lib/api';
 
 interface EditStockPanelProps {
   product: { id: string; name: string; sku?: string };
@@ -10,7 +10,7 @@ interface EditStockPanelProps {
 }
 
 export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, inventory, onClose, onSaved }) => {
-  const negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
   const [loadedInventory, setLoadedInventory] = useState<typeof inventory | null>(inventory ?? null);
   const [cantidad, setCantidad] = useState<number>(inventory?.cantidad_actual ?? 0);
   const [minimo, setMinimo] = useState<number>(inventory?.stock_minimo ?? 0);
@@ -21,10 +21,24 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
 
   useEffect(() => {
     const t = setTimeout(() => qtyRef.current?.focus(), 60);
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
     window.addEventListener('keydown', onKey);
     return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
-  }, [onClose]);
+  }, [onClose, saving]);
 
   useEffect(() => {
     // Si no pasaron inventory y no hay negocioId, intentamos traer inventario por producto (puede existir único registro)
@@ -91,12 +105,12 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
       <button aria-label='Cerrar editor de stock' onClick={onClose} className='fixed inset-0 bg-black/35 backdrop-blur-[1px] cursor-default z-[90]' />
       <aside className='fixed right-0 top-0 h-screen w-[92vw] sm:w-[420px] md:w-[460px] shadow-2xl z-[110] flex flex-col' style={{ background: 'var(--pos-card-bg)', borderLeft: '1px solid var(--pos-card-border)' }}>
         <div className='px-5 py-4 border-b flex items-center gap-3' style={{ borderColor: 'var(--pos-card-border)' }}>
-          <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>📦</div>
+          <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>📦</div>
           <div className='flex-1 min-w-0'>
             <div className='text-[11px] font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Inventario</div>
             <h2 className='text-xl font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{product.name}</h2>
           </div>
-          <button onClick={onClose} className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2 transition-colors' style={{ background: 'var(--fc-brand-600)' }}>✕</button>
+          <button onClick={onClose} className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2 transition-colors' style={{ background: 'var(--pos-accent-green)' }}>✕</button>
         </div>
         <div className='flex-1 overflow-y-auto p-4 space-y-4'>
           {error && <div className='text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2'>{error}</div>}
@@ -107,7 +121,7 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
               </div>
               <div>
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>ID de negocio</label>
-                <input value={negocioManual} onChange={e => setNegocioManual(e.target.value)} placeholder='p.ej. 1' className='w-full h-10 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
+                <input value={negocioManual} onChange={e => setNegocioManual(e.target.value)} placeholder='p.ej. 1' className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
               </div>
             </div>
           )}
@@ -115,11 +129,11 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
             <div className='grid grid-cols-2 gap-3'>
               <div>
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Cantidad actual</label>
-                <input ref={qtyRef} type='number' value={cantidad} onChange={e => setCantidad(parseInt(e.target.value || '0', 10))} className='w-full h-10 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
+                <input ref={qtyRef} type='number' value={cantidad} onChange={e => setCantidad(parseInt(e.target.value || '0', 10))} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
               </div>
               <div>
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Stock mínimo</label>
-                <input type='number' value={minimo} onChange={e => setMinimo(parseInt(e.target.value || '0', 10))} className='w-full h-10 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
+                <input type='number' value={minimo} onChange={e => setMinimo(parseInt(e.target.value || '0', 10))} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
               </div>
             </div>
           </section>
@@ -127,8 +141,8 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
         <div className='p-5 border-t flex items-center justify-between gap-2' style={{ borderColor: 'var(--pos-card-border)' }}>
           <div className='text-[11px] text-[var(--pos-text-muted)] hidden sm:block'>Esc para cerrar</div>
           <div className='ml-auto flex items-center gap-2'>
-            <button onClick={onClose} className='h-11 px-4 rounded-lg text-sm font-semibold transition-colors' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>Cancelar</button>
-            <button onClick={handleSave} className='h-11 px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60' style={{ background: 'var(--fc-brand-600)' }} disabled={saving}>
+            <button onClick={onClose} className='px-4 rounded-lg text-sm font-semibold transition-colors' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>Cancelar</button>
+            <button onClick={handleSave} className='px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60' style={{ height: 'var(--pos-control-h)', background: 'var(--pos-accent-green)' }} disabled={saving}>
               {saving ? 'Guardando…' : canUpdate ? 'Actualizar →' : 'Crear inventario →'}
             </button>
           </div>

@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import React from 'react';
 import { UserProvider } from '../src/state/userStore'; // Ajusta la ruta
 import ClientSettingsApplier from '../src/components/ClientSettingsApplier';
+import { ConfirmProvider } from '../src/components/system/ConfirmProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,7 +19,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <UserProvider>
           <ClientSettingsApplier />
-          {children}
+          <ConfirmProvider>
+            {children}
+          </ConfirmProvider>
         </UserProvider>
       </body>
     </html>

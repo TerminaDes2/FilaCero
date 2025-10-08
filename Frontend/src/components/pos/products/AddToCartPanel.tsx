@@ -54,7 +54,7 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
     onClose();
   };
 
-  const accent = 'var(--fc-brand-600)';
+  const accent = 'var(--pos-accent-green)';
   const candy = 'var(--pos-badge-stock-bg)';
 
   const notePresets = ['Sin cebolla', 'Bien cocido', 'Poco picante', 'Para llevar'];
@@ -81,7 +81,7 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
             <div className='flex-1 min-w-0'>
               <div className='flex items-start justify-between gap-2'>
                 <h3 className='text-lg font-extrabold leading-tight' style={{ color: 'var(--pos-text-heading)' }}>{product.name}</h3>
-                <span className='px-2 py-0.5 rounded-md text-xs font-medium' style={{ background: candy, color: '#694b3e' }}>{product.category || 'General'}</span>
+                <span className='px-2 py-0.5 rounded-md text-xs font-medium' style={{ background: candy, color: 'var(--pos-chip-text)' }}>{product.category || 'General'}</span>
               </div>
               {product.description && (
                 <p className='mt-1 text-[12px] line-clamp-2' style={{ color: 'var(--pos-text-muted)' }}>{product.description}</p>
@@ -138,7 +138,7 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
         <div className='p-5 border-t flex items-center justify-between gap-3' style={{ borderColor: 'var(--pos-card-border)' }}>
           <button onClick={onClose} className='h-11 px-4 rounded-lg text-sm font-semibold' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>Salir</button>
     <button onClick={handleAdd} className='h-11 px-5 rounded-full text-sm font-semibold text-white'
-      style={{ background: 'var(--fc-teal-500)' }}>{lineId ? 'Guardar cambios ↵' : 'Añadir al carrito ↵'}</button>
+      style={{ background: 'var(--pos-accent-green)' }}>{lineId ? 'Guardar cambios ↵' : 'Añadir al carrito ↵'}</button>
         </div>
       </aside>
     </>
