@@ -4,9 +4,20 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
+type ProductWithCategory = Prisma.productoGetPayload<{ include: { categoria: true } }>;
+
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
+
+  private mapProduct(product: ProductWithCategory, stock?: number | null) {
+    const { categoria, ...rest } = product;
+    return {
+      ...rest,
+      category: categoria?.nombre ?? null,
+      stock: stock ?? null,
+    };
+  }
 
   /**
    * Resuelve un identificador de categoría que puede venir como:
@@ -43,12 +54,15 @@ export class ProductsService {
 
     const resolvedCategory = await this.resolveCategoryId(id_categoria);
 
-    return this.prisma.producto.create({
+    const product = await this.prisma.producto.create({
       data: {
         ...rest,
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
       },
+      include: { categoria: true },
     });
+
+    return this.mapProduct(product);
   }
 
   async findAll(params: { search?: string; status?: string; id_negocio?: string }) {
@@ -75,6 +89,7 @@ export class ProductsService {
       this.prisma.producto.findMany({
         where,
         orderBy: { id_producto: 'desc' },
+        include: { categoria: true },
       }),
       this.prisma.inventario.groupBy({
         by: ['id_producto'],
@@ -97,10 +112,8 @@ export class ProductsService {
       const id = product.id_producto.toString();
       const hasStockInfo = stockMap.has(id);
       const stockValue = stockMap.get(id);
-      return {
-        ...product,
-        stock: hasStockInfo ? (stockValue ?? 0) : null,
-      };
+      const normalizedStock = hasStockInfo ? Number(stockValue ?? 0) : null;
+      return this.mapProduct(product, normalizedStock);
     });
   }
 
@@ -110,6 +123,7 @@ export class ProductsService {
 
     const product = await this.prisma.producto.findUnique({
       where: { id_producto: productId },
+      include: { categoria: true },
     });
 
     if (!product) {
@@ -120,10 +134,8 @@ export class ProductsService {
       where: { id_producto: productId },
     });
     const stockValue = stockAgg._sum.cantidad_actual;
-    return {
-      ...product,
-      stock: stockValue == null ? null : Number(stockValue),
-    };
+    const normalizedStock = stockValue == null ? null : Number(stockValue);
+    return this.mapProduct(product, normalizedStock);
   }
 
   // ✅ Lógica de actualización corregida.
@@ -133,13 +145,16 @@ export class ProductsService {
 
     const resolvedCategory = await this.resolveCategoryId(id_categoria);
 
-    return this.prisma.producto.update({
+    const product = await this.prisma.producto.update({
       where: { id_producto: productId },
       data: {
         ...rest,
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
       },
+      include: { categoria: true },
     });
+
+    return this.mapProduct(product);
   }
 
   async remove(id: string) {

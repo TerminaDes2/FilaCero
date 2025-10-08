@@ -10,7 +10,8 @@ type AdminProduct = {
   sku: string;
   price: number;
   stock: number | null; // null => sin información de inventario
-  category: string;
+  categoryId: string | null;
+  categoryName: string;
   active: boolean;
 };
 
@@ -23,6 +24,8 @@ type ApiProduct = {
   estado: string | null; // 'activo' | 'inactivo' | null
   codigo_barras?: string | null;
   stock?: number | string | null;
+  category?: string | null;
+  id_categoria?: string | number | null;
 };
 
 export interface AdminProductGridProps {
@@ -76,13 +79,16 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
         } else if (stockByProduct?.has(id)) {
           stockValue = stockByProduct.get(id) ?? null;
         }
+        const categoryId = p.id_categoria != null ? String(p.id_categoria) : null;
+        const rawCategoryName = typeof p.category === 'string' ? p.category.trim() : '';
         return {
           id,
           name: p.nombre,
           sku: (p.codigo_barras as any) || '',
           price: isNaN(priceNum) ? 0 : priceNum,
           stock: stockValue,
-          category: 'General',
+          categoryId,
+          categoryName: rawCategoryName || 'Sin categoría',
           active: (p.estado ?? 'activo') === 'activo',
         };
       });
@@ -209,7 +215,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
           if (!p) return null;
           return (
             <EditProductPanel
-              initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.category, active: p.active }}
+              initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.categoryId ?? '', active: p.active }}
               onClose={closeEdit}
               onSaved={async () => { await load(); closeEdit(); }}
             />
@@ -276,7 +282,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                       {!p.active && (
                         <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-tab-bg)', color: 'var(--pos-text-muted)' }}>Inactivo</span>
                       )}
-                      <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>General</span>
+                      <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{p.categoryName}</span>
                     </div>
                   </div>
                   <div className='mt-1 text-[11px] text-[var(--pos-text-muted)] truncate'>SKU: {p.sku || '—'}</div>
@@ -301,7 +307,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
         if (!p) return null;
         return (
           <EditProductPanel
-            initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.category, active: p.active }}
+            initial={{ id: p.id, name: p.name, sku: p.sku, price: p.price, category: p.categoryId ?? '', active: p.active }}
             onClose={closeEdit}
             onSaved={async () => { await load(); closeEdit(); }}
           />

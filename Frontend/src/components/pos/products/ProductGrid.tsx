@@ -12,7 +12,8 @@ interface ApiProduct {
   imagen: string | null;
   estado: string | null;
   stock?: number | string | null;
-  category?: string;
+  category?: string | null;
+  id_categoria?: string | number | null;
 }
 
 interface ProductGridProps {
@@ -44,6 +45,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
               stockValue = Number.isNaN(parsed) ? null : parsed;
             }
           }
+          const categoryLabel = (p.category ?? '').trim();
           return {
             id: idStr,
             name: p.nombre,
@@ -51,7 +53,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
             description: p.descripcion || undefined,
             image: p.imagen || undefined,
             stock: stockValue ?? 0,
-            category: p.category || 'General',
+            category: categoryLabel || 'Sin categoría',
           };
         });
 
@@ -72,8 +74,13 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
   }, [loading]);
 
   const filtered = useMemo(() => {
-    // Temporal: no filtramos por categoría hasta que el backend envíe categorías reales
-    return allProducts;
+    if (!category || category === 'all') return allProducts;
+    const normalized = category.trim().toLowerCase();
+    if (!normalized) return allProducts;
+    if (normalized === 'uncategorized') {
+      return allProducts.filter(p => !p.category || p.category.toLowerCase() === 'sin categoría');
+    }
+    return allProducts.filter(p => p.category && p.category.trim().toLowerCase() === normalized);
   }, [allProducts, category]);
 
   if (loading) {
