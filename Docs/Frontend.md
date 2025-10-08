@@ -87,3 +87,11 @@ En Docker (frontend) se expone el puerto 3000 y se monta el código para desarro
 - Cerrar sesión: Ctrl/Cmd + L (pide confirmación)
 - Confirmar en diálogos: Enter
 - Cancelar/cerrar panel o diálogo: Escape
+
+## Apariencia: densidad y acento
+
+- Densidad: configurable en POS > Configuración > Apariencia. Cambia el tamaño base de los controles a través de las variables `--pos-control-h` y `--pos-control-radius`.
+  - Cómoda (por defecto): `--pos-control-h: 44px`
+  - Compacta: agrega la clase `density-compact` al `html` y establece `--pos-control-h: 38px`.
+- Acento: alterna entre menta (`--fc-teal-*`) y brand frambuesa (`--fc-brand-*`). El mapeo afecta a `--pos-accent-green` y `--pos-accent-green-hover` que usan los botones primarios del POS.
+- Aplicación en cliente: `ClientSettingsApplier` observa cambios en el store y aplica la clase y variables CSS inmediatamente. Los valores persisten en `localStorage` (`posSettings`).
