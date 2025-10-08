@@ -1,8 +1,7 @@
 "use client";
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { PosSidebar } from '../../src/components/pos/sidebar';
 import { CartProvider } from '../../src/pos/cartContext';
-import { CategoryFilter } from '../../src/components/pos/filters/CategoryFilter';
 import { CategoryTabs } from '../../src/components/pos/filters/CategoryTabs';
 import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
@@ -12,6 +11,7 @@ import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
 import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
+import { useCategoriesStore } from '../../src/pos/categoriesStore';
 // Categories store not needed here
 
 // Mock product dataset (frontend only)
@@ -30,13 +30,31 @@ const MOCK_PRODUCTS: POSProduct[] = [
 
 export default function POSPage() {
   const settings = useSettingsStore();
-  const [category, setCategory] = useState('all');
   const [view, setView] = useState<'grid'|'list'>(settings.defaultView);
   const [search, setSearch] = useState('');
+  const { categories: storeCategories, selected, setSelected, replaceAll } = useCategoriesStore();
+  const categories = useMemo(() => storeCategories.map(c => c.name), [storeCategories]);
 
-  const categories = useMemo(()=> Array.from(new Set(MOCK_PRODUCTS.map(p=> p.category))), []);
-
-  // CategoryTabs use local state only on this page
+  // Fetch categories from backend (DB source of truth) on first load
+  useEffect(() => {
+    if (storeCategories.length > 0) return;
+    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
+    const controller = new AbortController();
+    fetch(`${base}/categories`, { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        // Map API (id_categoria, nombre) -> store shape
+        const items = data.map((it: any) => ({ id: String(it.id_categoria ?? it.id ?? ''), name: String(it.nombre ?? it.name ?? ''), color: 'brand' as const }))
+          .filter((it: any) => it.id && it.name);
+        if (items.length) replaceAll(items);
+      })
+      .catch(() => { /* silent: keep empty -> only 'Todas' tab */ })
+      .finally(() => { /* no-op */ });
+    return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <CartProvider>
@@ -61,12 +79,12 @@ export default function POSPage() {
           <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
             {/* Products section */}
             <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
-              {/* Panel container - match categories spacing */}
-              <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-2' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
-                {/* Tabs inside the panel to keep consistent top spacing */}
-                <div className='relative z-10 mb-2 -mx-2'>
-                  <CategoryTabs categories={categories} value={category} onChange={(c)=> setCategory(c)} />
-                </div>
+              {/* Tabs outside panel to simulate panel tabs */}
+              <div className='relative z-20 px-5 -mb-1'>
+                <CategoryTabs categories={categories} value={selected} onChange={setSelected} />
+              </div>
+              {/* Panel container under tabs */}
+              <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
                 <header className='space-y-3 mb-3 flex-none'>
                   <div className='flex flex-col md:flex-row md:items-center gap-3'>
                     <SearchBox value={search} onChange={setSearch} />
@@ -77,7 +95,7 @@ export default function POSPage() {
                   {/* Categories admin is available in /pos/categories */}
                 </header>
                 <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
-                  <ProductGrid category={category} search={search} view={view} />
+                  <ProductGrid category={selected} search={search} view={view} />
                 </div>
               </section>
             </div>

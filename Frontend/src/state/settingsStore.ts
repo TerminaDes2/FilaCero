@@ -2,7 +2,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ThemeMode = 'system' | 'light' | 'dark';
 export type Density = 'comfortable' | 'compact';
 export type POSView = 'grid' | 'list';
 export type LocaleCode = 'es-MX' | 'es-ES' | 'en-US';
@@ -10,7 +9,6 @@ export type CurrencyCode = 'MXN' | 'USD' | 'EUR';
 
 interface SettingsState {
   // Appearance
-  mode: ThemeMode;
   density: Density;
   accentTeal: boolean;
 
@@ -38,7 +36,6 @@ interface SettingsState {
 }
 
 const defaults: Omit<SettingsState, 'set' | 'reset'> = {
-  mode: 'system',
   density: 'comfortable',
   accentTeal: true,
   defaultView: 'grid',

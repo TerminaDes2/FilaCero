@@ -80,7 +80,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
       <aside className='fixed right-0 top-0 h-screen w-[92vw] sm:w-[420px] md:w-[440px] shadow-2xl z-[110] flex flex-col' style={{ background: 'var(--pos-card-bg)', borderLeft: '1px solid var(--pos-card-border)' }}>
         {/* Header estilo POS */}
         <div className='px-5 py-4 border-b flex items-center gap-3' style={{ borderColor: 'var(--pos-card-border)' }}>
-          <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: '#694b3e' }}>
+          <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>
             <svg viewBox='0 0 24 24' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
               <circle cx='12' cy='12' r='7' />
               <path d='M12 8v8M8 12h8' />

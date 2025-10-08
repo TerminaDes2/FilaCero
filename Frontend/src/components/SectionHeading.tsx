@@ -20,10 +20,10 @@ interface SectionHeadingProps {
 */
 
 const toneMap: Record<string, { bg: string; text: string; border: string }> = {
-  brand: { bg: 'bg-[var(--fc-brand-50)] dark:bg-[color-mix(in_srgb,var(--fc-brand-600)_25%,transparent)]', text: 'text-[var(--fc-brand-600)] dark:text-[var(--fc-brand-400)]', border: 'border-[var(--fc-brand-200)]/70 dark:border-white/10' },
-  teal: { bg: 'bg-[var(--fc-teal-50)] dark:bg-[color-mix(in_srgb,var(--fc-teal-600)_25%,transparent)]', text: 'text-[var(--fc-teal-700)] dark:text-[var(--fc-teal-300)]', border: 'border-[var(--fc-teal-200)]/70 dark:border-white/10' },
-  sun: { bg: 'bg-[var(--fc-sun-50)] dark:bg-[color-mix(in_srgb,var(--fc-sun-600)_25%,transparent)]', text: 'text-[var(--fc-sun-700)] dark:text-[var(--fc-sun-300)]', border: 'border-[var(--fc-sun-200)]/70 dark:border-white/10' },
-  neutral: { bg: 'bg-gray-100 dark:bg-white/10', text: 'text-gray-700 dark:text-slate-300', border: 'border-gray-300/60 dark:border-white/10' },
+  brand: { bg: 'bg-[var(--fc-brand-50)]', text: 'text-[var(--fc-brand-600)]', border: 'border-[var(--fc-brand-200)]/70' },
+  teal: { bg: 'bg-[var(--fc-teal-50)]', text: 'text-[var(--fc-teal-700)]', border: 'border-[var(--fc-teal-200)]/70' },
+  sun: { bg: 'bg-[var(--fc-sun-50)]', text: 'text-[var(--fc-sun-700)]', border: 'border-[var(--fc-sun-200)]/70' },
+  neutral: { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-300/60' },
 };
 
 export const SectionHeading: React.FC<SectionHeadingProps> = ({
@@ -53,11 +53,11 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
   return (
     <Tag className={wrapperCls} {...(id ? { id } : {})}>
       {badge && <span className={badgeCls}>{badge}</span>}
-      <h2 className="text-3xl font-bold tracking-tight text-[var(--fc-text-primary)] dark:text-white mb-4">
+      <h2 className="text-3xl font-bold tracking-tight text-[var(--fc-text-primary)] mb-4">
         {title}
       </h2>
       {subtitle && (
-        <p className={clsx('text-[var(--fc-text-secondary)] dark:text-slate-300 max-w-2xl', align === 'center' && 'mx-auto')}>
+        <p className={clsx('text-[var(--fc-text-secondary)] max-w-2xl', align === 'center' && 'mx-auto')}>
           {subtitle}
         </p>
       )}

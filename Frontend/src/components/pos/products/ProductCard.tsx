@@ -54,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
       <div className={view === 'grid' ? 'relative w-full h-36 overflow-hidden' : 'relative w-24 h-20 rounded-lg overflow-hidden flex-shrink-0'} style={{ background: '#f2e2c5' }}>
         <Image src={product.image || '/images/POS-OrdenarMenu.png'} alt={product.name} fill className='object-cover transition-transform duration-500 group-hover:scale-105' />
         {outOfStock && (
-          <span className='absolute inset-0 bg-[rgba(255,255,255,0.78)] backdrop-blur-sm flex items-center justify-center text-[11px] font-semibold tracking-wide' style={{ color: '#8c2e3b' }}>Sin stock</span>
+          <span className='absolute inset-0 bg-[rgba(255,255,255,0.78)] backdrop-blur-sm flex items-center justify-center text-[11px] font-semibold tracking-wide' style={{ color: 'var(--pos-danger-text)' }}>Sin stock</span>
         )}
       </div>
       <div className={`${view === 'grid' ? 'p-3' : 'flex-1 min-w-0'} relative z-0`}>

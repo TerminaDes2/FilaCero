@@ -56,12 +56,12 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange, n
     <div className={`${compact ? 'mt-2' : 'mt-4'}`}>
       {showContext && (
         <div className={`mb-3 ${compact ? 'space-y-1' : 'space-y-1.5'}`}>
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/80 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10 text-[11px] text-gray-700">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/80 ring-1 ring-black/5 text-[11px] text-gray-700">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--fc-brand-600)]" />
             Continuando tu registro
           </div>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <h3 className={`font-semibold ${compact ? 'text-sm' : 'text-base'} text-gray-900 dark:text-slate-100`}>{displayName ? `Hola, ${displayName}` : 'Elige tu tipo de cuenta'}</h3>
+            <h3 className={`font-semibold ${compact ? 'text-sm' : 'text-base'} text-gray-900`}>{displayName ? `Hola, ${displayName}` : 'Elige tu tipo de cuenta'}</h3>
             {displayEmail && (
               <span className="text-[11px] text-gray-600">Usaremos <span className="font-medium text-gray-800">{displayEmail}</span></span>
             )}
@@ -81,7 +81,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange, n
             type="button"
             onClick={() => handleRoleSelect(r.key)}
             className={`relative overflow-hidden rounded-2xl p-4 text-left group transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-600)] focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.995]
-              ${active ? 'text-white shadow-md' : 'text-gray-800 dark:text-slate-100'}
+              ${active ? 'text-white shadow-md' : 'text-gray-800'}
             `}
             aria-pressed={active}
             style={{
@@ -93,15 +93,15 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange, n
             {/* Ambient overlay */}
             <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: `radial-gradient(closest-side, ${accent}22, transparent)`}} />
             {/* Badge icon */}
-            <div className={`inline-flex items-center justify-center rounded-xl w-10 h-10 ring-1 ring-black/5 dark:ring-white/10 mb-2 ${active ? 'bg-white/20 text-white' : 'bg-white/70 text-gray-700'}`}>
+            <div className={`inline-flex items-center justify-center rounded-xl w-10 h-10 ring-1 ring-black/5 mb-2 ${active ? 'bg-white/20 text-white' : 'bg-white/70 text-gray-700'}`}>
               {React.cloneElement(r.icon as React.ReactElement, { className: 'w-5 h-5', stroke: 'currentColor' })}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-extrabold tracking-tight ${active ? 'text-white' : 'text-gray-900 dark:text-slate-100'}`}>{r.title}</p>
-              <p className={`text-[11px] mt-0.5 leading-tight ${active ? 'text-white/90' : 'text-gray-700 dark:text-slate-400'}`}>{r.desc}</p>
+              <p className={`text-sm font-extrabold tracking-tight ${active ? 'text-white' : 'text-gray-900'}`}>{r.title}</p>
+              <p className={`text-[11px] mt-0.5 leading-tight ${active ? 'text-white/90' : 'text-gray-700'}`}>{r.desc}</p>
             </div>
             {active && (
-              <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/50 dark:ring-white/20" />
+              <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/50" />
             )}
           </button>
         );

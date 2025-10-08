@@ -83,12 +83,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
   if (filtered.length === 0) {
     return (
       <div className='text-center py-16 px-4'>
-        <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300 dark:text-slate-600' fill='none' stroke='currentColor' strokeWidth='1.4'>
+        <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
           <circle cx='12' cy='12' r='7' />
           <path d='M8 12h8' />
         </svg>
-        <p className='text-sm font-medium text-slate-600 dark:text-slate-300 mt-3'>No hay resultados</p>
-        <p className='text-[12px] text-slate-500 dark:text-slate-400 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
+        <p className='text-sm font-medium text-slate-600 mt-3'>No hay resultados</p>
+        <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
       </div>
     );
   }

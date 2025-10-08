@@ -87,7 +87,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		<form onSubmit={submit} className="space-y-6" noValidate>
 
 					{error && (
-						<div className="text-[12px] text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-900/30 border border-rose-200/70 dark:border-rose-800 rounded-md px-3 py-2">
+						<div className="text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2">
 							{error}
 						</div>
 					)}
@@ -126,12 +126,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 			{password && suggestions.length > 0 && !passwordStrongEnough && (
 				<div className="flex flex-wrap gap-1.5 -mt-2">
 					{suggestions.map((s, idx) => {
-						const accentClass = idx % 3 === 0 ? 'border-sun-300 text-sun-700 dark:text-sun-300' : idx % 3 === 1 ? 'border-brand-200 text-brand-700 dark:text-brand-300' : 'border-emerald-200 text-emerald-700 dark:text-emerald-300';
-						const iconColor = idx % 3 === 0 ? 'text-sun-400 dark:text-sun-300' : idx % 3 === 1 ? 'text-brand-500 dark:text-brand-300' : 'text-emerald-400 dark:text-emerald-300';
+						const accentClass = idx % 3 === 0 ? 'border-sun-300 text-sun-700' : idx % 3 === 1 ? 'border-brand-200 text-brand-700' : 'border-emerald-200 text-emerald-700';
+						const iconColor = idx % 3 === 0 ? 'text-sun-400' : idx % 3 === 1 ? 'text-brand-500' : 'text-emerald-400';
 						return (
 							<span
 								key={s}
-								className={`inline-flex items-center gap-1 rounded-full bg-white/70 dark:bg-white/10 border ${accentClass} px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur-sm`}
+								className={`inline-flex items-center gap-1 rounded-full bg-white/70 border ${accentClass} px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur-sm`}
 							>
 								<svg className={`w-2.5 h-2.5 ${iconColor}`} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
 									<path strokeLinecap='round' strokeLinejoin='round' d='M12 3v4M12 17v4M4 12h4m8 0h4M7.8 7.8l2.8 2.8m2.8 2.8 2.8 2.8m0-8.4-2.8 2.8m-2.8 2.8-2.8 2.8' />
@@ -155,26 +155,26 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				hint={!confirm ? 'Repite la contraseña' : undefined}
 			/>
 			<div className="space-y-4">
-				<div className="flex items-start gap-3 rounded-md bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3">
+				<div className="flex items-start gap-3 rounded-md bg-white/60 border border-gray-200 p-3">
 					<input
 						id="terms"
 						type="checkbox"
 						checked={acceptedTerms}
 						onChange={e=>setAcceptedTerms(e.target.checked)}
-						className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:bg-slate-800 dark:border-white/20"
+						className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
 					/>
-						<label htmlFor="terms" className="text-xs leading-relaxed text-gray-600 dark:text-slate-300">
+						<label htmlFor="terms" className="text-xs leading-relaxed text-gray-600">
 							Acepto los {' '}
-							<button type="button" onClick={()=>setShowLegal('terminos')} className="font-medium text-brand-600 dark:text-brand-400 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
+							<button type="button" onClick={()=>setShowLegal('terminos')} className="font-medium text-brand-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
 								Términos de Servicio
 							</button>{' '}y la{' '}
-							<button type="button" onClick={()=>setShowLegal('privacidad')} className="font-medium text-brand-600 dark:text-brand-400 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
+							<button type="button" onClick={()=>setShowLegal('privacidad')} className="font-medium text-brand-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
 								Política de Privacidad
 							</button>.
 						</label>
 				</div>
 				{touched.terms && !acceptedTerms && (
-					<p className="text-[11px] text-rose-600 dark:text-rose-400">Debes aceptar los términos para continuar.</p>
+					<p className="text-[11px] text-rose-600">Debes aceptar los términos para continuar.</p>
 				)}
 				<button
 				type="submit"
