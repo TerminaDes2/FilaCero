@@ -52,6 +52,12 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
     router.push('/');
   };
 
+  // Pull dynamic name/role from store as primary source
+  const { name: storeName, backendRole } = useUserStore();
+  const looksLikeEmail = (v?: string | null) => !!v && /.+@.+\..+/.test(v);
+  const displayName = looksLikeEmail(storeName) ? (employeeName || 'Usuario') : (storeName || employeeName);
+  const displayRole = (backendRole && typeof backendRole === 'string') ? (backendRole === 'admin' ? 'Administrador' : backendRole) : role;
+
   return (
     <aside className="flex flex-col items-end gap-1 select-none" aria-label="Información superior derecha">
       {/* Nivel 1 */}
@@ -89,8 +95,8 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
 
         {/* Nombre y rol */}
         <div className="leading-tight text-right">
-          <div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>{employeeName}</div>
-          <div className="text-[11px]" style={{ color: 'var(--pos-text-muted)' }}>{role}</div>
+          <div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>{displayName}</div>
+          <div className="text-[11px]" style={{ color: 'var(--pos-text-muted)' }}>{displayRole}</div>
         </div>
       </div>
 

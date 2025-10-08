@@ -53,6 +53,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ correo_electronico, password }),
     }),
+  me: () => apiFetch<{ id: string; name?: string; email?: string; role?: string }>('auth/me'),
 register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
   console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
   console.log('📦 Datos enviados:', { name, email, password, role });
