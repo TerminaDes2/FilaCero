@@ -1,4 +1,3 @@
-// --- Tu código actualizado ---
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
 
 export interface ApiError {
@@ -46,12 +45,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 // --- Interfaces actualizadas ---
 export interface LoginResponse {
   token: string;
-  user: { 
-    id: string; 
-    email: string;
-    id_rol: number;        // ← Nuevo campo
-    nombre_rol?: string;   // ← Nuevo campo opcional
-  };
+  user: { id: string; email: string };
 }
 
 export interface UserInfo {
@@ -59,10 +53,9 @@ export interface UserInfo {
   nombre: string;
   correo_electronico: string;
   id_rol: number;
-  role?: {
-    id_rol: number;
-    nombre_rol: string;
-  };
+  // nombre del rol plano desde backend (JwtStrategy agrega role_name)
+  role_name?: string;
+  role?: { id_rol: number; nombre_rol: string };
   numero_telefono?: string;
   fecha_nacimiento?: string;
   fecha_registro?: string;
@@ -91,10 +84,7 @@ export const api = {
   // --- 👇 NUEVO: Obtener información del usuario actual ---
   me: () => apiFetch<UserInfo>('auth/me'),
 
-  // --- Productos generales ---
-  getProducts: (params?: { search?: string; status?: string }) => {
-    const query = params ? new URLSearchParams(params as any).toString() : '';
-  // Obtener la lista de productos (con filtros opcionales)
+  // --- Productos ---
   getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
@@ -134,8 +124,7 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // --- 👇 Inventario ---
-  // --- 👇 CÓDIGO AÑADIDO PARA CATEGORÍAS ---
+  // --- Categorías ---
   getCategories: () => 
     apiFetch<any[]>('categories'),
   getCategoryById: (id: string) =>
@@ -155,12 +144,12 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // --- 👇 NEGOCIOS ---
+  // --- Negocios ---
   createBusiness: (data: { nombre: string; direccion?: string; telefono?: string; correo?: string; logo?: string }) =>
     apiFetch<any>('businesses', { method: 'POST', body: JSON.stringify(data) }),
   listMyBusinesses: () => apiFetch<any[]>('businesses/my'),
 
-  // --- Funciones de Inventario (SIN CAMBIOS) ---
+  // --- Inventario ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
     return apiFetch<any[]>(`inventory?${query}`);
@@ -173,10 +162,41 @@ export const api = {
     apiFetch<any>(`inventory/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
+  
+  // --- Ventas ---
+  createSale: (data: { id_negocio: string; id_tipo_pago?: string; items: Array<{ id_producto: string; cantidad: number; precio_unitario?: number }>; cerrar?: boolean }) =>
+    apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }),
 
-  // --- 👇 NUEVO: Obtener productos de una tienda específica ---
+  // Historial de ventas
+  getSales: (params?: { id_negocio?: string; id_usuario?: string; estado?: string; desde?: string; hasta?: string }) => {
+    const merged = { ...(params || {}) } as Record<string, string | undefined>;
+    if (!merged.id_negocio) {
+      let negocioId: string | undefined;
+      try { negocioId = typeof window !== 'undefined' ? localStorage.getItem('active_business_id') || undefined : undefined; } catch {}
+      if (!negocioId) negocioId = process.env.NEXT_PUBLIC_NEGOCIO_ID as string | undefined;
+      if (negocioId) merged.id_negocio = negocioId;
+    }
+    const query = new URLSearchParams(Object.entries(merged).filter(([_,v]) => v != null && v !== '') as any).toString();
+    return apiFetch<any[]>(`sales${query ? `?${query}` : ''}`);
+  },
+  getSale: (id: string) => apiFetch<any>(`sales/${id}`),
+
+  // Legacy helper (si se usa en algún lugar)
   getStoreProducts: (id_negocio: string | number) => {
     if (!id_negocio) throw new Error('Se requiere un id_negocio válido');
     return apiFetch<any[]>(`store/${id_negocio}/products`);
+  },
+};
+
+// Helpers para negocio activo en el cliente
+export const activeBusiness = {
+  get(): string | null {
+    try { return typeof window !== 'undefined' ? localStorage.getItem('active_business_id') : null; } catch { return null; }
+  },
+  set(id: string) {
+    try { if (typeof window !== 'undefined') localStorage.setItem('active_business_id', id); } catch {}
+  },
+  clear() {
+    try { if (typeof window !== 'undefined') localStorage.removeItem('active_business_id'); } catch {}
   },
 };

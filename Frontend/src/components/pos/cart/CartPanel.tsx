@@ -6,6 +6,7 @@ import { PaymentPanel } from '../payments/PaymentPanel';
 import { AddToCartPanel } from '../products/AddToCartPanel';
 
 import { useConfirm } from '../../system/ConfirmProvider';
+import { api, activeBusiness } from '../../../lib/api';
 export const CartPanel: React.FC = () => {
   const { items, subtotal, total, remove, inc, dec, clear } = useCart();
   const confirm = useConfirm();
@@ -189,15 +190,25 @@ export const CartPanel: React.FC = () => {
           <PaymentPanel
             totalDue={total}
             onClose={()=> setShowPayment(false)}
-            onConfirm={(data)=>{
-              // After confirm: capture total, close payment, open success with details, and clear cart
-              const t = total;
-              setPaidTotal(t);
-              setShowPayment(false);
-              setSuccessData({ method: data.method, amountReceived: data.amountReceived, change: data.change });
-              setShowSuccess(true);
-              // clear cart after successful payment
-              clear();
+            onConfirm={async (data)=>{
+              // 1) Persistir la venta en backend
+              try {
+                const businessId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '1';
+                // Nota: backend exige items con id_producto (string), cantidad (number), precio_unitario opcional
+                const saleItems = items.map(i => ({ id_producto: i.product.id, cantidad: i.qty }));
+                await api.createSale({ id_negocio: String(businessId), items: saleItems, cerrar: true });
+
+                // 2) UI success
+                const t = total;
+                setPaidTotal(t);
+                setShowPayment(false);
+                setSuccessData({ method: data.method, amountReceived: data.amountReceived, change: data.change });
+                setShowSuccess(true);
+                clear();
+              } catch (err: any) {
+                console.error('[POS] Error al crear la venta', err);
+                alert(`No se pudo registrar la venta: ${err?.message || 'Error desconocido'}`);
+              }
             }}
           />
         )}

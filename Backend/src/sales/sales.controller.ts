@@ -9,7 +9,7 @@ import { CloseSaleDto } from './dto/close-sale.dto';
 
 @Controller('api/sales')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('superadmin', 'admin', 'empleado')
+@Roles('superadmin', 'admin', 'empleado', 'usuario')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 

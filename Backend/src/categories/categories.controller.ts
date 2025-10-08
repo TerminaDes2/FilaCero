@@ -18,16 +18,16 @@ export class CategoriesController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin','superadmin')
+  @Roles('admin','superadmin','empleado','usuario')
   create(@Body() dto: CreateCategoryDto) { return this.service.create(dto); }
 
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin','superadmin')
+  @Roles('admin','superadmin','empleado','usuario')
   update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) { return this.service.update(id, dto); }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin','superadmin')
+  @Roles('admin','superadmin','empleado','usuario')
   remove(@Param('id') id: string) { return this.service.remove(id); }
 }

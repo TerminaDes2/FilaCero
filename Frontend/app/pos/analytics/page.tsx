@@ -3,38 +3,171 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useSettingsStore } from '../../../src/state/settingsStore';
+import { api, activeBusiness } from '../../../src/lib/api';
 
-// Mock data generator (to be replaced by API later)
 type RangeKey = 'today'|'7d'|'14d'|'30d';
+type AnalyticsData = {
+  kpis: { revenueToday: number; ticketsToday: number; avgTicket: number; itemsSold: number };
+  sparkline: { h: number; v: number }[];
+  barDaily: { d: string; v: number }[];
+  donut: { label: string; value: number }[];
+  heatmap: { day: number; hour: number; v: number }[][];
+};
 
-function useMockAnalytics(range: RangeKey) {
+// Utilidad para rangos
+function rangeToDates(r: RangeKey): { desde: Date; hasta: Date; bucket: 'hour'|'day' } {
+  const now = new Date();
+  const end = new Date(now);
+  if (r === 'today') {
+    const start = new Date(now);
+    start.setHours(0,0,0,0);
+    return { desde: start, hasta: end, bucket: 'hour' };
+  }
+  const days = r === '7d' ? 7 : r === '14d' ? 14 : 30;
+  const start = new Date(now);
+  start.setHours(0,0,0,0);
+  start.setDate(start.getDate() - (days - 1));
+  return { desde: start, hasta: end, bucket: 'day' };
+}
+
+// Suma segura del total de una venta
+function saleTotal(sale: any): number {
+  if (sale?.total != null) return Number(sale.total) || 0;
+  if (Array.isArray(sale?.detalle_venta)) {
+    return sale.detalle_venta.reduce((acc: number, d: any) => acc + (Number(d.precio_unitario) || 0) * (Number(d.cantidad) || 0), 0);
+  }
+  return 0;
+}
+
+function useAnalytics(range: RangeKey, negocioId?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string|null>(null);
-  const [data, setData] = useState(() => ({
-    kpis: {
-      revenueToday: 12450,
-      ticketsToday: 186,
-      avgTicket: 67,
-      itemsSold: 732
-    },
-    sparkline: Array.from({ length: 24 }, (_, h) => ({ h, v: Math.round(20 + Math.random()*80) })),
-    barDaily: Array.from({ length: 14 }, (_, i) => ({ d: `D${i+1}`, v: Math.round(800 + Math.random()*3800) })),
-    donut: [
-      { label: 'Bebidas', value: 42 },
-      { label: 'Alimentos', value: 33 },
-      { label: 'Postres', value: 17 },
-      { label: 'Otros', value: 8 }
-    ],
-    heatmap: Array.from({ length: 7 }, (_, day) =>
-      Array.from({ length: 12 }, (_, hour) => ({ day, hour, v: Math.random() }))
-    )
-  }));
+  const [data, setData] = useState<AnalyticsData>();
 
   useEffect(() => {
+    let cancelled = false;
+    const { desde, hasta, bucket } = rangeToDates(range);
+    const desdeStr = desde.toISOString();
+    const hastaStr = hasta.toISOString();
     setLoading(true);
-    const t = setTimeout(()=> setLoading(false), 420);
-    return () => clearTimeout(t);
-  }, [range]);
+    setError(null);
+
+  api.getSales({ estado: 'pagada', desde: desdeStr, hasta: hastaStr, ...(negocioId ? { id_negocio: negocioId } : {}) })
+      .then((sales: any[]) => {
+        if (cancelled) return;
+        // KPIs
+        const tickets = sales.length;
+        const revenue = sales.reduce((acc, s) => acc + saleTotal(s), 0);
+        let items = 0;
+        for (const s of sales) {
+          for (const d of (s.detalle_venta || [])) items += Number(d.cantidad) || 0;
+        }
+        const avgTicket = tickets > 0 ? revenue / tickets : 0;
+
+        // Sparkline (24 puntos): si today -> por hora del día; si no -> últimos 24 buckets por día
+        const points: { h: number; v: number }[] = [];
+        if (bucket === 'hour') {
+          const hours = Array.from({ length: 24 }, (_, h) => h);
+          const byHour = new Array(24).fill(0);
+          for (const s of sales) {
+            const d = new Date(s.fecha_venta || s.fecha || s.createdAt || Date.now());
+            const h = d.getHours();
+            byHour[h] += saleTotal(s);
+          }
+          for (const h of hours) points.push({ h, v: Math.round(byHour[h]) });
+        } else {
+          // Tomar hasta 24 días hacia atrás (o lo que cubra el rango)
+          const map = new Map<string, number>(); // yyyy-mm-dd -> revenue
+          for (const s of sales) {
+            const d = new Date(s.fecha_venta || s.fecha || s.createdAt || Date.now());
+            const key = d.toISOString().slice(0,10);
+            map.set(key, (map.get(key) || 0) + saleTotal(s));
+          }
+          const days: { date: Date; key: string }[] = [];
+          const start = new Date(rangeToDates(range).desde);
+          const end = new Date(rangeToDates(range).hasta);
+          const iter = new Date(end);
+          iter.setHours(0,0,0,0);
+          const maxPoints = 24;
+          while (iter >= start && days.length < maxPoints) {
+            const key = iter.toISOString().slice(0,10);
+            days.unshift({ date: new Date(iter), key });
+            iter.setDate(iter.getDate() - 1);
+          }
+          let idx = 0;
+          for (const day of days) points.push({ h: idx++, v: Math.round(map.get(day.key) || 0) });
+        }
+
+        // Barras: 14 días recientes de revenue
+        const barDays: { d: string; v: number }[] = [];
+        {
+          const map = new Map<string, number>();
+          for (const s of sales) {
+            const d = new Date(s.fecha_venta || s.fecha || s.createdAt || Date.now());
+            const key = d.toISOString().slice(0,10);
+            map.set(key, (map.get(key) || 0) + saleTotal(s));
+          }
+          const end = new Date();
+          end.setHours(0,0,0,0);
+          const iter = new Date(end);
+          for (let i=13;i>=0;i--) {
+            const day = new Date(iter);
+            day.setDate(end.getDate() - (13 - i));
+            const key = day.toISOString().slice(0,10);
+            const label = `${day.getDate()}/${day.getMonth()+1}`;
+            barDays.push({ d: label, v: Math.round(map.get(key) || 0) });
+          }
+        }
+
+        // Donut: % por categoría (si viene product.categoria.nombre, si no 'Otros')
+        const catMap = new Map<string, number>();
+        for (const s of sales) {
+          for (const d of (s.detalle_venta || [])) {
+            const product = d.producto || d.product || {};
+            const cat = (product.categoria && (product.categoria.nombre || product.categoria.name)) || 'Otros';
+            const amount = (Number(d.precio_unitario) || 0) * (Number(d.cantidad) || 0);
+            catMap.set(cat, (catMap.get(cat) || 0) + amount);
+          }
+        }
+        const donutEntries = Array.from(catMap.entries());
+        donutEntries.sort((a,b)=> b[1]-a[1]);
+        const donut = donutEntries.slice(0,4).map(([label, value])=> ({ label, value: Math.round(value) }));
+
+        // Heatmap: intensidad por (día de semana 0..6, bloque de 2h)
+        const heat: number[][] = Array.from({ length: 7 }, ()=> new Array(12).fill(0));
+        for (const s of sales) {
+          const d = new Date(s.fecha_venta || s.fecha || s.createdAt || Date.now());
+          const dow = (d.getDay()+6)%7; // convertir a L=0 .. D=6
+          const block = Math.floor(d.getHours()/2); // 0..11
+          heat[dow][block] += saleTotal(s);
+        }
+        // Normalizar a 0..1 para visualización
+        let maxHeat = 0;
+        for (const row of heat) for (const v of row) maxHeat = Math.max(maxHeat, v);
+        const heatmap = heat.map((row,day)=> row.map((v,hour)=> ({ day, hour, v: maxHeat? v/maxHeat : 0 })));
+
+        const payload: AnalyticsData = {
+          kpis: {
+            revenueToday: Math.round(revenue),
+            ticketsToday: tickets,
+            avgTicket: Math.round(avgTicket),
+            itemsSold: items
+          },
+          sparkline: points,
+          barDaily: barDays,
+          donut,
+          heatmap
+        };
+        setData(payload);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e?.message || 'Error cargando métricas');
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [range, negocioId]);
 
   return { loading, error, data };
 }
@@ -44,7 +177,13 @@ function num(n: number) { return n.toLocaleString('es-MX'); }
 export default function AnalyticsPage() {
   const { defaultView } = useSettingsStore(); // store presence
   const [range, setRange] = useState<RangeKey>('today');
-  const { loading, error, data } = useMockAnalytics(range);
+  const [negocioId, setNegocioId] = useState<string | null>(null);
+  useEffect(() => {
+    const stored = activeBusiness.get();
+    if (stored) setNegocioId(stored);
+    else if (process.env.NEXT_PUBLIC_NEGOCIO_ID) setNegocioId(String(process.env.NEXT_PUBLIC_NEGOCIO_ID));
+  }, []);
+  const { loading, error, data } = useAnalytics(range, negocioId || undefined);
 
   return (
     <div className='h-screen flex pos-pattern overflow-hidden'>
@@ -59,6 +198,7 @@ export default function AnalyticsPage() {
           </h1>
           <div className='flex items-center gap-3'>
             <RangeSelector value={range} onChange={setRange} />
+            <BusinessSelector value={negocioId || ''} onChange={(id)=> { setNegocioId(id || null); if (id) activeBusiness.set(id); }} />
             <TopRightInfo businessName='Analítica' />
           </div>
         </div>
@@ -75,9 +215,7 @@ export default function AnalyticsPage() {
             {error && (
               <div className='text-sm text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2'>No se pudieron cargar las métricas.</div>
             )}
-            {!loading && !error && (
-              <Dashboard data={data} />
-            )}
+            {!loading && !error && data && (<Dashboard data={data} />)}
           </div>
         </section>
       </main>
@@ -85,7 +223,7 @@ export default function AnalyticsPage() {
   );
 }
 
-function Dashboard({ data }: { data: ReturnType<typeof useMockAnalytics>['data'] }) {
+function Dashboard({ data }: { data: AnalyticsData }) {
   const totalDonut = data.donut.reduce((a,b)=> a + b.value, 0);
   const donutAngles = data.donut.reduce<{ label:string; start:number; end:number; value:number }[]>((acc, seg, idx) => {
     const start = acc[idx-1]?.end ?? 0;
@@ -281,6 +419,30 @@ const RangeSelector: React.FC<{ value: RangeKey; onChange: (r: RangeKey)=>void }
     ))}
   </div>
 );
+
+const BusinessSelector: React.FC<{ value: string; onChange: (id: string)=>void }>=({ value, onChange })=> {
+  const [list, setList] = useState<Array<{ id_negocio: string; nombre: string }>>([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    api.listMyBusinesses()
+      .then((arr: any[]) => {
+        if (cancelled) return;
+        const mapped = (arr||[]).map(b => ({ id_negocio: String(b.id_negocio ?? b.id), nombre: b.nombre || 'Sin nombre' }));
+        setList(mapped);
+        if (!value && mapped[0]) onChange(mapped[0].id_negocio);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+  return (
+    <select value={value} onChange={(e)=> onChange(e.target.value)} className='text-[12px] rounded-md px-2' style={{ height: 'var(--pos-control-h)' }} aria-label='Negocio'>
+      {list.map(b => <option key={b.id_negocio} value={b.id_negocio}>{b.nombre}</option>)}
+    </select>
+  );
+};
 
 const InsightCard: React.FC<{ icon:string; title:string; value:string; hint?:string }>=({ icon, title, value, hint })=> (
   <div className='rounded-2xl p-4 flex items-center gap-3' style={{background:'rgba(255,255,255,0.9)', boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.05)'}}>

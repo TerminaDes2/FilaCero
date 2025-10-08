@@ -12,7 +12,7 @@ export class ProductsController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin')
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
   create(@Body() dto: CreateProductDto) {
     return this.service.create(dto);
   }
@@ -34,14 +34,14 @@ export class ProductsController {
 
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin')
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin')
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

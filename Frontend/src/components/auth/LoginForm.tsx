@@ -52,20 +52,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				window.localStorage.setItem('auth_user', JSON.stringify(userInfo));
 			}
 			
-			// 4. Redirigir según el rol
-			const userRole = userInfo.id_rol;
-			console.log('✅ Rol del usuario:', userRole);
-			console.log('✅ Usuario completo:', userInfo);
-			
-			// Lógica de redirección según tu base de datos
-			if (userRole == 2) {
+			// 4. Redirigir según el rol (por nombre, con fallback)
+			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
+			const idRol = userInfo.id_rol;
+			console.log('✅ Rol (name):', roleName, ' id_rol:', idRol);
+
+			// Admin/superadmin -> POS; otros -> Shop
+			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
 				console.log('🎯 Redirigiendo ADMIN a /pos');
 				router.push('/pos');
-			} else if (userRole == 4) {
-				console.log('🎯 Redirigiendo USUARIO a /shop');
-				router.push('/shop');
 			} else {
-				console.log('🎯 Rol no reconocido, redirigiendo por defecto a /shop');
+				console.log('🎯 Redirigiendo a /shop');
 				router.push('/shop');
 			}
 			
