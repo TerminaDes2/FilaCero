@@ -33,23 +33,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRoleState(storedRole);
       }
       const storedUser = localStorage.getItem('auth_user');
+      let parsedUser: any | null = null;
       if (storedUser) {
-        try { const u = JSON.parse(storedUser); setNameState(u?.name || u?.nombre || null); } catch {}
-      } else {
-        const raw = localStorage.getItem('auth_token');
-        if (raw) {
-          // defer me() until mount
-          import('../lib/api').then(({ api }) => {
-            api.me().then((u)=>{
-              setNameState(u?.name || (u as any)?.nombre || null);
-              setBackendRoleState((u?.role as BackendRole) ?? null);
-            }).catch(()=>{});
-          }).catch(()=>{});
-        }
+        try { parsedUser = JSON.parse(storedUser); } catch {}
       }
-      const storedBackendRole = localStorage.getItem('auth_user');
-      if (storedBackendRole) {
-        try { const u = JSON.parse(storedBackendRole); setBackendRoleState((u?.role as BackendRole) ?? null); } catch {}
+      const token = localStorage.getItem('auth_token');
+      // Populate from stored user first
+      if (parsedUser) {
+        setNameState(parsedUser?.name || parsedUser?.nombre || null);
+        setBackendRoleState((parsedUser?.role as BackendRole) ?? null);
+      }
+      // If we have token but no name yet, fetch me()
+      if (token && !(parsedUser?.name || parsedUser?.nombre)) {
+        import('../lib/api').then(({ api }) => {
+          api.me().then((u)=>{
+            const newName = u?.name || (u as any)?.nombre || null;
+            setNameState(newName);
+            setBackendRoleState((u?.role as BackendRole) ?? null);
+            try {
+              const merged = { ...(parsedUser || {}), ...(u || {}) };
+              localStorage.setItem('auth_user', JSON.stringify(merged));
+            } catch {}
+          }).catch(()=>{});
+        }).catch(()=>{});
       }
     }
   }, []);

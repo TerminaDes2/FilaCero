@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
+import { useUserStore } from '../../state/userStore';
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -16,6 +17,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
+  const { setName, setBackendRole } = useUserStore();
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordValid = password.length >= 6;
@@ -28,11 +30,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			setSubmitting(true);
 			setError(null);
 			try {
-						const res = await api.login(email.trim().toLowerCase(), password);
-						if (typeof window !== 'undefined') {
-							window.localStorage.setItem('auth_token', res.token);
-							window.localStorage.setItem('auth_user', JSON.stringify(res.user));
-						}
+				const res = await api.login(email.trim().toLowerCase(), password);
+				if (typeof window !== 'undefined') {
+					window.localStorage.setItem('auth_token', res.token);
+					window.localStorage.setItem('auth_user', JSON.stringify(res.user));
+				}
+
+				// Inmediatamente obtener el perfil completo para extraer nombre y rol
+				try {
+					const me = await api.me();
+					const fullUser = { ...res.user, ...me };
+					if (typeof window !== 'undefined') {
+						window.localStorage.setItem('auth_user', JSON.stringify(fullUser));
+					}
+					// Actualizar store para que el header muestre el nombre al instante
+					setName(me?.name || (me as any)?.nombre || null);
+					setBackendRole((me?.role as any) ?? null);
+				} catch {}
+
 				onSuccess?.();
 				// Redirige a POS o home; ajusta según flujo
 				router.push('/pos');

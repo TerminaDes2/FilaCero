@@ -55,6 +55,24 @@ export default function POSPage() {
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
+  // Keyboard: 'v' toggles view (grid/list) when not typing in input
+  useEffect(() => {
+    const isEditable = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      return !!(el.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select');
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!isEditable(e.target) && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        setView(v => v === 'grid' ? 'list' : 'grid');
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <CartProvider>
