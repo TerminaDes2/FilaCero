@@ -1,5 +1,6 @@
 "use client";
 import { create } from 'zustand';
+import { api } from '../lib/api';
 
 export type CategoryColor = 'brand' | 'teal' | 'amber' | 'gray' | 'rose';
 
@@ -14,9 +15,10 @@ interface CategoriesState {
   categories: CategoryItem[];
   selected: string; // 'all' or category name
   bootstrap: (names: string[]) => void;
-  add: (name: string, color?: CategoryColor, icon?: string) => void;
-  update: (id: string, patch: Partial<Pick<CategoryItem, 'name' | 'icon' | 'color'>>) => void;
-  remove: (id: string) => void;
+  fetchCategories: () => Promise<void>;
+  add: (name: string, color?: CategoryColor, icon?: string) => Promise<void>;
+  update: (id: string, patch: Partial<Pick<CategoryItem, 'name' | 'icon' | 'color'>>) => Promise<void>;
+  remove: (id: string) => Promise<void>;
   moveUp: (id: string) => void;
   moveDown: (id: string) => void;
   replaceAll: (items: CategoryItem[]) => void;
@@ -37,17 +39,53 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
     const seeded = uniq.map((n, i) => ({ id: uid(), name: n, color: (i % 3 === 0 ? 'brand' : i % 3 === 1 ? 'teal' : 'amber') as CategoryColor }));
     set({ categories: seeded });
   },
-  add: (name, color = 'brand', icon) => {
+  fetchCategories: async () => {
+    try {
+      const data = await api.getCategories();
+      const items: CategoryItem[] = (Array.isArray(data) ? data : []).map((it: any, idx: number) => ({
+        id: String(it.id_categoria ?? it.id ?? uid()),
+        name: String(it.nombre ?? it.name ?? ''),
+        icon: (it.icon ?? undefined) as string | undefined,
+        color: (['brand','teal','amber','gray','rose'][idx % 5] as CategoryColor)
+      })).filter(it => it.id && it.name);
+      set({ categories: items });
+    } catch (e) {
+      // si falla, mantenemos el estado actual
+      console.warn('No se pudieron cargar categorías', e);
+    }
+  },
+  add: async (name, color = 'brand', icon) => {
     name = name.trim();
     if (!name) return;
     const exists = get().categories.some(c => c.name.toLowerCase() === name.toLowerCase());
     if (exists) return;
-    set({ categories: [...get().categories, { id: uid(), name, color, icon }] });
+    try {
+      const created = await api.createCategory({ nombre: name });
+      const id = String(created?.id_categoria ?? created?.id ?? uid());
+      set({ categories: [...get().categories, { id, name, color, icon }] });
+    } catch (e) {
+      // superficie error al llamador si lo necesita
+      throw e;
+    }
   },
-  update: (id, patch) => {
-    set({ categories: get().categories.map(c => c.id === id ? { ...c, ...patch } : c) });
+  update: async (id, patch) => {
+    try {
+      if (patch.name && patch.name.trim()) {
+        await api.updateCategory(id, { nombre: patch.name.trim() });
+      }
+      // color/icon se manejan localmente
+      set({ categories: get().categories.map(c => c.id === id ? { ...c, ...patch } : c) });
+    } catch (e) {
+      throw e;
+    }
   },
-  remove: (id) => {
+  remove: async (id) => {
+    try {
+      await api.deleteCategory(id);
+    } catch (e) {
+      // Si falla el backend, no mutamos el estado.
+      throw e;
+    }
     const next = get().categories.filter(c => c.id !== id);
     const sel = get().selected;
     const stillExists = next.some(c => c.name === sel);
