@@ -10,11 +10,11 @@ interface NavItem {
 
 const navItems: NavItem[] = [
 	{ label: "Inicio", href: "#hero" },
+	{ label: "Compra ya", href: "shop" },
 	{ label: "Características", href: "#features" },
 	{ label: "Flujo", href: "#process" },
 	{ label: "Beneficios", href: "#benefits" },
 	{ label: "Precios", href: "#pricing" },
-	{ label: "Testimonios", href: "#testimonials" },
 	{ label: "Contacto", href: "#cta" },
 ];
 

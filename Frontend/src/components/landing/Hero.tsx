@@ -49,8 +49,8 @@ export function Hero() {
                 <span>Crear cuenta gratis</span>
                 <span className="translate-x-0 group-hover:translate-x-1 transition" aria-hidden="true">→</span>
               </Link>
-              <Link href="#process" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold border border-gray-300/70 text-gray-700 hover:border-brand-500 hover:text-brand-600 dark:text-gray-200 dark:border-white/15 dark:hover:border-brand-400 dark:hover:text-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
-                Ver cómo funciona
+              <Link href="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold border border-gray-300/70 text-gray-700 hover:border-brand-500 hover:text-brand-600 dark:text-gray-200 dark:border-white/15 dark:hover:border-brand-400 dark:hover:text-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
+                Compra ahora
               </Link>
               <Link href="#pricing" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">
                 Planes
