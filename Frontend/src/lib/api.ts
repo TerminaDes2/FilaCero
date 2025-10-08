@@ -66,8 +66,19 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
   // --- 👇 NUEVAS Funciones de Productos ---
 
   // Obtener la lista de productos (con filtros opcionales)
-  getProducts: (params?: { search?: string; status?: string }) => {
-    const query = params ? new URLSearchParams(params as any).toString() : '';
+  getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
+    const merged = { ...(params || {}) } as { [key: string]: string | undefined };
+    if (!merged.id_negocio) {
+      const negocioEnv = process.env.NEXT_PUBLIC_NEGOCIO_ID;
+      if (negocioEnv) merged.id_negocio = negocioEnv;
+    }
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(merged)) {
+      if (value != null && value !== '') {
+        queryParams.append(key, String(value));
+      }
+    }
+    const query = queryParams.toString();
     const path = query ? `products?${query}` : 'products';
     return apiFetch<any[]>(path);
   },
