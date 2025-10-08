@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 type ConfirmOptions = {
   title?: string;
@@ -27,6 +27,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions>({});
   const resolver = useRef<(v: boolean) => void>();
+  const primaryBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const confirm = useCallback((options: ConfirmOptions) => {
     setOpts(options);
@@ -57,6 +58,32 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const confirmBg = opts.tone === 'danger' ? '#dc2626' : opts.tone === 'neutral' ? 'rgba(0,0,0,0.75)' : accentBg;
   const confirmBgHover = opts.tone === 'danger' ? '#b91c1c' : opts.tone === 'neutral' ? 'rgba(0,0,0,0.85)' : accentBgHover;
 
+  // Enter/Escape shortcuts when modal is open + focus primary button
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => primaryBtnRef.current?.focus(), 30);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      } else if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        e.preventDefault();
+        onConfirm();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open, onCancel, onConfirm]);
+
   return (
     <ConfirmContext.Provider value={value}>
       {children}
@@ -73,7 +100,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                 <button onClick={onCancel} className="h-10 px-4 rounded-lg text-sm font-semibold bg-[rgba(0,0,0,0.06)] hover:bg-[rgba(0,0,0,0.1)] focus:outline-none focus-visible:ring-2" style={{ color: 'var(--pos-text)' }}>
                   {opts.cancelText ?? 'Cancelar'}
                 </button>
-                <button onClick={onConfirm} className="h-10 px-4 rounded-lg text-sm font-semibold text-white focus:outline-none focus-visible:ring-2" style={{ background: confirmBg }} onMouseDown={(e)=>{
+                <button ref={primaryBtnRef} onClick={onConfirm} className="h-10 px-4 rounded-lg text-sm font-semibold text-white focus:outline-none focus-visible:ring-2" style={{ background: confirmBg }} onMouseDown={(e)=>{
                   // allow hover visual on mousedown in some browsers
                 }} onMouseEnter={(e)=>{
                   (e.currentTarget as HTMLButtonElement).style.background = confirmBgHover;

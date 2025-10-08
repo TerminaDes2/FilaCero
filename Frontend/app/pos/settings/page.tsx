@@ -94,7 +94,7 @@ export default function POSSettingsPage() {
             <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
             <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </h1>
-          <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Configuración' />
+          <TopRightInfo businessName='Configuración' />
         </div>
         <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
           {/* Left nav */}
@@ -438,7 +438,7 @@ function StaffSection() {
             <div key={i} className='rounded-lg p-3 flex items-center justify-between' style={{background:'rgba(0,0,0,0.04)'}}>
               <div>
                 <div className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>Miembro {i}</div>
-                <div className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Rol: Cajero</div>
+                {/* Rol dinámico mostrado arriba via TopRightInfo */}
               </div>
               <button className='px-3 py-1.5 text-[12px] rounded-md' style={{background:'rgba(0,0,0,0.06)'}}>Gestionar</button>
             </div>
