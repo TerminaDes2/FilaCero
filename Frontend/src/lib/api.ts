@@ -68,8 +68,13 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
   getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
-      const negocioEnv = process.env.NEXT_PUBLIC_NEGOCIO_ID;
-      if (negocioEnv) merged.id_negocio = negocioEnv;
+      let negocioId: string | undefined = undefined;
+      try { negocioId = typeof window !== 'undefined' ? localStorage.getItem('active_business_id') || undefined : undefined; } catch {}
+      if (!negocioId) {
+        const negocioEnv = process.env.NEXT_PUBLIC_NEGOCIO_ID;
+        if (negocioEnv) negocioId = negocioEnv;
+      }
+      if (negocioId) merged.id_negocio = negocioId;
     }
     const queryParams = new URLSearchParams();
     for (const [key, value] of Object.entries(merged)) {
@@ -116,6 +121,11 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
       method: 'DELETE',
     }),
 
+  // --- 👇 NEGOCIOS ---
+  createBusiness: (data: { nombre: string; direccion?: string; telefono?: string; correo?: string; logo?: string }) =>
+    apiFetch<any>('businesses', { method: 'POST', body: JSON.stringify(data) }),
+  listMyBusinesses: () => apiFetch<any[]>('businesses/my'),
+
   // --- Funciones de Inventario (SIN CAMBIOS) ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
@@ -126,4 +136,17 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
   updateInventory: (id: string, data: Partial<{ cantidad_actual: number; stock_minimo: number }>) =>
     apiFetch<any>(`inventory/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
+};
+
+// Helpers para negocio activo en el cliente
+export const activeBusiness = {
+  get(): string | null {
+    try { return typeof window !== 'undefined' ? localStorage.getItem('active_business_id') : null; } catch { return null; }
+  },
+  set(id: string) {
+    try { if (typeof window !== 'undefined') localStorage.setItem('active_business_id', id); } catch {}
+  },
+  clear() {
+    try { if (typeof window !== 'undefined') localStorage.removeItem('active_business_id'); } catch {}
+  },
 };

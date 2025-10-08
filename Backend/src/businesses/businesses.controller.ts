@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { BusinessesService } from './businesses.service';
+import { BusinessesService } from 'src/businesses/businesses.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 
 @Controller('api/businesses')
