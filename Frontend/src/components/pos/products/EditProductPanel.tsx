@@ -1,6 +1,7 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../../lib/api';
+import { useCategoriesStore } from '../../../pos/categoriesStore';
 
 export interface EditProductData {
   id: string;
@@ -26,6 +27,7 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const { categories, fetchCategories } = useCategoriesStore();
 
   useEffect(() => {
     const t = setTimeout(() => nameInputRef.current?.focus(), 60);
@@ -47,6 +49,18 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
     window.addEventListener('keydown', onKey);
     return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
   }, [onClose, saving]);
+
+  // Load categories from API when the panel opens
+  useEffect(() => {
+    fetchCategories().catch((e) => console.error('Fetch categories failed', e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const categoryName = useMemo(() => {
+    if (!category) return 'Sin categoría';
+    const found = categories.find((c) => c.id === category);
+    return found ? (found.icon ? `${found.icon} ${found.name}` : found.name) : category;
+  }, [categories, category]);
 
   const handleSave = async () => {
     setError(null);
@@ -101,7 +115,7 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
           <section className='rounded-2xl p-4 space-y-3' style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}>
             <div className='flex items-center justify-between'>
               <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Información básica</h3>
-              <span className='px-2 py-0.5 rounded-md text-[11px] font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{category || 'Categoría'}</span>
+              <span className='px-2 py-0.5 rounded-md text-[11px] font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{categoryName || 'Categoría'}</span>
             </div>
             <div>
               <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Nombre</label>
@@ -115,11 +129,16 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
               <div>
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Categoría</label>
                 <div className='relative'>
-                  <select value={category} onChange={e => setCategory(e.target.value)} className='appearance-none w-full rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
+                  <select
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    className='appearance-none w-full rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2'
+                    style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+                  >
                     <option value=''>Sin categoría</option>
-                    <option value='1'>Bebidas</option>
-                    <option value='2'>Alimentos</option>
-                    <option value='3'>Postres</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ${c.name}` : c.name}</option>
+                    ))}
                   </select>
                   <svg aria-hidden viewBox='0 0 24 24' className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{ color: 'var(--pos-text-muted)' }}>
                     <path d='M6 9l6 6 6-6' />
