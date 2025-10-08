@@ -98,27 +98,69 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNe
 };
 
 // La sub-función InlineEdit no necesita cambios
-function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onSave:(patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>>) => void, onDelete:()=>void }) {
+function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onSave:(patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>>) => Promise<void>, onDelete:()=>Promise<void> }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(category.name);
   const [color, setColor] = useState<CategoryColor>(category.color);
   const [icon, setIcon] = useState(category.icon || '');
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
   const t = colorTokens[color];
 
-  const commit = () => {
+  const commit = async () => {
     const patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>> = {};
     if (name.trim() && name.trim() !== category.name) patch.name = name.trim();
     if (icon.trim() !== (category.icon || '')) patch.icon = icon.trim() || undefined;
     if (color !== category.color) patch.color = color;
-    if (Object.keys(patch).length) onSave(patch);
-    setEditing(false);
+    if (!Object.keys(patch).length) {
+      setEditing(false);
+      return;
+    }
+
+    setPending(true);
+    setError(null);
+    try {
+      await onSave(patch);
+      setEditing(false);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'No se pudo guardar los cambios.';
+      setError(message);
+    } finally {
+      setPending(false);
+    }
   };
 
   if (!editing) {
     return (
       <div className="inline-flex items-center gap-1">
-        <button onClick={()=>setEditing(true)} className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center gap-1" title="Editar"><Pencil className="w-4 h-4"/>Editar</button>
-        <button onClick={onDelete} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center text-red-600" title="Eliminar"><Trash2 className="w-4 h-4"/></button>
+        <button
+          onClick={()=>{ setError(null); setEditing(true); setName(category.name); setColor(category.color); setIcon(category.icon || ''); }}
+          className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center gap-1"
+          title="Editar"
+          disabled={pending}
+        >
+          <Pencil className="w-4 h-4"/>Editar
+        </button>
+        <button
+          onClick={async () => {
+            setPending(true);
+            setError(null);
+            try {
+              await onDelete();
+            } catch (e: unknown) {
+              const message = e instanceof Error ? e.message : 'No se pudo eliminar la categoría.';
+              setError(message);
+            } finally {
+              setPending(false);
+            }
+          }}
+          className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center text-red-600"
+          title="Eliminar"
+          disabled={pending}
+        >
+          <Trash2 className="w-4 h-4"/>
+        </button>
+  {error && <span className="ml-2 text-xs text-rose-600" title={error ?? undefined}>{error}</span>}
       </div>
     );
   }
@@ -130,8 +172,21 @@ function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onS
         {Object.keys(colorTokens).map(c => <option key={c} value={c}>{colorTokens[c as CategoryColor].label}</option>)}
       </select>
       <input value={icon} onChange={e=>setIcon(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm w-20" placeholder="Emoji" />
-      <button onClick={commit} className={`h-8 px-3 rounded-lg text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75`}>Guardar</button>
-      <button onClick={()=>setEditing(false)} className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5">Cancelar</button>
+      <button onClick={commit} className={`h-8 px-3 rounded-lg text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75`} disabled={pending}>Guardar</button>
+      <button
+        onClick={() => {
+          setEditing(false);
+          setError(null);
+          setName(category.name);
+          setColor(category.color);
+          setIcon(category.icon || '');
+        }}
+        className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5"
+        disabled={pending}
+      >
+        Cancelar
+      </button>
+  {error && <span className="text-xs text-rose-600 ml-2 max-w-[160px] truncate" title={error ?? undefined}>{error}</span>}
     </div>
   );
 }
