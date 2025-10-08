@@ -107,7 +107,19 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
         estado: active ? 'activo' : 'inactivo',
       };
       if (sku) productPayload.codigo_barras = sku;
-      if (category) productPayload.id_categoria = category; // opcional
+      if (category) {
+        const categoryFromStore = categories.find(cat => cat.id === category);
+        if (categoryFromStore) {
+          const idCandidate = categoryFromStore.id.trim();
+          const nameCandidate = categoryFromStore.name.trim();
+          const identifier = /^\d+$/.test(idCandidate) ? idCandidate : nameCandidate;
+          if (identifier) {
+            productPayload.id_categoria = identifier;
+          }
+        } else if (category.trim()) {
+          productPayload.id_categoria = category.trim();
+        }
+      }
 
       const created = await api.createProduct(productPayload);
       const productId = String(created?.id_producto ?? created?.id);
