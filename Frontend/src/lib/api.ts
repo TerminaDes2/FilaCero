@@ -1,4 +1,3 @@
-// --- Tu código original (sin cambios) ---
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
 
 export interface ApiError {
@@ -53,18 +52,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ correo_electronico, password }),
     }),
-register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
-  console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
-  console.log('📦 Datos enviados:', { name, email, password, role });
-  
-  return apiFetch<LoginResponse>('auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
-  });
-},
-  // --- 👇 NUEVAS Funciones de Productos ---
+  register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
+    console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
+    console.log('📦 Datos enviados:', { name, email, password, role });
 
-  // Obtener la lista de productos (con filtros opcionales)
+    return apiFetch<LoginResponse>('auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
+    });
+  },
+  // --- Funciones de Productos (SIN CAMBIOS) ---
   getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
@@ -81,39 +78,49 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
     const path = query ? `products?${query}` : 'products';
     return apiFetch<any[]>(path);
   },
-
-  // Crear un nuevo producto
   createProduct: (productData: any) =>
     apiFetch<any>('products', {
       method: 'POST',
       body: JSON.stringify(productData),
     }),
-  
-  // Actualizar un producto
   updateProduct: (id: string, productData: any) =>
     apiFetch<any>(`products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(productData),
     }),
-
-  // Eliminar un producto
   deleteProduct: (id: string) =>
     apiFetch<any>(`products/${id}`, {
       method: 'DELETE',
     }),
 
-  // --- 👇 Inventario ---
-  // Listar inventario por negocio (opcionalmente filtrar por producto)
+  // --- 👇 CÓDIGO AÑADIDO PARA CATEGORÍAS ---
+  getCategories: () => 
+    apiFetch<any[]>('categories'),
+  getCategoryById: (id: string) =>
+    apiFetch<any>(`categories/${id}`),
+  createCategory: (categoryData: { nombre: string }) =>
+    apiFetch<any>('categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    }),
+  updateCategory: (id: string, categoryData: { nombre: string }) =>
+    apiFetch<any>(`categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(categoryData),
+    }),
+  deleteCategory: (id: string) =>
+    apiFetch<any>(`categories/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // --- Funciones de Inventario (SIN CAMBIOS) ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
     return apiFetch<any[]>(`inventory?${query}`);
   },
-  // Crear registro de inventario
   createInventory: (data: { id_negocio: string; id_producto: string; cantidad_actual?: number; stock_minimo?: number }) =>
     apiFetch<any>('inventory', { method: 'POST', body: JSON.stringify(data) }),
-  // Actualizar inventario
   updateInventory: (id: string, data: Partial<{ cantidad_actual: number; stock_minimo: number }>) =>
     apiFetch<any>(`inventory/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  // Eliminar inventario
   deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
 };

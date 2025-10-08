@@ -43,6 +43,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
     };
   }, [onClose]);
 
+  // --- 👇 CÓDIGO MODIFICADO ---
   const handleSubmit = async () => {
     setError('');
     const n = name.trim();
@@ -59,15 +60,23 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
       setError('El emoji debe tener máximo 2 caracteres.');
       return;
     }
+    
     setSaving(true);
     try {
-      add(n, color, icon || undefined);
+      // Usamos 'await' para esperar la respuesta de la API
+      // y un try/catch para capturar errores del servidor.
+      await add(n, color, icon || undefined);
+      
       onCreated?.();
       onClose();
+    } catch (e: any) {
+      // Si la API devuelve un error (ej: duplicado), lo mostramos.
+      setError(e.message || 'Ocurrió un error inesperado.');
     } finally {
       setSaving(false);
     }
   };
+  // --- FIN DEL CÓDIGO MODIFICADO ---
 
   const t = colorTokens[color];
 
