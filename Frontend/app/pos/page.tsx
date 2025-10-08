@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { PosSidebar } from '../../src/components/pos/sidebar';
 import { CartProvider } from '../../src/pos/cartContext';
 import { CategoryFilter } from '../../src/components/pos/filters/CategoryFilter';
@@ -7,9 +7,12 @@ import { CategoryTabs } from '../../src/components/pos/filters/CategoryTabs';
 import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
 import { ProductGrid } from '../../src/components/pos/products/ProductGrid';
+// Categories CRUD lives on its own page
 import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
 import type { POSProduct } from '../../src/pos/cartContext';
+import { useSettingsStore } from '../../src/state/settingsStore';
+// Categories store not needed here
 
 // Mock product dataset (frontend only)
 const MOCK_PRODUCTS: POSProduct[] = [
@@ -26,11 +29,14 @@ const MOCK_PRODUCTS: POSProduct[] = [
 ];
 
 export default function POSPage() {
+  const settings = useSettingsStore();
   const [category, setCategory] = useState('all');
-  const [view, setView] = useState<'grid'|'list'>('grid');
+  const [view, setView] = useState<'grid'|'list'>(settings.defaultView);
   const [search, setSearch] = useState('');
 
   const categories = useMemo(()=> Array.from(new Set(MOCK_PRODUCTS.map(p=> p.category))), []);
+
+  // CategoryTabs use local state only on this page
 
   return (
     <CartProvider>
@@ -49,25 +55,26 @@ export default function POSPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' />
+            <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' showLogout />
           </div>
           {/* Columns wrapper: products (left) + cart (right) */}
           <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
             {/* Products section */}
             <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
-              {/* Tabs outside the panel, aligned to panel padding */}
-              <div className='px-5 relative z-20 mb-1.5'>
-                <CategoryTabs categories={categories} value={category} onChange={setCategory} />
-              </div>
-              {/* Panel overlaps up to sit under the tab */}
-              <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-8 pb-2 -mt-2' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
+              {/* Panel container - match categories spacing */}
+              <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-2' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
+                {/* Tabs inside the panel to keep consistent top spacing */}
+                <div className='relative z-10 mb-2 -mx-2'>
+                  <CategoryTabs categories={categories} value={category} onChange={(c)=> setCategory(c)} />
+                </div>
                 <header className='space-y-3 mb-3 flex-none'>
                   <div className='flex flex-col md:flex-row md:items-center gap-3'>
                     <SearchBox value={search} onChange={setSearch} />
-                    <div className='flex items-center gap-3'>
+                    <div className='flex items-center gap-2'>
                       <ViewToggle value={view} onChange={setView} />
                     </div>
                   </div>
+                  {/* Categories admin is available in /pos/categories */}
                 </header>
                 <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
                   <ProductGrid category={category} search={search} view={view} />

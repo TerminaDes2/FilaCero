@@ -62,15 +62,18 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({ categories, value, o
         role="tablist"
         aria-label="Categorías de productos"
       >
+        {/* Baseline under tabs */}
+        <span className="absolute left-0 right-0 bottom-0 h-px" style={{ background: 'var(--pos-border-soft)' }} aria-hidden="true" />
         {/* Active tab slab (animated) */}
         <span
-          className="absolute bottom-0 h-9 rounded-t-xl shadow-sm z-0"
+          className="absolute bottom-0 h-9 rounded-t-xl z-0"
           style={{
             left: 0,
             transform: `translateX(${indicator.left}px)`,
             width: indicator.width,
             transition: ready ? 'transform 260ms cubic-bezier(.2,.8,.2,1), width 260ms cubic-bezier(.2,.8,.2,1)' : 'none',
-            background: 'var(--pos-bg-sand)',
+            background: 'var(--pos-tab-active-bg)',
+            boxShadow: 'inset 0 0 0 1px var(--pos-border-soft)'
 
           }}
           aria-hidden="true"
@@ -104,7 +107,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({ categories, value, o
               className={`relative z-20 h-9 px-3 rounded-t-xl text-[12px] font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 transition-opacity hover:opacity-100 ${
                 active
                   ? ''
-                  : 'hover:bg-[var(--pos-badge-stock-bg)] after:content-[""] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[var(--pos-card-border)] after:transition-opacity after:opacity-0 hover:after:opacity-100'
+                  : 'hover:bg-[var(--pos-tab-bg)] after:content-["\""] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[var(--pos-card-border)] after:transition-opacity after:opacity-0 hover:after:opacity-100'
               }`}
               style={
                 active

@@ -1,5 +1,8 @@
 "use client";
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUserStore } from '../../../state/userStore';
+import { useSettingsStore } from '../../../state/settingsStore';
 
 export interface TopRightInfoProps {
   employeeName?: string;
@@ -7,6 +10,7 @@ export interface TopRightInfoProps {
   businessName?: string;
   date?: Date;
   onNotificationsClick?: () => void;
+  showLogout?: boolean;
 }
 
 export const TopRightInfo: React.FC<TopRightInfoProps> = ({
@@ -14,12 +18,39 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
   role = "Rol",
   businessName = "FilaCero",
   date,
-  onNotificationsClick
+  onNotificationsClick,
+  showLogout = false
 }) => {
+  const router = useRouter();
+  const { reset } = useUserStore();
+  const { locale, dateFormat } = useSettingsStore();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const today = useMemo(() => date ?? new Date(), [date]);
-  const formatted = useMemo(() =>
-    new Intl.DateTimeFormat('es-MX', { dateStyle: 'full' }).format(today)
-  , [today]);
+  const formatted = useMemo(() => {
+    if (!mounted) return '';
+    try {
+      // Use settings locale and optional custom format
+      if (dateFormat && dateFormat !== 'auto') {
+        const d = today;
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const DD = pad(d.getDate());
+        const MM = pad(d.getMonth() + 1);
+        const YYYY = d.getFullYear();
+        if (dateFormat === 'DD/MM/YYYY') return `${DD}/${MM}/${YYYY}`;
+        if (dateFormat === 'MM/DD/YYYY') return `${MM}/${DD}/${YYYY}`;
+        if (dateFormat === 'YYYY-MM-DD') return `${YYYY}-${MM}-${DD}`;
+      }
+      return new Intl.DateTimeFormat(locale || 'es-MX', { dateStyle: 'full' }).format(today);
+    } catch {
+      return '';
+    }
+  }, [today, mounted, locale, dateFormat]);
+
+  const onLogout = () => {
+    try { reset(); } catch {}
+    router.push('/');
+  };
 
   return (
     <aside className="flex flex-col items-end gap-1 select-none" aria-label="Información superior derecha">
@@ -39,6 +70,20 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
           </svg>
         </button>
 
+        {showLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            aria-label="Cerrar sesión"
+            className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm focus:outline-none focus-visible:ring-2"
+            style={{ background: 'rgba(255,255,255,0.7)', color: '#6d2530', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)' }}
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 17l5-5-5-5M21 12H9M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" />
+            </svg>
+          </button>
+        )}
+
         {/* Separador */}
         <span className="self-stretch w-px" style={{ background: 'var(--pos-border-soft)' }} aria-hidden="true" />
 
@@ -52,7 +97,7 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
       {/* Nivel 2 */}
       <div className="text-right">
         <div className="font-semibold tracking-tight text-lg md:text-xl" style={{ color: 'var(--pos-text-heading)' }}>{businessName}</div>
-        <div className="text-[11px] md:text-xs" style={{ color: 'var(--pos-text-muted)' }}>{formatted}</div>
+        <div className="text-[11px] md:text-xs" style={{ color: 'var(--pos-text-muted)' }}>{mounted ? formatted : '\u00A0'}</div>
       </div>
     </aside>
   );

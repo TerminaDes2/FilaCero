@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { POSProduct } from '../../../pos/cartContext'; // Este tipo es la clave
 import { useCart } from '../../../pos/cartContext';
 import { AddToCartPanel } from './AddToCartPanel';
+import { useSettingsStore } from '../../../state/settingsStore';
 
 interface ProductCardProps {
   product: POSProduct;
@@ -12,6 +13,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid' }) => {
   const { add } = useCart();
+  const { showStock, locale, currency } = useSettingsStore();
   const [showPanel, setShowPanel] = useState(false);
   const outOfStock = product.stock <= 0;
   const base = 'group relative rounded-2xl border transition overflow-hidden shadow-sm hover:shadow-md';
@@ -70,10 +72,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
         )}
         <div className='mt-2 flex items-center justify-between'>
           <div className='flex flex-col'>
-            <CandyBadge size='md' variant='price' className='w-max'>${product.price}</CandyBadge>
-            <CandyBadge size='sm' variant='stock' danger={outOfStock} className='mt-1 w-max'>
-              {outOfStock ? 'Sin stock' : `${product.stock} stock`}
+            <CandyBadge size='md' variant='price' className='w-max'>
+              {new Intl.NumberFormat(locale, { style: 'currency', currency }).format(product.price)}
             </CandyBadge>
+            {showStock && (
+              <CandyBadge size='sm' variant='stock' danger={outOfStock} className='mt-1 w-max'>
+                {outOfStock ? 'Sin stock' : `${product.stock} stock`}
+              </CandyBadge>
+            )}
           </div>
           <button
             disabled={outOfStock}

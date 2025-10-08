@@ -1,10 +1,13 @@
 # Backend dev Dockerfile - rápido y para desarrollo
-FROM node:20-alpine
+FROM node:20-bullseye
 
 WORKDIR /app
 
 # herramientas necesarias para compilación nativa si las necesitas
-RUN apk add --no-cache openssl libc6-compat python3 make g++
+RUN apt-get update \
+		&& apt-get install -y --no-install-recommends \
+			python3 make g++ openssl \
+		&& rm -rf /var/lib/apt/lists/*
 
 # copiamos package.json primero para aprovechar cache de docker build
 # (el build context es ya ./Backend desde docker-compose, por lo que NO existe subcarpeta Backend aquí)

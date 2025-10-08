@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCart } from '../../../pos/cartContext';
 import { PaymentSuccessPanel } from '../payments/PaymentSuccessPanel';
 import { PaymentPanel } from '../payments/PaymentPanel';
@@ -13,6 +13,7 @@ export const CartPanel: React.FC = () => {
   const [successData, setSuccessData] = useState<{ method: 'efectivo'|'credito'|'debito'; amountReceived: number; change: number }|null>(null);
   const [paidTotal, setPaidTotal] = useState<number|null>(null);
   const [editLineId, setEditLineId] = useState<string|null>(null);
+  const [loading] = useState(false);
 
   return (
     <div className='flex flex-col h-full overflow-hidden' style={{color:'var(--pos-text-heading)'}}>
@@ -33,7 +34,7 @@ export const CartPanel: React.FC = () => {
           </div>
         )}
 
-        {items.map(item => (
+        {!loading && items.map(item => (
           <div key={item.product.id} className='group relative rounded-xl border p-2.5 shadow-sm hover:shadow-md transition-shadow' style={{background:'var(--pos-card-bg)', borderColor:'var(--pos-card-border)'}}>
             <div className='flex items-start gap-3'>
               <div className='flex-1'>
@@ -85,7 +86,9 @@ export const CartPanel: React.FC = () => {
             <dl className='space-y-1.5'>
               <div className='flex justify-between'>
                 <dt>Subtotal</dt>
-                <dd className='tabular-nums font-medium' style={{color:'var(--pos-text-heading)'}}>${subtotal.toFixed(2)}</dd>
+                <dd className='tabular-nums font-medium' style={{color:'var(--pos-text-heading)'}}>
+                  {`$${subtotal.toFixed(2)}`}
+                </dd>
               </div>
               <div className='flex justify-between'>
                 <dt>Productos</dt>
@@ -98,7 +101,9 @@ export const CartPanel: React.FC = () => {
                   style={{color:'#4a3327'}}
                   aria-live='polite'
                   aria-atomic='true'
-                >${total.toFixed(2)}</dd>
+                >
+                  {`$${total.toFixed(2)}`}
+                </dd>
               </div>
             </dl>
           </div>

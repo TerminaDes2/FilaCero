@@ -2,14 +2,21 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
-  create(dto: CreateCategoryDto) {
-    return this.prisma.categoria.create({ data: { nombre: dto.nombre.trim() } });
+  async create(dto: CreateCategoryDto) {
+    try {
+      return await this.prisma.categoria.create({ data: { nombre: dto.nombre.trim() } });
+    } catch (e: unknown) {
+      const code = this.extractPrismaCode(e);
+      if (code === 'P2002') {
+        throw new BadRequestException('El nombre de categoría ya existe');
+      }
+      throw e;
+    }
   }
 
   findAll() {
@@ -25,11 +32,12 @@ export class CategoriesService {
   async update(id: string, dto: UpdateCategoryDto) {
     try {
       return await this.prisma.categoria.update({ where: { id_categoria: BigInt(id) }, data: { ...dto, ...(dto.nombre ? { nombre: dto.nombre.trim() } : {}) } });
-    } catch (e: any) {
-      if (e instanceof (Prisma as any).PrismaClientKnownRequestError && e.code === 'P2025') {
+    } catch (e: unknown) {
+      const code = this.extractPrismaCode(e);
+      if (code === 'P2025') {
         throw new NotFoundException('Categoría no encontrada');
       }
-      if (e instanceof (Prisma as any).PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (code === 'P2002') {
         throw new BadRequestException('El nombre de categoría ya existe');
       }
       throw e;
@@ -40,11 +48,18 @@ export class CategoriesService {
     try {
       await this.prisma.categoria.delete({ where: { id_categoria: BigInt(id) } });
       return { deleted: true };
-    } catch (e: any) {
-      if (e instanceof (Prisma as any).PrismaClientKnownRequestError && e.code === 'P2025') {
+    } catch (e: unknown) {
+      const code = this.extractPrismaCode(e);
+      if (code === 'P2025') {
         throw new NotFoundException('Categoría no encontrada');
       }
       throw e;
     }
+  }
+
+  private extractPrismaCode(error: unknown): string | undefined {
+    if (!error || typeof error !== 'object') return undefined;
+    const maybeCode = (error as { code?: unknown }).code;
+    return typeof maybeCode === 'string' ? maybeCode : undefined;
   }
 }
