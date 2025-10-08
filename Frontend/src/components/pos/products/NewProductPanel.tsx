@@ -78,6 +78,12 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+      } else if (e.key === 'Enter' && !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
+        // Submit dialog with Enter (only when not inside a textarea; here all inputs are single-line)
+        e.preventDefault();
+        if (!saving) {
+          handleSubmit();
+        }
       }
     };
     window.addEventListener('keydown', onKey);

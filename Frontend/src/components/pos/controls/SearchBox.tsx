@@ -1,5 +1,6 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useShortcuts } from '../../system/ShortcutProvider';
 
 interface SearchBoxProps {
   value: string;
@@ -8,9 +9,21 @@ interface SearchBoxProps {
 }
 
 export const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, onClear }) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  let registerSearchInput: ((el: HTMLInputElement | null) => void) | null = null;
+  try {
+    // Provider only exists under POS layout; guard for other pages
+    ({ registerSearchInput } = useShortcuts());
+  } catch {}
+
+  useEffect(() => {
+    registerSearchInput?.(inputRef.current);
+    return () => registerSearchInput?.(null);
+  }, [registerSearchInput]);
   return (
     <div className='relative w-full max-w-sm'>
       <input
+        ref={inputRef}
         value={value}
         onChange={e=> onChange(e.target.value)}
         placeholder='Buscar productos...'

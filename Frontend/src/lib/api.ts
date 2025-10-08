@@ -52,16 +52,19 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ correo_electronico, password }),
     }),
-  register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
-    console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
-    console.log('📦 Datos enviados:', { name, email, password, role });
+  me: () => apiFetch<{ id: string; name?: string; email?: string; role?: string }>('auth/me'),
+register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
+  console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
+  console.log('📦 Datos enviados:', { name, email, password, role });
+  
+  return apiFetch<LoginResponse>('auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
+  });
+},
+  // --- 👇 NUEVAS Funciones de Productos ---
 
-    return apiFetch<LoginResponse>('auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
-    });
-  },
-  // --- Funciones de Productos (SIN CAMBIOS) ---
+  // Obtener la lista de productos (con filtros opcionales)
   getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
