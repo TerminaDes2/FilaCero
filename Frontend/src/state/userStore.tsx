@@ -1,10 +1,21 @@
+// userStore.tsx - VERSIÓN COMPLETA
 "use client";
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { api, type UserInfo } from '../lib/api';
 
 export type AppRole = 'CUSTOMER' | 'OWNER' | null;
 export type BackendRole = 'usuario' | 'admin' | string | null;
 
 interface UserState {
+  // Estado de autenticación
+  user: UserInfo | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  login: (token: string, userData: UserInfo) => void;
+  logout: () => void;
+  checkAuth: () => Promise<void>;
+  
+  // Estado existente (mantener compatibilidad)
   role: AppRole;
   setRole: (r: AppRole) => void;
   name: string | null;
@@ -19,51 +30,74 @@ interface UserState {
 const UserContext = createContext<UserState | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
   const [role, setRoleState] = useState<AppRole>(null);
   const [name, setNameState] = useState<string | null>(null);
   const [backendRole, setBackendRoleState] = useState<BackendRole>(null);
   const [tempData, setTemp] = useState<Record<string, unknown>>({});
 
-  // Cargar rol desde localStorage al inicializar
+  // Verificar autenticación al cargar
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedRole = localStorage.getItem('userRole') as AppRole;
-      console.log('🔄 UserStore: Loading role from localStorage:', storedRole);
-      if (storedRole) {
-        setRoleState(storedRole);
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      
+      if (token) {
+  const userData = await api.me();
+  setUser(userData);
+  // Mapear rol por nombre (fallback a id numérico)
+  const roleName = (userData as any).role_name || userData.role?.nombre_rol || null;
+  const appRole = roleName === 'admin' || roleName === 'superadmin' || userData.id_rol === 2 ? 'OWNER' : 'CUSTOMER';
+        setRoleState(appRole);
+        console.log('✅ Sesión restaurada:', userData.nombre);
       }
-      const storedUser = localStorage.getItem('auth_user');
-      let parsedUser: any | null = null;
-      if (storedUser) {
-        try { parsedUser = JSON.parse(storedUser); } catch {}
-      }
-      const token = localStorage.getItem('auth_token');
-      // Populate from stored user first
-      if (parsedUser) {
-        setNameState(parsedUser?.name || parsedUser?.nombre || null);
-        setBackendRoleState((parsedUser?.role as BackendRole) ?? null);
-      }
-      // If we have token but no name yet, fetch me()
-      if (token && !(parsedUser?.name || parsedUser?.nombre)) {
-        import('../lib/api').then(({ api }) => {
-          api.me().then((u)=>{
-            const newName = u?.name || (u as any)?.nombre || null;
-            setNameState(newName);
-            setBackendRoleState((u?.role as BackendRole) ?? null);
-            try {
-              const merged = { ...(parsedUser || {}), ...(u || {}) };
-              localStorage.setItem('auth_user', JSON.stringify(merged));
-            } catch {}
-          }).catch(()=>{});
-        }).catch(()=>{});
-      }
+    } catch (error) {
+      console.error('Error verificando autenticación:', error);
+      logout();
+    } finally {
+      setLoading(false);
+      try {
+        const stored = localStorage.getItem('auth_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setNameState(parsed?.name || parsed?.nombre || null);
+          setBackendRoleState((parsed?.role as BackendRole) ?? null);
+        }
+      } catch {}
     }
+  };
+
+  const login = useCallback((token: string, userData: UserInfo) => {
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('auth_user', JSON.stringify(userData));
+    setUser(userData);
+    
+  // Sincronizar con tu sistema de roles (por nombre, con fallback)
+  const roleName = (userData as any).role_name || userData.role?.nombre_rol || null;
+  const appRole = roleName === 'admin' || roleName === 'superadmin' || userData.id_rol === 2 ? 'OWNER' : 'CUSTOMER';
+    setRoleState(appRole);
+    console.log('✅ Usuario logueado:', userData.nombre);
+  }, []);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    setRoleState(null);
+    setTemp({});
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('selectedRole');
+    }
+    console.log('✅ Sesión cerrada');
   }, []);
 
   const setRole = useCallback((newRole: AppRole) => {
     setRoleState(newRole);
-    
-    // Persistir en localStorage
     if (typeof window !== 'undefined') {
       if (newRole) {
         localStorage.setItem('userRole', newRole);
@@ -86,20 +120,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const reset = useCallback(() => {
-    setRoleState(null);
-    setNameState(null);
-    setBackendRoleState(null);
-    setTemp({});
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('selectedRole');
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-    }
-  }, []);
+    logout();
+  }, [logout]);
 
   return (
     <UserContext.Provider value={{ 
+      // Nuevo estado de autenticación
+      user,
+      isAuthenticated: !!user,
+      loading,
+      login,
+      logout,
+      checkAuth,
+      
+      // Estado existente
       role, 
       setRole, 
       name,
@@ -108,7 +142,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setBackendRole,
       tempData, 
       setTempData, 
-      reset 
+      reset
     }}>
       {children}
     </UserContext.Provider>

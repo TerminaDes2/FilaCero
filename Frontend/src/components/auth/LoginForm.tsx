@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
-import { useUserStore } from '../../state/userStore';
+import { useUserStore } from "../../state/userStore"; // Ajusta la ruta
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -23,41 +23,65 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const passwordValid = password.length >= 6;
 	const formValid = emailValid && passwordValid;
 
-		const submit = async (e: React.FormEvent) => {
+	const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setTouched({ email: true, password: true });
 		if(!formValid) return;
-			setSubmitting(true);
-			setError(null);
-			try {
-				const res = await api.login(email.trim().toLowerCase(), password);
-				if (typeof window !== 'undefined') {
-					window.localStorage.setItem('auth_token', res.token);
-					window.localStorage.setItem('auth_user', JSON.stringify(res.user));
-				}
-
-				// Inmediatamente obtener el perfil completo para extraer nombre y rol
-				try {
-					const me = await api.me();
-					const fullUser = { ...res.user, ...me };
-					if (typeof window !== 'undefined') {
-						window.localStorage.setItem('auth_user', JSON.stringify(fullUser));
-					}
-					// Actualizar store para que el header muestre el nombre al instante
-					setName(me?.name || (me as any)?.nombre || null);
-					setBackendRole((me?.role as any) ?? null);
-				} catch {}
-
-				onSuccess?.();
-				// Redirige a POS o home; ajusta según flujo
-				router.push('/pos');
-			} catch (err: any) {
-				setError(err?.message || 'Error al iniciar sesión');
-			} finally {
-				setSubmitting(false);
+		
+		setSubmitting(true);
+		setError(null);
+		
+		try {
+			// 1. Hacer login para obtener el token
+			const res = await api.login(email.trim().toLowerCase(), password);
+			
+			if (typeof window !== 'undefined') {
+				window.localStorage.setItem('auth_token', res.token);
+				// Guardar datos básicos del login temporalmente
+				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 			}
+			
+			onSuccess?.();
+			
+			// 2. Obtener información COMPLETA del usuario incluyendo el rol
+			console.log('🔄 Obteniendo información completa del usuario...');
+			const userInfo = await api.me();
+			
+			// 3. Actualizar localStorage con la información completa
+			if (typeof window !== 'undefined') {
+				window.localStorage.setItem('auth_user', JSON.stringify(userInfo));
+			}
+			
+			// 4. Redirigir según el rol (por nombre, con fallback)
+			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
+			const idRol = userInfo.id_rol;
+			console.log('✅ Rol (name):', roleName, ' id_rol:', idRol);
+
+			// Admin/superadmin -> POS; otros -> Shop
+			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
+				console.log('🎯 Redirigiendo ADMIN a /pos');
+				router.push('/pos');
+			} else {
+				console.log('🎯 Redirigiendo a /shop');
+				router.push('/shop');
+			}
+			
+		} catch (err: any) {
+			console.error('❌ Error en login:', err);
+			
+			// Limpiar localStorage en caso de error
+			if (typeof window !== 'undefined') {
+				window.localStorage.removeItem('auth_token');
+				window.localStorage.removeItem('auth_user');
+			}
+			
+			setError(err?.message || 'Error al iniciar sesión');
+		} finally {
+			setSubmitting(false);
+		}
 	};
 
+	// ... el resto del código permanece igual ...
 	return (
 		<form onSubmit={submit} className="space-y-6" aria-describedby="login-hint">
 			{/* Supportive microcopy / context */}
@@ -71,12 +95,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					Acceso seguro a tu panel. Tus credenciales se envían cifradas. <span className="hidden sm:inline">¿Nuevo aquí? Regístrate desde el enlace inferior.</span>
 				</p>
 			</div>
-					{error && (
-						<div className="text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2">
-							{error}
-						</div>
-					)}
-					<FancyInput
+			
+			{error && (
+				<div className="text-[12px] text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-900/30 border border-rose-200/70 dark:border-rose-800 rounded-md px-3 py-2">
+					{error}
+				</div>
+			)}
+			
+			<FancyInput
 				label="Correo electrónico"
 				type="email"
 				value={email}
@@ -86,6 +112,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M4 6l8 6 8-6M4 6v12h16V6' /></svg>}
 				hint={email ? undefined : 'Usa el correo con el que te registraste'}
 			/>
+			
 			<FancyInput
 				label="Contraseña"
 				type={showPassword ? 'text' : 'password'}
@@ -98,13 +125,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				onTogglePassword={()=>setShowPassword(s=>!s)}
 				hint={!password ? 'Tu contraseña segura' : undefined}
 			/>
-			<div className="flex items-center justify-between text-xs text-gray-600">
+			
+			<div className="flex items-center justify-between text-xs text-gray-600 dark:text-slate-400">
 				<label className="inline-flex items-center gap-2 cursor-pointer select-none">
 					<input type='checkbox' className='appearance-none h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:bg-brand-600 checked:border-brand-600' />
 					<span>Recordarme</span>
 				</label>
 				<button type='button' className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>¿Olvidaste tu contraseña?</button>
 			</div>
+			
 			<button
 				type="submit"
 				disabled={!formValid || submitting}
@@ -122,20 +151,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				{submitting ? 'Ingresando...' : 'Entrar'}
 			</button>
 
-		  
-          <div className="text-center pt-1">
-            <div className="border-t border-gray-200 pt-3">
-              <p className="text-xs text-gray-600">
-                ¿Eres nuevo en FilaCero?{' '}
-                <a 
-                  href="/auth/register"
-                  className="text-brand-600 font-medium hover:underline"
-                > 
-                  Crea una cuenta
-                </a>
-              </p>
-            </div>
-          </div>		
-		  </form>
+			<div className="text-center pt-1">
+				<div className="border-t border-gray-200 pt-3">
+					<p className="text-xs text-gray-600">
+						¿Eres nuevo en FilaCero?{' '}
+						<a 
+							href="/auth/register"
+							className="text-brand-600 font-medium hover:underline"
+						> 
+							Crea una cuenta
+						</a>
+					</p>
+				</div>
+			</div>		
+		</form>
 	);
 };

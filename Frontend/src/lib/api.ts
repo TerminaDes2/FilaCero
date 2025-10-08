@@ -23,12 +23,14 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
   const res = await fetch(url, { ...init, headers });
+
   if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-    // Pequeño log de depuración para ver a dónde está pegando el frontend
     console.debug('[apiFetch]', init.method || 'GET', url);
   }
+
   const text = await res.text();
   const data = text ? JSON.parse(text) : undefined;
+
   if (!res.ok) {
     const err: ApiError = {
       status: res.status,
@@ -36,35 +38,53 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     };
     throw err;
   }
+
   return data as T;
 }
 
+// --- Interfaces actualizadas ---
 export interface LoginResponse {
   token: string;
   user: { id: string; email: string };
 }
 
-// --- Objeto 'api' con las nuevas funciones añadidas ---
+export interface UserInfo {
+  id_usuario: number;
+  nombre: string;
+  correo_electronico: string;
+  id_rol: number;
+  // nombre del rol plano desde backend (JwtStrategy agrega role_name)
+  role_name?: string;
+  role?: { id_rol: number; nombre_rol: string };
+  numero_telefono?: string;
+  fecha_nacimiento?: string;
+  fecha_registro?: string;
+  estado?: string;
+}
+
+// --- 👇 Objeto principal con métodos actualizados ---
 export const api = {
-  // --- Tus funciones de Auth (SIN CAMBIOS) ---
+  // --- Auth ---
   login: (correo_electronico: string, password: string) =>
     apiFetch<LoginResponse>('auth/login', {
       method: 'POST',
       body: JSON.stringify({ correo_electronico, password }),
     }),
-  me: () => apiFetch<{ id: string; name?: string; email?: string; role?: string }>('auth/me'),
-register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
-  console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
-  console.log('📦 Datos enviados:', { name, email, password, role });
-  
-  return apiFetch<LoginResponse>('auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
-  });
-},
-  // --- 👇 NUEVAS Funciones de Productos ---
 
-  // Obtener la lista de productos (con filtros opcionales)
+  register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
+    console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
+    console.log('📦 Datos enviados:', { name, email, password, role });
+    
+    return apiFetch<LoginResponse>('auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
+    });
+  },
+
+  // --- 👇 NUEVO: Obtener información del usuario actual ---
+  me: () => apiFetch<UserInfo>('auth/me'),
+
+  // --- Productos ---
   getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
@@ -86,22 +106,25 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
     const path = query ? `products?${query}` : 'products';
     return apiFetch<any[]>(path);
   },
+
   createProduct: (productData: any) =>
     apiFetch<any>('products', {
       method: 'POST',
       body: JSON.stringify(productData),
     }),
+
   updateProduct: (id: string, productData: any) =>
     apiFetch<any>(`products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(productData),
     }),
+
   deleteProduct: (id: string) =>
     apiFetch<any>(`products/${id}`, {
       method: 'DELETE',
     }),
 
-  // --- 👇 CÓDIGO AÑADIDO PARA CATEGORÍAS ---
+  // --- Categorías ---
   getCategories: () => 
     apiFetch<any[]>('categories'),
   getCategoryById: (id: string) =>
@@ -121,23 +144,26 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
       method: 'DELETE',
     }),
 
-  // --- 👇 NEGOCIOS ---
+  // --- Negocios ---
   createBusiness: (data: { nombre: string; direccion?: string; telefono?: string; correo?: string; logo?: string }) =>
     apiFetch<any>('businesses', { method: 'POST', body: JSON.stringify(data) }),
   listMyBusinesses: () => apiFetch<any[]>('businesses/my'),
 
-  // --- Funciones de Inventario (SIN CAMBIOS) ---
+  // --- Inventario ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
     return apiFetch<any[]>(`inventory?${query}`);
   },
+
   createInventory: (data: { id_negocio: string; id_producto: string; cantidad_actual?: number; stock_minimo?: number }) =>
     apiFetch<any>('inventory', { method: 'POST', body: JSON.stringify(data) }),
+
   updateInventory: (id: string, data: Partial<{ cantidad_actual: number; stock_minimo: number }>) =>
     apiFetch<any>(`inventory/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
   deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
   
-  // --- 👇 Ventas ---
+  // --- Ventas ---
   createSale: (data: { id_negocio: string; id_tipo_pago?: string; items: Array<{ id_producto: string; cantidad: number; precio_unitario?: number }>; cerrar?: boolean }) =>
     apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }),
 
@@ -154,6 +180,12 @@ register: (name: string, email: string, password: string, role?: 'usuario' | 'ad
     return apiFetch<any[]>(`sales${query ? `?${query}` : ''}`);
   },
   getSale: (id: string) => apiFetch<any>(`sales/${id}`),
+
+  // Legacy helper (si se usa en algún lugar)
+  getStoreProducts: (id_negocio: string | number) => {
+    if (!id_negocio) throw new Error('Se requiere un id_negocio válido');
+    return apiFetch<any[]>(`store/${id_negocio}/products`);
+  },
 };
 
 // Helpers para negocio activo en el cliente

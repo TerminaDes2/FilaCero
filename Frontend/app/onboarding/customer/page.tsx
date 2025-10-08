@@ -1,3 +1,14 @@
+"use client";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
 export default function CustomerOnboardingPage() {
-	return null;
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redireccionar a /shop
+    router.push('/shop');
+  }, [router]);
+
+  return null;
 }
