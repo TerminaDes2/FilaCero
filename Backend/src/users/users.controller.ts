@@ -11,9 +11,13 @@ export class UsersController {
 
   // Ruta R: Obtener el perfil del usuario logeado
   @Get('me') 
-  getProfile(@Req() req) {
-    // req.user ya contiene la data básica del usuario gracias al JwtStrategy
-    return req.user; 
+  async getProfile(@Req() req) {
+    const user = req.user;
+    const id = user?.id_usuario ?? user?.id;
+    if (!id) {
+      throw new UnauthorizedException('Token inválido.');
+    }
+    return this.usersService.findOne(BigInt(id));
   }
 
   // Ruta U: Actualizar Perfil

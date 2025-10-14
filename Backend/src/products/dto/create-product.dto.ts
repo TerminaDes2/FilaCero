@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ProductMediaInputDto } from './product-media.dto';
 
 export class CreateProductDto {
   @IsNotEmpty()
@@ -11,6 +13,10 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
+  descripcion_larga?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(100)
   codigo_barras?: string;
 
@@ -20,7 +26,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  imagen?: string;
+  imagen_url?: string;
 
   @IsOptional()
   @IsString()
@@ -30,4 +36,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   id_categoria?: string; // BigInt id as string
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductMediaInputDto)
+  media?: ProductMediaInputDto[];
 }

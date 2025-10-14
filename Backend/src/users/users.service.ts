@@ -13,12 +13,26 @@ export class UsersService {
     const user = await this.prisma.usuarios.findUnique({ 
         where: { id_usuario: id },
         // Excluir la contraseña al leer el perfil
-        select: { id_usuario: true, nombre: true, correo_electronico: true, numero_telefono: true, id_rol: true }
+        select: {
+            id_usuario: true,
+            nombre: true,
+            correo_electronico: true,
+            numero_telefono: true,
+            id_rol: true,
+            avatar_url: true,
+            credential_url: true,
+            verificado: true,
+            fecha_verificacion: true,
+        }
     });
     if (!user) {
         throw new NotFoundException('Usuario no encontrado.');
     }
-    return user;
+    return {
+        ...user,
+        id_usuario: user.id_usuario.toString(),
+        fecha_verificacion: user.fecha_verificacion ? user.fecha_verificacion.toISOString() : null,
+    };
   }
 
   // --- U (Update) - Actualizar Perfil ---
@@ -32,6 +46,12 @@ export class UsersService {
     if (updateUserDto.phoneNumber) {
         dataToUpdate.numero_telefono = updateUserDto.phoneNumber;
     }
+    if (updateUserDto.avatarUrl) {
+        dataToUpdate.avatar_url = updateUserDto.avatarUrl;
+    }
+    if (updateUserDto.credentialUrl) {
+        dataToUpdate.credential_url = updateUserDto.credentialUrl;
+    }
 
     // 2. Manejar la contraseña (si se proporciona, debe hashearse)
     if (updateUserDto.newPassword) {
@@ -40,11 +60,25 @@ export class UsersService {
     }
 
     try {
-        return await this.prisma.usuarios.update({
+        const updated = await this.prisma.usuarios.update({
             where: { id_usuario: id },
             data: dataToUpdate,
-            select: { id_usuario: true, nombre: true, correo_electronico: true },
+            select: {
+                id_usuario: true,
+                nombre: true,
+                correo_electronico: true,
+                numero_telefono: true,
+                avatar_url: true,
+                credential_url: true,
+                verificado: true,
+                fecha_verificacion: true,
+            },
         });
+        return {
+            ...updated,
+            id_usuario: updated.id_usuario.toString(),
+            fecha_verificacion: updated.fecha_verificacion ? updated.fecha_verificacion.toISOString() : null,
+        };
     } catch (error) {
         // Manejar errores de Prisma si el ID no existe
         throw new NotFoundException('Usuario no encontrado o error de actualización.');

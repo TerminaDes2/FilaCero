@@ -22,7 +22,8 @@ export class BusinessesService {
             direccion: dto.direccion || null,
             telefono: dto.telefono || null,
             correo: dto.correo || null,
-            logo: dto.logo || null,
+            logo_url: dto.logo_url || null,
+            hero_image_url: dto.hero_image_url || null,
             fecha_registro: new Date(),
           },
         });

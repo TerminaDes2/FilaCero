@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsEmail, MinLength, IsUrl } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -12,6 +12,14 @@ export class UpdateUserDto {
   @IsOptional()
   @MinLength(6, { message: 'La nueva contraseña debe tener al menos 6 caracteres' })
   newPassword?: string; // Si se cambia la contraseña
+
+  @IsOptional()
+  @IsUrl({}, { message: 'El avatar debe ser una URL válida' })
+  avatarUrl?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'La credencial debe ser una URL válida' })
+  credentialUrl?: string;
 
   // Nota: El correo electrónico (correo_electronico) generalmente no se permite cambiar fácilmente 
   // por seguridad o requiere un proceso de doble confirmación.
