@@ -3,12 +3,15 @@ import {
     Injectable, 
     UnauthorizedException,
     ConflictException,
+    NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service'; // Asegura la ruta correcta
 import { RegisterDto } from './dto/register.dto'; // Importación necesaria para el método register
 import { LoginDto } from './dto/login.dto'; // Importación necesaria para el método login
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { randomUUID } from 'crypto';
 
 // Interfaz para el Payload del JWT
 interface JwtPayload {
@@ -43,11 +46,18 @@ export class AuthService {
             // Determinar rol solicitado (admin/usuario) o usar 'usuario' por defecto
             const desiredRoleName = registerDto.role ?? 'usuario';
             const desiredRole = await this.prisma.roles.findUnique({ where: { nombre_rol: desiredRoleName } });
+            const verificationToken = randomUUID();
+            const verificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+
             const user = await this.prisma.usuarios.create({
                 data: {
                     nombre: registerDto.name,
                     correo_electronico: registerDto.email,
                     password_hash: hashedPassword,
+                    verificado: false,
+                    verification_token: verificationToken,
+                    verification_token_expires: verificationExpires,
+                    fecha_registro: new Date(),
                     ...(desiredRole ? { id_rol: desiredRole.id_rol } : {}),
                 },
             });
@@ -57,8 +67,14 @@ export class AuthService {
                 id: user.id_usuario.toString(), 
                 email: user.correo_electronico 
             };
-            
-            return this.generateToken(payload);
+
+            const authResponse = this.generateToken(payload, user);
+            return {
+                ...authResponse,
+                requiresVerification: true,
+                verificationToken,
+                verificationTokenExpiresAt: verificationExpires.toISOString(),
+            };
         } catch (error) {
             console.error(error);
             throw new BadRequestException('Error al crear el usuario. Revise los datos.');
@@ -71,12 +87,24 @@ export class AuthService {
         // 1. Buscar usuario por 'correo_electronico'
         const user = await this.prisma.usuarios.findUnique({ 
             where: { correo_electronico: loginDto.correo_electronico },
+            select: {
+                id_usuario: true,
+                correo_electronico: true,
+                password_hash: true,
+                verificado: true,
+                avatar_url: true,
+                credential_url: true,
+            },
         });
         
         // Si no se encuentra el usuario
         if (!user) {
             // Se usa la excepción importada
             throw new UnauthorizedException('Credenciales inválidas (Correo no encontrado).');
+        }
+
+        if (!user.verificado) {
+            throw new UnauthorizedException('Cuenta pendiente de verificación.');
         }
 
         // 2. Comparar la contraseña ingresada con el hash de la DB
@@ -94,17 +122,74 @@ export class AuthService {
             email: user.correo_electronico 
         };
         
-        return this.generateToken(payload);
+        return this.generateToken(payload, user);
+    }
+
+    async verifyAccount(dto: VerifyEmailDto) {
+        const token = dto.token?.trim();
+        if (!token) {
+            throw new BadRequestException('Token de verificación inválido.');
+        }
+
+        const user = await this.prisma.usuarios.findUnique({
+            where: { verification_token: token },
+        });
+
+        if (!user) {
+            throw new NotFoundException('Token de verificación no válido o ya utilizado.');
+        }
+
+        if (user.verificado) {
+            return {
+                message: 'La cuenta ya estaba verificada.',
+                ...this.generateToken({ id: user.id_usuario.toString(), email: user.correo_electronico }, user),
+            };
+        }
+
+        if (user.verification_token_expires && user.verification_token_expires.getTime() < Date.now()) {
+            throw new UnauthorizedException('El token de verificación ha expirado.');
+        }
+
+        const updated = await this.prisma.usuarios.update({
+            where: { id_usuario: user.id_usuario },
+            data: {
+                verificado: true,
+                fecha_verificacion: new Date(),
+                verification_token: null,
+                verification_token_expires: null,
+            },
+            select: {
+                id_usuario: true,
+                correo_electronico: true,
+                verificado: true,
+                avatar_url: true,
+                credential_url: true,
+            },
+        });
+
+        const payload: JwtPayload = {
+            id: updated.id_usuario.toString(),
+            email: updated.correo_electronico,
+        };
+
+        return {
+            message: 'Cuenta verificada correctamente.',
+            verifiedAt: new Date().toISOString(),
+            ...this.generateToken(payload, updated),
+        };
     }
     
     // Función auxiliar para generar el token
-    private generateToken(payload: JwtPayload) {
+    private generateToken(payload: JwtPayload, user?: { verificado?: boolean; avatar_url?: string | null; credential_url?: string | null }) {
         const token = this.jwtService.sign(payload);
         return { 
             token, 
             user: { 
                 id: payload.id, 
-                email: payload.email 
+                email: payload.email,
+                verified: user?.verificado ?? false,
+                avatarUrl: user?.avatar_url ?? null,
+                credentialUrl: user?.credential_url ?? null,
             } 
         };
     }

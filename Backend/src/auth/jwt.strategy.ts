@@ -23,7 +23,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 1. Busca el usuario para confirmar que sigue activo
     const user = await this.prisma.usuarios.findUnique({
       where: { id_usuario: BigInt(payload.id) },
-      select: { id_usuario: true, nombre: true, correo_electronico: true, id_rol: true, role: { select: { nombre_rol: true } } },
+      select: {
+        id_usuario: true,
+        nombre: true,
+        correo_electronico: true,
+        id_rol: true,
+        avatar_url: true,
+        credential_url: true,
+        verificado: true,
+        fecha_verificacion: true,
+        role: { select: { nombre_rol: true } },
+      },
     });
 
     if (!user) {
