@@ -41,6 +41,24 @@ services:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
+  ocr:
+    build:
+      context: ./Python
+      dockerfile: Dockerfile
+    container_name: filacero-ocr-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - BACKEND_URL=http://backend:3000
+    volumes:
+      - ./Python:/app
+    depends_on:
+      - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
   postgres:
     image: postgres:13
     container_name: filacero-postgres-dev
