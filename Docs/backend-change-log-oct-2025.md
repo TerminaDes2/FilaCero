@@ -9,6 +9,7 @@
 - **Usuarios (`usuarios`)**
   - Added verification lifecycle fields: `verificado`, `fecha_verificacion`, `verification_token`, `verification_token_expires`.
   - Added media/document fields: `avatar_url`, `credential_url`.
+  - Added student profile data: optional `numero_cuenta` (unique) and `edad` (smallint) to support cafeteria accounts.
   - Linked to new `negocio_rating` relation.
 - **Negocio (`negocio`)**
   - Renamed branding fields to `logo_url`, `hero_image_url`.
@@ -26,11 +27,13 @@
 - **DTOs**
   - `UpdateUserDto`: now validates optional `avatarUrl`, `credentialUrl`; retains password and profile validation.
   - New `VerifyEmailDto` enforces token payload.
+  - `RegisterDto`/`UpdateUserDto`: accept optional `accountNumber` (5-20 digits) and `age` (16-120) for student onboarding.
 - **AuthService**
   - Registration now creates verification tokens (`uuid`), stores expiry (24h), defaults user to `verificado=false`.
+  - Registration persists optional cafeteria data (`numero_cuenta`, `edad`) and exposes it in the JWT payload for clients.
   - Login short-circuits if the account is unverified (401 with explanation) while still performing credential validation.
   - Added `verifyAccount(token)` flow to validate tokens, mark account verified, stamp `fecha_verificacion`, clear token fields, and return a fresh JWT + profile metadata.
-  - JWT payload responses now include `verified`, `avatarUrl`, `credentialUrl` for client hydration.
+  - JWT payload responses now include `verified`, `avatarUrl`, `credentialUrl`, `accountNumber`, `age` for client hydration.
 - **AuthController**
   - Introduced `POST /api/auth/verify` endpoint.
 - **JwtStrategy**

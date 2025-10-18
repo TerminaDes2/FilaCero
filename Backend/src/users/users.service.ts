@@ -19,6 +19,8 @@ export class UsersService {
             correo_electronico: true,
             numero_telefono: true,
             id_rol: true,
+            numero_cuenta: true,
+            edad: true,
             avatar_url: true,
             credential_url: true,
             verificado: true,
@@ -30,7 +32,9 @@ export class UsersService {
     }
     return {
         ...user,
-        id_usuario: user.id_usuario.toString(),
+                id_usuario: user.id_usuario.toString(),
+                numero_cuenta: user.numero_cuenta ?? null,
+                edad: user.edad ?? null,
         fecha_verificacion: user.fecha_verificacion ? user.fecha_verificacion.toISOString() : null,
     };
   }
@@ -53,6 +57,15 @@ export class UsersService {
         dataToUpdate.credential_url = updateUserDto.credentialUrl;
     }
 
+    if (updateUserDto.accountNumber !== undefined) {
+        const trimmed = updateUserDto.accountNumber?.trim();
+        dataToUpdate.numero_cuenta = trimmed && trimmed.length > 0 ? trimmed : null;
+    }
+
+    if (updateUserDto.age !== undefined) {
+        dataToUpdate.edad = updateUserDto.age;
+    }
+
     // 2. Manejar la contraseña (si se proporciona, debe hashearse)
     if (updateUserDto.newPassword) {
         const salt = await bcrypt.genSalt(10);
@@ -68,6 +81,8 @@ export class UsersService {
                 nombre: true,
                 correo_electronico: true,
                 numero_telefono: true,
+                numero_cuenta: true,
+                edad: true,
                 avatar_url: true,
                 credential_url: true,
                 verificado: true,
@@ -77,6 +92,8 @@ export class UsersService {
         return {
             ...updated,
             id_usuario: updated.id_usuario.toString(),
+            numero_cuenta: updated.numero_cuenta ?? null,
+            edad: updated.edad ?? null,
             fecha_verificacion: updated.fecha_verificacion ? updated.fecha_verificacion.toISOString() : null,
         };
     } catch (error) {
