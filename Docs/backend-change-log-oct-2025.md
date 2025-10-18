@@ -40,7 +40,7 @@
   - Selects new profile fields (avatar, credential, verification status) for downstream guards/controllers.
 - **UsersController & UsersService**
   - `/api/users/me` now fetches up-to-date user profile via Prisma (ensuring new fields propagate).
-  - Update path persists avatar/credential URLs and returns serialized `BigInt`/`Date` fields as strings.
+  - Update path persists avatar/credential URLs, `numero_cuenta` y `edad`, y ahora serializa la respuesta en camelCase (`accountNumber`, `age`, `verifiedAt`).
 
 ## 4. Products Module Enhancements
 - **DTOs** (`CreateProductDto`, `UpdateProductDto`)
