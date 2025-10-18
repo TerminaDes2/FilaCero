@@ -65,7 +65,7 @@
 ## 7. Testing & Tooling
 - Regenerated Prisma client: `cmd /c npx prisma generate`.
 - Verified compilation: `cmd /c npm run build` (Nest build passes).
-- Pending test coverage for new flows (unit/e2e) once auth verification guard and ratings endpoints are implemented.
+- Added endpoint coverage for `UsersController` via `src/users/users.controller.spec.ts` (GET/PUT/DELETE with guard overrides).
 
 ## 8. Operational Considerations
 - **Migration**: prepare SQL for renaming columns (`imagen` → `imagen_url`, `logo` → `logo_url`) during migration generation to preserve legacy data.
