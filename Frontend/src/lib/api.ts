@@ -43,9 +43,22 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 // --- Interfaces actualizadas ---
+export interface LoginUserPayload {
+  id: string;
+  email: string;
+  verified?: boolean;
+  avatarUrl?: string | null;
+  credentialUrl?: string | null;
+  accountNumber?: string | null;
+  age?: number | null;
+}
+
 export interface LoginResponse {
   token: string;
-  user: { id: string; email: string };
+  user: LoginUserPayload;
+  requiresVerification?: boolean;
+  verificationToken?: string;
+  verificationTokenExpiresAt?: string;
 }
 
 export interface UserInfo {
