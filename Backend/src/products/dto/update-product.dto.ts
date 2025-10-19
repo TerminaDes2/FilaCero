@@ -1,6 +1,8 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateProductDto } from './create-product.dto';
-import { IsNumber, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsNumber, IsOptional, IsPositive, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { ProductMediaInputDto } from './product-media.dto';
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {
   @IsOptional()
@@ -14,6 +16,10 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
 
   @IsOptional()
   @IsString()
+  descripcion_larga?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(100)
   codigo_barras?: string;
 
@@ -24,7 +30,7 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
 
   @IsOptional()
   @IsString()
-  imagen?: string;
+  imagen_url?: string;
 
   @IsOptional()
   @IsString()
@@ -34,4 +40,10 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
   @IsOptional()
   @IsString()
   id_categoria?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductMediaInputDto)
+  media?: ProductMediaInputDto[];
 }

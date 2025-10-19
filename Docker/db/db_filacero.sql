@@ -10,7 +10,9 @@ CREATE TABLE "usuarios" (
   "correo_electronico" varchar(254) UNIQUE NOT NULL,
   "password_hash" varchar(255) NOT NULL,
   "numero_telefono" varchar(30),
+  "numero_cuenta" varchar(30) UNIQUE,
   "fecha_nacimiento" date,
+  "edad" smallint,
   "fecha_registro" timestamptz,
   "estado" varchar(20)
 );

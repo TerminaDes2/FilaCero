@@ -22,13 +22,22 @@ model usuarios {
   correo_electronico     String                   @unique @map("correo_electronico") @db.VarChar(254)
   password_hash          String                   @map("password_hash") @db.VarChar(255)
   numero_telefono        String?                  @map("numero_telefono") @db.VarChar(30)
+  numero_cuenta          String?                  @unique @map("numero_cuenta") @db.VarChar(30)
   fecha_nacimiento       DateTime?                @map("fecha_nacimiento") @db.Date
   fecha_registro         DateTime?                @map("fecha_registro") @db.Timestamptz(6)
   estado                 String?                  @map("estado") @db.VarChar(20)
+  edad                   Int?                     @db.SmallInt
+  verificado             Boolean                  @default(false)
+  fecha_verificacion     DateTime?
+  verification_token     String?                  @unique @db.VarChar(128)
+  verification_token_expires DateTime?
+  credential_url         String?                  @db.VarChar(512)
+  avatar_url             String?                  @db.VarChar(512)
   comentario             comentario[]
   corte_caja             corte_caja[]
   feedback               feedback[]
   movimientos_inventario movimientos_inventario[]
+  negocio_ratings        negocio_rating[]
   role                   roles?                   @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
   venta                  venta[]
   usuarios_negocio       usuarios_negocio[]
@@ -121,7 +130,8 @@ model negocio {
   direccion              String?
   telefono               String?                  @db.VarChar(30)
   correo                 String?                  @db.VarChar(254)
-  logo                   String?
+  logo_url               String?
+  hero_image_url         String?
   fecha_registro         DateTime?                @db.Timestamptz(6)
   corte_caja             corte_caja[]
   inventario             inventario[]
@@ -129,6 +139,8 @@ model negocio {
   reporte_ventas         reporte_ventas[]
   venta                  venta[]
   usuarios_negocio       usuarios_negocio[]
+  ratings                negocio_rating[]
+  metricas               producto_metricas_semanales[]
 }
 
 model producto {
@@ -136,14 +148,17 @@ model producto {
   id_categoria           BigInt?
   nombre                 String                   @db.VarChar(200)
   descripcion            String?
+  descripcion_larga      String?
   codigo_barras          String?                  @unique @db.VarChar(100)
   precio                 Decimal                  @db.Decimal(12, 2)
-  imagen                 String?
+  imagen_url             String?
   estado                 String?                  @db.VarChar(30)
   detalle_venta          detalle_venta[]
   inventario             inventario[]
   movimientos_inventario movimientos_inventario[]
   categoria              categoria?               @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
+  media                  producto_media[]
+  metricas               producto_metricas_semanales[]
 }
 
 model reporte_ventas {
@@ -193,4 +208,44 @@ model usuarios_negocio {
 
   @@unique([id_usuario, id_negocio])
   @@map("usuarios_negocio")
+}
+
+model negocio_rating {
+  id_rating   BigInt    @id @default(autoincrement())
+  id_negocio  BigInt
+  id_usuario  BigInt
+  estrellas   Int       @db.SmallInt
+  comentario  String?
+  creado_en   DateTime  @default(now()) @db.Timestamptz(6)
+
+  negocio negocio @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+  usuario usuarios @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_negocio, id_usuario])
+}
+
+model producto_media {
+  id_media    BigInt   @id @default(autoincrement())
+  id_producto BigInt
+  url         String   @db.VarChar(2048)
+  principal   Boolean  @default(false)
+  tipo        String?  @db.VarChar(30)
+  creado_en   DateTime @default(now()) @db.Timestamptz(6)
+
+  producto producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model producto_metricas_semanales {
+  id_metricas BigInt   @id @default(autoincrement())
+  id_producto BigInt
+  id_negocio  BigInt?
+  anio        Int
+  semana      Int
+  cantidad    Int
+  calculado_en DateTime @default(now()) @db.Timestamptz(6)
+
+  producto producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
+  negocio  negocio? @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_producto, id_negocio, anio, semana])
 }

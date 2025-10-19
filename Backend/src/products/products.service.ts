@@ -3,20 +3,100 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductMediaInputDto } from './dto/product-media.dto';
 
-type ProductWithCategory = Prisma.productoGetPayload<{ include: { categoria: true } }>;
+type SanitizedMedia = { url: string; principal: boolean; tipo: string | null };
+
+const productInclude = Prisma.validator<Prisma.productoInclude>()({
+  categoria: true,
+  media: { orderBy: [{ principal: 'desc' as const }, { creado_en: 'desc' as const }] },
+  metricas: { orderBy: { calculado_en: 'desc' as const }, take: 8 },
+});
+
+type ProductWithRelations = Prisma.productoGetPayload<{ include: typeof productInclude }>;
 
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  private mapProduct(product: ProductWithCategory, stock?: number | null) {
-    const { categoria, ...rest } = product;
+  private mapProduct(product: ProductWithRelations, stock?: number | null) {
+    const { categoria, media, metricas, id_producto, id_categoria, precio, ...rest } = product;
+    const mediaList = (media ?? []).map((item) => ({
+      id_media: item.id_media.toString(),
+      url: item.url,
+      principal: item.principal,
+      tipo: item.tipo,
+      creado_en: item.creado_en?.toISOString() ?? null,
+    }));
+
+    const metricList = (metricas ?? []).map((metric) => ({
+      id_metricas: metric.id_metricas.toString(),
+      id_negocio: metric.id_negocio ? metric.id_negocio.toString() : null,
+      anio: metric.anio,
+      semana: metric.semana,
+      cantidad: metric.cantidad,
+      calculado_en: metric.calculado_en?.toISOString() ?? null,
+    }));
+
+    const popularity = metricList.reduce((acc, item) => acc + (item.cantidad ?? 0), 0);
+
     return {
       ...rest,
+      id_producto: id_producto.toString(),
+      id_categoria: id_categoria ? id_categoria.toString() : null,
+      precio: Number(precio),
       category: categoria?.nombre ?? null,
       stock: stock ?? null,
+      media: mediaList,
+      metricas: metricList,
+      popularity,
     };
+  }
+
+  private sanitizeMediaPayload(media?: ProductMediaInputDto[]) {
+    if (!media || media.length === 0) {
+      return [] as SanitizedMedia[];
+    }
+
+    let principalFound = false;
+    const sanitized = media.map((item) => {
+      const markedAsPrincipal = item.principal === true && !principalFound;
+      if (markedAsPrincipal) {
+        principalFound = true;
+      }
+      return {
+        url: item.url,
+        principal: markedAsPrincipal,
+        tipo: item.tipo ?? null,
+      } as SanitizedMedia;
+    });
+
+    if (!principalFound && sanitized.length > 0) {
+      sanitized[0].principal = true;
+    }
+
+    return sanitized;
+  }
+
+  private async replaceProductMedia(productId: bigint, media: SanitizedMedia[]) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.producto_media.deleteMany({ where: { id_producto: productId } });
+      if (media.length > 0) {
+        await tx.producto_media.createMany({
+          data: media.map((item) => ({
+            ...item,
+            id_producto: productId,
+          })),
+        });
+      }
+    });
+  }
+
+  private async fetchProductWithRelations(id: bigint) {
+    return this.prisma.producto.findUnique({
+      where: { id_producto: id },
+      include: productInclude,
+    });
   }
 
   /**
@@ -50,16 +130,22 @@ export class ProductsService {
 
   // ✅ Ahora async para poder resolver la categoría por nombre o id
   async create(createProductDto: CreateProductDto) {
-    const { id_categoria, ...rest } = createProductDto;
+    const { id_categoria, media, ...rest } = createProductDto;
 
     const resolvedCategory = await this.resolveCategoryId(id_categoria);
+    const sanitizedMedia = this.sanitizeMediaPayload(media);
 
     const product = await this.prisma.producto.create({
       data: {
         ...rest,
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
+        ...(sanitizedMedia.length > 0 && {
+          media: {
+            create: sanitizedMedia,
+          },
+        }),
       },
-      include: { categoria: true },
+      include: productInclude,
     });
 
     return this.mapProduct(product);
@@ -89,7 +175,7 @@ export class ProductsService {
       this.prisma.producto.findMany({
         where,
         orderBy: { id_producto: 'desc' },
-        include: { categoria: true },
+        include: productInclude,
       }),
       this.prisma.inventario.groupBy({
         by: ['id_producto'],
@@ -121,10 +207,7 @@ export class ProductsService {
     // Convertimos el ID a BigInt para la consulta
     const productId = BigInt(id);
 
-    const product = await this.prisma.producto.findUnique({
-      where: { id_producto: productId },
-      include: { categoria: true },
-    });
+    const product = await this.fetchProductWithRelations(productId);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID #${id} no encontrado`);
@@ -140,10 +223,11 @@ export class ProductsService {
 
   // ✅ Lógica de actualización corregida.
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const { id_categoria, ...rest } = updateProductDto;
+    const { id_categoria, media, ...rest } = updateProductDto;
     const productId = BigInt(id);
 
     const resolvedCategory = await this.resolveCategoryId(id_categoria);
+    const sanitizedMedia = media ? this.sanitizeMediaPayload(media) : undefined;
 
     const product = await this.prisma.producto.update({
       where: { id_producto: productId },
@@ -151,8 +235,17 @@ export class ProductsService {
         ...rest,
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
       },
-      include: { categoria: true },
+      include: productInclude,
     });
+
+    if (sanitizedMedia) {
+      await this.replaceProductMedia(productId, sanitizedMedia);
+      const refreshed = await this.fetchProductWithRelations(productId);
+      if (!refreshed) {
+        throw new NotFoundException(`Producto con ID #${id} no encontrado luego de actualizar media.`);
+      }
+      return this.mapProduct(refreshed);
+    }
 
     return this.mapProduct(product);
   }
