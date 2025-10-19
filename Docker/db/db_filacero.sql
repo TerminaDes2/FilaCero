@@ -12,8 +12,14 @@ CREATE TABLE "usuarios" (
   "numero_telefono" varchar(30),
   "numero_cuenta" varchar(30) UNIQUE,
   "fecha_nacimiento" date,
+  "avatar_url" varchar(512),
+  "credential_url" varchar(512),
   "edad" smallint,
   "fecha_registro" timestamptz,
+  "fecha_verificacion" timestamptz,
+  "verificado" boolean NOT NULL DEFAULT false,
+  "verification_token" varchar(128),
+  "verification_token_expires" timestamptz,
   "estado" varchar(20)
 );
 
@@ -23,7 +29,8 @@ CREATE TABLE "negocio" (
   "direccion" text,
   "telefono" varchar(30),
   "correo" varchar(254),
-  "logo" text,
+  "logo_url" text,
+  "hero_image_url" text,
   "fecha_registro" timestamptz
 );
 
@@ -37,10 +44,39 @@ CREATE TABLE "producto" (
   "id_categoria" bigint,
   "nombre" varchar(200) NOT NULL,
   "descripcion" text,
+  "descripcion_larga" text,
   "codigo_barras" varchar(100) UNIQUE,
   "precio" numeric(12,2) NOT NULL,
-  "imagen" text,
+  "imagen_url" text,
   "estado" varchar(30)
+);
+
+CREATE TABLE "negocio_rating" (
+  "id_rating" bigserial PRIMARY KEY,
+  "id_negocio" bigint NOT NULL,
+  "id_usuario" bigint NOT NULL,
+  "estrellas" smallint NOT NULL,
+  "comentario" text,
+  "creado_en" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "producto_media" (
+  "id_media" bigserial PRIMARY KEY,
+  "id_producto" bigint NOT NULL,
+  "url" varchar(2048) NOT NULL,
+  "principal" boolean NOT NULL DEFAULT false,
+  "tipo" varchar(30),
+  "creado_en" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "producto_metricas_semanales" (
+  "id_metricas" bigserial PRIMARY KEY,
+  "id_producto" bigint NOT NULL,
+  "id_negocio" bigint,
+  "anio" int NOT NULL,
+  "semana" int NOT NULL,
+  "cantidad" int NOT NULL,
+  "calculado_en" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "inventario" (
@@ -57,6 +93,15 @@ CREATE TABLE "tipo_pago" (
   "tipo" varchar(50) UNIQUE NOT NULL,
   "descripcion" text
 );
+
+CREATE UNIQUE INDEX "categoria_nombre_key" ON "public"."categoria"("nombre" ASC);
+CREATE UNIQUE INDEX "producto_codigo_barras_key" ON "public"."producto"("codigo_barras" ASC);
+CREATE UNIQUE INDEX "roles_nombre_rol_key" ON "public"."roles"("nombre_rol" ASC);
+CREATE UNIQUE INDEX "tipo_pago_tipo_key" ON "public"."tipo_pago"("tipo" ASC);
+CREATE UNIQUE INDEX "usuarios_correo_electronico_key" ON "public"."usuarios"("correo_electronico" ASC);
+CREATE UNIQUE INDEX IF NOT EXISTS "usuarios_verification_token_key" ON "public"."usuarios"("verification_token" ASC);
+CREATE UNIQUE INDEX IF NOT EXISTS "negocio_rating_id_negocio_id_usuario_key" ON "public"."negocio_rating"("id_negocio", "id_usuario");
+CREATE UNIQUE INDEX IF NOT EXISTS "producto_metricas_semanales_id_producto_id_negocio_anio_sem_key" ON "public"."producto_metricas_semanales"("id_producto", "id_negocio", "anio", "semana");
 
 CREATE TABLE "venta" (
   "id_venta" bigserial PRIMARY KEY,
@@ -130,6 +175,16 @@ ALTER TABLE "venta" ADD FOREIGN KEY ("id_tipo_pago") REFERENCES "tipo_pago" ("id
 ALTER TABLE "detalle_venta" ADD FOREIGN KEY ("id_venta") REFERENCES "venta" ("id_venta");
 
 ALTER TABLE "detalle_venta" ADD FOREIGN KEY ("id_producto") REFERENCES "producto" ("id_producto");
+
+ALTER TABLE "negocio_rating" ADD FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio") ON DELETE CASCADE;
+
+ALTER TABLE "negocio_rating" ADD FOREIGN KEY ("id_usuario") REFERENCES "usuarios" ("id_usuario") ON DELETE CASCADE;
+
+ALTER TABLE "producto_media" ADD FOREIGN KEY ("id_producto") REFERENCES "producto" ("id_producto") ON DELETE CASCADE;
+
+ALTER TABLE "producto_metricas_semanales" ADD FOREIGN KEY ("id_producto") REFERENCES "producto" ("id_producto") ON DELETE CASCADE;
+
+ALTER TABLE "producto_metricas_semanales" ADD FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio") ON DELETE CASCADE;
 
 ALTER TABLE "corte_caja" ADD FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio");
 
