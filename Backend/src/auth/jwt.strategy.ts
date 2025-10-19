@@ -32,6 +32,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         credential_url: true,
         verificado: true,
         fecha_verificacion: true,
+        numero_cuenta: true,
+        edad: true,
         role: { select: { nombre_rol: true } },
       },
     });

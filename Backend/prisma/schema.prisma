@@ -22,9 +22,11 @@ model usuarios {
   correo_electronico     String                   @unique @map("correo_electronico") @db.VarChar(254)
   password_hash          String                   @map("password_hash") @db.VarChar(255)
   numero_telefono        String?                  @map("numero_telefono") @db.VarChar(30)
+  numero_cuenta          String?                  @unique @map("numero_cuenta") @db.VarChar(30)
   fecha_nacimiento       DateTime?                @map("fecha_nacimiento") @db.Date
   fecha_registro         DateTime?                @map("fecha_registro") @db.Timestamptz(6)
   estado                 String?                  @map("estado") @db.VarChar(20)
+  edad                   Int?                     @db.SmallInt
   verificado             Boolean                  @default(false)
   fecha_verificacion     DateTime?
   verification_token     String?                  @unique @db.VarChar(128)
