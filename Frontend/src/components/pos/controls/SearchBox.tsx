@@ -10,15 +10,11 @@ interface SearchBoxProps {
 
 export const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, onClear }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  let registerSearchInput: ((el: HTMLInputElement | null) => void) | null = null;
-  try {
-    // Provider only exists under POS layout; guard for other pages
-    ({ registerSearchInput } = useShortcuts());
-  } catch {}
+  const { registerSearchInput } = useShortcuts(true);
 
   useEffect(() => {
-    registerSearchInput?.(inputRef.current);
-    return () => registerSearchInput?.(null);
+    registerSearchInput(inputRef.current);
+    return () => registerSearchInput(null);
   }, [registerSearchInput]);
   return (
     <div className='relative w-full max-w-sm'>
