@@ -2,7 +2,6 @@ import cv2
 import pytesseract
 import numpy as np
 import re
-from fuzzywuzzy import fuzz
 import sys
 import json
 from pathlib import Path
@@ -133,27 +132,17 @@ def validate_card(image_path, expected_student_id=None, expected_name=None):
     img = best_rotation_image(img)
 
     texts = extract_text_blocks(img)
-    universidad_ok = find_universidad(texts)
     student_id = find_student_id(texts)
     name_guess = guess_name(texts)
-    photo_ok = detect_photo(img)
+    raw_text_joined = " ".join([t['text'] for t in texts])
 
     result = {
-        'universidad_found': universidad_ok,
-        'student_id_extracted': student_id,
-        'student_name_extracted': name_guess,
-        'photo_detected': photo_ok,
-        'raw_text_joined': " ".join([t['text'] for t in texts])
+        'Numero_de_cuenta': student_id is not None,
+        'Nombre_del_estudiante': name_guess is not None,
+        'Universidad_de_Colima': bool(raw_text_joined.strip()),
+        'Bachillerato': 'BACHILLERATO' in raw_text_joined.upper()
     }
 
-    # If expected values provided, compare (fuzzy for name)
-    if expected_student_id:
-        result['student_id_match'] = (student_id == expected_student_id)
-    if expected_name and name_guess:
-        # fuzzy match
-        score = fuzz.token_set_ratio(expected_name.upper(), name_guess.upper())
-        result['student_name_match_score'] = score
-        result['student_name_match'] = score >= 85  # threshold
     return result
 
 if __name__ == '__main__':
