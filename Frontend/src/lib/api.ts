@@ -71,13 +71,25 @@ export const api = {
       body: JSON.stringify({ correo_electronico, password }),
     }),
 
-  register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    role?: 'usuario' | 'admin',
+    accountNumber?: string,
+    age?: number
+  ) => {
+    const payload: Record<string, unknown> = { name, email, password };
+    if (role) payload.role = role;
+    if (accountNumber) payload.accountNumber = accountNumber;
+    if (typeof age === 'number') payload.age = age;
+
     console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
-    console.log('📦 Datos enviados:', { name, email, password, role });
+    console.log('📦 Datos enviados:', payload);
     
     return apiFetch<LoginResponse>('auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
+      body: JSON.stringify(payload),
     });
   },
 
