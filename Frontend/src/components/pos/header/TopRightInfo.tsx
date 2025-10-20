@@ -25,8 +25,7 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
   const router = useRouter();
   const { reset } = useUserStore();
   const { locale, dateFormat } = useSettingsStore();
-  let openHelp: (() => void) | null = null;
-  try { ({ openHelp } = useShortcuts()); } catch {}
+  const { openHelp } = useShortcuts(true);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const today = useMemo(() => date ?? new Date(), [date]);
@@ -68,7 +67,7 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
         {/* Botón Ayuda (atajos) */}
         <button
           type="button"
-          onClick={() => openHelp?.()}
+          onClick={() => openHelp()}
           aria-label="Ver atajos del teclado"
           className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm focus:outline-none focus-visible:ring-2"
           style={{ background: 'rgba(255,255,255,0.7)', color: '#6d2530', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)' }}

@@ -12,6 +12,7 @@ import { RegisterDto } from './dto/register.dto'; // Importación necesaria para
 import { LoginDto } from './dto/login.dto'; // Importación necesaria para el método login
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { randomUUID } from 'crypto';
+import { Prisma } from '@prisma/client';
 
 // Interfaz para el Payload del JWT
 interface JwtPayload {
@@ -37,6 +38,9 @@ export class AuthService {
             throw new ConflictException('El usuario ya existe con ese correo.');
         }
 
+        const normalizedAccountNumber = registerDto.accountNumber?.trim();
+        const normalizedAge = registerDto.age ?? null;
+
         // 2. Hashear la contraseña
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(registerDto.password, salt);
@@ -59,6 +63,8 @@ export class AuthService {
                     verification_token_expires: verificationExpires,
                     fecha_registro: new Date(),
                     ...(desiredRole ? { id_rol: desiredRole.id_rol } : {}),
+                    ...(normalizedAccountNumber ? { numero_cuenta: normalizedAccountNumber } : {}),
+                    ...(normalizedAge !== null ? { edad: normalizedAge } : {}),
                 },
             });
 
@@ -76,6 +82,9 @@ export class AuthService {
                 verificationTokenExpiresAt: verificationExpires.toISOString(),
             };
         } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                throw new ConflictException('El correo o número de cuenta ya se encuentra registrado.');
+            }
             console.error(error);
             throw new BadRequestException('Error al crear el usuario. Revise los datos.');
         }
@@ -94,6 +103,8 @@ export class AuthService {
                 verificado: true,
                 avatar_url: true,
                 credential_url: true,
+                numero_cuenta: true,
+                edad: true,
             },
         });
         
@@ -101,10 +112,6 @@ export class AuthService {
         if (!user) {
             // Se usa la excepción importada
             throw new UnauthorizedException('Credenciales inválidas (Correo no encontrado).');
-        }
-
-        if (!user.verificado) {
-            throw new UnauthorizedException('Cuenta pendiente de verificación.');
         }
 
         // 2. Comparar la contraseña ingresada con el hash de la DB
@@ -122,7 +129,7 @@ export class AuthService {
             email: user.correo_electronico 
         };
         
-        return this.generateToken(payload, user);
+    return this.generateToken(payload, user);
     }
 
     async verifyAccount(dto: VerifyEmailDto) {
@@ -164,6 +171,8 @@ export class AuthService {
                 verificado: true,
                 avatar_url: true,
                 credential_url: true,
+                numero_cuenta: true,
+                edad: true,
             },
         });
 
@@ -180,7 +189,16 @@ export class AuthService {
     }
     
     // Función auxiliar para generar el token
-    private generateToken(payload: JwtPayload, user?: { verificado?: boolean; avatar_url?: string | null; credential_url?: string | null }) {
+    private generateToken(
+        payload: JwtPayload,
+        user?: {
+            verificado?: boolean;
+            avatar_url?: string | null;
+            credential_url?: string | null;
+            numero_cuenta?: string | null;
+            edad?: number | null;
+        },
+    ) {
         const token = this.jwtService.sign(payload);
         return { 
             token, 
@@ -190,6 +208,8 @@ export class AuthService {
                 verified: user?.verificado ?? false,
                 avatarUrl: user?.avatar_url ?? null,
                 credentialUrl: user?.credential_url ?? null,
+                accountNumber: user?.numero_cuenta ?? null,
+                age: user?.edad ?? null,
             } 
         };
     }
