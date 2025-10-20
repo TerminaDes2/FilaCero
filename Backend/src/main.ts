@@ -9,6 +9,7 @@ async function bootstrap() {
   // CORS explícito para desarrollo: permitir frontend en localhost:3001 y cabecera Authorization
   app.enableCors({
     origin: [
+      'https://filacero.up.railway.app',
       'http://localhost:3001',
       'http://127.0.0.1:3001',
       // Permite también el mismo origen si se prueba sin proxy
