@@ -150,11 +150,24 @@ export const api = {
     }),
 
   // --- Categorías ---
-  getCategories: () => 
-    apiFetch<any[]>('categories'),
+  getCategories: (params?: { id_negocio?: string }) => {
+    let negocioId = params?.id_negocio;
+    if (!negocioId) {
+      try { negocioId = typeof window !== 'undefined' ? window.localStorage.getItem('active_business_id') || undefined : undefined; } catch {}
+    }
+    if (!negocioId) {
+      const envNegocio = process.env.NEXT_PUBLIC_NEGOCIO_ID;
+      if (envNegocio) negocioId = envNegocio;
+    }
+    if (!negocioId) {
+      throw new Error('Se requiere un negocio activo para cargar categorías');
+    }
+    const query = new URLSearchParams({ id_negocio: String(negocioId) }).toString();
+    return apiFetch<any[]>(`categories?${query}`);
+  },
   getCategoryById: (id: string) =>
     apiFetch<any>(`categories/${id}`),
-  createCategory: (categoryData: { nombre: string }) =>
+  createCategory: (categoryData: { nombre: string; negocioId: string }) =>
     apiFetch<any>('categories', {
       method: 'POST',
       body: JSON.stringify(categoryData),

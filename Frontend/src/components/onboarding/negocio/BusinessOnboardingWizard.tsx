@@ -123,13 +123,14 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
     setSaving(true)
     setError(null)
     try {
-      const payload = {
+      const payload: Parameters<typeof api.createBusiness>[0] = {
         nombre: draft.identidad.nombre.trim(),
-        direccion: draft.ubicacion.direccion || undefined,
-        telefono: draft.ubicacion.telefono || undefined,
-        correo: draft.ubicacion.web ? undefined : undefined, // no email en wizard aún
-        logo: draft.identidad.logoDataUrl || undefined,
       }
+      const direccion = draft.ubicacion.direccion.trim()
+      if (direccion) payload.direccion = direccion
+      const telefono = (draft.ubicacion.telefono || '').trim()
+      if (telefono) payload.telefono = telefono
+      // Logo aún no se sube al backend; se usa solo para vista previa local
       const created = await api.createBusiness(payload as any)
       const id = String((created as any)?.id_negocio ?? (created as any)?.id)
       if (id) activeBusiness.set(id)
@@ -137,7 +138,11 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
       try { localStorage.removeItem(DRAFT_KEY) } catch {}
       setStep('exito')
     } catch (e: any) {
-      setError(e?.message || 'No se pudo crear el negocio')
+      if (e?.status === 413) {
+        setError('El archivo del logo es demasiado pesado. Usa una imagen más liviana o súbela más tarde.')
+      } else {
+        setError(e?.message || 'No se pudo crear el negocio')
+      }
     } finally {
       setSaving(false)
     }

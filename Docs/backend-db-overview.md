@@ -20,11 +20,11 @@ Este documento resume el estado actual del esquema PostgreSQL que respalda a Fil
 ### 2.2 Negocios y Asignaciones
 - `negocio`: datos de la cafetería (branding con `logo_url`, `hero_image_url`).
 - `empleados`: relación muchos-a-muchos entre usuarios y negocio con estado (`activo`/`inactivo`).
-- `usuarios_negocio`: asignaciones con rol específico por negocio (empleados vs propietarios).
+- `usuarios_negocio`: asignaciones con rol específico por negocio (empleados vs propietarios). También se usa para autorizar acceso a inventario, categorías y ventas.
 - `negocio_rating`: puntuaciones de usuarios sobre negocios (una por usuario y negocio).
 
 ### 2.3 Catálogo y Stock
-- `categoria`: categorías únicas de productos.
+- `categoria`: catálogo jerárquico. Las categorías globales poseen `negocio_id = NULL`; las personalizadas vinculan `negocio_id` y el esquema aplica `@@unique([negocio_id, nombre])` para evitar duplicados por negocio.
 - `producto`:
   - Información general: `nombre`, `descripcion`, `descripcion_larga`, `codigo_barras` (único), `precio`, `estado` (`activo`/`inactivo`).
   - Relación opcional con `categoria` y varias tablas derivadas.
@@ -49,6 +49,7 @@ Este documento resume el estado actual del esquema PostgreSQL que respalda a Fil
   - `inventario(id_negocio, id_producto)`.
   - `empleados(negocio_id, usuario_id)`.
   - `negocio_rating(id_negocio, id_usuario)`.
+  - `categoria(negocio_id, nombre)` para asegurar unicidad por negocio sin bloquear categorías globales.
 - **Checks**:
   - `producto.estado` y `venta.estado` limitan valores permitidos.
   - `inventario` impone cantidades no negativas.
@@ -56,9 +57,10 @@ Este documento resume el estado actual del esquema PostgreSQL que respalda a Fil
   - `fn_touch_inventario_fecha`: auto-actualiza `inventario.fecha_actualizacion`.
   - `fn_inventario_aplicar_delta` / `fn_trg_detalle_venta_inventario`: mantienen coherencia entre detalle de venta, inventario y movimientos.
   - `fn_recalcular_total_venta` / `fn_trg_detalle_venta_total`: recalculan el total de la venta después de cambios en el detalle.
+  - Las verificaciones de que una categoría pertenece al negocio se realizan en la capa de servicio (`CategoriesService`) antes de insertar o actualizar productos.
 - **Semillas**:
   - Roles básicos y tipos de pago se insertan idempotentemente.
-  - Categorías iniciales (`Bebidas`, `Alimentos`, etc.).
+  - Categorías iniciales (`Bebidas`, `Alimentos`, etc.) se insertan como globales (`negocio_id = NULL`).
 
 ## 4. Flujo de Datos Clave
 1. **Registro y verificación**

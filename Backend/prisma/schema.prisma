@@ -47,8 +47,13 @@ model usuarios {
 
 model categoria {
   id_categoria BigInt     @id @default(autoincrement())
-  nombre       String     @unique @db.VarChar(120)
+  nombre       String     @db.VarChar(120)
+  negocio_id   BigInt?
   producto     producto[]
+  negocio      negocio?   @relation(fields: [negocio_id], references: [id_negocio], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([negocio_id])
+  @@unique([negocio_id, nombre])
 }
 
 model comentario {
@@ -135,6 +140,7 @@ model negocio {
   fecha_registro         DateTime?                @db.Timestamptz(6)
   corte_caja             corte_caja[]
   inventario             inventario[]
+  categorias             categoria[]
   movimientos_inventario movimientos_inventario[]
   reporte_ventas         reporte_ventas[]
   venta                  venta[]
