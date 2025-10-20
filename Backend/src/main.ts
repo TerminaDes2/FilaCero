@@ -15,7 +15,7 @@ async function bootstrap() {
       // Permite también el mismo origen si se prueba sin proxy
       'http://localhost:3000',
       'http://127.0.0.1:3000',
-      'https://filacero.up.railway.app',
+      'https://filacero.up.railway.app:8080',
     ],
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
