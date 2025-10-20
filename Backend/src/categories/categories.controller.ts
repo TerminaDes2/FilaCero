@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards, BadRequestException } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -11,23 +11,51 @@ export class CategoriesController {
   constructor(private readonly service: CategoriesService) {}
 
   @Get()
-  findAll() { return this.service.findAll(); }
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin','superadmin','empleado','usuario')
+  findAll(@Req() req: any, @Query('id_negocio') idNegocio?: string) {
+    const userId = this.extractUserId(req);
+    return this.service.findAll(userId, idNegocio);
+  }
 
   @Get(':id')
-  findOne(@Param('id') id: string) { return this.service.findOne(id); }
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin','superadmin','empleado','usuario')
+  findOne(@Req() req: any, @Param('id') id: string) {
+    const userId = this.extractUserId(req);
+    return this.service.findOne(userId, id);
+  }
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin','superadmin','empleado','usuario')
-  create(@Body() dto: CreateCategoryDto) { return this.service.create(dto); }
+  create(@Req() req: any, @Body() dto: CreateCategoryDto) {
+    const userId = this.extractUserId(req);
+    return this.service.create(userId, dto);
+  }
 
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin','superadmin','empleado','usuario')
-  update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) { return this.service.update(id, dto); }
+  update(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+    const userId = this.extractUserId(req);
+    return this.service.update(userId, id, dto);
+  }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin','superadmin','empleado','usuario')
-  remove(@Param('id') id: string) { return this.service.remove(id); }
+  remove(@Req() req: any, @Param('id') id: string) {
+    const userId = this.extractUserId(req);
+    return this.service.remove(userId, id);
+  }
+
+  private extractUserId(req: any): string {
+    const user = req?.user;
+    const value = user?.id_usuario ?? user?.id;
+    if (value === undefined || value === null) {
+      throw new BadRequestException('Usuario no autenticado');
+    }
+    return String(value);
+  }
 }
