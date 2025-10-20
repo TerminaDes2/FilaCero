@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUserStore } from '../../../state/userStore';
+import { useUserStore } from '../../../state/UserDropdown';
 import { useSettingsStore } from '../../../state/settingsStore';
 import { useShortcuts } from '../../system/ShortcutProvider';
 

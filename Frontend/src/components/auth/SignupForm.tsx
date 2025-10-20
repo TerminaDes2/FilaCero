@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { LegalModal } from '../../components/legal/LegalModal';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
-import { useUserStore } from '../../state/userStore';
+import { useUserStore } from '../../state/UserDropdown';
 
 interface SignupFormProps {
 	onSuccess?: () => void;

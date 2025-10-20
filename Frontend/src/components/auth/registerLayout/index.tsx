@@ -5,7 +5,7 @@ import { BenefitsSection } from './BenefitsSection';
 import { AuthFormSection } from './AuthFormSection';
 import { BackButton } from './BackButton';
 import { StepType } from '../registerHooks';
-import { useUserStore } from '../../../state/userStore'; // Importar el store
+import { useUserStore } from '../../../state/UserDropdown'; // Importar el store
 
 interface RegisterLayoutProps {
   step: StepType;

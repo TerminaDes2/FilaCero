@@ -1,6 +1,6 @@
 // components/ProtectedRoute.tsx
 "use client";
-import { useUserStore } from '../state/userStore';
+import { useUserStore } from '../state/UserDropdown';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
