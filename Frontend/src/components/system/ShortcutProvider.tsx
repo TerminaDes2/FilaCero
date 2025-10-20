@@ -2,7 +2,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from './ConfirmProvider';
-import { useUserStore } from '../../state/userStore';
+import { useUserStore } from '../../state/UserDropdown';
 import ShortcutsHelpOverlay from './ShortcutsHelpOverlay';
 
 type ShortcutContextValue = {

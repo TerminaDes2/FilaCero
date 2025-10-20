@@ -114,10 +114,6 @@ export class AuthService {
             throw new UnauthorizedException('Credenciales inválidas (Correo no encontrado).');
         }
 
-        if (!user.verificado) {
-            throw new UnauthorizedException('Cuenta pendiente de verificación.');
-        }
-
         // 2. Comparar la contraseña ingresada con el hash de la DB
         const isPasswordValid = await bcrypt.compare(loginDto.password, user.password_hash); 
         
@@ -133,7 +129,7 @@ export class AuthService {
             email: user.correo_electronico 
         };
         
-        return this.generateToken(payload, user);
+    return this.generateToken(payload, user);
     }
 
     async verifyAccount(dto: VerifyEmailDto) {

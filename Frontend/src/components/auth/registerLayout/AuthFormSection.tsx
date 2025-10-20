@@ -1,6 +1,6 @@
 import React from 'react';
 import { SignupForm } from '../../auth/SignupForm';
-import { useUserStore } from '../../../state/userStore';
+import { useUserStore } from '../../../state/UserDropdown';
 
 interface AuthFormSectionProps {
   onBackToSelection: () => void;
