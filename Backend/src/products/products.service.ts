@@ -171,27 +171,44 @@ export class ProductsService {
       }
     }
 
-    const [products, inventoryByProduct] = await Promise.all([
-      this.prisma.producto.findMany({
-        where,
-        orderBy: { id_producto: 'desc' },
-        include: productInclude,
-      }),
-      this.prisma.inventario.groupBy({
-        by: ['id_producto'],
-        where: {
-          ...(negocioIdFilter !== undefined && { id_negocio: negocioIdFilter }),
-        },
-        _sum: { cantidad_actual: true },
-      }),
-    ]);
+    let inventoryRows: Array<{ id_producto: bigint | null; cantidad_actual: number | null }> = [];
+    if (negocioIdFilter !== undefined) {
+      const negocioId = negocioIdFilter;
+      inventoryRows = await this.prisma.inventario.findMany({
+        where: { id_negocio: negocioId },
+        select: { id_producto: true, cantidad_actual: true },
+      });
+      const productIds = Array.from(
+        new Set(
+          inventoryRows
+            .map((row) => row.id_producto)
+            .filter((value): value is bigint => value != null),
+        ),
+      );
+      if (productIds.length === 0) {
+        return [];
+      }
+      where.id_producto = { in: productIds };
+    }
+
+    const products = await this.prisma.producto.findMany({
+      where,
+      orderBy: { id_producto: 'desc' },
+      include: productInclude,
+    });
+
+    if (negocioIdFilter === undefined) {
+      inventoryRows = await this.prisma.inventario.findMany({
+        select: { id_producto: true, cantidad_actual: true },
+      });
+    }
 
     const stockMap = new Map<string, number>();
-    for (const row of inventoryByProduct) {
+    for (const row of inventoryRows) {
       const id = row.id_producto?.toString();
       if (!id) continue;
-      const amount = row._sum.cantidad_actual ?? 0;
-      stockMap.set(id, Number(amount));
+      const amount = Number(row.cantidad_actual ?? 0);
+      stockMap.set(id, (stockMap.get(id) ?? 0) + amount);
     }
 
     return products.map((product) => {

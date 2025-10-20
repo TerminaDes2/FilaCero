@@ -130,15 +130,21 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
       const created = await api.createProduct(productPayload);
       const productId = String(created?.id_producto ?? created?.id);
 
-  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
-      const stockInicial = Number(stock) || 0;
-      if (negocioId && productId && stockInicial > 0) {
-        await api.createInventory({
-          id_negocio: negocioId,
-          id_producto: productId,
-          cantidad_actual: stockInicial,
-          stock_minimo: 0,
-        });
+    const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+      const stockInicial = Math.max(Number(stock) || 0, 0);
+      if (negocioId && productId) {
+        try {
+          await api.createInventory({
+            id_negocio: negocioId,
+            id_producto: productId,
+            cantidad_actual: stockInicial,
+            stock_minimo: 0,
+          });
+        } catch (invErr: any) {
+          if (invErr?.status !== 409) {
+            console.warn('No se pudo registrar inventario inicial:', invErr);
+          }
+        }
       }
 
       onProductCreated();

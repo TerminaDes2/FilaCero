@@ -35,6 +35,7 @@ export class BusinessesService {
             fecha_asignacion: new Date(),
           },
         });
+
         return negocio;
       });
       return result;
