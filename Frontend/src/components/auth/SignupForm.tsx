@@ -33,12 +33,24 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
 	const { role } = useUserStore();
+	const isOwner = role === 'OWNER';
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordStrength = computeStrength(password);
 	const passwordStrongEnough = passwordStrength >= 3; // must hit 3 of 4
 	const confirmValid = confirm.length > 0 && confirm === password;
 	const nameValid = name.trim().length >= 2;
+	const accountNumberClean = accountNumber.trim();
+	const accountNumberValid =
+		isOwner || accountNumberClean === "" || /^[0-9]{5,20}$/.test(accountNumberClean);
+	const ageValue = age === "" ? undefined : Number(age);
+	const ageValid =
+		isOwner ||
+		age === "" ||
+		 (ageValue !== undefined &&
+		 Number.isInteger(ageValue) &&
+		 ageValue >= 16 &&
+		 ageValue <= 120);
 	const baseValid = emailValid && passwordStrongEnough && confirmValid && nameValid;
 	const formValid = baseValid && acceptedTerms;
 
@@ -51,47 +63,56 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		return s;
 	}, [password]);
 
-		const submit = async (e: React.FormEvent) => {
+	const submit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-			setTouched({ name: true, email: true, password: true, confirm: true, terms: true });
-			if(!formValid) return;
-			// Exigir selección de rol explícita
-			if (!role) {
-				setError('Selecciona un rol (Cliente o Negocio) antes de continuar.');
-				return;
+		setTouched({
+			name: true,
+			email: true,
+			password: true,
+			confirm: true,
+			terms: true,
+			accountNumber: !isOwner,
+			age: !isOwner,
+		});
+		if(!formValid) return;
+		// Exigir selección de rol explícita para evitar registros ambiguos
+		if(!role) {
+			setError('Selecciona un rol (Cliente o Negocio) antes de continuar.');
+			return;
+		}
+		setSubmitting(true);
+		setError(null);
+		try {
+			const roleName: 'usuario' | 'admin' = isOwner ? 'admin' : 'usuario';
+			const res = await api.register(
+				name.trim(),
+				email.trim().toLowerCase(),
+				password,
+				roleName,
+				isOwner ? undefined : accountNumberClean || undefined,
+				isOwner ? undefined : ageValue
+			);
+			if(typeof window !== 'undefined') {
+				window.localStorage.setItem('auth_token', res.token);
+				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 			}
-			setSubmitting(true);
-			setError(null);
-			try {
-												const roleName: 'usuario' | 'admin' = role === 'OWNER' ? 'admin' : 'usuario';
-												const res = await api.register(
-													name.trim(),
-													email.trim().toLowerCase(),
-													password,
-													roleName
-												);
-						if (typeof window !== 'undefined') {
-							window.localStorage.setItem('auth_token', res.token);
-							window.localStorage.setItem('auth_user', JSON.stringify(res.user));
-						}
-				onSuccess?.();
-				router.push(role === 'OWNER' ? '/onboarding/negocio' : '/onboarding/customer');
-			} catch (err: any) {
-				setError(err?.message || 'Error al crear la cuenta');
-			} finally {
-				setSubmitting(false);
-			}
+			onSuccess?.();
+			router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
+		} catch (err: any) {
+			setError(err?.message || 'Error al crear la cuenta');
+		} finally {
+			setSubmitting(false);
+		}
 	};
 
 	return (
 		<form onSubmit={submit} className="space-y-6" noValidate>
-
-					{error && (
-						<div className="text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2">
-							{error}
-						</div>
-					)}
-					<FancyInput
+			{error && (
+				<div className="text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2">
+					{error}
+				</div>
+			)}
+			<FancyInput
 				label="Nombre"
 				value={name}
 				onChange={e=>setName(e.target.value)}
@@ -110,6 +131,34 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M4 6l8 6 8-6M4 6v12h16V6' /></svg>}
 				hint={!email ? 'Usa un correo válido que controles' : undefined}
 			/>
+			{!isOwner && (
+				<>
+					<FancyInput
+						label="Número de cuenta"
+						value={accountNumber}
+						onChange={e=>setAccountNumber(e.target.value)}
+						onBlur={()=>setTouched(t=>({...t,accountNumber:true}))}
+						error={touched.accountNumber && !accountNumberValid ? 'Debe contener entre 5 y 20 dígitos' : undefined}
+						leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M3 4h18v5H3zM3 13h18v7H3z'/><path strokeLinecap='round' strokeLinejoin='round' d='M7 17h2m4 0h6'/></svg>}
+						hint={accountNumber ? undefined : 'Opcional, solo números'}
+						inputMode="numeric"
+						pattern="[0-9]*"
+						maxLength={20}
+					/>
+					<FancyInput
+						label="Edad"
+						type="number"
+						value={age}
+						onChange={e=>setAge(e.target.value)}
+						onBlur={()=>setTouched(t=>({...t,age:true}))}
+						error={touched.age && !ageValid ? 'Selecciona una edad entre 16 y 120' : undefined}
+						leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M12 8v4l3 1.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z' /></svg>}
+						hint={age ? undefined : 'Opcional, utilizada para beneficios estudiantiles'}
+						min={16}
+						max={120}
+					/>
+				</>
+			)}
 			<FancyInput
 				label="Contraseña"
 				type={showPassword ? 'text' : 'password'}

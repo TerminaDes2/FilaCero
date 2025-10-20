@@ -1,97 +1,75 @@
 # Frontend
 
 ## Resumen
-Aplicación **Next.js 13** (App Router) con **Tailwind CSS** para la interfaz del punto de venta. Consume la API del backend (`NEXT_PUBLIC_API_BASE`).
+La interfaz de FilaCero está construida con **Next.js 13 App Router**, **React 18** y **Tailwind CSS**. El objetivo principal es ofrecer un onboarding guiado y un POS multinegocio. Las llamadas al backend se realizan mediante `fetch` encapsulado en utilidades (`src/lib/api.ts`) y el estado compartido se maneja con **Zustand**.
 
-## Stack
-- Next.js 13.4
-- React 18
-- Tailwind CSS + PostCSS + Autoprefixer
+## Stack y tooling
+- Next.js 13.5 (App Router, Server/Client Components).
+- React 18 con Suspense progresivo.
+- Tailwind CSS (config extendida en `tailwind.config.js`).
+- Zustand para stores (`src/pos/categoriesStore.ts`, `src/state/userStore.ts`).
+- React Hook Form + Zod para validaciones embebidas en wizard de onboarding.
 
-## Scripts NPM
-| Script | Descripción                |
-|--------|----------------------------|
-| dev    | Desarrollo (hot reload)    |
-| build  | Construcción producción    |
-| start  | Sirve build                |
-| lint   | Linter Next (pendiente conf extendida) |
+## Scripts npm
+| Script | Descripción |
+|--------|-------------|
+| `npm run dev` | Servidor de desarrollo con hot reload |
+| `npm run build` | Construcción para producción |
+| `npm run start` | Sirve el build |
+| `npm run lint` | Linter Next + reglas personalizadas |
 
-## Variables de Entorno
-En `docker-compose.yml`:
+## Variables de entorno relevantes
 ```
 NEXT_PUBLIC_API_BASE=http://localhost:3000/api
+NEXT_PUBLIC_NEGOCIO_ID=<opcional para preseleccionar negocio>
 ```
-Utilizar siempre el prefijo `NEXT_PUBLIC_` para exponer variables al cliente.
+Todas las variables expuestas al cliente deben iniciar con `NEXT_PUBLIC_`. Durante desarrollo Docker, `NEXT_PUBLIC_API_BASE` apunta al backend interno.
 
-## Estructura (parcial)
+## Estructura actual
 ```
 Frontend/
   app/
-    layout.js
-    page.js
-    globals.css
-  public/
-  src/ (espacio para componentes / hooks / lib)
+    layout.tsx            # Layout raíz App Router
+    page.tsx              # Landing pública
+    auth/                 # Login, registro, recuperaciones
+    onboarding/           # Wizard multi-paso (owner -> negocio)
+    pos/                  # Terminal de punto de venta
+    productos/            # Administración de catálogo y categorías
+    shop/                 # Vistas públicas en progreso
+  src/
+    components/           # UI y bloques de formulario reutilizables
+    features/             # Lógica específica (auth, pos, legal)
+    lib/api.ts            # Wrapper fetch + helpers para tokens
+    state/                # Stores Zustand (usuario, settings, modales)
+  public/                 # Imágenes y assets
   tailwind.config.js
   postcss.config.js
 ```
 
-## Estilos
-- Tailwind configurado vía `tailwind.config.js`.
-- Archivo global: `app/globals.css`.
+## Formularios y flujos principales
+- **Registro y login (`app/auth`)**: formularios responsivos con validación en cliente. El formulario de registro adapta campos opcionales para dueños (razón social, teléfono) y estudiantes (número de cuenta) ocultando inputs según selección.
+- **Onboarding de negocio (`BusinessOnboardingWizard`)**: 4 pasos (datos generales, branding, dirección, horarios). El wizard se puede incrustar (`embed`) y guarda progreso en estado local para evitar pérdida accidental.
+- **Gestión de categorías (`app/productos/categorias`)**: Panel CRUD que diferencia categorías globales (solo lectura) de las propias del negocio. Usa `useCategoriesStore` para sincronizar con el backend.
+- **Inventario (`app/pos/inventory`)**: Formularios para alta rápida de existencias por negocio. Muestran validaciones cuando falta negocio activo y llaman a `/api/inventory`.
+- **POS (`app/pos`)**: Permite seleccionar categoría, buscar productos, gestionar carrito y registrar venta. Incluye formularios modales para aplicar descuentos y seleccionar método de pago.
 
-## Comunicación con API
-Crear un helper (propuesto) en `src/lib/api.ts`:
-```ts
-export async function api(path, options = {}) {
-  const base = process.env.NEXT_PUBLIC_API_BASE;
-  const res = await fetch(`${base}${path}`, { headers: { 'Content-Type': 'application/json' }, ...options });
-  if (!res.ok) throw new Error('API error');
-  return res.json();
-}
-```
+## Estado compartido
+- `activeBusiness` (en `src/lib/api.ts`) almacena el negocio seleccionado y se sincroniza con `localStorage`.
+- `useCategoriesStore` mantiene categorías cargadas desde `/api/categories?id_negocio=...`, conserva categorías globales y evita duplicados.
+- `useUserStore` guarda payload del JWT (rol, verificación, negocio por defecto) para hidratar componentes cliente.
+- `posSettingsStore` controla densidad, tema y atajos con persistencia local.
 
-## Estado
-Por ahora se recomienda iniciar simple (fetch directo / Server Components). Si se escala, evaluar:
-- React Query / TanStack Query
-- Zustand o Context API para carrito / sesión
+## Estilos y diseño
+- Tailwind se complementa con tokens CSS (`--pos-control-h`, `--pos-accent-*`) aplicados por `ClientSettingsApplier`.
+- Layouts usan CSS Grid para dividir onboarding (beneficios + formulario) y el POS (panel principal + laterales).
+- Se mantiene contraste AA/AAA y focus visibles; cada formulario muestra mensajes contextualizados.
 
-## Tabla de Productos
-Para listar productos usar TanStack Table (mencionado en README) — pendiente de instalación:
-```
-npm i @tanstack/react-table
-```
+## Integración con la API
+- `src/lib/api.ts` centraliza métodos (`getCategories`, `createCategory`, `getInventory`, etc.) y adjunta encabezados JWT.
+- Cada llamada requiere negocio activo cuando la lógica lo demanda; el store lanza mensajes en español cuando faltan datos.
+- Se propaga el error nativo del backend para que el frontend muestre feedback coherente (p. ej. duplicados de categoría).
 
-## Accesibilidad y UX (Checklist breve)
-- Colores con contraste adecuado
-- Focus visible
-- Mensajes de error claros
-- Loading states en peticiones
-
-## Próximos Componentes (propuesto)
-- Barra de búsqueda / filtros
-- Carrito rápido
-- Panel de ventas activas
-- Dashboard con métricas
-
-## Deploy / Build
-En Docker (frontend) se expone el puerto 3000 y se monta el código para desarrollo. Para producción se recomienda build multistage y servir sólo `.next` + `node_modules` mínimos.
-
-## Atajos de teclado (POS)
-
-- Buscar: Ctrl/Cmd + K o `/` (enfoca la caja de búsqueda)
-- Cambiar vista: V (alterna grid/list)
-- Nuevo producto (admin productos): N
-- Ir a inicio POS: P
-- Ir a configuración: S
-- Cerrar sesión: Ctrl/Cmd + L (pide confirmación)
-- Confirmar en diálogos: Enter
-- Cancelar/cerrar panel o diálogo: Escape
-
-## Apariencia: densidad y acento
-
-- Densidad: configurable en POS > Configuración > Apariencia. Cambia el tamaño base de los controles a través de las variables `--pos-control-h` y `--pos-control-radius`.
-  - Cómoda (por defecto): `--pos-control-h: 44px`
-  - Compacta: agrega la clase `density-compact` al `html` y establece `--pos-control-h: 38px`.
-- Acento: alterna entre menta (`--fc-teal-*`) y brand frambuesa (`--fc-brand-*`). El mapeo afecta a `--pos-accent-green` y `--pos-accent-green-hover` que usan los botones primarios del POS.
-- Aplicación en cliente: `ClientSettingsApplier` observa cambios en el store y aplica la clase y variables CSS inmediatamente. Los valores persisten en `localStorage` (`posSettings`).
+## Próximos ajustes
+- Consolidar un hook de negocio activo para evitar acceso directo a `activeBusiness`.
+- Generar documentación UI de componentes en `Docs/Frontend-UI.md` (pendiente).
+- Integrar pruebas de interacción (Playwright) para checkout POS y onboarding.

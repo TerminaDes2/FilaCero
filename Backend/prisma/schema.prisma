@@ -39,10 +39,13 @@ model usuarios {
 
 model categoria {
   id_categoria BigInt     @id @default(autoincrement())
-  nombre       String     @unique @db.VarChar(120)
+  nombre       String     @db.VarChar(120)
+  negocio_id   BigInt?
   producto     producto[]
+  negocio      negocio?   @relation(fields: [negocio_id], references: [id_negocio], onDelete: SetNull, onUpdate: NoAction)
 
-  @@index([nombre], map: "idx_categoria_nombre")
+  @@index([negocio_id])
+  @@unique([negocio_id, nombre])
 }
 
 model comentario {
@@ -138,6 +141,7 @@ model negocio {
   corte_caja             corte_caja[]
   empleados              empleados[]
   inventario             inventario[]
+  categorias             categoria[]
   movimientos_inventario movimientos_inventario[]
   usuarios               usuarios?                @relation(fields: [owner_id], references: [id_usuario], onDelete: Restrict, map: "fk_negocio_owner")
   reporte_ventas         reporte_ventas[]
