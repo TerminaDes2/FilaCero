@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback } from 'react';
-import { UserProvider, useUserStore } from '../../../src/state/userStore';
+import { UserProvider, useUserStore } from '../../../src/state/UserDropdown';
 import { RegisterLayout } from '../../../src/components/auth/registerLayout';
 import { useRegisterFlow } from '../../../src/components/auth/registerHooks';
 
