@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "../../state/userStore";
+import { useUserStore } from "../state/userStore";
 import { 
   User, 
   LogOut, 
@@ -71,7 +71,6 @@ export default function UserDropdown() {
 
   return (
     <div className="relative">
-      console.log("Usuario: " user.id_rol);
       <button
         className="user-menu-trigger flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition"
         onClick={(e) => {
@@ -164,7 +163,11 @@ export default function UserDropdown() {
               <Settings className="w-4 h-4 text-gray-500 dark:text-slate-400" />
               <span>Mi Perfil</span>
             </Link>
+
+            
+
           </div>
+          
           
           {/* Separador */}
           <div className="border-t border-gray-100 dark:border-slate-700 my-1"></div>
