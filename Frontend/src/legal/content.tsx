@@ -23,14 +23,14 @@ export const terminos: LegalDocument = {
   label: 'Términos de Servicio',
   updated: '22 septiembre 2025',
   intro: (
-    <p>Estos Términos de Servicio ("Términos") regulan el uso de la plataforma FilaCero ("Servicio"). Al crear una cuenta o utilizar el Servicio aceptas estos Términos.</p>
+    <p>Estos Términos de Servicio (&quot;Términos&quot;) regulan el uso de la plataforma FilaCero (&quot;Servicio&quot;). Al crear una cuenta o utilizar el Servicio aceptas estos Términos.</p>
   ),
   sections: [
     {
       id: 'definiciones',
       title: '1. Definiciones',
       body: (
-        <p><strong>"Cliente"</strong>: Institución, escuela o entidad que crea la cuenta. <strong>"Usuarios finales"</strong>: Personas que realizan pedidos o interactúan con el catálogo. <strong>"Contenido"</strong>: Información, datos, menús, imágenes o materiales cargados al Servicio.</p>
+        <p><strong>&quot;Cliente&quot;</strong>: Institución, escuela o entidad que crea la cuenta. <strong>&quot;Usuarios finales&quot;</strong>: Personas que realizan pedidos o interactúan con el catálogo. <strong>&quot;Contenido&quot;</strong>: Información, datos, menús, imágenes o materiales cargados al Servicio.</p>
       )
     },
     {
@@ -62,7 +62,7 @@ export const terminos: LegalDocument = {
       id: 'disponibilidad',
       title: '5. Disponibilidad',
       body: (
-        <p>Trabajamos para mantener alta disponibilidad, pero el Servicio se ofrece "tal cual" sin garantías absolutas. Podremos realizar mantenimientos planificados.</p>
+        <p>Trabajamos para mantener alta disponibilidad, pero el Servicio se ofrece &quot;tal cual&quot; sin garantías absolutas. Podremos realizar mantenimientos planificados.</p>
       )
     },
     {
@@ -104,7 +104,7 @@ export const privacidad: LegalDocument = {
   label: 'Política de Privacidad',
   updated: '22 septiembre 2025',
   intro: (
-    <p>Esta Política describe cómo FilaCero ("nosotros") recopila, utiliza y protege datos relacionados con el uso del Servicio.</p>
+    <p>Esta Política describe cómo FilaCero (&quot;nosotros&quot;) recopila, utiliza y protege datos relacionados con el uso del Servicio.</p>
   ),
   sections: [
     {
