@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { BusinessesService } from './businesses.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
@@ -6,6 +6,12 @@ import { CreateBusinessDto } from './dto/create-business.dto';
 @Controller('api/businesses')
 export class BusinessesController {
   constructor(private readonly service: BusinessesService) {}
+
+  @Get()
+  async listPublic(@Query('search') search?: string, @Query('limit') limit?: string) {
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
+    return this.service.listPublicBusinesses({ search, limit: parsedLimit });
+  }
 
   @UseGuards(AuthGuard('jwt'))
   @Post()

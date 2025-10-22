@@ -31,7 +31,7 @@ Backend/
 |--------|----------|-------------|-------|
 | Auth | `/api/auth` | Registro, login, verificación y refresh | Retorna JWT con claims de rol y negocio activo |
 | Users | `/api/users` | Perfil, actualización de datos y búsqueda | Requiere JWT, usa Prisma `usuarios` |
-| Businesses | `/api/businesses` | CRUD de negocios, branding, horarios, miembros | Valida asociación en `usuarios_negocio` |
+| Businesses | `/api/businesses` | Listado público, CRUD de negocios, branding, horarios, miembros | Pública: `GET /api/businesses`; operaciones mutables validan `usuarios_negocio` |
 | Categories | `/api/categories` | Listado combinado (global + negocio) y CRUD | Todas las operaciones requieren negocio activo; globales son de solo lectura |
 | Inventory | `/api/inventory` / `/api/movements` | Existencias por producto/negocio y registro de ajustes | Consistente con triggers PostgreSQL |
 | Products | `/api/products` | Catálogo y media. Actualmente TypeORM, se migra a Prisma | Filtra por negocio vía inventario |

@@ -5,6 +5,9 @@ type Store = {
   nombre: string;
   descripcion?: string | null;
   logo?: string | null;
+  hero_image_url?: string | null;
+  telefono?: string | null;
+  correo?: string | null;
   estrellas?: number;
   categorias?: string[];
 };
@@ -49,7 +52,7 @@ export default function StoresSection() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold">{s.nombre}</h3>
-                <p className="text-sm text-gray-600">{s.descripcion}</p>
+                <p className="text-sm text-gray-600">{s.descripcion || 'Próximamente más detalles.'}</p>
 
                 <a
                   href={`/shop/${s.id_negocio}`}
@@ -63,7 +66,7 @@ export default function StoresSection() {
                     <svg className="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.896 4.664 23.165l1.402-8.168L.132 9.21l8.2-1.192z" />
                     </svg>
-                    <span className="text-sm font-semibold">{(s.estrellas ?? 0).toFixed(1)}</span>
+                    <span className="text-sm font-semibold">{Number(s.estrellas ?? 0).toFixed(1)}</span>
                   </div>
                   <div className="text-xs text-gray-500">{s.categorias?.join(' · ')}</div>
                 </div>
