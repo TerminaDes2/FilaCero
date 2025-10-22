@@ -6,15 +6,20 @@ import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // CORS explícito para desarrollo: permitir frontend en localhost:3001 y cabecera Authorization
+  const defaultOrigins = [
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://filacero.up.railway.app',
+  ];
+  const envOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
   app.enableCors({
-    origin: [
-      'http://localhost:3001',
-      'http://127.0.0.1:3001',
-      // Permite también el mismo origen si se prueba sin proxy
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-    ],
+    origin: allowedOrigins,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: false,
