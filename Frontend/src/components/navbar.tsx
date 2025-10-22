@@ -1,4 +1,4 @@
-// components/navbar.tsx - VERSIÓN REFACTORIZADA
+// components/navbar.tsx - VERSIÓN CORREGIDA
 "use client";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,7 +25,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
-  const { isAuthenticated, loading } = useUserStore();
+  const { user, isAuthenticated, loading, logout } = useUserStore(); // 👈 Añadir user y logout
 
   useEffect(() => {
     const onScroll = () => {
@@ -34,6 +34,11 @@ export default function Navbar() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    setOpen(false);
+  };
 
   if (loading) {
     return (
@@ -77,10 +82,8 @@ export default function Navbar() {
         
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
-            // 👇 AHORA USA EL COMPONENTE UserDropdown
             <UserDropdown />
           ) : (
-            // 👇 BOTONES DE LOGIN/REGISTER (no autenticado)
             <>
               <Link
                 href="/auth/login"
@@ -121,7 +124,7 @@ export default function Navbar() {
         </button>
       </nav>
       
-      {/* Menú móvil */}
+      {/* Menú móvil CORREGIDO */}
       {open && (
         <div className="md:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-gray-200 dark:border-white/10 px-4 pb-6 pt-2 space-y-2">
           {navItems.map(item => (
@@ -136,9 +139,9 @@ export default function Navbar() {
           ))}
           
           <div className="pt-2">
-            {isAuthenticated ? (
-              // 👇 PARA MÓVIL, PODRÍAS CREAR UN UserDropdownMobile O USAR ESTE CÓDIGO SIMPLIFICADO
+            {isAuthenticated && user ? (
               <div className="w-full space-y-3">
+                {/* Header del usuario en móvil */}
                 <div className="px-2 py-3 border-b border-gray-200 dark:border-slate-700">
                   <div className="flex items-center gap-3">
                     <div className="relative">
@@ -147,13 +150,46 @@ export default function Navbar() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
+                      {/* Badge del rol en móvil */}
+                      {user.id_rol && (
+                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-[10px] font-bold ${
+                          user.id_rol === 2 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}>
+                          {user.id_rol === 2 ? "A" : "U"}
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">Usuario</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400">Ver perfil</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{user.nombre}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">{user.correo_electronico}</p>
+                      {user.id_rol && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          user.id_rol === 2 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}>
+                          {user.id_rol === 2 ? 'Admin' : 'Usuario'}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
+                
+                {/* 👇 AÑADIR OPCIÓN DE PANEL ADMIN EN MÓVIL */}
+                {user.id_rol === 2 && (
+                  <Link 
+                    href="/pos" 
+                    className="flex items-center gap-2 py-2 text-sm text-gray-700 dark:text-slate-200"
+                    onClick={() => setOpen(false)}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                    Panel Administrador
+                  </Link>
+                )}
                 
                 <Link 
                   href="/shop" 
@@ -179,10 +215,7 @@ export default function Navbar() {
                 </Link>
                 
                 <button
-                  onClick={() => {
-                    // Aquí podrías llamar a la función logout del UserStore
-                    setOpen(false);
-                  }}
+                  onClick={handleLogout}
                   className="flex items-center gap-2 w-full py-2 text-sm font-medium text-red-600 dark:text-red-400"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

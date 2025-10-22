@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { BusinessesService } from './businesses.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 
@@ -15,23 +17,35 @@ export class BusinessesController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  async create(@Req() req: any, @Body() dto: CreateBusinessDto) {
-    const user = req.user; // injected by JwtStrategy
-    const userId = String(user?.id_usuario ?? user?.id);
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
+  create(@Req() req: any, @Body() dto: CreateBusinessDto) {
+    const userId = this.extractUserId(req);
     return this.service.createBusinessAndAssignOwner(userId, dto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('my')
-  async myBusinesses(@Req() req: any) {
-    const user = req.user;
-    const userId = String(user?.id_usuario ?? user?.id);
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
+  myBusinesses(@Req() req: any) {
+    const userId = this.extractUserId(req);
     return this.service.listBusinessesForUser(userId);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get(':id')
-  async getById(@Param('id') id: string) {
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
+  getById(@Req() req: any, @Param('id') id: string) {
+    const userId = this.extractUserId(req);
     return this.service.getBusinessById(id);
+  }
+
+  private extractUserId(req: any): string {
+    const user = req?.user;
+    const value = user?.id_usuario ?? user?.id;
+    if (value === undefined || value === null) {
+      throw new BadRequestException('Usuario no autenticado');
+    }
+    return String(value);
   }
 }

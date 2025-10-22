@@ -21,10 +21,8 @@ import { BusinessesModule } from './businesses/businesses.module';
     ProductsModule, // módulo de productos (Prisma)
     InventoryModule, // módulo de inventario (Prisma)
     CategoriesModule, // módulo de categorías (Prisma)
-  SalesModule, // módulo de ventas (Prisma)
+    SalesModule, // módulo de ventas (Prisma) <-- AQUÍ FALTABA LA COMA
     BusinessesModule, // módulo de negocios (Prisma)
-    // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
-    // ProductModule,
   ],
   controllers: [HealthController],
 })
