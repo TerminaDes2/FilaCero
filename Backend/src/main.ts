@@ -33,5 +33,8 @@ async function bootstrap() {
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`Nest backend escuchando en puerto ${port}`);
+
+  
 }
 bootstrap();
+
