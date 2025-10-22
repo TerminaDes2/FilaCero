@@ -52,6 +52,7 @@ Frontend/
 - **Gestión de categorías (`app/productos/categorias`)**: Panel CRUD que diferencia categorías globales (solo lectura) de las propias del negocio. Usa `useCategoriesStore` para sincronizar con el backend.
 - **Inventario (`app/pos/inventory`)**: Formularios para alta rápida de existencias por negocio. Muestran validaciones cuando falta negocio activo y llaman a `/api/inventory`.
 - **POS (`app/pos`)**: Permite seleccionar categoría, buscar productos, gestionar carrito y registrar venta. Incluye formularios modales para aplicar descuentos y seleccionar método de pago.
+- **Tienda pública (`app/shop`)**: Consume `app/api/stores` para mostrar negocios disponibles, secciones destacadas y carrito ligero.
 
 ## Estado compartido
 - `activeBusiness` (en `src/lib/api.ts`) almacena el negocio seleccionado y se sincroniza con `localStorage`.

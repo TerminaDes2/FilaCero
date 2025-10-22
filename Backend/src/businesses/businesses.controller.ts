@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -9,13 +9,13 @@ import { CreateBusinessDto } from './dto/create-business.dto';
 export class BusinessesController {
   constructor(private readonly service: BusinessesService) {}
 
-  // ✅ Endpoint público - SIN autenticación
-  @Get('public')
-  getPublicBusinesses() {
-    console.log('✅ GET /api/businesses/public está funcionando!');
-    return this.service.getPublicBusinesses();
+  @Get()
+  async listPublic(@Query('search') search?: string, @Query('limit') limit?: string) {
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
+    return this.service.listPublicBusinesses({ search, limit: parsedLimit });
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'superadmin', 'empleado', 'usuario')

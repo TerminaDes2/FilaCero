@@ -9,8 +9,11 @@ type Store = {
   telefono?: string | null;
   correo?: string | null;
   logo?: string | null;
-  fecha_registro?: string;
-  owner_id?: number;
+  hero_image_url?: string | null;
+  telefono?: string | null;
+  correo?: string | null;
+  estrellas?: number;
+  categorias?: string[];
 };
 
 // Datos mock mejorados
@@ -153,37 +156,30 @@ export default function StoresSection() {
               key={store.id_negocio}
               className="bg-white rounded-lg border hover:shadow-md transition-all duration-200 p-4"
             >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <img 
-                    alt={`Logo de ${store.nombre}`}
-                    className="w-16 h-16 rounded-lg object-cover bg-gray-100"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://via.placeholder.com/96x96/3B82F6/FFFFFF?text=${store.nombre.charAt(0)}`;
-                    }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{store.nombre}</h3>
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                    {store.direccion || 'Dirección no disponible'}
-                  </p>
-                  {store.telefono && (
-                    <p className="text-sm text-gray-600 mt-1 flex items-center">
-                      <span className="mr-1">📞</span>
-                      {store.telefono}
-                    </p>
-                  )}
-                  
-                  <div className="mt-3">
-                    <Link
-                      href={`/stores/${store.id_negocio}`}
-                      className="inline-flex items-center px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
-                    >
-                      Visitar tienda
-                      <span className="ml-1">→</span>
-                    </Link>
+              <div className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                {s.logo ? (
+                  <img src={s.logo} alt={s.nombre} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm text-gray-400">Logo</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">{s.nombre}</h3>
+                <p className="text-sm text-gray-600">{s.descripcion || 'Próximamente más detalles.'}</p>
+
+                <a
+                  href={`/shop/${s.id_negocio}`}
+                  className="inline-block mt-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Visitar tienda
+                </a>
+
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <svg className="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.896 4.664 23.165l1.402-8.168L.132 9.21l8.2-1.192z" />
+                    </svg>
+                    <span className="text-sm font-semibold">{Number(s.estrellas ?? 0).toFixed(1)}</span>
                   </div>
                 </div>
               </div>

@@ -38,7 +38,12 @@ Este documento describe todas las funcionalidades principales y atómicas de la 
 - **Función:** Permite al dueño registrar un nuevo negocio con branding, horarios y ubicación.
 - **Interacción:** El usuario queda vinculado como propietario en `usuarios_negocio`.
 
-### 2.2 Asignación de Empleados (`assign-employee`)
+### 2.2 Listado público de negocios (`list-public-businesses`)
+- **Endpoint:** `GET /api/businesses`
+- **Función:** Devuelve negocios disponibles para la tienda online, con rating promedio, logo y categorías destacadas.
+- **Interacción:** Consumido por `app/api/stores` en el frontend para renderizar la sección "Tiendas".
+
+### 2.3 Asignación de Empleados (`assign-employee`)
 - **Endpoint:** `POST /api/businesses/:id/assign`
 - **Función:** Vincula usuarios existentes como empleados del negocio.
 - **Interacción:** Controla acceso a inventario, ventas y categorías.

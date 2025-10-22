@@ -4,33 +4,58 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 
+interface PublicBusinessFilters {
+  search?: string;
+  limit?: number;
+}
+
+const DEFAULT_PUBLIC_LIMIT = 20;
+const MAX_PUBLIC_LIMIT = 50;
+
 @Injectable()
 export class BusinessesService {
   constructor(private prisma: PrismaService) {}
 
-  // Método para obtener negocios públicos - ACTUALIZADO
-  async getPublicBusinesses() {
+  async listPublicBusinesses(filters: PublicBusinessFilters = {}) {
     const prisma = this.prisma as any;
-    const businesses = await prisma.negocio.findMany({
-      select: {
-        id_negocio: true,
-        nombre: true,
-        direccion: true,
-        telefono: true,
-        correo: true,
-        logo: true,
-        fecha_registro: true,
-        owner_id: true,
-      },
-      orderBy: { fecha_registro: 'desc' },
-    });
+    const search = filters.search?.trim();
+    const limit = Number.isFinite(filters.limit)
+      ? Math.min(Math.max(Math.floor(filters.limit!), 1), MAX_PUBLIC_LIMIT)
+      : DEFAULT_PUBLIC_LIMIT;
 
-    // Convertir BigInt a Number para la respuesta JSON
-    return businesses.map(business => ({
-      ...business,
-      id_negocio: Number(business.id_negocio),
-      owner_id: business.owner_id ? Number(business.owner_id) : null
-    }));
+    const whereClause = search
+      ? Prisma.sql`WHERE n.nombre ILIKE ${`%${search}%`}`
+      : Prisma.sql``;
+
+    const query = Prisma.sql`
+      SELECT
+        n.id_negocio,
+        n.nombre,
+        n.direccion AS descripcion,
+        n.telefono,
+        n.correo,
+        n.logo_url AS logo,
+        n.hero_image_url,
+  COALESCE(ROUND(AVG(r.estrellas)::numeric, 1), 0)::float AS estrellas,
+        COALESCE(
+          (
+            SELECT array_agg(DISTINCT c.nombre ORDER BY c.nombre)
+            FROM categoria c
+            JOIN producto p ON p.id_categoria = c.id_categoria
+            JOIN inventario inv ON inv.id_producto = p.id_producto AND inv.id_negocio = n.id_negocio
+            WHERE inv.cantidad_actual IS NULL OR inv.cantidad_actual > 0
+          ),
+          ARRAY[]::text[]
+        ) AS categorias
+      FROM negocio n
+      LEFT JOIN negocio_rating r ON r.id_negocio = n.id_negocio
+      ${whereClause}
+      GROUP BY n.id_negocio
+      ORDER BY n.nombre ASC
+      LIMIT ${limit}
+    `;
+
+    return prisma.$queryRaw(query);
   }
 
   async createBusinessAndAssignOwner(userId: string, dto: CreateBusinessDto) {
