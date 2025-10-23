@@ -2,7 +2,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from './ConfirmProvider';
-import { useUserStore } from '../../state/UserDropdown';
+import { useUserStore } from '../../state/userStore';
 import ShortcutsHelpOverlay from './ShortcutsHelpOverlay';
 
 type ShortcutContextValue = {
@@ -12,19 +12,9 @@ type ShortcutContextValue = {
 
 const ShortcutContext = createContext<ShortcutContextValue | null>(null);
 
-const noopShortcuts: ShortcutContextValue = {
-  registerSearchInput: () => {},
-  openHelp: () => {}
-};
-
-export function useShortcuts(optional = false): ShortcutContextValue {
+export function useShortcuts() {
   const ctx = useContext(ShortcutContext);
-  if (!ctx) {
-    if (optional) {
-      return noopShortcuts;
-    }
-    throw new Error('useShortcuts must be used within ShortcutProvider');
-  }
+  if (!ctx) throw new Error('useShortcuts must be used within ShortcutProvider');
   return ctx;
 }
 
@@ -111,7 +101,7 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [confirm, reset, router]);
+  }, []);
 
   const openHelp = useCallback(() => setShowHelp(true), []);
 

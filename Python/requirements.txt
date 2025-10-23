@@ -1,0 +1,8 @@
+fastapi==0.95.2
+uvicorn[standard]==0.22.0
+opencv-python-headless==4.8.1.78
+pytesseract==0.3.13
+numpy==1.26.2
+fuzzywuzzy==0.18.0
+python-levenshtein==0.21.0
+python-multipart==0.0.6

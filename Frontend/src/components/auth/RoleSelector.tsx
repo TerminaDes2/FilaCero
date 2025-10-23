@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { useUserStore, AppRole } from '../../state/UserDropdown';
+import { useUserStore, AppRole } from '../../state/userStore';
 
 interface RoleSelectorProps {
   compact?: boolean;

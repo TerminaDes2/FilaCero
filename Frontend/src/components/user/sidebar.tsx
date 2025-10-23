@@ -13,7 +13,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useUserStore } from '../../state/UserDropdown';
+import { useUserStore } from '../../state/userStore';
 import { useRouter } from 'next/navigation';
 
 interface UserSidebarProps {
@@ -46,9 +46,7 @@ const getRoleInfo = (id_rol: number) => {
 const menuItems = [
   { id: 'profile', label: 'Mi Perfil', icon: User, active: true },
   { id: 'notifications', label: 'Notificaciones', icon: Bell },
-  { id: 'billing', label: 'Facturación', icon: CreditCard },
-  { id: 'security', label: 'Seguridad', icon: Shield },
-  { id: 'settings', label: 'Configuración', icon: Settings },
+  { id: 'verification', label: 'Verificación', icon: Shield },
   { id: 'help', label: 'Ayuda', icon: HelpCircle },
 ];
 

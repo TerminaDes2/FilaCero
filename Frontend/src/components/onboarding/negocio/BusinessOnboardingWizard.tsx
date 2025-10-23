@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, ChevronLeft, ChevronRight, Store, MapPin, Cog, ClipboardList } from 'lucide-react'
-import { useUserStore } from '../../../state/UserDropdown'
+import { useUserStore } from '../../../state/userStore'
 import { LoginCard } from '../../auth/LoginCard'
 import { api, activeBusiness } from '../../../lib/api'
 

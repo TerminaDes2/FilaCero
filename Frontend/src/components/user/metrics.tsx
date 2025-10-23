@@ -2,6 +2,7 @@
 "use client";
 import { UserInfo } from '../../lib/api';
 import { 
+  User, // 👈 AÑADIR ESTE IMPORT
   Calendar, 
   Mail, 
   Phone, 

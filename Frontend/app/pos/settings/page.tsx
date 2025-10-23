@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
-import { useUserStore } from '../../../src/state/UserDropdown';
+import { useUserStore } from '../../../src/state/userStore';
 import { useSettingsStore } from '../../../src/state/settingsStore';
 import { useConfirm } from '../../../src/components/system/ConfirmProvider';
 
