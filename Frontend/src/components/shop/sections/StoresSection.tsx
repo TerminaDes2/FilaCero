@@ -5,6 +5,7 @@ import { api } from '../../../lib/api';
 type Store = {
   id_negocio: number;
   nombre: string;
+  descripcion?: string | null;
   direccion?: string | null;
   telefono?: string | null;
   correo?: string | null;
@@ -15,6 +16,43 @@ type Store = {
   fecha_registro?: string;
   owner_id?: number;
 };
+  fecha_registro?: string;
+  owner_id?: number;
+};
+
+// Datos mock mejorados
+const mockStores: Store[] = [
+  {
+    id_negocio: 1,
+    nombre: 'Restaurante La Esperanza',
+    direccion: 'Av. Principal 123, Ciudad',
+    telefono: '555-1234',
+    correo: 'contacto@laesperanza.com',
+    logo: '/api/placeholder/96/96',
+    fecha_registro: new Date().toISOString(),
+    owner_id: 1
+  },
+  {
+    id_negocio: 2,
+    nombre: 'Farmacia San José',
+    direccion: 'Calle Secundaria 456, Ciudad',
+    telefono: '555-5678',
+    correo: 'info@farmaciasanjose.com',
+    logo: '/api/placeholder/96/96',
+    fecha_registro: new Date().toISOString(),
+    owner_id: 2
+  },
+  {
+    id_negocio: 3,
+    nombre: 'Supermercado El Ahorro',
+    direccion: 'Plaza Central 789, Ciudad',
+    telefono: '555-9012',
+    correo: 'ventas@elahorro.com',
+    logo: '/api/placeholder/96/96',
+    fecha_registro: new Date().toISOString(),
+    owner_id: 3
+  }
+];
 
 export default function StoresSection() {
   const [stores, setStores] = useState<Store[]>([]);
@@ -131,6 +169,8 @@ export default function StoresSection() {
               <div className="flex-1">
                 <h3 className="font-semibold">{store.nombre}</h3>
                 <p className="text-sm text-gray-600">Próximamente más detalles.</p>
+                <h3 className="font-semibold">{store.nombre}</h3>
+                <p className="text-sm text-gray-600">{store.descripcion || store.direccion || 'Próximamente más detalles.'}</p>
 
                 <a
                   href={`/shop/${store.id_negocio}`}
