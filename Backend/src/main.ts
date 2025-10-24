@@ -3,9 +3,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Recordar quitar esto en caso de no ser necesario
+  // --- IGNORE ---
+  const bodyLimit = process.env.REQUEST_BODY_LIMIT || '10mb';
+  app.use(json({ limit: bodyLimit }));
+  app.use(urlencoded({ limit: bodyLimit, extended: true }));
   // CORS
   // - Por defecto permitimos localhost y el dominio de producción en Vercel.
   // - Se puede sobreescribir/añadir con CORS_ORIGINS (lista separada por comas) en el entorno.
