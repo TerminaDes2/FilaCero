@@ -39,57 +39,131 @@ Este documento describe todas las funcionalidades principales y atómicas de la 
 - **Interacción:** El usuario queda vinculado como propietario en `usuarios_negocio`.
 
 ### 2.2 Listado público de negocios (`list-public-businesses`)
-- **Endpoint:** `GET /api/businesses`
-- **Función:** Devuelve negocios disponibles para la tienda online, con rating promedio, logo y categorías destacadas.
-- **Interacción:** Consumido por `app/api/stores` en el frontend para renderizar la sección "Tiendas".
+- **Endpoint:** `GET /api/businesses` (público, sin autenticación)
+- **Query params:** `search` (filtro por nombre), `limit` (máx 50, default 20)
+- **Función:** Devuelve negocios disponibles para la tienda online con:
+  - Información básica: nombre, dirección, teléfono, correo
+  - Branding: `logo`, `hero_image_url`
+  - Rating promedio calculado desde `negocio_rating`
+  - Lista de categorías destacadas con inventario disponible
+- **Interacción:** 
+  - Consumido por `app/api/stores` (proxy Next.js) para la sección "Tiendas cerca de ti"
+  - Frontend renderiza cards con logo, rating, categorías y botón "Visitar tienda"
+  - Usa consulta SQL optimizada con agregaciones para performance
 
-### 2.3 Asignación de Empleados (`assign-employee`)
-- **Endpoint:** `POST /api/businesses/:id/assign`
-- **Función:** Vincula usuarios existentes como empleados del negocio.
-- **Interacción:** Controla acceso a inventario, ventas y categorías.
+### 2.3 Mis negocios (`my-businesses`)
+- **Endpoint:** `GET /api/businesses/my` (requiere JWT)
+- **Función:** Lista negocios donde el usuario está registrado en `usuarios_negocio`
+- **Interacción:** POS y onboarding usan esto para seleccionar negocio activo
+
+### 2.4 Obtener negocio por ID (`get-business`)
+- **Endpoint:** `GET /api/businesses/:id` (requiere JWT)
+- **Función:** Retorna detalles completos de un negocio específico
+- **Interacción:** Usado en vistas de configuración y edición de negocio
+
+### 2.5 Asignación de Empleados (`assign-employee`)
+- **Endpoint:** `POST /api/businesses/:id/assign` (requiere JWT y ownership)
+- **Función:** Vincula usuarios existentes como empleados del negocio
+- **Interacción:** Controla acceso a inventario, ventas y categorías
 
 ---
 
 ## 3. Catálogo y Categorías
 ### 3.1 Listar Categorías (`list-categories`)
-- **Endpoint:** `GET /api/categories?id_negocio=<id>`
-- **Función:** Devuelve categorías globales y del negocio activo.
-- **Interacción:** El frontend POS filtra productos por categoría.
+- **Endpoint:** `GET /api/categories?id_negocio=<id>` (requiere JWT)
+- **Función:** Devuelve categorías globales (`negocio_id=null`) y del negocio especificado
+- **Interacción:** 
+  - El POS filtra productos por categoría seleccionada
+  - Store Zustand (`useCategoriesStore`) persiste categorías con `scope: 'global' | 'business'`
+  - Frontend deshabilita edición/borrado de categorías globales
 
-### 3.2 Crear Categoría (`create-category`)
-- **Endpoint:** `POST /api/categories`
-- **Función:** Permite crear una categoría personalizada para el negocio.
-- **Restricción:** No se pueden crear categorías globales desde el frontend.
+### 3.2 Obtener Categoría (`get-category`)
+- **Endpoint:** `GET /api/categories/:id` (requiere JWT)
+- **Función:** Retorna una categoría específica validando ownership si es del negocio
+- **Interacción:** Usado en formularios de edición
 
-### 3.3 Editar/Eliminar Categoría (`update-category`, `delete-category`)
-- **Endpoints:** `PATCH /api/categories/:id`, `DELETE /api/categories/:id`
-- **Función:** Solo categorías del negocio pueden editarse/eliminarse. Las globales son de solo lectura.
+### 3.3 Crear Categoría (`create-category`)
+- **Endpoint:** `POST /api/categories` (requiere JWT)
+- **Body:** `{ "nombre": "string", "negocioId": "string" }`
+- **Función:** Crea categoría personalizada vinculada al negocio
+- **Restricción:** 
+  - No se pueden crear categorías globales desde API
+  - Validación de unicidad por `[negocio_id, nombre]`
+  - Requiere pertenencia del usuario al negocio (`usuarios_negocio`)
+
+### 3.4 Actualizar Categoría (`update-category`)
+- **Endpoint:** `PATCH /api/categories/:id` (requiere JWT)
+- **Body:** `{ "nombre": "string" }` (parcial)
+- **Función:** Renombra categorías del negocio
+- **Restricción:** Categorías globales son de solo lectura (error 403)
+
+### 3.5 Eliminar Categoría (`delete-category`)
+- **Endpoint:** `DELETE /api/categories/:id` (requiere JWT)
+- **Función:** Borra categoría del negocio
+- **Restricción:** 
+  - No se pueden eliminar categorías globales
+  - Validación de ownership antes de borrado
 
 ---
 
 ## 4. Productos e Inventario
 ### 4.1 Listar Productos (`list-products`)
-- **Endpoint:** `GET /api/products`
-- **Función:** Devuelve productos filtrados por negocio y categoría.
-- **Interacción:** El POS muestra solo productos disponibles en el inventario del negocio.
+- **Endpoint:** `GET /api/products` (requiere JWT)
+- **Query params:** filtros por negocio, categoría, búsqueda
+- **Función:** Devuelve productos con datos completos:
+  - Información básica y precios
+  - Media asociada (`producto_media`)
+  - Métricas semanales de popularidad
+  - Estado de inventario por negocio
+- **Interacción:** 
+  - POS muestra solo productos con inventario > 0
+  - Admin productos usa vista completa para gestión
 
-### 4.2 Crear Producto (`create-product`)
-- **Endpoint:** `POST /api/products`
-- **Función:** Permite registrar un nuevo producto en el catálogo.
-- **Interacción:** Se asocia a una categoría y se inicializa inventario.
+### 4.2 Obtener Producto (`get-product`)
+- **Endpoint:** `GET /api/products/:id` (requiere JWT)
+- **Función:** Retorna producto individual con media, categoría y métricas
+- **Interacción:** Vista de detalle y formularios de edición
 
-### 4.3 Actualizar/Eliminar Producto (`update-product`, `delete-product`)
-- **Endpoints:** `PATCH /api/products/:id`, `DELETE /api/products/:id`
-- **Función:** Modifica datos del producto o lo elimina (borrado lógico si está referenciado).
+### 4.3 Crear Producto (`create-product`)
+- **Endpoint:** `POST /api/products` (requiere JWT)
+- **Body:** datos del producto + opcionalmente `categoria_id`, `media[]`
+- **Función:** Registra producto en catálogo y puede inicializar inventario
+- **Interacción:** 
+  - Valida categoría si se proporciona
+  - Asigna primera imagen como principal si no se especifica
 
-### 4.4 Inventario (`inventory`)
-- **Endpoint:** `GET /api/inventory?negocio=<id>`
-- **Función:** Devuelve existencias por producto y negocio.
-- **Interacción:** El POS solo permite ventas si hay stock suficiente.
+### 4.4 Actualizar Producto (`update-product`)
+- **Endpoint:** `PATCH /api/products/:id` (requiere JWT)
+- **Función:** Modifica datos del producto (nombre, precio, descripción, media)
+- **Restricción:** No permite cambiar categoría si tiene inventario activo
 
-### 4.5 Movimientos de Inventario (`inventory-movement`)
-- **Endpoint:** `POST /api/movements`
-- **Función:** Registra ajustes, ventas, devoluciones y actualiza stock.
+### 4.5 Eliminar Producto (`delete-product`)
+- **Endpoint:** `DELETE /api/products/:id` (requiere JWT)
+- **Función:** Borrado físico o lógico según referencias
+- **Interacción:** Si tiene ventas registradas, cambia estado a 'inactivo'
+
+### 4.6 Listar Inventario (`list-inventory`)
+- **Endpoint:** `GET /api/inventory?negocio=<id>` (requiere JWT)
+- **Función:** Devuelve existencias por producto y negocio con:
+  - Cantidad actual y stock mínimo
+  - Fecha última actualización
+  - Detalles del producto asociado
+- **Interacción:** 
+  - POS valida stock antes de permitir ventas
+  - Panel inventario muestra alertas de stock bajo
+
+### 4.7 Crear/Actualizar Inventario (`manage-inventory`)
+- **Endpoint:** `POST /api/inventory`, `PATCH /api/inventory/:id` (requiere JWT)
+- **Función:** Inicializa o ajusta existencias por negocio/producto
+- **Restricción:** Unique constraint `[negocio_id, producto_id]`
+
+### 4.8 Movimientos de Inventario (`inventory-movements`)
+- **Endpoint:** `GET /api/movements?negocio=<id>` (requiere JWT)
+- **Función:** Auditoría de cambios de stock con:
+  - Delta aplicado (positivo=entrada, negativo=salida)
+  - Motivo (venta, ajuste, devolución)
+  - Referencias a venta/detalle/usuario
+- **Interacción:** Triggers automáticos registran movimientos en ventas
 
 ---
 
@@ -131,26 +205,123 @@ Este documento describe todas las funcionalidades principales y atómicas de la 
 
 ---
 
-## 8. Seguridad y Validaciones
-- Todos los endpoints protegidos requieren JWT y validan rol y pertenencia al negocio.
-- Los DTOs aplican validaciones estrictas (`class-validator`).
-- El backend verifica ownership antes de permitir acciones sensibles (inventario, ventas, categorías).
-- Las restricciones únicas y triggers en la BD aseguran integridad de datos.
+## 8. Tienda Online (Shop)
+### 8.1 Vista Pública de Negocios (`public-stores`)
+- **Frontend:** `/shop` (página pública)
+- **API:** `GET /api/stores` (proxy Next.js → `GET /api/businesses`)
+- **Función:** Muestra grid de negocios disponibles con:
+  - Logo y hero image
+  - Rating promedio con estrella
+  - Categorías destacadas
+  - Botón "Visitar tienda"
+- **Interacción:** 
+  - No requiere autenticación
+  - Soporta búsqueda por nombre
+  - Links a vista individual de negocio
+
+### 8.2 Catálogo Público por Negocio (`store-catalog`)
+- **Frontend:** `/shop/:negocioId` (en desarrollo)
+- **Función:** Muestra productos disponibles de un negocio específico
+- **Interacción:** Consume productos filtrados por negocio con inventario > 0
+
+### 8.3 Carrito de Compras (`shopping-cart`)
+- **Frontend:** `CartContext` + `CartSlide`
+- **Función:** Gestión de carrito temporal en sesión
+- **Interacción:** Permite agregar productos, ajustar cantidades, checkout
 
 ---
 
-## 9. Interacción entre funcionalidades
-- El registro de usuario y negocio habilita el acceso al POS y a la gestión de inventario/categorías.
-- Las categorías y productos se filtran siempre por negocio activo, evitando fugas de datos entre negocios.
-- Las ventas disparan movimientos de inventario y actualizan métricas en tiempo real.
-- Los reportes y notificaciones se personalizan por usuario y negocio, permitiendo seguimiento granular.
+## 9. Seguridad y Validaciones
+- **JWT obligatorio:** Todos los endpoints mutables y de gestión requieren JWT válido
+- **Validación de ownership:** Backend verifica pertenencia en `usuarios_negocio` antes de permitir acciones sobre inventario, ventas, categorías
+- **DTOs estrictos:** `class-validator` aplica reglas en todos los payloads (longitud, formato, tipos)
+- **Restricciones DB:** 
+  - Unicidad: email, codigo_barras, [negocio_id+producto_id], [negocio_id+nombre_categoria]
+  - Checks: estados permitidos, cantidades no negativas
+  - Triggers: auto-actualización de timestamps, coherencia inventario/ventas
+- **Roles y permisos:**
+  - Categorías globales: solo lectura para todos
+  - Negocios: solo owners y empleados asignados
+  - Ventas/inventario: validación de negocio activo
+- **Endpoints públicos:** 
+  - `GET /api/businesses` (listado tiendas)
+  - `GET /api/health` (ping)
+  - Resto requiere autenticación
 
 ---
 
-## 10. Referencias rápidas
-- **Frontend:** rutas en `Frontend/app/` y stores en `src/state/`, `src/pos/categoriesStore.ts`.
-- **Backend:** módulos en `Backend/src/`, DTOs en `dto/`, migraciones en `prisma/migrations/`.
-- **Base de datos:** restricciones y triggers en `Docker/db/db_filacero.sql`, modelo Prisma en `Backend/prisma/schema.prisma`.
+## 10. Interacción entre funcionalidades
+### Flujo de registro a operación
+1. Usuario se registra (`POST /api/auth/register`) y verifica email (`POST /api/auth/verify`)
+2. Completa onboarding de negocio (`POST /api/businesses`) quedando como owner
+3. Configura categorías personalizadas (`POST /api/categories`)
+4. Crea productos y asocia inventario (`POST /api/products`, `POST /api/inventory`)
+5. Accede al POS seleccionando negocio activo, carga categorías/productos
+6. Registra ventas que disparan automáticamente movimientos de inventario
+
+### Flujo tienda pública
+1. Usuario anónimo visita `/shop`
+2. Frontend llama `GET /api/stores` (proxy a `GET /api/businesses`)
+3. Backend agrega ratings y categorías disponibles
+4. Usuario navega a `/shop/:negocioId` para ver catálogo
+5. Añade productos al carrito y procede a checkout (futuro)
+
+### Separación por negocio
+- Todas las operaciones CRUD validan `negocio_id` activo
+- Inventario, categorías y ventas filtran por negocio
+- Reportes y métricas se agregan por negocio
+- POS muestra solo datos del negocio seleccionado
+
+### Auditoría y trazabilidad
+- Movimientos de inventario registran usuario, fecha y motivo
+- Ventas mantienen referencia a usuario y negocio
+- Timestamps automáticos en todas las tablas principales
+
+---
+
+## 11. Referencias rápidas
+### Documentación por módulo
+- **Arquitectura:** `Docs/Arquitectura.md` - visión general, diagrama, decisiones clave
+- **Backend:** `Docs/Backend.md` - módulos, endpoints, variables de entorno, scripts
+- **Frontend:** `Docs/Frontend.md` - rutas, componentes, stores, formularios
+- **Base de datos:** `Docs/backend-db-overview.md` - esquema, restricciones, triggers, migraciones
+- **APIs específicas:**
+  - `Docs/API_Businesses.md` - negocios públicos y CRUD
+  - `Docs/API_Categorias.md` - categorías globales y por negocio
+  - `Docs/API_Productos.md` - catálogo y media
+  - `Docs/API_Usuarios.md` - perfil y autenticación
+  - `Docs/API_Ventas.md` - ventas, tickets, reportes
+
+### Rutas clave
+- **Backend:** módulos en `Backend/src/`, DTOs en `dto/`, migraciones en `prisma/migrations/`
+- **Frontend:** rutas en `Frontend/app/`, stores en `src/state/` y `src/pos/`, componentes en `src/components/`
+- **Docker:** `docker-compose.yml` (producción), `docker-compose.dev.yml` (desarrollo)
+- **Prisma:** modelo en `Backend/prisma/schema.prisma`, cliente generado en `Backend/generated/prisma/`
+
+### Comandos útiles
+```bash
+# Backend
+docker exec -it filacero-backend npx prisma migrate dev
+docker exec -it filacero-backend npx prisma generate
+docker exec -it filacero-backend npm run lint
+
+# Frontend
+docker exec -it filacero-frontend npm run build
+docker exec -it filacero-frontend npm run lint
+
+# Docker
+docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml build
+docker compose logs -f backend
+```
+
+### Próximas funcionalidades planificadas
+- Checkout completo en tienda pública
+- Notificaciones en tiempo real (WebSockets)
+- Dashboard analítico con gráficas
+- Gestión avanzada de empleados y permisos
+- API de pagos integrada
+- Sistema de cupones y descuentos
 
 ---
 

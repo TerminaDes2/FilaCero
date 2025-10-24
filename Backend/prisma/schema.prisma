@@ -22,8 +22,16 @@ model usuarios {
   correo_electronico     String                   @unique @map("correo_electronico") @db.VarChar(254)
   password_hash          String                   @map("password_hash") @db.VarChar(255)
   numero_telefono        String?                  @map("numero_telefono") @db.VarChar(30)
+  numero_cuenta          String?                  @unique @map("numero_cuenta") @db.VarChar(30)
   fecha_nacimiento       DateTime?                @map("fecha_nacimiento") @db.Date
   fecha_registro         DateTime?                @default(now()) @map("fecha_registro") @db.Timestamptz(6)
+  fecha_verificacion     DateTime?                @map("fecha_verificacion") @db.Timestamptz(6)
+  verificado             Boolean                  @default(false) @map("verificado")
+  verification_token     String?                  @unique @map("verification_token") @db.VarChar(128)
+  verification_token_expires DateTime?            @map("verification_token_expires") @db.Timestamptz(6)
+  avatar_url             String?                  @map("avatar_url") @db.VarChar(512)
+  credential_url         String?                  @map("credential_url") @db.VarChar(512)
+  edad                   Int?                     @map("edad") @db.SmallInt
   estado                 String?                  @map("estado") @db.VarChar(20)
   comentario             comentario[]
   corte_caja             corte_caja[]
