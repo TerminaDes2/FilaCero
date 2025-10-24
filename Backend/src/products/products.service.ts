@@ -9,8 +9,8 @@ type SanitizedMedia = { url: string; principal: boolean; tipo: string | null };
 
 const productInclude = Prisma.validator<Prisma.productoInclude>()({
   categoria: true,
-  media: { orderBy: [{ principal: 'desc' as const }, { creado_en: 'desc' as const }] },
-  metricas: { orderBy: { calculado_en: 'desc' as const }, take: 8 },
+  producto_media: { orderBy: [{ principal: 'desc' as const }, { creado_en: 'desc' as const }] },
+  producto_metricas_semanales: { orderBy: { calculado_en: 'desc' as const }, take: 8 },
 });
 
 type ProductWithRelations = Prisma.productoGetPayload<{ include: typeof productInclude }>;
@@ -20,8 +20,16 @@ export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   private mapProduct(product: ProductWithRelations, stock?: number | null) {
-    const { categoria, media, metricas, id_producto, id_categoria, precio, ...rest } = product;
-    const mediaList = (media ?? []).map((item) => ({
+    const {
+      categoria,
+      producto_media: mediaRecords,
+      producto_metricas_semanales: metricRecords,
+      id_producto,
+      id_categoria,
+      precio,
+      ...rest
+    } = product;
+    const mediaList = (mediaRecords ?? []).map((item) => ({
       id_media: item.id_media.toString(),
       url: item.url,
       principal: item.principal,
@@ -29,7 +37,7 @@ export class ProductsService {
       creado_en: item.creado_en?.toISOString() ?? null,
     }));
 
-    const metricList = (metricas ?? []).map((metric) => ({
+    const metricList = (metricRecords ?? []).map((metric) => ({
       id_metricas: metric.id_metricas.toString(),
       id_negocio: metric.id_negocio ? metric.id_negocio.toString() : null,
       anio: metric.anio,
@@ -140,7 +148,7 @@ export class ProductsService {
         ...rest,
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
         ...(sanitizedMedia.length > 0 && {
-          media: {
+          producto_media: {
             create: sanitizedMedia,
           },
         }),

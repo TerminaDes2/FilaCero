@@ -16,44 +16,42 @@ model roles {
 }
 
 model usuarios {
-  id_usuario             BigInt                   @id @default(autoincrement()) @map("id_usuario")
-  id_rol                 BigInt?                  @map("id_rol")
-  nombre                 String                   @map("nombre") @db.VarChar(150)
-  correo_electronico     String                   @unique @map("correo_electronico") @db.VarChar(254)
-  password_hash          String                   @map("password_hash") @db.VarChar(255)
-  numero_telefono        String?                  @map("numero_telefono") @db.VarChar(30)
-  numero_cuenta          String?                  @unique @map("numero_cuenta") @db.VarChar(30)
-  fecha_nacimiento       DateTime?                @map("fecha_nacimiento") @db.Date
-  fecha_registro         DateTime?                @default(now()) @map("fecha_registro") @db.Timestamptz(6)
-  fecha_verificacion     DateTime?                @map("fecha_verificacion") @db.Timestamptz(6)
-  verificado             Boolean                  @default(false) @map("verificado")
-  verification_token     String?                  @unique @map("verification_token") @db.VarChar(128)
-  verification_token_expires DateTime?            @map("verification_token_expires") @db.Timestamptz(6)
-  avatar_url             String?                  @map("avatar_url") @db.VarChar(512)
-  credential_url         String?                  @map("credential_url") @db.VarChar(512)
-  edad                   Int?                     @map("edad") @db.SmallInt
-  estado                 String?                  @map("estado") @db.VarChar(20)
-  comentario             comentario[]
-  corte_caja             corte_caja[]
-  empleados              empleados[]
-  feedback               feedback[]
-  movimientos_inventario movimientos_inventario[]
-  negocio                negocio[]
-  role                   roles?                   @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
-  venta                  venta[]
+  id_usuario                 BigInt                   @id @default(autoincrement()) @map("id_usuario")
+  id_rol                     BigInt?                  @map("id_rol")
+  nombre                     String                   @map("nombre") @db.VarChar(150)
+  correo_electronico         String                   @unique @map("correo_electronico") @db.VarChar(254)
+  password_hash              String                   @map("password_hash") @db.VarChar(255)
+  numero_telefono            String?                  @map("numero_telefono") @db.VarChar(30)
+  numero_cuenta              String?                  @unique @map("numero_cuenta") @db.VarChar(30)
+  fecha_nacimiento           DateTime?                @map("fecha_nacimiento") @db.Date
+  fecha_registro             DateTime?                @default(now()) @map("fecha_registro") @db.Timestamptz(6)
+  fecha_verificacion         DateTime?                @map("fecha_verificacion") @db.Timestamptz(6)
+  verificado                 Boolean                  @default(false) @map("verificado")
+  verification_token         String?                  @unique @map("verification_token") @db.VarChar(128)
+  verification_token_expires DateTime?                @map("verification_token_expires") @db.Timestamptz(6)
+  avatar_url                 String?                  @map("avatar_url") @db.VarChar(512)
+  credential_url             String?                  @map("credential_url") @db.VarChar(512)
+  edad                       Int?                     @map("edad") @db.SmallInt
+  estado                     String?                  @map("estado") @db.VarChar(20)
+  comentario                 comentario[]
+  corte_caja                 corte_caja[]
+  empleados                  empleados[]
+  feedback                   feedback[]
+  movimientos_inventario     movimientos_inventario[]
+  negocio                    negocio[]
+  negocio_rating             negocio_rating[]
+  role                       roles?                   @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
+  venta                      venta[]
 
   @@map("usuarios")
 }
 
 model categoria {
   id_categoria BigInt     @id @default(autoincrement())
-  nombre       String     @db.VarChar(120)
-  negocio_id   BigInt?
+  nombre       String     @unique @db.VarChar(120)
   producto     producto[]
-  negocio      negocio?   @relation(fields: [negocio_id], references: [id_negocio], onDelete: SetNull, onUpdate: NoAction)
 
-  @@index([negocio_id])
-  @@unique([negocio_id, nombre])
+  @@index([nombre], map: "idx_categoria_nombre")
 }
 
 model comentario {
@@ -138,38 +136,43 @@ model movimientos_inventario {
 }
 
 model negocio {
-  id_negocio             BigInt                   @id @default(autoincrement())
-  nombre                 String                   @db.VarChar(200)
-  direccion              String?
-  telefono               String?                  @db.VarChar(30)
-  correo                 String?                  @db.VarChar(254)
-  logo                   String?
-  fecha_registro         DateTime?                @default(now()) @db.Timestamptz(6)
-  owner_id               BigInt?
-  corte_caja             corte_caja[]
-  empleados              empleados[]
-  inventario             inventario[]
-  categorias             categoria[]
-  movimientos_inventario movimientos_inventario[]
-  usuarios               usuarios?                @relation(fields: [owner_id], references: [id_usuario], onDelete: Restrict, map: "fk_negocio_owner")
-  reporte_ventas         reporte_ventas[]
-  venta                  venta[]
+  id_negocio                  BigInt                        @id @default(autoincrement())
+  nombre                      String                        @db.VarChar(200)
+  direccion                   String?
+  telefono                    String?                       @db.VarChar(30)
+  correo                      String?                       @db.VarChar(254)
+  logo_url                    String?
+  hero_image_url              String?
+  fecha_registro              DateTime?                     @default(now()) @db.Timestamptz(6)
+  owner_id                    BigInt?
+  corte_caja                  corte_caja[]
+  empleados                   empleados[]
+  inventario                  inventario[]
+  movimientos_inventario      movimientos_inventario[]
+  usuarios                    usuarios?                     @relation(fields: [owner_id], references: [id_usuario], onDelete: Restrict, map: "fk_negocio_owner")
+  negocio_rating              negocio_rating[]
+  producto_metricas_semanales producto_metricas_semanales[]
+  reporte_ventas              reporte_ventas[]
+  venta                       venta[]
 }
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model producto {
-  id_producto            BigInt                   @id @default(autoincrement())
-  id_categoria           BigInt?
-  nombre                 String                   @db.VarChar(200)
-  descripcion            String?
-  codigo_barras          String?                  @unique @db.VarChar(100)
-  precio                 Decimal                  @db.Decimal(12, 2)
-  imagen                 String?
-  estado                 String?                  @db.VarChar(30)
-  detalle_venta          detalle_venta[]
-  inventario             inventario[]
-  movimientos_inventario movimientos_inventario[]
-  categoria              categoria?               @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
+  id_producto                 BigInt                        @id @default(autoincrement())
+  id_categoria                BigInt?
+  nombre                      String                        @db.VarChar(200)
+  descripcion                 String?
+  descripcion_larga           String?
+  codigo_barras               String?                       @unique @db.VarChar(100)
+  precio                      Decimal                       @db.Decimal(12, 2)
+  imagen_url                  String?
+  estado                      String?                       @db.VarChar(30)
+  detalle_venta               detalle_venta[]
+  inventario                  inventario[]
+  movimientos_inventario      movimientos_inventario[]
+  categoria                   categoria?                    @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
+  producto_media              producto_media[]
+  producto_metricas_semanales producto_metricas_semanales[]
 }
 
 model reporte_ventas {
@@ -219,4 +222,41 @@ model empleados {
   usuarios    usuarios @relation(fields: [usuario_id], references: [id_usuario])
 
   @@unique([negocio_id, usuario_id], map: "uq_empleados_negocio_usuario")
+}
+
+model negocio_rating {
+  id_rating  BigInt   @id @default(autoincrement())
+  id_negocio BigInt
+  id_usuario BigInt
+  estrellas  Int      @db.SmallInt
+  comentario String?
+  creado_en  DateTime @default(now()) @db.Timestamptz(6)
+  negocio    negocio  @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+  usuarios   usuarios @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_negocio, id_usuario])
+}
+
+model producto_media {
+  id_media    BigInt   @id @default(autoincrement())
+  id_producto BigInt
+  url         String   @db.VarChar(2048)
+  principal   Boolean  @default(false)
+  tipo        String?  @db.VarChar(30)
+  creado_en   DateTime @default(now()) @db.Timestamptz(6)
+  producto    producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model producto_metricas_semanales {
+  id_metricas  BigInt   @id @default(autoincrement())
+  id_producto  BigInt
+  id_negocio   BigInt?
+  anio         Int
+  semana       Int
+  cantidad     Int
+  calculado_en DateTime @default(now()) @db.Timestamptz(6)
+  negocio      negocio? @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+  producto     producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_producto, id_negocio, anio, semana])
 }
