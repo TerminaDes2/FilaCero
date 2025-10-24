@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { CartProvider } from '../../src/components/shop/CartContext';
-import DesayunosSection from '../../src/components/shop/sections/DesayunosSection';
+import DesayunosSection from '../../src/components/shop/sections/Section';
 import PopularSection from '../../src/components/shop/sections/PopularSection';
 import StoresSection from '../../src/components/shop/sections/StoresSection';
 import CartSlide from '../../src/components/shop/CartSlide';

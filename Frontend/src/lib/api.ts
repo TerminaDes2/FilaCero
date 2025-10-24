@@ -110,7 +110,12 @@ export const api = {
   me: () => apiFetch<UserInfo>('auth/me'),
 
   // --- Productos ---
-  getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
+  getProducts: (params?: { 
+    search?: string; 
+    status?: string; 
+    id_negocio?: string;
+    categoria?: string; // ← Agrega este parámetro
+  }) => {
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
       let negocioId: string | undefined = undefined;

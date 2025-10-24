@@ -10,45 +10,11 @@ type Store = {
   correo?: string | null;
   logo?: string | null;
   hero_image_url?: string | null;
-  telefono?: string | null;
-  correo?: string | null;
   estrellas?: number;
   categorias?: string[];
+  fecha_registro?: string;
+  owner_id?: number;
 };
-
-// Datos mock mejorados
-const mockStores: Store[] = [
-  {
-    id_negocio: 1,
-    nombre: 'Restaurante La Esperanza',
-    direccion: 'Av. Principal 123, Ciudad',
-    telefono: '555-1234',
-    correo: 'contacto@laesperanza.com',
-    logo: '/api/placeholder/96/96',
-    fecha_registro: new Date().toISOString(),
-    owner_id: 1
-  },
-  {
-    id_negocio: 2,
-    nombre: 'Farmacia San José',
-    direccion: 'Calle Secundaria 456, Ciudad',
-    telefono: '555-5678',
-    correo: 'info@farmaciasanjose.com',
-    logo: '/api/placeholder/96/96',
-    fecha_registro: new Date().toISOString(),
-    owner_id: 2
-  },
-  {
-    id_negocio: 3,
-    nombre: 'Supermercado El Ahorro',
-    direccion: 'Plaza Central 789, Ciudad',
-    telefono: '555-9012',
-    correo: 'ventas@elahorro.com',
-    logo: '/api/placeholder/96/96',
-    fecha_registro: new Date().toISOString(),
-    owner_id: 3
-  }
-];
 
 export default function StoresSection() {
   const [stores, setStores] = useState<Store[]>([]);
@@ -70,15 +36,14 @@ export default function StoresSection() {
           console.log(`✅ ${data.length} negocios cargados desde API`);
           setStores(data);
         } else {
-          console.log('ℹ️ No hay negocios en API, usando datos mock');
-          setStores(mockStores);
+          console.log('ℹ️ No hay negocios en la API');
+          setStores([]);
         }
         
       } catch (err: any) {
         console.error('❌ Error cargando negocios:', err);
-        setError('No se pudieron cargar las tiendas. Mostrando datos de ejemplo.');
-        // Usar datos mock como fallback
-        setStores(mockStores);
+        setError('No se pudieron cargar las tiendas. Por favor, intenta más tarde.');
+        setStores([]);
       } finally {
         setLoading(false);
       }
@@ -141,7 +106,7 @@ export default function StoresSection() {
         <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed">
           <div className="text-gray-400 text-6xl mb-4">🏪</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tiendas disponibles</h3>
-          <p className="text-gray-500 mb-4">Parece que no hay tiendas registradas en el sistema.</p>
+          <p className="text-gray-500 mb-4">Actualmente no hay tiendas registradas en el sistema.</p>
           <button 
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
@@ -157,18 +122,18 @@ export default function StoresSection() {
               className="bg-white rounded-lg border hover:shadow-md transition-all duration-200 p-4"
             >
               <div className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
-                {s.logo ? (
-                  <img src={s.logo} alt={s.nombre} className="w-full h-full object-cover" />
+                {store.logo ? (
+                  <img src={store.logo} alt={store.nombre} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-sm text-gray-400">Logo</span>
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">{s.nombre}</h3>
-                <p className="text-sm text-gray-600">{s.descripcion || 'Próximamente más detalles.'}</p>
+                <h3 className="font-semibold">{store.nombre}</h3>
+                <p className="text-sm text-gray-600">Próximamente más detalles.</p>
 
                 <a
-                  href={`/shop/${s.id_negocio}`}
+                  href={`/shop/${store.id_negocio}`}
                   className="inline-block mt-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   Visitar tienda
@@ -179,7 +144,7 @@ export default function StoresSection() {
                     <svg className="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.896 4.664 23.165l1.402-8.168L.132 9.21l8.2-1.192z" />
                     </svg>
-                    <span className="text-sm font-semibold">{Number(s.estrellas ?? 0).toFixed(1)}</span>
+                    <span className="text-sm font-semibold">{Number(store.estrellas ?? 0).toFixed(1)}</span>
                   </div>
                 </div>
               </div>
