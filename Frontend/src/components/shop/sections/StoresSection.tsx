@@ -16,9 +16,6 @@ type Store = {
   fecha_registro?: string;
   owner_id?: number;
 };
-  fecha_registro?: string;
-  owner_id?: number;
-};
 
 // Datos mock mejorados
 const mockStores: Store[] = [
