@@ -55,12 +55,17 @@ model categoria {
 }
 
 model comentario {
-  id_comentario BigInt     @id @default(autoincrement())
-  id_usuario    BigInt?
-  comentario    String?
-  fecha         DateTime?  @db.Timestamptz(6)
-  usuarios      usuarios?  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
-  feedback      feedback[]
+  id_comentario  BigInt      @id @default(autoincrement())
+  id_negocio     BigInt      @map("id_negocio")
+  id_usuario     BigInt      @map("id_usuario")
+  titulo         String?     @map("titulo") @db.VarChar(150)
+  contenido      String      @map("comentario") @db.Text
+  creado_en      DateTime    @default(now()) @map("fecha") @db.Timestamptz(6)
+  actualizado_en DateTime?   @map("actualizado_en") @db.Timestamptz(6)
+  estado         String      @default("visible") @map("estado") @db.VarChar(20)
+  negocio        negocio     @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+  usuarios       usuarios    @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+  feedback       feedback[]
 }
 
 model corte_caja {
@@ -91,12 +96,16 @@ model detalle_venta {
 
 model feedback {
   id_feedback   BigInt      @id @default(autoincrement())
-  id_usuario    BigInt?
-  id_comentario BigInt?
-  calificacion  Int?        @db.SmallInt
-  fecha         DateTime?   @db.Timestamptz(6)
-  comentario    comentario? @relation(fields: [id_comentario], references: [id_comentario], onDelete: NoAction, onUpdate: NoAction)
-  usuarios      usuarios?   @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
+  id_comentario BigInt      @map("id_comentario")
+  id_usuario    BigInt      @map("id_usuario")
+  tipo          String      @default("like") @map("tipo") @db.VarChar(20)
+  mensaje       String?     @map("mensaje")
+  calificacion  Int?        @map("calificacion") @db.SmallInt
+  creado_en     DateTime    @default(now()) @map("fecha") @db.Timestamptz(6)
+  comentario    comentario  @relation(fields: [id_comentario], references: [id_comentario], onDelete: Cascade, onUpdate: NoAction)
+  usuarios      usuarios    @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_comentario, id_usuario, tipo])
 }
 
 model inventario {
@@ -148,6 +157,7 @@ model negocio {
   corte_caja                  corte_caja[]
   empleados                   empleados[]
   inventario                  inventario[]
+  comentarios                 comentario[]
   movimientos_inventario      movimientos_inventario[]
   usuarios                    usuarios?                     @relation(fields: [owner_id], references: [id_usuario], onDelete: Restrict, map: "fk_negocio_owner")
   negocio_rating              negocio_rating[]

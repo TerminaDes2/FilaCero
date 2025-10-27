@@ -102,6 +102,7 @@ CREATE UNIQUE INDEX "usuarios_correo_electronico_key" ON "public"."usuarios"("co
 CREATE UNIQUE INDEX IF NOT EXISTS "usuarios_verification_token_key" ON "public"."usuarios"("verification_token" ASC);
 CREATE UNIQUE INDEX IF NOT EXISTS "negocio_rating_id_negocio_id_usuario_key" ON "public"."negocio_rating"("id_negocio", "id_usuario");
 CREATE UNIQUE INDEX IF NOT EXISTS "producto_metricas_semanales_id_producto_id_negocio_anio_sem_key" ON "public"."producto_metricas_semanales"("id_producto", "id_negocio", "anio", "semana");
+CREATE UNIQUE INDEX IF NOT EXISTS "feedback_id_comentario_id_usuario_tipo_key" ON "public"."feedback"("id_comentario", "id_usuario", "tipo");
 
 CREATE TABLE "venta" (
   "id_venta" bigserial PRIMARY KEY,
@@ -145,17 +146,23 @@ CREATE TABLE "reporte_ventas" (
 
 CREATE TABLE "comentario" (
   "id_comentario" bigserial PRIMARY KEY,
-  "id_usuario" bigint,
-  "comentario" text,
-  "fecha" timestamptz
+  "id_negocio" bigint NOT NULL,
+  "id_usuario" bigint NOT NULL,
+  "titulo" varchar(150),
+  "comentario" text NOT NULL,
+  "fecha" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "actualizado_en" timestamptz,
+  "estado" varchar(20) NOT NULL DEFAULT 'visible'
 );
 
 CREATE TABLE "feedback" (
   "id_feedback" bigserial PRIMARY KEY,
-  "id_usuario" bigint,
-  "id_comentario" bigint,
+  "id_usuario" bigint NOT NULL,
+  "id_comentario" bigint NOT NULL,
+  "tipo" varchar(20) NOT NULL DEFAULT 'like',
+  "mensaje" text,
   "calificacion" smallint,
-  "fecha" timestamptz
+  "fecha" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE "usuarios" ADD FOREIGN KEY ("id_rol") REFERENCES "roles" ("id_rol");
@@ -192,11 +199,13 @@ ALTER TABLE "corte_caja" ADD FOREIGN KEY ("id_usuario") REFERENCES "usuarios" ("
 
 ALTER TABLE "reporte_ventas" ADD FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio");
 
-ALTER TABLE "comentario" ADD FOREIGN KEY ("id_usuario") REFERENCES "usuarios" ("id_usuario");
+ALTER TABLE "comentario" ADD FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio") ON DELETE CASCADE;
 
-ALTER TABLE "feedback" ADD FOREIGN KEY ("id_usuario") REFERENCES "usuarios" ("id_usuario");
+ALTER TABLE "comentario" ADD FOREIGN KEY ("id_usuario") REFERENCES "usuarios" ("id_usuario") ON DELETE CASCADE;
 
-ALTER TABLE "feedback" ADD FOREIGN KEY ("id_comentario") REFERENCES "comentario" ("id_comentario");
+ALTER TABLE "feedback" ADD FOREIGN KEY ("id_usuario") REFERENCES "usuarios" ("id_usuario") ON DELETE CASCADE;
+
+ALTER TABLE "feedback" ADD FOREIGN KEY ("id_comentario") REFERENCES "comentario" ("id_comentario") ON DELETE CASCADE;
 
 -- =============================================================
 -- FilaCero DB hardening and business rules (idempotent changes)
@@ -299,6 +308,26 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+-- negocio_rating.estrellas entre 1 y 5
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'negocio_rating' AND constraint_name = 'ck_negocio_rating_estrellas'
+  ) THEN
+    ALTER TABLE negocio_rating ADD CONSTRAINT ck_negocio_rating_estrellas CHECK (estrellas BETWEEN 1 AND 5);
+  END IF;
+END $$;
+
+-- comentario.estado controlado
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'comentario' AND constraint_name = 'ck_comentario_estado'
+  ) THEN
+    ALTER TABLE comentario ADD CONSTRAINT ck_comentario_estado CHECK (estado IN ('visible','oculto','borrado'));
+  END IF;
+END $$;
+
 -- venta.estado: flujo típico POS
 DO $$ BEGIN
   IF NOT EXISTS (
@@ -321,6 +350,20 @@ CREATE INDEX IF NOT EXISTS idx_venta_fecha ON venta(fecha_venta);
 CREATE INDEX IF NOT EXISTS idx_detalle_venta_producto ON detalle_venta(id_producto);
 -- Búsqueda por nombre de producto (texto completo simple)
 CREATE INDEX IF NOT EXISTS idx_producto_nombre_tsv ON producto USING gin (to_tsvector('spanish', coalesce(nombre,'')));
+CREATE INDEX IF NOT EXISTS idx_comentario_negocio_fecha ON comentario(id_negocio, fecha DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_comentario ON feedback(id_comentario);
+
+-- Actualizar timestamp en comentarios
+CREATE OR REPLACE FUNCTION fn_touch_comentario_actualizado()
+RETURNS trigger AS $$
+BEGIN
+  NEW.actualizado_en := CURRENT_TIMESTAMP;
+  RETURN NEW;
+END$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS trg_touch_comentario_actualizado ON comentario;
+CREATE TRIGGER trg_touch_comentario_actualizado
+  BEFORE UPDATE ON comentario
+  FOR EACH ROW EXECUTE FUNCTION fn_touch_comentario_actualizado();
 
 -- 7) Movimientos de inventario (auditoría)
 CREATE TABLE IF NOT EXISTS movimientos_inventario (
