@@ -13,7 +13,8 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         project: ['./tsconfig.json'],
-        tsconfigRootDir: import.meta.dirname,
+        // Use the current working directory to ensure consistent path casing on Windows
+        tsconfigRootDir: process.cwd(),
       },
     },
     rules: {
