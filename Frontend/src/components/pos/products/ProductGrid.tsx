@@ -1,110 +1,119 @@
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
-import { POSProduct } from '../../../pos/cartContext';
-import { ProductCard } from './ProductCard';
-import { api } from '../../../lib/api';
+import React, { useEffect, useState, useMemo } from "react";
+import { api, API_BASE } from "../../../lib/api";
+import { ProductCard } from "./ProductCard";
+import { POSProduct } from "../../../pos/cartContext"; // Tipo de producto
 
+// Estructura que devuelve la API
 interface ApiProduct {
-  id_producto: string | number;
+  id_producto: number;
   nombre: string;
   descripcion: string | null;
-  precio: string;
+  precio: string; // Prisma envía Decimal como string
   imagen: string | null;
-  estado: string | null;
-  stock?: number | string | null;
-  category?: string | null;
-  id_categoria?: string | number | null;
+  categoria: { nombre: string } | null;
+  inventario: { cantidad_actual: number | null }[];
 }
 
 interface ProductGridProps {
-  category: string;
-  search: string;
-  view: 'grid' | 'list';
+  search?: string;
+  category?: string;
+  view?: "grid" | "list";
 }
 
-export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view }) => {
-  const [allProducts, setAllProducts] = useState<POSProduct[]>([]);
+export const ProductGrid: React.FC<ProductGridProps> = ({
+  search = "",
+  category = "all",
+  view = "grid",
+}) => {
+  const [products, setProducts] = useState<POSProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showEmptyDelay, setShowEmptyDelay] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAndAdaptProducts = async () => {
       setLoading(true);
-      try {
-        const apiProducts: ApiProduct[] = await api.getProducts({ search });
-        const adaptedProducts: POSProduct[] = apiProducts.map(p => {
-          const idStr = String(p.id_producto);
-          const priceNum = typeof (p as any).precio === 'number' ? (p as any).precio : parseFloat(String((p as any).precio ?? 0));
-          let stockValue: number | null = null;
-          if (p.stock !== undefined) {
-            if (p.stock === null) {
-              stockValue = null;
-            } else {
-              const parsed = typeof p.stock === 'number' ? p.stock : parseFloat(String(p.stock));
-              stockValue = Number.isNaN(parsed) ? null : parsed;
-            }
-          }
-          const categoryLabel = (p.category ?? '').trim();
-          return {
-            id: idStr,
-            name: p.nombre,
-            price: isNaN(priceNum) ? 0 : priceNum,
-            description: p.descripcion || undefined,
-            image: p.imagen || undefined,
-            stock: stockValue ?? 0,
-            category: categoryLabel || 'Sin categoría',
-          };
-        });
+      setError(null);
 
-        setAllProducts(adaptedProducts);
+      try {
+        const params: Record<string, string> = {};
+        if (search) params.search = search;
+
+        const apiProducts: ApiProduct[] = await api.getProducts(params);
+
+        // Adaptamos los productos
+        const adaptedProducts = apiProducts
+          .map((p): POSProduct | null => {
+            if (!p || !p.nombre || !p.precio) return null;
+
+            const backendBaseUrl = API_BASE.replace("/api", "");
+            const imageUrl = p.imagen
+              ? `${backendBaseUrl}${p.imagen}`
+              : undefined;
+
+            const priceNum = parseFloat(p.precio);
+            if (isNaN(priceNum)) return null;
+
+            return {
+              id: String(p.id_producto),
+              name: p.nombre,
+              price: priceNum,
+              description: p.descripcion || undefined,
+              image: imageUrl,
+              stock: p.inventario?.[0]?.cantidad_actual ?? 0,
+              category: p.categoria?.nombre || "General",
+            };
+          })
+          .filter((item): item is POSProduct => item !== null); // 🔹 Asegura el tipo correcto
+
+        setProducts(adaptedProducts);
       } catch (err) {
-        setError('No se pudieron cargar los productos.');
-        console.error(err);
+        console.error("[ProductGrid] Error fetching products", err);
+        setError("No se pudieron cargar los productos.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchAndAdaptProducts();
-  }, [search]); // Se recarga si cambia el término de búsqueda
+  }, [search]);
 
-  // No skeletons: show empty state immediately
-  useEffect(() => {
-    setShowEmptyDelay(false);
-  }, [loading]);
-
-  const filtered = useMemo(() => {
-    if (!category || category === 'all') return allProducts;
-    const normalized = category.trim().toLowerCase();
-    if (!normalized) return allProducts;
-    if (normalized === 'uncategorized') {
-      return allProducts.filter(p => !p.category || p.category.toLowerCase() === 'sin categoría');
-    }
-    return allProducts.filter(p => p.category && p.category.trim().toLowerCase() === normalized);
-  }, [allProducts, category]);
-
-  if (loading) {
-    return <div className='text-center py-10 text-[var(--pos-text-muted)] text-sm'>Cargando productos…</div>;
-  }
-  if (error) return <div className='text-center py-24 text-red-500'>{error}</div>;
-  if (filtered.length === 0) {
-    return (
-      <div className='text-center py-16 px-4'>
-        <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
-          <circle cx='12' cy='12' r='7' />
-          <path d='M8 12h8' />
-        </svg>
-        <p className='text-sm font-medium text-slate-600 mt-3'>No hay resultados</p>
-        <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
-      </div>
+  // Filtrado por categoría
+  const filteredProducts = useMemo(() => {
+    if (category === "all") return products;
+    return products.filter(
+      (p) => p.category?.toLowerCase() === category.toLowerCase()
     );
-  }
+  }, [products, category]);
 
   return (
-    <div className={view === 'grid' ? 'grid gap-4 lg:gap-5 grid-cols-2 md:grid-cols-3 xl:grid-cols-4' : 'space-y-3'}>
-      {filtered.map(p => (
-        <ProductCard key={p.id} product={p} view={view} />
-      ))}
+    <div
+      className={
+        view === "grid"
+          ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+          : "flex flex-col space-y-3"
+      }
+    >
+      {loading && (
+        <p className="col-span-full text-center p-8">Cargando productos...</p>
+      )}
+      {error && (
+        <p className="col-span-full text-center p-8 text-red-500">{error}</p>
+      )}
+
+      {!loading &&
+        !error &&
+        filteredProducts.map((product) => (
+          <ProductCard key={product.id} product={product} view={view} />
+        ))}
+
+      {!loading &&
+        !error &&
+        filteredProducts.length === 0 && (
+          <p className="col-span-full text-center p-8">
+            No se encontraron productos.
+          </p>
+        )}
     </div>
   );
 };

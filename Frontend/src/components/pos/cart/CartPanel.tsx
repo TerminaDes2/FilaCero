@@ -7,12 +7,13 @@ import { AddToCartPanel } from '../products/AddToCartPanel';
 
 import { useConfirm } from '../../system/ConfirmProvider';
 import { api, activeBusiness } from '../../../lib/api';
+
 export const CartPanel: React.FC = () => {
   const { items, subtotal, total, remove, inc, dec, clear } = useCart();
   const confirm = useConfirm();
   const hasItems = items.length > 0;
-  const [showPayment, setShowPayment] = useState(false); // show PaymentPanel
-  const [showSuccess, setShowSuccess] = useState(false); // show PaymentSuccessPanel
+  const [showPayment, setShowPayment] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [successData, setSuccessData] = useState<{ method: 'efectivo'|'credito'|'debito'; amountReceived: number; change: number }|null>(null);
   const [paidTotal, setPaidTotal] = useState<number|null>(null);
   const [editLineId, setEditLineId] = useState<string|null>(null);
@@ -20,11 +21,12 @@ export const CartPanel: React.FC = () => {
 
   return (
     <div className='flex flex-col h-full overflow-hidden' style={{color:'var(--pos-text-heading)'}}>
-  <header className='pb-2 border-b mb-2 flex-none' style={{borderColor:'var(--pos-summary-border)'}}>
-  <h2 className='text-base font-semibold' style={{color:'var(--pos-text-heading)'}}>Carrito</h2>
+      <header className='pb-2 border-b mb-2 flex-none' style={{borderColor:'var(--pos-summary-border)'}}>
+        <h2 className='text-base font-semibold' style={{color:'var(--pos-text-heading)'}}>Carrito</h2>
         <p className='text-xs mt-0.5' style={{color:'var(--pos-text-muted)'}}>Gestiona la orden actual</p>
       </header>
-  <div className='flex-1 overflow-y-auto pr-1 space-y-2 pb-1 custom-scroll-area'>
+
+      <div className='flex-1 overflow-y-auto pr-1 space-y-2 pb-1 custom-scroll-area'>
         {!hasItems && (
           <div className='mt-10 text-center px-4'>
             <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
@@ -71,12 +73,12 @@ export const CartPanel: React.FC = () => {
                     });
                     if (ok) remove(item.lineId);
                   }} className='inline-flex items-center gap-1 text-[11px] focus:outline-none rounded px-1 opacity-90 hover:opacity-100 transition' style={{color:'var(--pos-danger-text)'}}>
-                  <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
-                    <path d='M3 6h18' />
-                    <path d='M8 6V4h8v2' />
-                    <path d='M19 6l-1 14H6L5 6' />
-                  </svg>
-                  Quitar
+                    <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
+                      <path d='M3 6h18' />
+                      <path d='M8 6V4h8v2' />
+                      <path d='M19 6l-1 14H6L5 6' />
+                    </svg>
+                    Quitar
                   </button>
                 </div>
               </div>
@@ -85,7 +87,7 @@ export const CartPanel: React.FC = () => {
         ))}
       </div>
 
-  <div className='mt-1 pt-2 border-t border-transparent flex-none space-y-3'>
+      <div className='mt-1 pt-2 border-t border-transparent flex-none space-y-3'>
         {/* Resumen */}
         <div className='mt-2 relative'>
           <div
@@ -121,8 +123,8 @@ export const CartPanel: React.FC = () => {
           </div>
         </div>
 
-  <div className='flex gap-2 pt-2 pb-2'>
-          {/* Botón animado: Continuar con el pago */}
+        <div className='flex gap-2 pt-2 pb-2'>
+          {/* Botón Continuar con el pago */}
           <button
             type='button'
             disabled={!hasItems}
@@ -138,7 +140,6 @@ export const CartPanel: React.FC = () => {
             '
             onClick={()=> setShowPayment(true)}
           >
-            {/* Fondo expansible (círculo turquesa que se expande a todo el botón) */}
             <span
               aria-hidden='true'
               className='
@@ -148,7 +149,6 @@ export const CartPanel: React.FC = () => {
                 transition-[clip-path] duration-500 ease-out
               '
             />
-            {/* Flecha que viaja de izquierda a derecha */}
             <span
               aria-hidden='true'
               className='
@@ -162,7 +162,6 @@ export const CartPanel: React.FC = () => {
                 <path d='M5 12h14M13 6l6 6-6 6' />
               </svg>
             </span>
-            {/* Texto que cambia a blanco cuando el fondo se vuelve turquesa */}
             <span
               className='
                 relative z-10
@@ -186,19 +185,26 @@ export const CartPanel: React.FC = () => {
             if (ok) clear();
           }} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>Limpiar</button>
         </div>
+
         {showPayment && (
           <PaymentPanel
             totalDue={total}
             onClose={()=> setShowPayment(false)}
             onConfirm={async (data)=>{
-              // 1) Persistir la venta en backend
               try {
                 const businessId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '1';
-                // Nota: backend exige items con id_producto (string), cantidad (number), precio_unitario opcional
                 const saleItems = items.map(i => ({ id_producto: i.product.id, cantidad: i.qty }));
                 await api.createSale({ id_negocio: String(businessId), items: saleItems, cerrar: true });
 
-                // 2) UI success
+                // ✅ RESTAR STOCK EN INVENTARIO
+                for (const i of items) {
+                  const newStock = i.product.stock - i.qty;
+                  if (newStock < 0) continue;
+                  await api.updateInventory(i.product.id, { cantidad_actual: newStock });
+                  i.product.stock = newStock; // actualizar stock local
+                }
+
+                // UI success
                 const t = total;
                 setPaidTotal(t);
                 setShowPayment(false);
@@ -223,6 +229,7 @@ export const CartPanel: React.FC = () => {
             onPrint={()=>{/* TODO: print receipt */}}
           />
         )}
+
         {editLineId && (()=>{
           const line = items.find(i => i.lineId === editLineId);
           if (!line) return null;

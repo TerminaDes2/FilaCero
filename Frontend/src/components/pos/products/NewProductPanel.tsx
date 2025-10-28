@@ -12,13 +12,15 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
   const [nombre, setNombre] = useState('');
   const [precio, setPrecio] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
-  const [sku, setSku] = useState(''); // mapea a codigo_barras
-  const [category, setCategory] = useState(''); // mapea a id_categoria opcional
-  const [active, setActive] = useState(true); // mapea a estado 'activo' | 'inactivo'
+  const [sku, setSku] = useState('');
+  const [category, setCategory] = useState('');
+  const [active, setActive] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
+
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const isMounted = useRef(true);
 
@@ -45,16 +47,12 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
   }, [fetchCategories]);
 
   useEffect(() => {
-    updateCategories().catch(() => {
-      /* error ya manejado en updateCategories */
-    });
+    updateCategories().catch(() => {});
   }, [updateCategories]);
 
   useEffect(() => {
     isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
+    return () => { isMounted.current = false; };
   }, []);
 
   useEffect(() => {
@@ -63,35 +61,35 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
     }
   }, [categories, category]);
 
+  // --- Fallback para mostrar categoría aunque no esté en store ---
   const selectedCategoryName = useMemo(
-    () => categories.find(c => c.id === category)?.name ?? '',
+    () => categories.find(c => c.id === category)?.name || category || '',
     [categories, category],
   );
 
-  // UX: foco y tecla Esc
   useEffect(() => {
     const t = setTimeout(() => {
       nameInputRef.current?.focus();
       nameInputRef.current?.select();
     }, 60);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+      else if (e.key === 'Enter' && !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        onClose();
-      } else if (e.key === 'Enter' && !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
-        // Submit dialog with Enter (only when not inside a textarea; here all inputs are single-line)
-        e.preventDefault();
-        if (!saving) {
-          handleSubmit();
-        }
+        if (!saving) handleSubmit();
       }
     };
     window.addEventListener('keydown', onKey);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
+    return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
+  }, [onClose, saving]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImagenFile(e.target.files[0]);
+    } else {
+      setImagenFile(null);
+    }
+  };
 
   const generateSku = () => {
     if (!nombre.trim()) return;
@@ -106,49 +104,69 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
       return;
     }
     setSaving(true);
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('nombre', nombre.trim());
+    formDataToSend.append('precio', precio.toString());
+    formDataToSend.append('estado', active ? 'activo' : 'inactivo');
+    formDataToSend.append('stock', stock.toString());
+    if (sku) formDataToSend.append('codigo_barras', sku);
+    if (category) {
+      const categoryFromStore = categories.find(cat => cat.id === category);
+      let categoryIdentifier: string | undefined;
+      if (categoryFromStore) {
+        categoryIdentifier = categoryFromStore.id.trim();
+      } else if (category.trim()) {
+        categoryIdentifier = category.trim();
+      }
+      if (categoryIdentifier) {
+        formDataToSend.append('id_categoria', categoryIdentifier);
+      }
+    }
+    if (imagenFile) {
+      formDataToSend.append('imagen', imagenFile);
+    }
+
     try {
-      const productPayload: any = {
-        nombre: nombre.trim(),
-        precio: Number(precio),
-        estado: active ? 'activo' : 'inactivo',
-      };
-      if (sku) productPayload.codigo_barras = sku;
-      if (category) {
-        const categoryFromStore = categories.find(cat => cat.id === category);
-        if (categoryFromStore) {
-          const idCandidate = categoryFromStore.id.trim();
-          const nameCandidate = categoryFromStore.name.trim();
-          const identifier = /^\d+$/.test(idCandidate) ? idCandidate : nameCandidate;
-          if (identifier) {
-            productPayload.id_categoria = identifier;
-          }
-        } else if (category.trim()) {
-          productPayload.id_categoria = category.trim();
+      const created = await api.createProduct(formDataToSend);
+
+      // --- Actualizar categorías después de crear producto ---
+      await fetchCategories();
+
+      const productId = String(created?.id_producto ?? created?.id);
+      const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+      const stockInicial = Number(stock) || 0;
+
+      if (negocioId && productId && stockInicial >= 0) {
+        try {
+          await api.createInventory({ id_negocio: negocioId, id_producto: productId, cantidad_actual: stockInicial, stock_minimo: 0 });
+        } catch (inventoryError) {
+          console.warn("No se pudo crear registro de inventario automáticamente:", inventoryError);
+        }
+      }
+      onProductCreated();
+    } catch (err: any) {
+      let msg = 'Ocurrió un error al guardar el producto.';
+      let detailedError = err;
+
+      if (err && typeof err === 'object') {
+        if ('message' in err && err.message) msg = err.message;
+        if ('status' in err && err.status) {
+          if (err.status === 401) msg = 'No autenticado. Inicia sesión para crear productos.';
+          if (err.status === 403) msg = 'No tienes permisos para crear productos (requiere rol admin).';
+          if (err.status === 400) msg = 'Datos inválidos o relaciones inexistentes (revisa categoría).';
+        }
+        if (err.response && typeof err.response.json === 'function') {
+          try {
+            const responseBody = await err.response.json();
+            detailedError = responseBody;
+            if (responseBody.message) msg = responseBody.message;
+          } catch {}
         }
       }
 
-      const created = await api.createProduct(productPayload);
-      const productId = String(created?.id_producto ?? created?.id);
-
-  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
-      const stockInicial = Number(stock) || 0;
-      if (negocioId && productId && stockInicial > 0) {
-        await api.createInventory({
-          id_negocio: negocioId,
-          id_producto: productId,
-          cantidad_actual: stockInicial,
-          stock_minimo: 0,
-        });
-      }
-
-      onProductCreated();
-    } catch (err: any) {
-      let msg = err?.message || 'Ocurrió un error al guardar el producto.';
-      if (err?.status === 401) msg = 'No autenticado. Inicia sesión para crear productos.';
-      if (err?.status === 403) msg = 'No tienes permisos para crear productos (requiere rol admin).';
-      if (err?.status === 400) msg = 'Datos inválidos o relaciones inexistentes (revisa categoría).';
       setError(msg);
-      console.error('Error al crear producto:', err);
+      console.error('Error al crear producto:', detailedError);
     } finally {
       setSaving(false);
     }
@@ -156,39 +174,25 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
 
   return (
     <>
-      {/* Overlay */}
       <button aria-label='Cerrar editor' onClick={onClose} className='fixed inset-0 bg-black/35 backdrop-blur-[1px] cursor-default z-[90]' />
-
-      {/* Panel */}
       <aside className='fixed right-0 top-0 h-screen w-[92vw] sm:w-[440px] md:w-[480px] shadow-2xl z-[110] flex flex-col' style={{ background: 'var(--pos-card-bg)', borderLeft: '1px solid var(--pos-card-border)' }}>
-        {/* Header estilo POS */}
         <div className='px-5 py-4 border-b flex items-center gap-3' style={{ borderColor: 'var(--pos-card-border)' }}>
-          <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>
-            <svg viewBox='0 0 24 24' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
-              <rect x='3' y='7' width='14' height='10' rx='2' />
-              <path d='M7 7V5h14v10h-2' />
-            </svg>
-          </div>
-          <div className='flex-1 min-w-0'>
-            <div className='text-[11px] font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Nuevo</div>
-            <h2 className='text-xl font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{nombre || 'Producto'}</h2>
-          </div>
-          <button onClick={onClose} className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2 transition-colors' style={{ background: 'var(--pos-accent-green)' }}>✕</button>
+            <div className='w-10 h-10 rounded-xl flex items-center justify-center' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>
+                <svg viewBox='0 0 24 24' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'><rect x='3' y='7' width='14' height='10' rx='2' /><path d='M7 7V5h14v10h-2' /></svg>
+            </div>
+            <div className='flex-1 min-w-0'>
+                <div className='text-[11px] font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Nuevo</div>
+                <h2 className='text-xl font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{nombre || 'Producto'}</h2>
+            </div>
+            <button onClick={onClose} className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2 transition-colors' style={{ background: 'var(--pos-accent-green)' }}>✕</button>
         </div>
 
-        {/* Body */}
         <div className='flex-1 overflow-y-auto p-4 space-y-4'>
-          {error && (
-            <div className='text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2'>
-              {error}
-            </div>
-          )}
+          {error && (<div className='text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2'>{error}</div>)}
 
-          {/* Información básica */}
           <section className='rounded-2xl p-4 space-y-3' style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}>
             <div className='flex items-center justify-between'>
-              <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Información básica</h3>
-              <span className='px-2 py-0.5 rounded-md text-[11px] font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{selectedCategoryName || 'Categoría'}</span>
+                <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Información básica</h3>
             </div>
             <div>
               <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Nombre</label>
@@ -203,53 +207,25 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
                 </div>
               </div>
               <div>
-                <div className='flex items-center justify-between'>
-                  <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Categoría</label>
-                  <button
-                    type='button'
-                    onClick={() => {
-                      updateCategories().catch(() => {
-                        /* error ya manejado en updateCategories */
-                      });
-                    }}
-                    className='text-[11px] font-semibold text-[var(--pos-text-muted)] hover:text-[var(--pos-text-heading)] transition-colors'
-                    disabled={loadingCategories}
-                  >
-                    Actualizar
-                  </button>
-                </div>
+                 <div className='flex items-center justify-between'>
+                     <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Categoría</label>
+                     <button type='button' onClick={() => { updateCategories().catch(() => {}); }} className='text-[11px] font-semibold text-[var(--pos-text-muted)] hover:text-[var(--pos-text-heading)] transition-colors' disabled={loadingCategories}>Actualizar</button>
+                 </div>
                 <div className='relative'>
-                  <select
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    className='appearance-none w-full rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2'
-                    style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-                    disabled={loadingCategories && categories.length === 0}
-                  >
+                  <select value={category} onChange={e => setCategory(e.target.value)} className='appearance-none w-full rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }} disabled={loadingCategories && categories.length === 0}>
                     <option value=''>Sin categoría</option>
-                    {loadingCategories && categories.length === 0 && (
-                      <option value='' disabled>
-                        Cargando categorías…
-                      </option>
-                    )}
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
+                     {loadingCategories && categories.length === 0 && (<option value='' disabled>Cargando categorías…</option>)}
+                     {categories.map(cat => (
+                         <option key={cat.id} value={cat.id}>{cat.name}</option>
+                     ))}
                   </select>
-                  <svg aria-hidden viewBox='0 0 24 24' className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{ color: 'var(--pos-text-muted)' }}>
-                    <path d='M6 9l6 6 6-6' />
-                  </svg>
+                   <svg aria-hidden viewBox='0 0 24 24' className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{ color: 'var(--pos-text-muted)' }}><path d='M6 9l6 6 6-6' /></svg>
                 </div>
-                {categoriesError && (
-                  <p className='mt-1 text-[11px] text-rose-600'>{categoriesError}</p>
-                )}
+                {categoriesError && (<p className='mt-1 text-[11px] text-rose-600'>{categoriesError}</p>)}
               </div>
             </div>
           </section>
 
-          {/* Precio y stock */}
           <section className='rounded-2xl p-4 space-y-3' style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}>
             <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Precio y stock</h3>
             <div className='grid grid-cols-2 gap-3 items-end'>
@@ -265,39 +241,44 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
                 <input type='number' value={stock} onChange={e => setStock(parseInt(e.target.value || '0', 10))} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
               </div>
             </div>
-            <div className='flex items-center justify-between'>
-              <span className='text-xs font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Estado</span>
-              <button type='button' onClick={() => setActive(v => !v)} className={`h-8 px-3 rounded-full text-xs font-semibold transition-colors ${active ? 'text-white' : ''}`} style={active ? { background: 'var(--pos-accent-green)' } : { background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>
-                {active ? 'Activo' : 'Inactivo'}
-              </button>
-            </div>
+             <div className='flex items-center justify-between'>
+                <span className='text-xs font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Estado</span>
+                <button type='button' onClick={() => setActive(v => !v)} className={`h-8 px-3 rounded-full text-xs font-semibold transition-colors ${active ? 'text-white' : ''}`} style={active ? { background: 'var(--pos-accent-green)' } : { background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>
+                  {active ? 'Activo' : 'Inactivo'}
+                </button>
+              </div>
           </section>
 
-          {/* Vista previa rápida */}
-          <section className='rounded-2xl p-4' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)' }}>
-            <div className='flex items-start justify-between gap-2'>
-              <div className='min-w-0'>
-                <div className='text-xs font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Vista previa</div>
-                <h4 className='text-base font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{nombre || 'Producto'}</h4>
-                <div className='mt-1 flex items-center gap-2'>
-                  <span className='px-2 py-0.5 rounded-md text-[11px] font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{selectedCategoryName || 'Categoría'}</span>
-                  <span className='px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums' style={{ background: 'var(--pos-badge-price-bg)', color: 'var(--pos-text-heading)' }}>${(precio ?? 0).toFixed(2)}</span>
-                </div>
+          <section className='rounded-2xl p-4' style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}>
+            <h3 className='text-sm font-extrabold mb-2' style={{ color: 'var(--pos-text-heading)' }}>Imagen del Producto</h3>
+            <input type="file" name="imagen" accept="image/png, image/jpeg" onChange={handleFileChange} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"/>
+            {imagenFile && (
+              <div className="mt-4">
+                <p className="text-xs font-semibold mb-1" style={{ color: 'var(--pos-text-heading)' }}>Vista previa:</p>
+                <img src={URL.createObjectURL(imagenFile)} alt="Vista previa" className="max-h-32 rounded-lg border" style={{ borderColor: 'var(--pos-card-border)' }} />
               </div>
-              <span className='text-[11px]' style={{ color: 'var(--pos-text-muted)' }}>SKU: {sku || '—'}</span>
-            </div>
+            )}
+          </section>
+
+          <section className='rounded-2xl p-4' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)' }}>
+             <div className='flex items-start justify-between gap-2'>
+                  <div className='min-w-0'>
+                      <div className='text-xs font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Vista previa</div>
+                      <h4 className='text-base font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{nombre || 'Producto'}</h4>
+                      <div className='mt-1 flex items-center gap-2'>
+                          <span className='px-2 py-0.5 rounded-md text-[11px] font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{selectedCategoryName || 'Categoría'}</span>
+                          <span className='px-2 py-0.5 rounded-md text-[11px] font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>${precio.toFixed(2)}</span>
+                      </div>
+                  </div>
+             </div>
           </section>
         </div>
 
-        {/* Footer */}
-        <div className='p-5 border-t flex items-center justify-between gap-2' style={{ borderColor: 'var(--pos-card-border)' }}>
-          <div className='text-[11px] text-[var(--pos-text-muted)] hidden sm:block'>Esc para cerrar</div>
-          <div className='ml-auto flex items-center gap-2'>
-            <button onClick={onClose} className='px-4 rounded-lg text-sm font-semibold transition-colors' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>Cancelar</button>
-            <button onClick={handleSubmit} className='px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', background: 'var(--pos-accent-green)' }} disabled={saving}>
-              {saving ? 'Creando…' : 'Crear →'}
-            </button>
-          </div>
+        <div className='px-4 py-3 border-t flex justify-end gap-2' style={{ borderColor: 'var(--pos-card-border)' }}>
+          <button onClick={onClose} className='px-4 py-2 rounded-lg font-semibold text-sm transition-colors' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}>Cancelar</button>
+          <button onClick={handleSubmit} disabled={saving} className='px-4 py-2 rounded-lg font-semibold text-sm transition-colors' style={{ background: 'var(--pos-accent-green)', color: 'white' }}>
+            {saving ? 'Guardando…' : 'Guardar'}
+          </button>
         </div>
       </aside>
     </>

@@ -1,37 +1,46 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { api, activeBusiness } from '../../../lib/api';
-import { EditProductPanel } from './EditProductPanel';
-import { EditStockPanel } from './EditStockPanel';
-import { useConfirm } from '../../system/ConfirmProvider';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { api, activeBusiness } from "../../../lib/api";
+import { EditProductPanel } from "./EditProductPanel";
+import { EditStockPanel } from "./EditStockPanel";
+import { useConfirm } from "../../system/ConfirmProvider";
 
 type AdminProduct = {
   id: string;
   name: string;
   sku: string;
   price: number;
-  stock: number | null; // null => sin información de inventario
+  stock: number | null;
   categoryId: string | null;
   categoryName: string;
   active: boolean;
 };
 
-type ApiProduct = {
-  id_producto: string | number;
+interface ApiProduct {
+  id_producto: number | string;
   nombre: string;
   descripcion: string | null;
   precio: string | number;
   imagen: string | null;
-  estado: string | null; // 'activo' | 'inactivo' | null
+  estado: string | null;
   codigo_barras?: string | null;
   stock?: number | string | null;
-  category?: string | null;
   id_categoria?: string | number | null;
-};
+  // Nota: algunos backends devuelven 'categoria' como objeto, otros como string.
+  // So soporte ambas maneras:
+  categoria?: { id_categoria?: number | string; nombre?: string } | string | null;
+  inventario?: {
+    id_inventario?: number | string;
+    id_negocio?: number | string;
+    cantidad_actual?: number | string | null;
+    stock_minimo?: number | string | null;
+    id_producto?: number | string;
+  }[];
+}
 
 export interface AdminProductGridProps {
   search: string;
-  view: 'grid' | 'list';
+  view: "grid" | "list";
 }
 
 export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view }) => {
@@ -42,18 +51,18 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
   const [selection, setSelection] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
-  const [actionBusy, setActionBusy] = useState<string | null>(null); // holds product id during toggle/delete
-  const [invState, setInvState] = useState<any[]>([]); // inventario actual para el negocio
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [invState, setInvState] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const apiProducts: ApiProduct[] = await api.getProducts({ search });
-      // Inventario opcional (se mantiene para panel de edición)
-  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+      const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || "";
       let invList: any[] = [];
       let stockByProduct: Map<string, number> | undefined;
+
       if (negocioId) {
         try {
           invList = await api.getInventory({ id_negocio: negocioId });
@@ -64,58 +73,81 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
             }
           }
         } catch (e) {
-          console.warn('Inventario no disponible para AdminProductGrid:', e);
+          console.warn("Inventario no disponible para AdminProductGrid:", e);
         }
       }
-      const adapted: AdminProduct[] = apiProducts.map(p => {
+
+      const adapted: AdminProduct[] = apiProducts.map((p) => {
         const id = String(p.id_producto);
-        const priceNum = typeof p.precio === 'number' ? p.precio : parseFloat(String(p.precio));
+        const priceNum = typeof p.precio === "number" ? p.precio : parseFloat(String(p.precio));
         let stockValue: number | null = null;
+
+        // 1) Si API devuelve campo 'stock' directo
         if (p.stock !== undefined) {
           if (p.stock === null) {
             stockValue = null;
           } else {
-            const parsed = typeof p.stock === 'number' ? p.stock : parseFloat(String(p.stock));
+            const parsed = typeof p.stock === "number" ? p.stock : parseFloat(String(p.stock));
             stockValue = Number.isNaN(parsed) ? null : parsed;
           }
-        } else if (stockByProduct?.has(id)) {
-          stockValue = stockByProduct.get(id) ?? null;
         }
-        const categoryId = p.id_categoria != null ? String(p.id_categoria) : null;
-        const rawCategoryName = typeof p.category === 'string' ? p.category.trim() : '';
+
+        // 2) Si hay inventario separado por negocio
+        if ((stockValue === null || stockValue === 0) && stockByProduct?.has(id)) {
+          stockValue = stockByProduct.get(id) ?? stockValue;
+        } else if (stockValue === null && p.inventario?.length) {
+          // fallback: buscar inventario incluido en el producto (por id_negocio si aplica)
+          const invMatch = negocioId
+            ? p.inventario.find(inv => String(inv.id_negocio) === String(negocioId))
+            : p.inventario[0];
+          if (invMatch && invMatch.cantidad_actual != null) {
+            stockValue = Number(invMatch.cantidad_actual);
+          }
+        }
+
+        // Categoría: manejo flexible (objeto o string)
+        let categoryId: string | null = null;
+        let categoryName = "Sin categoría";
+        if (p.categoria) {
+          if (typeof p.categoria === "string") {
+            categoryName = p.categoria.trim() || categoryName;
+          } else {
+            if (p.categoria.nombre) categoryName = String(p.categoria.nombre);
+            if (p.categoria.id_categoria != null) categoryId = String(p.categoria.id_categoria);
+          }
+        } else if (p.id_categoria != null) {
+          categoryId = String(p.id_categoria);
+        }
+
         return {
           id,
           name: p.nombre,
-          sku: (p.codigo_barras as any) || '',
+          sku: p.codigo_barras || "",
           price: isNaN(priceNum) ? 0 : priceNum,
           stock: stockValue,
           categoryId,
-          categoryName: rawCategoryName || 'Sin categoría',
-          active: (p.estado ?? 'activo') === 'activo',
+          categoryName,
+          active: (p.estado ?? "activo") === "activo",
         };
       });
+
       setItems(adapted);
       setSelection([]);
       setInvState(invList);
     } catch (e) {
-      console.error(e);
-      setError('No se pudieron cargar los productos.');
+      console.error("Error cargar productos:", e);
+      setError("No se pudieron cargar los productos.");
     } finally {
       setLoading(false);
     }
   }, [search]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const allSelected = selection.length > 0 && selection.length === items.length;
   const toggle = (id: string) => setSelection(sel => sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]);
   const toggleAll = () => setSelection(allSelected ? [] : items.map(p => p.id));
-
-  const list = useMemo(() => {
-    return items; // el ordenado/estado se puede añadir luego
-  }, [items]);
+  const list = useMemo(() => items, [items]);
 
   const startEdit = (id: string) => setEditingId(id);
   const closeEdit = () => setEditingId(null);
@@ -125,19 +157,20 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
   const handleToggleActive = async (p: AdminProduct) => {
     try {
       const ok = await confirm({
-        title: p.active ? 'Desactivar producto' : 'Activar producto',
-        description: p.active ? 'El producto dejará de estar disponible para la venta.' : 'El producto estará disponible para la venta.',
-        confirmText: p.active ? 'Desactivar' : 'Activar',
-        cancelText: 'Cancelar',
-        tone: 'accent'
+        title: p.active ? "Desactivar producto" : "Activar producto",
+        description: p.active ? "El producto dejará de estar disponible para la venta." : "El producto estará disponible para la venta.",
+        confirmText: p.active ? "Desactivar" : "Activar",
+        cancelText: "Cancelar",
+        tone: "accent"
       });
       if (!ok) return;
       setActionBusy(p.id);
-      await api.updateProduct(p.id, { estado: p.active ? 'inactivo' : 'activo' });
+      // backend acepta JSON para cambio simple; si tu api.updateProduct requiere FormData, ajusta aquí
+      await api.updateProduct(p.id, { estado: p.active ? "inactivo" : "activo" } as any);
       await load();
     } catch (e: any) {
       console.error(e);
-      alert(e?.message || 'No se pudo cambiar el estado.');
+      alert(e?.message || "No se pudo cambiar el estado.");
     } finally {
       setActionBusy(null);
     }
@@ -145,11 +178,11 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
 
   const handleDelete = async (p: AdminProduct) => {
     const ok = await confirm({
-      title: 'Eliminar producto',
+      title: "Eliminar producto",
       description: `¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`,
-      confirmText: 'Eliminar',
-      cancelText: 'Cancelar',
-      tone: 'danger'
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+      tone: "danger"
     });
     if (!ok) return;
     try {
@@ -158,14 +191,15 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
       await load();
     } catch (e: any) {
       console.error(e);
-      let msg = e?.message || 'No se pudo eliminar el producto.';
-      if (e?.status === 409) msg = 'No se puede eliminar: tiene dependencias.';
+      let msg = e?.message || "No se pudo eliminar el producto.";
+      if (e?.status === 409) msg = "No se puede eliminar: tiene dependencias.";
       alert(msg);
     } finally {
       setActionBusy(null);
     }
   };
 
+  // ----- RENDER -----
   if (loading) return <div className='text-center py-24'>Cargando productos…</div>;
   if (error) return <div className='text-center py-24 text-red-500'>{error}</div>;
   if (list.length === 0) {
@@ -187,6 +221,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
             <tr>
               <th className='px-3 py-2 w-10'><input type='checkbox' checked={allSelected} onChange={toggleAll} className='accent-[var(--pos-accent-green)]' /></th>
               <th className='px-3 py-2'>Producto</th>
+              <th className='px-3 py-2'>Categoría</th>
               <th className='px-3 py-2'>SKU</th>
               <th className='px-3 py-2 text-right'>Precio</th>
               <th className='px-3 py-2 text-right'>Stock</th>
@@ -201,6 +236,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                 <tr key={p.id} className={`border-t border-[var(--pos-card-border)] ${selected ? 'bg-[var(--pos-badge-stock-bg)]' : ''}`}>
                   <td className='px-3 py-2'><input type='checkbox' className='accent-[var(--pos-accent-green)]' checked={selected} onChange={() => toggle(p.id)} /></td>
                   <td className='px-3 py-2' style={{ color: 'var(--pos-text-heading)' }}>{p.name}</td>
+                  <td className='px-3 py-2 text-[var(--pos-text-muted)]'>{p.categoryName}</td>
                   <td className='px-3 py-2 text-[var(--pos-text-muted)]'>{p.sku || '—'}</td>
                   <td className='px-3 py-2 text-right tabular-nums' style={{ color: 'var(--pos-text-heading)' }}>${p.price.toFixed(2)}</td>
                   <td className='px-3 py-2 text-right text-[var(--pos-text-muted)]'>
@@ -226,6 +262,8 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
             })}
           </tbody>
         </table>
+
+        {/* Modales (list view) */}
         {editingId && (() => {
           const p = items.find(i => i.id === editingId);
           if (!p) return null;
@@ -237,6 +275,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
             />
           );
         })()}
+
         {editingStockId && (() => {
           const p = items.find(i => i.id === editingStockId);
           if (!p) return null;
@@ -258,9 +297,9 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
     );
   }
 
+  // GRID VIEW with actions + modals
   return (
-  <div className='relative flex-1 min-h-0 overflow-y-auto pr-1 pb-4 custom-scroll-area'>
-      {/* Select all sticky */}
+    <div className='relative flex-1 min-h-0 overflow-y-auto pr-1 pb-4 custom-scroll-area'>
       <div className='sticky top-0 z-[5] mb-2'>
         <label className='w-full rounded-lg px-3 py-2 flex items-center gap-3 bg-[var(--pos-card-bg)] border border-[var(--pos-card-border)] cursor-pointer shadow-sm'>
           <input type='checkbox' className='accent-[var(--pos-accent-green)]' checked={allSelected} onChange={toggleAll} />
@@ -301,6 +340,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                       <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>{p.categoryName}</span>
                     </div>
                   </div>
+
                   <div className='mt-1 text-[11px] text-[var(--pos-text-muted)] truncate'>SKU: {p.sku || '—'}</div>
                   <div className='mt-2 flex items-center justify-between'>
                     <span className='text-sm font-semibold tabular-nums'>${p.price.toFixed(2)}</span>
@@ -308,6 +348,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
                   </div>
                 </div>
               </div>
+
               <div className='mt-2 flex items-center gap-2'>
                 <button onClick={() => startEdit(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Editar</button>
                 <button onClick={() => startEditStock(p.id)} className='h-8 px-2 rounded-md text-xs font-medium' style={{ background: 'var(--pos-badge-stock-bg)', color: 'var(--pos-chip-text)' }}>Stock</button>
@@ -318,6 +359,8 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
           );
         })}
       </div>
+
+      {/* Modales (grid view) */}
       {editingId && (() => {
         const p = items.find(i => i.id === editingId);
         if (!p) return null;
@@ -329,10 +372,11 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
           />
         );
       })()}
+
       {editingStockId && (() => {
         const p = items.find(i => i.id === editingStockId);
         if (!p) return null;
-  const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
+        const negocioId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '';
         let inv: any | undefined;
         if (negocioId) {
           inv = invState.find(x => String(x.id_producto) === p.id && String(x.id_negocio) === String(negocioId));
@@ -351,4 +395,3 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({ search, view
 };
 
 export default AdminProductGrid;
-
