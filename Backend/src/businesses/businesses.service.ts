@@ -15,6 +15,7 @@ export class BusinessesService {
 
     const prisma = this.prisma as any;
     try {
+      // Asignamos el propietario usando el campo existente owner_id en la tabla negocio
       const result = await prisma.$transaction(async (tx: any) => {
         const negocio = await tx.negocio.create({
           data: {
@@ -25,17 +26,9 @@ export class BusinessesService {
             logo_url: dto.logo_url || null,
             hero_image_url: dto.hero_image_url || null,
             fecha_registro: new Date(),
+            owner_id: uid,
           },
         });
-        await tx.usuarios_negocio.create({
-          data: {
-            id_usuario: uid,
-            id_negocio: negocio.id_negocio,
-            rol: 'owner',
-            fecha_asignacion: new Date(),
-          },
-        });
-
         return negocio;
       });
       return result;
@@ -60,7 +53,12 @@ export class BusinessesService {
     try { uid = BigInt(userId); } catch { throw new BadRequestException('Usuario inválido'); }
     const prisma = this.prisma as any;
     return prisma.negocio.findMany({
-      where: { usuarios_negocio: { some: { id_usuario: uid } } },
+      where: {
+        OR: [
+          { owner_id: uid },
+          { empleados: { some: { usuario_id: uid } } },
+        ],
+      },
       orderBy: { id_negocio: 'asc' },
     });
   }

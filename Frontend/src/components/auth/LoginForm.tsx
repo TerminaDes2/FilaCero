@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
-import { api, type ApiError, type UserInfo, type LoginResponse } from '../../lib/api';
+import { api } from '../../lib/api';
 import { useUserStore } from "../../state/userStore"; // Ajusta la ruta
 
 interface LoginFormProps {
@@ -17,30 +17,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
-	const { setName, setBackendRole, login: persistLogin } = useUserStore();
-
-	const isPendingVerificationError = (err: unknown): err is ApiError => {
-		const maybeError = err as ApiError | undefined;
-		return Boolean(
-			maybeError &&
-			maybeError.status === 401 &&
-			typeof maybeError.message === 'string' &&
-			maybeError.message.toLowerCase().includes('verificación')
-		);
-	};
-
-	const buildFallbackUser = (loginUser: LoginResponse['user']): UserInfo => {
-		const parsedId = Number.parseInt(loginUser.id, 10);
-		const safeId = Number.isNaN(parsedId) || !Number.isSafeInteger(parsedId) ? 0 : parsedId;
-		const inferredName = loginUser.email?.split('@')[0] ?? 'Usuario';
-		return {
-			id_usuario: safeId,
-			nombre: inferredName,
-			correo_electronico: loginUser.email,
-			id_rol: 3,
-			role_name: 'usuario',
-		};
-	};
+  const { setName, setBackendRole } = useUserStore();
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordValid = password.length >= 6;
@@ -57,46 +34,30 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 		try {
 			// 1. Hacer login para obtener el token
 			const res = await api.login(email.trim().toLowerCase(), password);
-
+			
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem('auth_token', res.token);
+				// Guardar datos básicos del login temporalmente
+				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 			}
-
-			let userInfo: UserInfo;
-			let fetchedFromMe = true;
-
-			try {
-				console.log('🔄 Obteniendo información completa del usuario...');
-				userInfo = await api.me();
-			} catch (fetchError) {
-				if (isPendingVerificationError(fetchError)) {
-					console.warn('⚠️ No se pudo obtener /auth/me por verificación pendiente. Continuamos con información básica.');
-					userInfo = buildFallbackUser(res.user);
-					fetchedFromMe = false;
-				} else {
-					throw fetchError;
-				}
-			}
-
-			persistLogin(res.token, userInfo);
-
-			if (typeof window !== 'undefined') {
-				if (!fetchedFromMe) {
-					window.localStorage.setItem('auth_user_fallback_reason', 'pending-verification');
-				} else {
-					window.localStorage.removeItem('auth_user_fallback_reason');
-				}
-			}
-
+			
 			onSuccess?.();
-
+			
+			// 2. Obtener información COMPLETA del usuario incluyendo el rol
+			console.log('🔄 Obteniendo información completa del usuario...');
+			const userInfo = await api.me();
+			
+			// 3. Actualizar localStorage con la información completa
+			if (typeof window !== 'undefined') {
+				window.localStorage.setItem('auth_user', JSON.stringify(userInfo));
+			}
+			
+			// 4. Redirigir según el rol (por nombre, con fallback)
 			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
 			const idRol = userInfo.id_rol;
 			console.log('✅ Rol (name):', roleName, ' id_rol:', idRol);
 
-			setName(userInfo.nombre ?? userInfo.correo_electronico);
-			setBackendRole(roleName);
-
+			// Admin/superadmin -> POS; otros -> Shop
 			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
 				console.log('🎯 Redirigiendo ADMIN a /pos');
 				router.push('/pos');
@@ -112,14 +73,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			if (typeof window !== 'undefined') {
 				window.localStorage.removeItem('auth_token');
 				window.localStorage.removeItem('auth_user');
-				window.localStorage.removeItem('auth_user_fallback_reason');
 			}
 			
-			if (isPendingVerificationError(err)) {
-				setError('No pudimos iniciar sesión porque el servidor aún marca la cuenta como pendiente de verificación. Revisa tu bandeja o contacta soporte.');
-			} else {
-				setError(err?.message || 'Error al iniciar sesión');
-			}
+			setError(err?.message || 'Error al iniciar sesión');
 		} finally {
 			setSubmitting(false);
 		}

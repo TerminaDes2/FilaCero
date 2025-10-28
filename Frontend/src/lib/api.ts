@@ -43,22 +43,9 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 // --- Interfaces actualizadas ---
-export interface LoginUserPayload {
-  id: string;
-  email: string;
-  verified?: boolean;
-  avatarUrl?: string | null;
-  credentialUrl?: string | null;
-  accountNumber?: string | null;
-  age?: number | null;
-}
-
 export interface LoginResponse {
   token: string;
-  user: LoginUserPayload;
-  requiresVerification?: boolean;
-  verificationToken?: string;
-  verificationTokenExpiresAt?: string;
+  user: { id: string; email: string };
 }
 
 export interface UserInfo {
@@ -84,25 +71,13 @@ export const api = {
       body: JSON.stringify({ correo_electronico, password }),
     }),
 
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    role?: 'usuario' | 'admin',
-    accountNumber?: string,
-    age?: number
-  ) => {
-    const payload: Record<string, unknown> = { name, email, password };
-    if (role) payload.role = role;
-    if (accountNumber) payload.accountNumber = accountNumber;
-    if (typeof age === 'number') payload.age = age;
-
+  register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
     console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
-    console.log('📦 Datos enviados:', payload);
+    console.log('📦 Datos enviados:', { name, email, password, role });
     
     return apiFetch<LoginResponse>('auth/register', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
     });
   },
 
@@ -150,24 +125,11 @@ export const api = {
     }),
 
   // --- Categorías ---
-  getCategories: (params?: { id_negocio?: string }) => {
-    let negocioId = params?.id_negocio;
-    if (!negocioId) {
-      try { negocioId = typeof window !== 'undefined' ? window.localStorage.getItem('active_business_id') || undefined : undefined; } catch {}
-    }
-    if (!negocioId) {
-      const envNegocio = process.env.NEXT_PUBLIC_NEGOCIO_ID;
-      if (envNegocio) negocioId = envNegocio;
-    }
-    if (!negocioId) {
-      throw new Error('Se requiere un negocio activo para cargar categorías');
-    }
-    const query = new URLSearchParams({ id_negocio: String(negocioId) }).toString();
-    return apiFetch<any[]>(`categories?${query}`);
-  },
+  getCategories: () => 
+    apiFetch<any[]>('categories'),
   getCategoryById: (id: string) =>
     apiFetch<any>(`categories/${id}`),
-  createCategory: (categoryData: { nombre: string; negocioId: string }) =>
+  createCategory: (categoryData: { nombre: string }) =>
     apiFetch<any>('categories', {
       method: 'POST',
       body: JSON.stringify(categoryData),

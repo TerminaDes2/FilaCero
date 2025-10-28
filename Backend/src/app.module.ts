@@ -10,6 +10,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { CategoriesModule } from './categories/categories.module';
 import { SalesModule } from './sales/sales.module';
 import { BusinessesModule } from './businesses/businesses.module';
+import { EmployeesModule } from './employees/employees.module';
 
 @Module({
   imports: [
@@ -21,8 +22,9 @@ import { BusinessesModule } from './businesses/businesses.module';
     ProductsModule, // módulo de productos (Prisma)
     InventoryModule, // módulo de inventario (Prisma)
     CategoriesModule, // módulo de categorías (Prisma)
-  SalesModule, // módulo de ventas (Prisma)
+    SalesModule, // módulo de ventas (Prisma)
     BusinessesModule, // módulo de negocios (Prisma)
+    EmployeesModule, // módulo de empleados (Prisma)
     // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
     // ProductModule,
   ],

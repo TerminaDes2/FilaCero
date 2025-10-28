@@ -31,6 +31,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const [acceptedTerms, setAcceptedTerms] = useState(false);
 	const [showLegal, setShowLegal] = useState<null | 'terminos' | 'privacidad'>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [accountNumber, setAccountNumber] = useState("");
+	const [age, setAge] = useState("");
 	const router = useRouter();
 	const { role } = useUserStore();
 	const isOwner = role === 'OWNER';
@@ -88,9 +90,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				name.trim(),
 				email.trim().toLowerCase(),
 				password,
-				roleName,
-				isOwner ? undefined : accountNumberClean || undefined,
-				isOwner ? undefined : ageValue
+				roleName
 			);
 			if(typeof window !== 'undefined') {
 				window.localStorage.setItem('auth_token', res.token);

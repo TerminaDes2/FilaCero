@@ -83,22 +83,11 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'staff',
-		label: 'Staff',
+		label: 'Empleados',
 		href: '/pos/staff',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
 				<path strokeLinecap="round" strokeLinejoin="round" d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5Zm0 2c-4 0-7 2-7 4v1h14v-1c0-2-3-4-7-4Z" />
-			</svg>
-		)
-	},
-	{
-		key: 'customers',
-		label: 'Clientes',
-		href: '/pos/customers',
-		icon: (
-			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
-				<path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
-				<path strokeLinecap="round" strokeLinejoin="round" d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
 			</svg>
 		)
 	}
