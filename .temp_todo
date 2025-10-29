@@ -1,0 +1,18 @@
+## Todo List
+
+- [x] Ajustar endpoint público de negocios
+	- Quitar guard de roles/JWT en `GET /api/businesses/:id` para permitir acceso público.
+- [x] Validar servicio tras el cambio
+	- Revisar que `BusinessesService.getBusinessById` no requiera `userId` y devuelve datos esperados.
+- [x] Actualizar documentación relevante
+	- Reflejar que el detalle del negocio es accesible públicamente y mencionar uso desde la tienda online.
+- [x] Implementar validación de usuarios verificados en compras
+	- Crear un guard reutilizable que verifique `req.user.verificado`.
+- [x] Aplicar guard en `POST /api/sales`
+	- Impedir que usuarios no verificados creen ventas y devolver mensaje claro.
+- [x] Actualizar documentación
+	- Ajustar `Docs/API_Ventas.md` para reflejar la nueva restricción.
+- [x] Ejecutar pruebas disponibles
+	- Intentar `npm run build` o pruebas relevantes; documentar si fallan por problemas ajenos.
+- [x] Corregir errores en `products.service.ts`
+	- Ajustar include y manejo de media/métricas para resolver errores de build actuales.

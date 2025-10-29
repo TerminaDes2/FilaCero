@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, producto, producto_media, producto_metricas_semanales, categoria } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -7,13 +7,17 @@ import { ProductMediaInputDto } from './dto/product-media.dto';
 
 type SanitizedMedia = { url: string; principal: boolean; tipo: string | null };
 
-const productInclude = Prisma.validator<Prisma.productoInclude>()({
+const productInclude = {
   categoria: true,
   producto_media: { orderBy: [{ principal: 'desc' as const }, { creado_en: 'desc' as const }] },
   producto_metricas_semanales: { orderBy: { calculado_en: 'desc' as const }, take: 8 },
-});
+} as const;
 
-type ProductWithRelations = Prisma.productoGetPayload<{ include: typeof productInclude }>;
+type ProductWithRelations = producto & {
+  categoria: Pick<categoria, 'nombre'> | null;
+  producto_media: producto_media[];
+  producto_metricas_semanales: producto_metricas_semanales[];
+};
 
 @Injectable()
 export class ProductsService {
@@ -87,7 +91,7 @@ export class ProductsService {
   }
 
   private async replaceProductMedia(productId: bigint, media: SanitizedMedia[]) {
-    await this.prisma.$transaction(async (tx) => {
+  await this.prisma.$transaction(async (tx) => {
       await tx.producto_media.deleteMany({ where: { id_producto: productId } });
       if (media.length > 0) {
         await tx.producto_media.createMany({
@@ -101,10 +105,11 @@ export class ProductsService {
   }
 
   private async fetchProductWithRelations(id: bigint) {
-    return this.prisma.producto.findUnique({
+    const product = await this.prisma.producto.findUnique({
       where: { id_producto: id },
-      include: productInclude,
+      include: productInclude as unknown as Prisma.productoInclude,
     });
+  return product as unknown as ProductWithRelations | null;
   }
 
   /**
@@ -153,10 +158,10 @@ export class ProductsService {
           },
         }),
       },
-      include: productInclude,
+      include: productInclude as unknown as Prisma.productoInclude,
     });
 
-    return this.mapProduct(product);
+  return this.mapProduct(product as unknown as ProductWithRelations);
   }
 
   async findAll(params: { search?: string; status?: string; id_negocio?: string }) {
@@ -199,11 +204,11 @@ export class ProductsService {
       where.id_producto = { in: productIds };
     }
 
-    const products = await this.prisma.producto.findMany({
+    const products = (await this.prisma.producto.findMany({
       where,
       orderBy: { id_producto: 'desc' },
-      include: productInclude,
-    });
+      include: productInclude as unknown as Prisma.productoInclude,
+    })) as unknown as ProductWithRelations[];
 
     if (negocioIdFilter === undefined) {
       inventoryRows = await this.prisma.inventario.findMany({
@@ -232,7 +237,7 @@ export class ProductsService {
     // Convertimos el ID a BigInt para la consulta
     const productId = BigInt(id);
 
-    const product = await this.fetchProductWithRelations(productId);
+  const product = await this.fetchProductWithRelations(productId);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID #${id} no encontrado`);
@@ -243,7 +248,7 @@ export class ProductsService {
     });
     const stockValue = stockAgg._sum.cantidad_actual;
     const normalizedStock = stockValue == null ? null : Number(stockValue);
-    return this.mapProduct(product, normalizedStock);
+  return this.mapProduct(product as unknown as ProductWithRelations, normalizedStock);
   }
 
   // ✅ Lógica de actualización corregida.
@@ -260,7 +265,7 @@ export class ProductsService {
         ...rest,
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
       },
-      include: productInclude,
+      include: productInclude as unknown as Prisma.productoInclude,
     });
 
     if (sanitizedMedia) {
@@ -269,10 +274,10 @@ export class ProductsService {
       if (!refreshed) {
         throw new NotFoundException(`Producto con ID #${id} no encontrado luego de actualizar media.`);
       }
-      return this.mapProduct(refreshed);
+  return this.mapProduct(refreshed as unknown as ProductWithRelations);
     }
 
-    return this.mapProduct(product);
+  return this.mapProduct(product as unknown as ProductWithRelations);
   }
 
   async remove(id: string) {
