@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
+import { VerifiedGuard } from './verified.guard';
 import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../prisma/prisma.module'; // 👈 ¡Importación crucial para el AuthService!
 
@@ -30,13 +31,15 @@ import { PrismaModule } from '../prisma/prisma.module'; // 👈 ¡Importación c
   ],
   controllers: [AuthController],
   providers: [
-    AuthService, 
-    JwtStrategy // 👈 La estrategia es esencial para validar el token JWT
+    AuthService,
+    JwtStrategy, // 👈 La estrategia es esencial para validar el token JWT
+    VerifiedGuard,
   ],
   exports: [
     AuthService, // Exporta el servicio principal de Auth
     JwtModule,      // Permite que otros módulos usen el JwtModule (p. ej., para firmar tokens)
     PassportModule, // Permite que otros módulos usen los Guards de Passport (p. ej., AuthGuard)
+    VerifiedGuard,
   ],
 })
 export class AuthModule {}
