@@ -194,13 +194,25 @@ export const api = {
   
   getPublicBusinesses: async () => {
     try {
-      const businesses = await apiFetch<any[]>('businesses/public');
+      const businesses = await apiFetch<any[]>('businesses');
       console.log('✅ Negocios cargados desde API:', businesses);
       return businesses;
     } catch (error) {
       console.error('❌ Error cargando negocios públicos:', error);
       // Retorna array vacío en lugar de lanzar error
       return [];
+    }
+  },
+  getBusinessById: async (id: string | number) => {
+    try {
+      // Asegúrate de que el ID sea string para la comparación
+      const businessId = String(id);
+      const business = await apiFetch<any>(`businesses/${businessId}`);
+      console.log('✅ Tienda cargada desde API:', business);
+      return business;
+    } catch (error) {
+      console.error('❌ Error cargando tienda:', error);
+      throw error;
     }
   },
   // --- Inventario ---
