@@ -67,7 +67,6 @@ const HomePage: React.FC = () => {
           <>
             {/* 🛍️ Mostrar módulos del shop */}
             <DesayunosSection />
-            <PopularSection />
             <StoresSection />
           </>
         )}

@@ -73,6 +73,7 @@ export interface UserInfo {
   fecha_nacimiento?: string;
   fecha_registro?: string;
   estado?: string;
+  credential_url?: string;
 }
 
 // --- 👇 Objeto principal con métodos actualizados ---
