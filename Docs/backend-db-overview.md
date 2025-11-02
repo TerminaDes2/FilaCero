@@ -94,5 +94,51 @@ Este documento resume el estado actual del esquema PostgreSQL que respalda a Fil
 - **Datos legacy**: si existen usuarios previos sin `numero_cuenta`/`edad`, definir scripts de backfill o permitir valores nulos.
 - **Pruebas automatizadas**: ampliar suites e2e para cubrir registro con `numero_cuenta`, actualización y flujos de inventario.
 
+## 7. Modelos Adicionales
+
+### 7.1 Business Ratings
+**Tabla:** `negocio_rating`  
+**Descripción:** Valoraciones 1-5 estrellas sobre negocios con comentarios opcionales.
+
+**Campos:**
+- `id_rating`: PK autoincremental
+- `id_negocio`: FK a negocio (cascade delete)
+- `id_usuario`: FK a usuario (cascade delete)
+- `estrellas`: SmallInt (1-5)
+- `comentario`: Text opcional
+- `creado_en`: Timestamp con zona horaria
+
+**Restricciones:**
+- `UNIQUE(id_negocio, id_usuario)`: un usuario solo puede tener una valoración por negocio (permite upsert)
+- Check constraint en estrellas (1-5) aplicado en capa aplicación
+
+**Uso en código:**
+- `BusinessRatingsService.upsertRating`: crea o actualiza valoración existente
+- `BusinessRatingsService.getSummary`: agrega promedio y distribución usando Prisma `aggregate` + `groupBy`
+- Validación de cuenta verificada en controller para prevenir spam
+
+### 7.2 Comentarios y Feedback
+**Tablas:** `comentario`, `feedback`
+
+**Comentario:**
+- Permite a usuarios dejar opiniones textuales sobre negocios
+- Estados: `visible`, `oculto`, `reportado`
+- Trigger `fn_touch_comentario_actualizado` actualiza timestamp al recibir feedback
+
+**Feedback:**
+- Reacciones sobre comentarios (likes, calificaciones)
+- Restricción única: `(id_comentario, id_usuario, tipo)` previene duplicados por tipo de reacción
+- Cascade delete cuando se elimina comentario o usuario
+
+**Pendiente:**
+- Implementar `FeedbackService` y endpoints REST
+- Validar estados de comentarios en capa aplicación
+- Frontend para visualizar/moderar comentarios
+
 ---
 Este panorama debe revisarse en cada refactorización significativa para evitar divergencia entre el modelo Prisma, las migraciones y el SQL inicial distribuidos con Docker.
+
+## Referencias
+- **Análisis exhaustivo:** `backend-comprehensive-analysis.md`
+- **Verificación:** `verificacion-usuarios.md`
+- **Ratings:** `implementaciones-negocio-rating.md`
