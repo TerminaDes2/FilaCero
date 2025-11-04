@@ -169,13 +169,12 @@ export default function StoresSection() {
                 <h3 className="font-semibold">{store.nombre}</h3>
                 <p className="text-sm text-gray-600">{store.descripcion || store.direccion || 'Próximamente más detalles.'}</p>
 
-                <a
-                  href={`/shop/${store.id_negocio}`}
+                <Link
+                  href={`/stores/${store.id_negocio}`}
                   className="inline-block mt-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   Visitar tienda
-                </a>
-
+                </Link>
                 <div className="mt-2 flex items-center gap-3">
                   <div className="flex items-center gap-1">
                     <svg className="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">

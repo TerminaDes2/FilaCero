@@ -1,5 +1,6 @@
 import React from "react";
 import { useCart } from "./CartContext";
+import Link from "next/link";
 
 export default function CartSlide() {
   const { open, toggleOpen, items, total, updateQty, removeFromCart, clearCart } = useCart();
@@ -93,12 +94,17 @@ export default function CartSlide() {
               >
                 Vaciar carrito
               </button>
-              <button
-                className="flex-1 bg-green-600 text-white rounded-md py-2 hover:bg-green-500 transition"
-                onClick={() => alert("Ir al checkout")}
-              >
-                Verificar
-              </button>
+<button
+  className="flex-1 bg-green-600 text-white rounded-md py-2 hover:bg-green-500 transition"
+  onClick={() => toggleOpen(false)}
+>
+  <Link
+    href="/checkout"
+    className="block w-full h-full text-center"
+  >
+    Continuar
+  </Link>
+</button>
             </div>
           </div>
         )}
