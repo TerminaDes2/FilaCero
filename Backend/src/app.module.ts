@@ -10,7 +10,6 @@ import { InventoryModule } from './inventory/inventory.module';
 import { CategoriesModule } from './categories/categories.module';
 import { SalesModule } from './sales/sales.module';
 import { BusinessesModule } from './businesses/businesses.module';
-import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { MailModule } from './mail/mail.module';
     CategoriesModule, // módulo de categorías (Prisma)
     SalesModule, // módulo de ventas (Prisma) <-- AQUÍ FALTABA LA COMA
     BusinessesModule, // módulo de negocios (Prisma)
-    MailModule, // módulo de correo saliente
   ],
   controllers: [HealthController],
 })
