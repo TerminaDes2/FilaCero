@@ -61,6 +61,14 @@ JWT_EXPIRES_IN=3600s
 - En el entorno Docker se leen desde `docker-compose.yml`.
 - Si se ejecuta local fuera de Docker, crear `.env` en `Backend/`.
 
+### Correo saliente
+- Configura host, puerto y flag de TLS: `MAIL_HOST`, `MAIL_PORT`, `MAIL_SECURE`.
+- Define credenciales y remitente para cada casilla:
+  - Contacto: `MAIL_CONTACT_USER`, `MAIL_CONTACT_PASS`, `MAIL_CONTACT_FROM`.
+  - Notificaciones: `MAIL_NOREPLY_USER`, `MAIL_NOREPLY_PASS`, `MAIL_NOREPLY_FROM`.
+  - Privacidad: `MAIL_PRIVACY_USER`, `MAIL_PRIVACY_PASS`, `MAIL_PRIVACY_FROM`.
+- Si una casilla no tiene credenciales, el servicio la omite y lanza `503` al intentar usarla.
+
 ## Scripts npm
 | Script | Descripción |
 |--------|-------------|
