@@ -200,7 +200,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					<p className="text-xs text-gray-600">
 						¿Eres nuevo en FilaCero?{' '}
 						<a 
-							href="/auth/register"
+							href="/register"
 							className="text-brand-600 font-medium hover:underline"
 						> 
 							Crea una cuenta

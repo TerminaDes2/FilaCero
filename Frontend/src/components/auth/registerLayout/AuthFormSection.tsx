@@ -61,7 +61,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
               <p className="text-xs text-gray-600">
                 ¿Ya tienes una cuenta?{' '}
                 <a 
-                  href="/auth/login"
+                  href="/login"
                   className="text-brand-600 font-medium hover:underline"
                 > 
                   Iniciar sesión
