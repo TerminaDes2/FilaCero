@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { useCart } from './CartContext';
 
 export default function CartSlide() {
@@ -40,8 +41,12 @@ export default function CartSlide() {
             <div className="text-sm text-gray-500">No hay productos en el carrito.</div>
           ) : items.map((it) => (
             <div key={it.id} className="flex items-center gap-3">
-              <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                {it.imagen ? <img src={it.imagen} alt={it.nombre} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">Img</div>}
+              <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100 relative">
+                {it.imagen ? (
+                  <Image src={it.imagen} alt={it.nombre} fill className="object-cover" sizes="64px" unoptimized />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">Img</div>
+                )}
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">

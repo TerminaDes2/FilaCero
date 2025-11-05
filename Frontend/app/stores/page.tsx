@@ -1,6 +1,7 @@
 // app/stores/[id]/page.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -102,12 +103,15 @@ export default function StorePage() {
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-            <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center relative">
               {store.logo ? (
-                <img 
-                  src={store.logo} 
-                  alt={store.nombre} 
+                <Image
+                  src={store.logo}
+                  alt={store.nombre}
+                  width={96}
+                  height={96}
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               ) : (
                 <span className="text-gray-400 text-sm">Logo</span>
@@ -195,12 +199,15 @@ export default function StorePage() {
                     key={producto.id_producto}
                     className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow"
                   >
-                    <div className="w-full h-48 rounded-md overflow-hidden bg-gray-100 mb-4 flex items-center justify-center">
+                    <div className="w-full h-48 rounded-md overflow-hidden bg-gray-100 mb-4 flex items-center justify-center relative">
                       {producto.imagen ? (
-                        <img
+                        <Image
                           src={producto.imagen}
                           alt={producto.nombre}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                          unoptimized
                         />
                       ) : (
                         <span className="text-gray-400">Sin imagen</span>

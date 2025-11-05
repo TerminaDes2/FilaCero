@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { api } from '../../../lib/api';
 
 type Store = {
   id_negocio: number;
   nombre: string;
+  descripcion?: string | null;
   direccion?: string | null;
   telefono?: string | null;
   correo?: string | null;
   logo?: string | null;
   hero_image_url?: string | null;
-  telefono?: string | null;
-  correo?: string | null;
   estrellas?: number;
   categorias?: string[];
+  fecha_registro?: string;
+  owner_id?: number;
 };
 
 // Datos mock mejorados
@@ -21,6 +23,7 @@ const mockStores: Store[] = [
   {
     id_negocio: 1,
     nombre: 'Restaurante La Esperanza',
+    descripcion: 'Cocina tradicional con ingredientes locales.',
     direccion: 'Av. Principal 123, Ciudad',
     telefono: '555-1234',
     correo: 'contacto@laesperanza.com',
@@ -31,6 +34,7 @@ const mockStores: Store[] = [
   {
     id_negocio: 2,
     nombre: 'Farmacia San José',
+    descripcion: 'Medicamentos y productos de cuidado personal.',
     direccion: 'Calle Secundaria 456, Ciudad',
     telefono: '555-5678',
     correo: 'info@farmaciasanjose.com',
@@ -41,6 +45,7 @@ const mockStores: Store[] = [
   {
     id_negocio: 3,
     nombre: 'Supermercado El Ahorro',
+    descripcion: 'Despensa completa con promociones diarias.',
     direccion: 'Plaza Central 789, Ciudad',
     telefono: '555-9012',
     correo: 'ventas@elahorro.com',
@@ -88,9 +93,7 @@ export default function StoresSection() {
   }, []);
 
   // Función para obtener imagen del logo
-  const getStoreLogo = (store: Store) => {
-      return store.logo;
-  };
+  const getStoreLogo = (store: Store) => store.logo;
 
   if (loading) {
     return (
@@ -156,19 +159,19 @@ export default function StoresSection() {
               key={store.id_negocio}
               className="bg-white rounded-lg border hover:shadow-md transition-all duration-200 p-4"
             >
-              <div className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
-                {s.logo ? (
-                  <img src={s.logo} alt={s.nombre} className="w-full h-full object-cover" />
+              <div className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                {store.logo ? (
+                  <Image src={store.logo} alt={store.nombre} fill className="object-cover" sizes="96px" unoptimized />
                 ) : (
                   <span className="text-sm text-gray-400">Logo</span>
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">{s.nombre}</h3>
-                <p className="text-sm text-gray-600">{s.descripcion || 'Próximamente más detalles.'}</p>
+                <h3 className="font-semibold">{store.nombre}</h3>
+                <p className="text-sm text-gray-600">{store.descripcion || 'Próximamente más detalles.'}</p>
 
                 <a
-                  href={`/shop/${s.id_negocio}`}
+                  href={`/shop/${store.id_negocio}`}
                   className="inline-block mt-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   Visitar tienda
@@ -179,7 +182,7 @@ export default function StoresSection() {
                     <svg className="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.896 4.664 23.165l1.402-8.168L.132 9.21l8.2-1.192z" />
                     </svg>
-                    <span className="text-sm font-semibold">{Number(s.estrellas ?? 0).toFixed(1)}</span>
+                    <span className="text-sm font-semibold">{Number(store.estrellas ?? 0).toFixed(1)}</span>
                   </div>
                 </div>
               </div>

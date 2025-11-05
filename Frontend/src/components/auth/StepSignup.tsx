@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image';
 import { useUserStore } from '../../state/userStore';
 
 type StepSignupProps = {
@@ -64,14 +65,14 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#D55D7B]/30 to-[#D55D7B]/50 opacity-70 group-hover:opacity-80 transition-opacity duration-500" />
         {/* Blob decorativo */}
         <div className="pointer-events-none absolute -top-24 -right-24 w-[55vw] md:w-[32vw] aspect-square rounded-full blur-3xl opacity-40" style={{ background: 'radial-gradient(closest-side, #D55D7B55, transparent)' }} />
-        <img
+        <Image
           src="/images/clienteprueba.jpg"
           alt="Persona disfrutando de un café como cliente"
-          className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
-          loading="lazy"
-          decoding="async"
+          fill
+          className="pointer-events-none object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
           sizes="(min-width: 768px) 50vw, 100vw"
-          onError={(e) => (e.currentTarget.style.display = 'none')}
+          priority={false}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
 
   {/* Contenido */}
@@ -125,14 +126,14 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#4CC1AD]/30 to-[#4CC1AD]/50 opacity-70 group-hover:opacity-80 transition-opacity duration-500" />
         {/* Blob decorativo */}
         <div className="pointer-events-none absolute -bottom-24 -left-24 w-[55vw] md:w-[32vw] aspect-square rounded-full blur-3xl opacity-40" style={{ background: 'radial-gradient(closest-side, #4CC1AD55, transparent)' }} />
-        <img
+        <Image
           src="/images/dueñoprueba.jpg"
           alt="Negocio atendiendo a clientes"
-          className="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
-          loading="lazy"
-          decoding="async"
+          fill
+          className="pointer-events-none object-cover opacity-30 group-hover:opacity-40 transition-all duration-500 transform motion-safe:group-hover:scale-105"
           sizes="(min-width: 768px) 50vw, 100vw"
-          onError={(e) => (e.currentTarget.style.display = 'none')}
+          priority={false}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
 
         {/* Contenido */}

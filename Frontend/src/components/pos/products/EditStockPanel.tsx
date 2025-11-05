@@ -77,7 +77,7 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
     } finally {
       setSaving(false);
     }
-  }, [canUpdate, loadedInventory, inventory, cantidad, minimo, targetNegocioId, onSaved]);
+  }, [canUpdate, canCreate, loadedInventory, inventory, cantidad, minimo, targetNegocioId, product.id, onSaved]);
 
   useEffect(() => {
     const t = setTimeout(() => qtyRef.current?.focus(), 60);
