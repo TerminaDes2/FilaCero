@@ -10,7 +10,7 @@ interface SearchBoxProps {
 
 export const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, onClear }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const { registerSearchInput } = useShortcuts(true);
+  const { registerSearchInput } = useShortcuts({ optional: true });
 
   useEffect(() => {
     registerSearchInput(inputRef.current);
