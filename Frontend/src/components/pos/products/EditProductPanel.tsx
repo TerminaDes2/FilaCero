@@ -85,28 +85,7 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
     [categories, category],
   );
 
-  useEffect(() => {
-    const t = setTimeout(() => nameInputRef.current?.focus(), 60);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      } else if (
-        e.key === 'Enter' &&
-        !e.shiftKey &&
-        !e.altKey &&
-        !e.metaKey &&
-        !e.ctrlKey
-      ) {
-        e.preventDefault();
-        if (!saving) handleSave();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
-  }, [onClose, saving]);
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setError(null);
     if (!nombre.trim() || precio <= 0) {
       setError('El nombre y el precio son obligatorios.');
@@ -145,7 +124,28 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
     } finally {
       setSaving(false);
     }
-  };
+  }, [nombre, precio, active, sku, category, categories, initial.id, onSaved]);
+
+  useEffect(() => {
+    const t = setTimeout(() => nameInputRef.current?.focus(), 60);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
+  }, [onClose, saving, handleSave]);
 
   return (
     <>

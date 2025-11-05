@@ -117,7 +117,7 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  }, [confirm, reset, router]);
 
   const openHelp = useCallback(() => setShowHelp(true), []);
 
