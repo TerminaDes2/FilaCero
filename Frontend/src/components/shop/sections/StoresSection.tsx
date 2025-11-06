@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { api } from "../../../lib/api";
 
 type Store = {
@@ -98,15 +99,17 @@ export default function StoresSection() {
                 key={store.id_negocio}
                 className="flex h-full flex-col rounded-lg border bg-white p-4 shadow-sm transition hover:shadow-lg"
               >
-                <div className="mb-4 h-40 w-full overflow-hidden rounded-md bg-gray-100">
+                <div className="relative mb-4 h-40 w-full overflow-hidden rounded-md bg-gray-100">
                   {primaryImage ? (
-                    <img
+                    <Image
                       src={primaryImage}
                       alt={store.nombre}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      unoptimized
                       onError={(event) => {
-                        (event.target as HTMLImageElement).style.display = "none";
+                        event.currentTarget.style.display = "none";
                       }}
                     />
                   ) : (

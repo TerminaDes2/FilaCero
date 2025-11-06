@@ -1,6 +1,7 @@
 "use client";
 import { useUserStore } from "../../state/userStore";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import UserSidebar from "./sidebar";
@@ -30,12 +31,6 @@ export default function UserProfilePage() {
 
   if (!isAuthenticated || !user) return null;
 
-  const userOrders = (
-    user as typeof user & {
-      orders?: Array<{ id: number; fecha: string; total: number; estado: string }>;
-    }
-  ).orders ?? [];
-
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-100">
       {/* Sidebar fija */}
@@ -50,11 +45,16 @@ export default function UserProfilePage() {
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">{user.nombre}</span>
-            <img
-              src="/images/profile_picture.png"
-              alt="Avatar"
-              className="w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600"
-            />
+            <div className="relative h-8 w-8 overflow-hidden rounded-full border border-gray-300 dark:border-slate-600">
+              <Image
+                src="/images/profile_picture.png"
+                alt="Avatar"
+                fill
+                className="object-cover"
+                sizes="32px"
+                priority
+              />
+            </div>
             <button
               onClick={logout}
               className="text-sm font-medium bg-brand-500 text-white px-3 py-1.5 rounded-lg hover:bg-brand-600 transition"

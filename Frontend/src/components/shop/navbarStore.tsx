@@ -121,7 +121,14 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
                       ))
                     ) : (
                       <div className="p-6 flex flex-col items-center justify-center text-gray-400">
-                        <img src="https://via.placeholder.com/120x120?text=📭" alt="Sin notificaciones" className="opacity-70 mb-2" />
+                        <Image
+                          src="https://via.placeholder.com/120x120?text=%F0%9F%93%AD"
+                          alt="Sin notificaciones"
+                          width={120}
+                          height={120}
+                          className="mb-2 opacity-70"
+                          unoptimized
+                        />
                         <p className="text-sm font-medium">Aún no tienes notificaciones.</p>
                       </div>
                     )}

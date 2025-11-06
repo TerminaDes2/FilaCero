@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Image from "next/image";
 
 export default function StoreHeader({ store }: { store: any }) {
   return (
@@ -7,16 +8,21 @@ export default function StoreHeader({ store }: { store: any }) {
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           {/* Logo */}
-          <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+          <div className="relative h-24 w-24 overflow-hidden rounded-lg bg-gray-100">
             {store.logo ? (
-              <img
+              <Image
                 src={store.logo}
                 alt={store.nombre}
-                className="w-full h-full object-cover"
-                onError={(e) => ((e.target as HTMLImageElement).src = "/api/placeholder/96/96")}
+                fill
+                className="object-cover"
+                sizes="96px"
+                unoptimized
+                onError={(event) => {
+                  event.currentTarget.src = "/api/placeholder/96/96";
+                }}
               />
             ) : (
-              <div className="bg-gradient-to-br from-green-400 to-green-600 w-full h-full flex items-center justify-center text-white font-bold text-lg">
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-green-400 to-green-600 text-lg font-bold text-white">
                 {store.nombre.charAt(0)}
               </div>
             )}

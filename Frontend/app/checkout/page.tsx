@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import NavbarStore from "../../src/components/shop/navbarStore";
 import { useCart } from "../../src/components/shop/CartContext";
 import { useRouter } from "next/navigation";
@@ -25,7 +26,7 @@ export default function CheckoutPage() {
         id_negocio: localStorage.getItem("active_business_id") || "1",
         id_tipo_pago: paymentMethod === "efectivo" ? "1" : "2",
         items: items.map((it) => ({
-          id_producto: it.id,
+          id_producto: String(it.id),
           cantidad: it.cantidad,
           precio_unitario: it.precio,
         })),
@@ -88,12 +89,15 @@ export default function CheckoutPage() {
               <ul className="space-y-4 mb-6">
                 {items.map((it) => (
                   <li key={it.id} className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
+                    <div className="relative h-16 w-16 overflow-hidden rounded-md bg-gray-100">
                       {it.imagen ? (
-                        <img
+                        <Image
                           src={it.imagen}
                           alt={it.nombre}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                          unoptimized
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full text-gray-400 text-sm">
