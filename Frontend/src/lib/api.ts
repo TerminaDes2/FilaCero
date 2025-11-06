@@ -73,6 +73,7 @@ export interface UserInfo {
   fecha_nacimiento?: string;
   fecha_registro?: string;
   estado?: string;
+  credential_url?: string;
 }
 
 // --- 👇 Objeto principal con métodos actualizados ---
@@ -194,7 +195,7 @@ export const api = {
   
   getPublicBusinesses: async () => {
     try {
-      const businesses = await apiFetch<any[]>('businesses/public');
+      const businesses = await apiFetch<any[]>('businesses');
       console.log('✅ Negocios cargados desde API:', businesses);
       return businesses;
     } catch (error) {
@@ -203,6 +204,19 @@ export const api = {
       return [];
     }
   },
+  getBusinessById: async (id: string | number) => {
+    try {
+      // Asegúrate de que el ID sea string para la comparación
+      const businessId = String(id);
+      const business = await apiFetch<any>(`businesses/${businessId}`);
+      console.log('✅ Tienda cargada desde API:', business);
+      return business;
+    } catch (error) {
+      console.error('❌ Error cargando tienda:', error);
+      throw error;
+    }
+  },
+
   // --- Inventario ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
@@ -240,6 +254,10 @@ export const api = {
     if (!id_negocio) throw new Error('Se requiere un id_negocio válido');
     return apiFetch<any[]>(`store/${id_negocio}/products`);
   },
+  //Comentarios
+  getBusinessComments: (id_negocio: string | number) =>
+  apiFetch<any[]>(`businesses/${id_negocio}/ratings`),
+
 };
 
 // Helpers para negocio activo en el cliente
@@ -254,3 +272,4 @@ export const activeBusiness = {
     try { if (typeof window !== 'undefined') localStorage.removeItem('active_business_id'); } catch {}
   },
 };
+
