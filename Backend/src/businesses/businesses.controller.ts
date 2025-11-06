@@ -33,10 +33,7 @@ export class BusinessesController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin', 'empleado', 'usuario')
   getById(@Req() req: any, @Param('id') id: string) {
-    const userId = this.extractUserId(req);
     return this.service.getBusinessById(id);
   }
 

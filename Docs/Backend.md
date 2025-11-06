@@ -84,3 +84,11 @@ JWT_EXPIRES_IN=3600s
 - Migrar módulo `products` a Prisma para eliminar TypeORM.
 - Implementar rate limiting básico en auth y endpoints sensibles.
 - Publicar documentación OpenAPI (Nest Swagger) para alinear contratos con frontend.
+
+## Documentación Adicional
+Para un análisis exhaustivo del backend, consultar:
+- **`backend-comprehensive-analysis.md`**: Análisis completo de arquitectura, módulos, endpoints, base de datos, testing, deployment y guías de desarrollo.
+- **`backend-db-overview.md`**: Panorama detallado del esquema PostgreSQL y reglas de integridad.
+- **`verificacion-usuarios.md`**: Flujo completo del sistema de verificación de email.
+- **`implementaciones-negocio-rating.md`**: Documentación del módulo de valoraciones.
+- **`backend-linting.md`**: Configuración ESLint y scripts de calidad.

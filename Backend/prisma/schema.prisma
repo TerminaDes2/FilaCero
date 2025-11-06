@@ -22,16 +22,16 @@ model usuarios {
   correo_electronico         String                   @unique @map("correo_electronico") @db.VarChar(254)
   password_hash              String                   @map("password_hash") @db.VarChar(255)
   numero_telefono            String?                  @map("numero_telefono") @db.VarChar(30)
-  numero_cuenta              String?                  @unique @db.VarChar(30)
+  numero_cuenta              String?                  @unique @map("numero_cuenta") @db.VarChar(30)
   fecha_nacimiento           DateTime?                @map("fecha_nacimiento") @db.Date
-  avatar_url                 String?                  @db.VarChar(512)
-  credential_url             String?                  @db.VarChar(512)
-  edad                       Int?                     @db.SmallInt
   fecha_registro             DateTime?                @default(now()) @map("fecha_registro") @db.Timestamptz(6)
-  fecha_verificacion         DateTime?                @db.Timestamptz(6)
-  verificado                 Boolean                  @default(false)
-  verification_token         String?                  @unique @db.VarChar(128)
-  verification_token_expires DateTime?                @db.Timestamptz(6)
+  fecha_verificacion         DateTime?                @map("fecha_verificacion") @db.Timestamptz(6)
+  verificado                 Boolean                  @default(false) @map("verificado")
+  verification_token         String?                  @unique @map("verification_token") @db.VarChar(128)
+  verification_token_expires DateTime?                @map("verification_token_expires") @db.Timestamptz(6)
+  avatar_url                 String?                  @map("avatar_url") @db.VarChar(512)
+  credential_url             String?                  @map("credential_url") @db.VarChar(512)
+  edad                       Int?                     @map("edad") @db.SmallInt
   estado                     String?                  @map("estado") @db.VarChar(20)
   comentario                 comentario[]
   corte_caja                 corte_caja[]
@@ -55,12 +55,17 @@ model categoria {
 }
 
 model comentario {
-  id_comentario BigInt     @id @default(autoincrement())
-  id_usuario    BigInt?
-  comentario    String?
-  fecha         DateTime?  @db.Timestamptz(6)
-  usuarios      usuarios?  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
-  feedback      feedback[]
+  id_comentario  BigInt      @id @default(autoincrement())
+  id_negocio     BigInt      @map("id_negocio")
+  id_usuario     BigInt      @map("id_usuario")
+  titulo         String?     @map("titulo") @db.VarChar(150)
+  contenido      String      @map("comentario") @db.Text
+  creado_en      DateTime    @default(now()) @map("fecha") @db.Timestamptz(6)
+  actualizado_en DateTime?   @map("actualizado_en") @db.Timestamptz(6)
+  estado         String      @default("visible") @map("estado") @db.VarChar(20)
+  negocio        negocio     @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+  usuarios       usuarios    @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+  feedback       feedback[]
 }
 
 model corte_caja {
@@ -91,12 +96,16 @@ model detalle_venta {
 
 model feedback {
   id_feedback   BigInt      @id @default(autoincrement())
-  id_usuario    BigInt?
-  id_comentario BigInt?
-  calificacion  Int?        @db.SmallInt
-  fecha         DateTime?   @db.Timestamptz(6)
-  comentario    comentario? @relation(fields: [id_comentario], references: [id_comentario], onDelete: NoAction, onUpdate: NoAction)
-  usuarios      usuarios?   @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
+  id_comentario BigInt      @map("id_comentario")
+  id_usuario    BigInt      @map("id_usuario")
+  tipo          String      @default("like") @map("tipo") @db.VarChar(20)
+  mensaje       String?     @map("mensaje")
+  calificacion  Int?        @map("calificacion") @db.SmallInt
+  creado_en     DateTime    @default(now()) @map("fecha") @db.Timestamptz(6)
+  comentario    comentario  @relation(fields: [id_comentario], references: [id_comentario], onDelete: Cascade, onUpdate: NoAction)
+  usuarios      usuarios    @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_comentario, id_usuario, tipo])
 }
 
 model inventario {
@@ -148,6 +157,7 @@ model negocio {
   corte_caja                  corte_caja[]
   empleados                   empleados[]
   inventario                  inventario[]
+  comentarios                 comentario[]
   movimientos_inventario      movimientos_inventario[]
   usuarios                    usuarios?                     @relation(fields: [owner_id], references: [id_usuario], onDelete: Restrict, map: "fk_negocio_owner")
   negocio_rating              negocio_rating[]
