@@ -1,9 +1,12 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '../../../state/userStore';
+import { useBusinessStore } from '../../../state/businessStore';
 import { useSettingsStore } from '../../../state/settingsStore';
 import { useShortcuts } from '../../system/ShortcutProvider';
+import { useConfirm } from '../../system/ConfirmProvider';
+import { api } from '../../../lib/api';
 
 export interface TopRightInfoProps {
   employeeName?: string;
@@ -15,20 +18,46 @@ export interface TopRightInfoProps {
 }
 
 export const TopRightInfo: React.FC<TopRightInfoProps> = ({
-  employeeName = "Empleado",
-  role = "Rol",
-  businessName = "FilaCero",
+  employeeName,
+  role,
+  businessName,
   date,
   onNotificationsClick,
   showLogout = false
 }) => {
   const router = useRouter();
-  const { reset } = useUserStore();
+  const { reset, user } = useUserStore();
+  const { activeBusiness, setActiveBusiness } = useBusinessStore();
   const { locale, dateFormat } = useSettingsStore();
+  const confirm = useConfirm();
   let openHelp: (() => void) | null = null;
   try { ({ openHelp } = useShortcuts()); } catch {}
   const [mounted, setMounted] = useState(false);
+  const hasAttemptedLoad = useRef(false);
+  
   useEffect(() => setMounted(true), []);
+  
+  // Cargar negocio si el usuario es admin y no hay negocio activo (solo una vez)
+  useEffect(() => {
+    if (!user || activeBusiness || hasAttemptedLoad.current) return;
+    
+    const roleName = (user as any).role_name || user.role?.nombre_rol || '';
+    const idRol = user.id_rol;
+    
+    // Solo cargar si es admin
+    if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
+      hasAttemptedLoad.current = true;
+      api.listMyBusinesses()
+        .then((businesses) => {
+          if (businesses && businesses.length > 0) {
+            setActiveBusiness(businesses[0]);
+          }
+        })
+        .catch((err) => {
+          console.warn('Error cargando negocio:', err);
+        });
+    }
+  }, [user, activeBusiness, setActiveBusiness]);
   const today = useMemo(() => date ?? new Date(), [date]);
   const formatted = useMemo(() => {
     if (!mounted) return '';
@@ -55,11 +84,44 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
     router.push('/');
   };
 
-  // Pull dynamic name/role from store as primary source
-  const { name: storeName, backendRole } = useUserStore();
-  const looksLikeEmail = (v?: string | null) => !!v && /.+@.+\..+/.test(v);
-  const displayName = looksLikeEmail(storeName) ? (employeeName || 'Usuario') : (storeName || employeeName);
-  const displayRole = (backendRole && typeof backendRole === 'string') ? (backendRole === 'admin' ? 'Administrador' : backendRole) : role;
+  const handleLogoutClick = async () => {
+    const ok = await confirm({
+      title: 'Cerrar sesión',
+      description: '¿Seguro que quieres cerrar sesión en este dispositivo?',
+      confirmText: 'Cerrar sesión',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
+    if (!ok) return;
+    onLogout();
+  };
+
+  // Obtener datos dinámicos del store (prioridad sobre props)
+  const userName = user?.nombre || employeeName || 'Usuario';
+  
+  // Mapear rol del backend a nombre amigable
+  const getRoleName = (roleData: any): string => {
+    if (role) return role; // Si se pasa prop, usarla
+    
+    const roleName = roleData?.role_name || roleData?.role?.nombre_rol || '';
+    
+    switch (roleName) {
+      case 'superadmin':
+        return 'Super Administrador';
+      case 'admin':
+        return 'Administrador';
+      case 'empleado':
+        return 'Empleado';
+      case 'usuario':
+        return 'Cliente';
+      default:
+        return roleName || 'Usuario';
+    }
+  };
+  
+  const displayName = userName;
+  const displayRole = getRoleName(user);
+  const displayBusinessName = activeBusiness?.nombre || businessName || 'Mi Negocio';
 
   return (
     <aside className="flex flex-col items-end gap-1 select-none" aria-label="Información superior derecha">
@@ -95,7 +157,7 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
         {showLogout && (
           <button
             type="button"
-            onClick={onLogout}
+            onClick={handleLogoutClick}
             aria-label="Cerrar sesión"
             className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm focus:outline-none focus-visible:ring-2"
             style={{ background: 'rgba(255,255,255,0.7)', color: '#6d2530', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)' }}
@@ -118,9 +180,11 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
 
       {/* Nivel 2 */}
       <div className="text-right">
-        <div className="font-semibold tracking-tight text-lg md:text-xl" style={{ color: 'var(--pos-text-heading)' }}>{businessName}</div>
+        <div className="font-semibold tracking-tight text-lg md:text-xl" style={{ color: 'var(--pos-text-heading)' }}>{displayBusinessName}</div>
         <div className="text-[11px] md:text-xs" style={{ color: 'var(--pos-text-muted)' }}>{mounted ? formatted : '\u00A0'}</div>
       </div>
+
+      {/* Modal de confirmación reutilizado vía ConfirmProvider */}
     </aside>
   );
 };

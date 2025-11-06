@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
           <div className='flex items-center gap-3'>
             <RangeSelector value={range} onChange={setRange} />
             <BusinessSelector value={negocioId || ''} onChange={(id)=> { setNegocioId(id || null); if (id) activeBusiness.set(id); }} />
-            <TopRightInfo businessName='Analítica' />
+            <TopRightInfo showLogout />
           </div>
         </div>
 

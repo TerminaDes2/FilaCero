@@ -46,7 +46,14 @@ export default function POSPage() {
         const data = await res.json();
         if (!Array.isArray(data)) return;
         // Map API (id_categoria, nombre) -> store shape
-        const items = data.map((it: any) => ({ id: String(it.id_categoria ?? it.id ?? ''), name: String(it.nombre ?? it.name ?? ''), color: 'brand' as const }))
+        const items = data
+          .map((it: any) => ({
+            id: String(it.id_categoria ?? it.id ?? ''),
+            name: String(it.nombre ?? it.name ?? ''),
+            color: 'brand' as const,
+            scope: 'global' as const,
+            businessId: null as null,
+          }))
           .filter((it: any) => it.id && it.name);
         if (items.length) replaceAll(items);
       })
@@ -91,7 +98,7 @@ export default function POSPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo businessName='Punto de Venta' showLogout />
+            <TopRightInfo showLogout />
           </div>
           {/* Columns wrapper: products (left) + cart (right) */}
           <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>

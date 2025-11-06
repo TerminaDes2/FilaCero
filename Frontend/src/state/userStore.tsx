@@ -43,31 +43,34 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const checkAuth = async () => {
+    setLoading(true);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       
-      if (token) {
-  const userData = await api.me();
-  setUser(userData);
-  // Mapear rol por nombre (fallback a id numérico)
-  const roleName = (userData as any).role_name || userData.role?.nombre_rol || null;
-  const appRole = roleName === 'admin' || roleName === 'superadmin' || userData.id_rol === 2 ? 'OWNER' : 'CUSTOMER';
-        setRoleState(appRole);
-        console.log('✅ Sesión restaurada:', userData.nombre);
+      if (!token) {
+        // No hay token, no está autenticado
+        setLoading(false);
+        return;
       }
+      
+      // Verificar el token con el backend
+      const userData = await api.me();
+      setUser(userData);
+      
+      // Mapear rol por nombre (fallback a id numérico)
+      const roleName = (userData as any).role_name || userData.role?.nombre_rol || null;
+      const appRole = roleName === 'admin' || roleName === 'superadmin' || userData.id_rol === 2 ? 'OWNER' : 'CUSTOMER';
+      setRoleState(appRole);
+      setNameState(userData.nombre);
+      setBackendRoleState(roleName);
+      
+      console.log('✅ Sesión restaurada:', userData.nombre);
     } catch (error) {
-      console.error('Error verificando autenticación:', error);
+      console.error('❌ Error verificando autenticación:', error);
+      // Token inválido o expirado, limpiar sesión
       logout();
     } finally {
       setLoading(false);
-      try {
-        const stored = localStorage.getItem('auth_user');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setNameState(parsed?.name || parsed?.nombre || null);
-          setBackendRoleState((parsed?.role as BackendRole) ?? null);
-        }
-      } catch {}
     }
   };
 
@@ -92,6 +95,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('auth_user');
       localStorage.removeItem('userRole');
       localStorage.removeItem('selectedRole');
+      localStorage.removeItem('active-business-storage'); // Limpiar negocio activo (persist store)
+      localStorage.removeItem('active_business_id'); // Limpiar helper
     }
     console.log('✅ Sesión cerrada');
   }, []);

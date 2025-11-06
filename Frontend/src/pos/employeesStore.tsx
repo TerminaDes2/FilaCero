@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from '../lib/api';
 
 export interface Employee {
   id_empleado: string;
@@ -36,14 +37,11 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
   fetchEmployees: async (businessId: string) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${API_BASE}/api/employees/business/${businessId}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-      const data = await res.json();
+      const data = await api.getEmployeesByBusiness(businessId);
       set({ employees: data, loading: false });
     } catch (err: any) {
-      set({ error: err.message, loading: false });
+      const message = (err && err.message) || JSON.stringify(err) || 'Error obteniendo empleados';
+      set({ error: message, loading: false });
       throw err;
     }
   },
@@ -51,24 +49,15 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
   addEmployee: async (businessId: string, correo_electronico: string, nombre?: string) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${API_BASE}/api/employees/business/${businessId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ correo_electronico, nombre }),
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || `Error ${res.status}`);
-      }
-      const newEmployee = await res.json();
+      const newEmployee = await api.createEmployee(businessId, { correo_electronico, nombre });
       set((state) => ({
         employees: [newEmployee, ...state.employees],
         loading: false,
       }));
       return newEmployee;
     } catch (err: any) {
-      set({ error: err.message, loading: false });
+      const message = (err && err.message) || JSON.stringify(err) || 'Error creando empleado';
+      set({ error: message, loading: false });
       throw err;
     }
   },
@@ -76,22 +65,14 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
   updateEmployeeStatus: async (employeeId: string, estado: 'activo' | 'inactivo') => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${API_BASE}/api/employees/${employeeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ estado }),
-      });
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      const updated = await res.json();
+      const updated = await api.updateEmployee(employeeId, { estado });
       set((state) => ({
-        employees: state.employees.map((e) =>
-          e.id_empleado === employeeId ? updated : e
-        ),
+        employees: state.employees.map((e) => (e.id_empleado === employeeId ? updated : e)),
         loading: false,
       }));
     } catch (err: any) {
-      set({ error: err.message, loading: false });
+      const message = (err && err.message) || JSON.stringify(err) || 'Error actualizando empleado';
+      set({ error: message, loading: false });
       throw err;
     }
   },
@@ -99,19 +80,14 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
   removeEmployee: async (employeeId: string) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${API_BASE}/api/employees/${employeeId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error(`Error ${res.status}`);
+      await api.deleteEmployee(employeeId);
       set((state) => ({
-        employees: state.employees.map((e) =>
-          e.id_empleado === employeeId ? { ...e, estado: 'inactivo' as const } : e
-        ),
+        employees: state.employees.map((e) => (e.id_empleado === employeeId ? { ...e, estado: 'inactivo' as const } : e)),
         loading: false,
       }));
     } catch (err: any) {
-      set({ error: err.message, loading: false });
+      const message = (err && err.message) || JSON.stringify(err) || 'Error eliminando empleado';
+      set({ error: message, loading: false });
       throw err;
     }
   },

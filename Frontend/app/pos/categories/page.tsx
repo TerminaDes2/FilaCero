@@ -24,18 +24,14 @@ export default function POSCategoriesPage() {
             <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
             <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </h1>
-          <TopRightInfo employeeName='Juan Pérez' role='Cajero' businessName='Punto de Venta' showLogout />
+          <TopRightInfo showLogout />
         </div>
 
-        <div className='flex-1 min-h-0 overflow-hidden rounded-t-2xl pt-8 flex flex-col' style={{ background: 'var(--pos-bg-sand)', boxShadow: '0 2px 4px rgba(0,0,0,0.04), inset 0 0 0 1px var(--pos-border-soft)' }}>
+        <div className='flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-8 pb-3 flex flex-col' style={{ background: 'var(--pos-bg-sand)', boxShadow: '0 2px 4px rgba(0,0,0,0.04), inset 0 0 0 1px var(--pos-border-soft)' }}>
           {/* Categories section */}
-          <section className='flex-1 flex flex-col overflow-hidden min-h-0'>
-            <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-2' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
-              <div className='flex-1 overflow-y-auto custom-scroll-area'>
-                <CategoriesAdminPanel onNewCategory={()=>setIsPanelOpen(true)} />
-              </div>
-            </section>
-          </section>
+          <div className='flex-1 min-h-0 overflow-y-auto pr-1 pb-1 custom-scroll-area'>
+            <CategoriesAdminPanel onNewCategory={()=>setIsPanelOpen(true)} />
+          </div>
         </div>
         {isPanelOpen && (
           <NewCategoryPanel onClose={()=>setIsPanelOpen(false)} />

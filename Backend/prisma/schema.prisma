@@ -145,38 +145,44 @@ model movimientos_inventario {
 }
 
 model negocio {
-  id_negocio             BigInt                   @id @default(autoincrement())
-  nombre                 String                   @db.VarChar(200)
-  direccion              String?
-  telefono               String?                  @db.VarChar(30)
-  correo                 String?                  @db.VarChar(254)
-  logo                   String?
-  fecha_registro         DateTime?                @default(now()) @db.Timestamptz(6)
-  owner_id               BigInt?
-  corte_caja             corte_caja[]
-  empleados              empleados[]
-  inventario             inventario[]
-  categorias             categoria[]
-  movimientos_inventario movimientos_inventario[]
-  usuarios               usuarios?                @relation(fields: [owner_id], references: [id_usuario], onDelete: Restrict, map: "fk_negocio_owner")
-  reporte_ventas         reporte_ventas[]
-  venta                  venta[]
+  id_negocio                  BigInt                        @id @default(autoincrement())
+  nombre                      String                        @db.VarChar(200)
+  direccion                   String?
+  telefono                    String?                       @db.VarChar(30)
+  correo                      String?                       @db.VarChar(254)
+  logo_url                    String?
+  hero_image_url              String?
+  fecha_registro              DateTime?                     @default(now()) @db.Timestamptz(6)
+  owner_id                    BigInt?
+  corte_caja                  corte_caja[]
+  empleados                   empleados[]
+  inventario                  inventario[]
+  comentarios                 comentario[]
+  movimientos_inventario      movimientos_inventario[]
+  usuarios                    usuarios?                     @relation(fields: [owner_id], references: [id_usuario], onDelete: Restrict, map: "fk_negocio_owner")
+  negocio_rating              negocio_rating[]
+  producto_metricas_semanales producto_metricas_semanales[]
+  reporte_ventas              reporte_ventas[]
+  venta                       venta[]
 }
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model producto {
-  id_producto            BigInt                   @id @default(autoincrement())
-  id_categoria           BigInt?
-  nombre                 String                   @db.VarChar(200)
-  descripcion            String?
-  codigo_barras          String?                  @unique @db.VarChar(100)
-  precio                 Decimal                  @db.Decimal(12, 2)
-  imagen                 String?
-  estado                 String?                  @db.VarChar(30)
-  detalle_venta          detalle_venta[]
-  inventario             inventario[]
-  movimientos_inventario movimientos_inventario[]
-  categoria              categoria?               @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
+  id_producto                 BigInt                        @id @default(autoincrement())
+  id_categoria                BigInt?
+  nombre                      String                        @db.VarChar(200)
+  descripcion                 String?
+  descripcion_larga           String?
+  codigo_barras               String?                       @unique @db.VarChar(100)
+  precio                      Decimal                       @db.Decimal(12, 2)
+  imagen_url                  String?
+  estado                      String?                       @db.VarChar(30)
+  detalle_venta               detalle_venta[]
+  inventario                  inventario[]
+  movimientos_inventario      movimientos_inventario[]
+  categoria                   categoria?                    @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
+  producto_media              producto_media[]
+  producto_metricas_semanales producto_metricas_semanales[]
 }
 
 model reporte_ventas {
@@ -226,4 +232,41 @@ model empleados {
   usuarios    usuarios @relation(fields: [usuario_id], references: [id_usuario])
 
   @@unique([negocio_id, usuario_id], map: "uq_empleados_negocio_usuario")
+}
+
+model negocio_rating {
+  id_rating  BigInt   @id @default(autoincrement())
+  id_negocio BigInt
+  id_usuario BigInt
+  estrellas  Int      @db.SmallInt
+  comentario String?
+  creado_en  DateTime @default(now()) @db.Timestamptz(6)
+  negocio    negocio  @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+  usuarios   usuarios @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_negocio, id_usuario])
+}
+
+model producto_media {
+  id_media    BigInt   @id @default(autoincrement())
+  id_producto BigInt
+  url         String   @db.VarChar(2048)
+  principal   Boolean  @default(false)
+  tipo        String?  @db.VarChar(30)
+  creado_en   DateTime @default(now()) @db.Timestamptz(6)
+  producto    producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model producto_metricas_semanales {
+  id_metricas  BigInt   @id @default(autoincrement())
+  id_producto  BigInt
+  id_negocio   BigInt?
+  anio         Int
+  semana       Int
+  cantidad     Int
+  calculado_en DateTime @default(now()) @db.Timestamptz(6)
+  negocio      negocio? @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade, onUpdate: NoAction)
+  producto     producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_producto, id_negocio, anio, semana])
 }

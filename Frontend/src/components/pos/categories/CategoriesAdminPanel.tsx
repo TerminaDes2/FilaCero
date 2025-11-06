@@ -41,22 +41,20 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNe
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header & quick add */}
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <h2 className="text-base font-semibold text-[var(--pos-text-heading)]">Categorías</h2>
-        <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          <div className="relative w-full max-w-sm">
+      {/* Header: search left, action right (sin título interno) */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="relative w-full">
             <SearchBox value={query} onChange={setQuery} />
           </div>
-          <button
-            onClick={onNewCategory}
-            className="h-9 px-3 rounded-lg text-sm font-semibold text-white"
-            style={{ background: 'var(--pos-accent-green)', textShadow: '0 1px 0 rgba(0,0,0,0.25)' }}
-          >
-            Nueva categoría
-          </button>
         </div>
+        <button
+          onClick={onNewCategory}
+          className="h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2"
+          style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
+        >
+          Nueva categoría
+        </button>
       </div>
 
       {/* Grid of category chips with controls */}

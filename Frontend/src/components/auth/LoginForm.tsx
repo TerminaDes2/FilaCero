@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
-import { useUserStore } from "../../state/userStore"; // Ajusta la ruta
+import { useUserStore } from "../../state/userStore";
+import { useBusinessStore } from "../../state/businessStore";
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -17,7 +18,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
-  const { setName, setBackendRole } = useUserStore();
+  const { setName, setBackendRole, login } = useUserStore();
+  const { setActiveBusiness } = useBusinessStore();
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordValid = password.length >= 6;
@@ -47,14 +49,38 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			console.log('🔄 Obteniendo información completa del usuario...');
 			const userInfo = await api.me();
 			
-			// 3. Actualizar localStorage con la información completa
-			if (typeof window !== 'undefined') {
-				window.localStorage.setItem('auth_user', JSON.stringify(userInfo));
-			}
+			// 3. Actualizar store con login
+			login(res.token, userInfo);
 			
-			// 4. Redirigir según el rol (por nombre, con fallback)
+			// 4. Obtener negocios del usuario (si es admin/owner)
 			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
 			const idRol = userInfo.id_rol;
+			
+			console.log('👤 Información del usuario:', { roleName, idRol, userInfo });
+			
+			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
+				try {
+					console.log('🏪 Obteniendo negocios del usuario...');
+					const businesses = await api.listMyBusinesses();
+					
+					console.log('📦 Negocios recibidos:', businesses);
+					
+					if (businesses && businesses.length > 0) {
+						// Establecer el primer negocio como activo por defecto
+						setActiveBusiness(businesses[0]);
+						console.log('✅ Negocio activo establecido:', businesses[0]);
+					} else {
+						console.warn('⚠️ No se encontraron negocios para este usuario');
+					}
+				} catch (busErr) {
+					console.error('❌ Error al cargar negocios:', busErr);
+					// No bloquear el login si falla la carga de negocios
+				}
+			} else {
+				console.log('ℹ️ Usuario no es admin, saltando carga de negocios');
+			}
+			
+			// 5. Redirigir según el rol
 			console.log('✅ Rol (name):', roleName, ' id_rol:', idRol);
 
 			// Admin/superadmin -> POS; otros -> Shop

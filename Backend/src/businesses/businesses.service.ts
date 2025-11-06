@@ -126,11 +126,13 @@ export class BusinessesService {
     }
     
     const prisma = this.prisma as any;
+    
+    // Buscar negocios donde el usuario es owner o empleado
     const businesses = await prisma.negocio.findMany({
       where: { 
         OR: [
-          { owner_id: uid },
-          { usuarios_negocio: { some: { id_usuario: uid } } }
+          { owner_id: uid }, // Usuario es dueño
+          { empleados: { some: { usuario_id: uid } } } // Usuario es empleado
         ]
       },
       orderBy: { id_negocio: 'asc' },

@@ -130,15 +130,28 @@ export const api = {
     }),
 
   // --- Categorías ---
-  getCategories: () => 
-    apiFetch<any[]>('categories'),
+  getCategories: (params?: { id_negocio?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.id_negocio) {
+      queryParams.append('id_negocio', params.id_negocio);
+    }
+    const query = queryParams.toString();
+    const path = query ? `categories?${query}` : 'categories';
+    return apiFetch<any[]>(path);
+  },
   getCategoryById: (id: string) =>
     apiFetch<any>(`categories/${id}`),
-  createCategory: (categoryData: { nombre: string }) =>
-    apiFetch<any>('categories', {
+  createCategory: (categoryData: { nombre: string; negocioId?: string }) => {
+    // Enviar campos según DTO del backend: nombre y negocioId (camelCase)
+    const body: any = { nombre: categoryData.nombre };
+    if (categoryData.negocioId) {
+      body.negocioId = categoryData.negocioId;
+    }
+    return apiFetch<any>('categories', {
       method: 'POST',
-      body: JSON.stringify(categoryData),
-    }),
+      body: JSON.stringify(body),
+    });
+  },
   updateCategory: (id: string, categoryData: { nombre: string }) =>
     apiFetch<any>(`categories/${id}`, {
       method: 'PATCH',
@@ -148,6 +161,15 @@ export const api = {
     apiFetch<any>(`categories/${id}`, {
       method: 'DELETE',
     }),
+  // --- Empleados ---
+  getEmployeesByBusiness: (businessId: string) =>
+    apiFetch<any[]>(`employees/business/${businessId}`),
+  createEmployee: (businessId: string, payload: { correo_electronico: string; nombre?: string }) =>
+    apiFetch<any>(`employees/business/${businessId}`, { method: 'POST', body: JSON.stringify(payload) }),
+  updateEmployee: (employeeId: string, payload: { estado: string }) =>
+    apiFetch<any>(`employees/${employeeId}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  deleteEmployee: (employeeId: string) =>
+    apiFetch<any>(`employees/${employeeId}`, { method: 'DELETE' }),
   // --- Negocios ---
   createBusiness: (data: { nombre: string; direccion?: string; telefono?: string; correo?: string; logo?: string }) =>
     apiFetch<any>('businesses', { method: 'POST', body: JSON.stringify(data) }),

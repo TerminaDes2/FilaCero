@@ -7,18 +7,19 @@ import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { EmployeesAdminPanel } from '../../../src/components/pos/employees/EmployeesAdminPanel';
 import { NewEmployeePanel } from '../../../src/components/pos/employees/NewEmployeePanel';
 import { useSettingsStore } from '../../../src/state/settingsStore';
+import { useBusinessStore } from '../../../src/state/businessStore';
 
 export default function EmployeesPage() {
   const settings = useSettingsStore();
+  const { activeBusiness } = useBusinessStore();
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'grid' | 'list'>(settings.defaultView);
   const [statusFilter, setStatusFilter] = useState<'all' | 'activo' | 'inactivo'>('all');
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // TODO: Obtener businessId del contexto/store del usuario actual
-  // Por ahora usamos un ID hardcodeado para desarrollo
-  const businessId = '1';
+  // Tomar id de negocio activo desde el store (establecido al iniciar sesión o por TopRightInfo)
+  const businessId = activeBusiness?.id_negocio || '';
 
   // Keyboard: 'v' toggles view (grid/list) when not typing in input
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function EmployeesPage() {
             <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
             <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </h1>
-          <TopRightInfo businessName='Punto de Venta' showLogout />
+          <TopRightInfo showLogout />
         </div>
 
         {/* Panel area */}
@@ -126,11 +127,10 @@ export default function EmployeesPage() {
                 <div className='ml-0 md:ml-2 flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start'>
                   <button 
                     onClick={() => setIsPanelOpen(true)} 
-                    className='h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2 hover:opacity-90 transition-opacity' 
+                    className='h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2'
                     style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
                   >
-                    <span className='hidden sm:inline'>Nuevo empleado</span>
-                    <span className='sm:hidden'>+ Empleado</span>
+                    Nuevo empleado
                   </button>
                 </div>
               </div>
@@ -148,19 +148,28 @@ export default function EmployeesPage() {
           </header>
 
           <div className='flex-1 min-h-0 overflow-y-auto pr-1 pb-4 custom-scroll-area'>
-            <EmployeesAdminPanel 
-              key={refreshKey}
-              businessId={businessId}
-              search={search} 
-              statusFilter={statusFilter}
-              view={view}
-              onNewEmployee={() => setIsPanelOpen(true)}
-            />
+            {businessId ? (
+              <EmployeesAdminPanel 
+                key={refreshKey}
+                businessId={businessId}
+                search={search} 
+                statusFilter={statusFilter}
+                view={view}
+                onNewEmployee={() => setIsPanelOpen(true)}
+              />
+            ) : (
+              <div className='flex flex-col items-center justify-center py-20 gap-3'>
+                <div className='text-center'>
+                  <h3 className='text-lg font-bold mb-2'>Sin negocio activo</h3>
+                  <p className='text-sm opacity-70'>Inicia sesión como admin y selecciona un negocio para gestionar empleados.</p>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </main>
 
-      {isPanelOpen && (
+      {isPanelOpen && businessId && (
         <NewEmployeePanel 
           businessId={businessId}
           onClose={() => setIsPanelOpen(false)} 

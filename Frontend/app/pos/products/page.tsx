@@ -73,7 +73,7 @@ export default function ProductsAdminPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo businessName='Punto de Venta' showLogout />
+            <TopRightInfo showLogout />
           </div>
 
           {/* Panel area */}
