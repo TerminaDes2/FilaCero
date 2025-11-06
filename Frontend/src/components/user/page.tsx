@@ -17,10 +17,14 @@ export default function UserProfilePage() {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
 <<<<<<< HEAD
+<<<<<<< HEAD
       router.push('/login');
 =======
       router.push("/auth/login");
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+      router.push('/login');
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
     }
   }, [isAuthenticated, loading, router]);
 

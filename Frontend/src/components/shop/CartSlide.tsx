@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React from 'react';
 import Image from 'next/image';
 import { useCart } from './CartContext';
@@ -7,6 +8,12 @@ import React from "react";
 import { useCart } from "./CartContext";
 import Link from "next/link";
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+import React from 'react';
+import Image from 'next/image';
+import { useCart } from './CartContext';
+import Link from "next/link";
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 
 export default function CartSlide() {
   const { open, toggleOpen, items, total, updateQty, removeFromCart, clearCart } = useCart();
@@ -31,6 +38,9 @@ export default function CartSlide() {
         <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
           {items.length === 0 ? (
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
             <div className="text-sm text-gray-500">No hay productos en el carrito.</div>
           ) : items.map((it) => (
             <div key={it.id} className="flex items-center gap-3">
@@ -40,6 +50,7 @@ export default function CartSlide() {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">Img</div>
                 )}
+<<<<<<< HEAD
 =======
             <div className="flex flex-col items-center justify-center text-gray-500 mt-8">
               <svg
@@ -64,6 +75,13 @@ export default function CartSlide() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">Img</div>
                   )}
+=======
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="font-medium text-sm">{it.nombre}</div>
+                  <div className="text-sm font-semibold">{(it.precio * it.cantidad).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</div>
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
@@ -88,7 +106,10 @@ export default function CartSlide() {
                     </button>
                   </div>
                 </div>
+<<<<<<< HEAD
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
               </div>
             ))
           )}

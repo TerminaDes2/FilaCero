@@ -1,11 +1,15 @@
 "use client";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
 =======
+=======
+import Image from 'next/image';
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -15,7 +19,11 @@ import StoreSidebar from "../../src/components/shop/stores/StoreSidebar";
 import StoreProductList from "../../src/components/shop/stores/StoreProductList";
 import StoreLoading from "../../src/components/shop/stores/StoreLoading";
 import NavbarStore from "../../src/components/shop/navbarStore";
+<<<<<<< HEAD
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 type Product = {
   id_producto: number;
   nombre: string;
@@ -95,6 +103,9 @@ export default function StorePage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
       {/* Header de la tienda */}
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4 py-6">
@@ -256,12 +267,15 @@ export default function StorePage() {
             )}
           </div>
         </div>
+<<<<<<< HEAD
 =======
       <StoreHeader store={store} />
       <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
         <StoreSidebar store={store} />
         <StoreProductList productos={store.productos || []} />
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
       </div>
     </div>
   );

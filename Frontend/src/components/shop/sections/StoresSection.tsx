@@ -1,14 +1,22 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+"use client";
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '../../../lib/api';
+<<<<<<< HEAD
 =======
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 
 type Store = {
   id_negocio: number;
@@ -20,6 +28,9 @@ type Store = {
   logo_url?: string | null;
   hero_image_url?: string | null;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
   estrellas?: number;
   categorias?: string[];
   fecha_registro?: string;
@@ -63,12 +74,15 @@ const mockStores: Store[] = [
   }
 ];
 
+<<<<<<< HEAD
 =======
   fecha_registro?: string;
   estrellas?: number;
 };
 
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 export default function StoresSection() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,11 +120,17 @@ export default function StoresSection() {
   }, []);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Función para obtener imagen del logo
   const getStoreLogo = (store: Store) => store.logo;
 
 =======
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+  // Función para obtener imagen del logo
+  const getStoreLogo = (store: Store) => store.logo;
+
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
   if (loading) {
     return (
       <section className="max-w-6xl mx-auto px-4 py-10">
@@ -178,10 +198,13 @@ export default function StoresSection() {
               className="bg-white rounded-lg border hover:shadow-lg transition-all duration-200 p-4 flex flex-col"
             >
 <<<<<<< HEAD
+<<<<<<< HEAD
               <div className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center relative">
                 {store.logo ? (
                   <Image src={store.logo} alt={store.nombre} fill className="object-cover" sizes="96px" unoptimized />
 =======
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
               {/* Imagen o logo */}
               <div className="w-full h-40 rounded-md overflow-hidden bg-gray-100 mb-4 flex items-center justify-center">
                 {store.logo_url ? (
@@ -190,11 +213,15 @@ export default function StoresSection() {
                     alt={store.nombre}
                     className="w-full h-full object-cover"
                   />
+<<<<<<< HEAD
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
                 ) : (
                   <span className="text-sm text-gray-400">Sin logo</span>
                 )}
               </div>
+<<<<<<< HEAD
 <<<<<<< HEAD
               <div className="flex-1">
                 <h3 className="font-semibold">{store.nombre}</h3>
@@ -207,6 +234,8 @@ export default function StoresSection() {
                   Visitar tienda
                 </a>
 =======
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 
               {/* Información */}
               <div className="flex-1 flex flex-col justify-between">
@@ -228,7 +257,10 @@ export default function StoresSection() {
                     </p>
                   )}
                 </div>
+<<<<<<< HEAD
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
 
                 <div className="mt-4 flex items-center justify-between">
                   <Link
@@ -246,10 +278,14 @@ export default function StoresSection() {
                       <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.896 4.664 23.165l1.402-8.168L.132 9.21l8.2-1.192z" />
                     </svg>
 <<<<<<< HEAD
+<<<<<<< HEAD
                     <span className="text-sm font-semibold">{Number(store.estrellas ?? 0).toFixed(1)}</span>
 =======
                     <span>{Number(store.estrellas ?? 0).toFixed(1)}</span>
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+                    <span className="text-sm font-semibold">{Number(store.estrellas ?? 0).toFixed(1)}</span>
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
                   </div>
                 </div>
               </div>

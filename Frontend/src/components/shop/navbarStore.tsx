@@ -153,6 +153,9 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
           ) : (
             <div className="flex items-center gap-3">
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
               <Link
                 href="/login"
                 className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
@@ -163,12 +166,15 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
                 href="/register"
                 className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-500 transition shadow-glow"
               >
+<<<<<<< HEAD
 =======
               <Link href="/auth/login" className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:border-brand-500 hover:text-brand-600 transition">
                 Iniciar sesión
               </Link>
               <Link href="/auth/register" className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-500 transition shadow-glow">
 >>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
+=======
+>>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
                 Crear cuenta
               </Link>
             </div>
