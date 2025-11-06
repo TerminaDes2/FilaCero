@@ -53,7 +53,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		 Number.isInteger(ageValue) &&
 		 ageValue >= 16 &&
 		 ageValue <= 120);
-	const baseValid = emailValid && passwordStrongEnough && confirmValid && nameValid;
+	const baseValid =
+		emailValid &&
+		passwordStrongEnough &&
+		confirmValid &&
+		nameValid &&
+		(isOwner || accountNumberValid) &&
+		(isOwner || ageValid);
 	const formValid = baseValid && acceptedTerms;
 
 	const suggestions = useMemo(() => {

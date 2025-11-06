@@ -1,10 +1,21 @@
-// app/stores/[id]/page.tsx
 "use client";
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
+=======
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { api } from "../../src/lib/api";
+import StoreHeader from "../../src/components/shop/stores/StoreHeader";
+import StoreSidebar from "../../src/components/shop/stores/StoreSidebar";
+import StoreProductList from "../../src/components/shop/stores/StoreProductList";
+import StoreLoading from "../../src/components/shop/stores/StoreLoading";
+import NavbarStore from "../../src/components/shop/navbarStore";
+>>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
 type Product = {
   id_producto: number;
   nombre: string;
@@ -13,6 +24,7 @@ type Product = {
   imagen?: string | null;
   stock: number;
   stock_minimo: number;
+  categoria?: string;
 };
 
 type Store = {
@@ -26,29 +38,34 @@ type Store = {
   estrellas?: number;
   categorias?: string[];
   productos?: Product[];
+  hero_image_url?: string | null;
+  fecha_registro?: string;
 };
 
 export default function StorePage() {
   const params = useParams();
-  const storeId = params.id;
+  const storeId = params.id as string;
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStore = async () => {
-      if (!storeId) return;
-      
+      if (!storeId) return setError("ID de tienda no válido");
+
       try {
         setLoading(true);
-        const response = await fetch(`/api/stores/${storeId}`);
-        if (!response.ok) throw new Error('Tienda no encontrada');
-        const data = await response.json();
+        const data = await api.getBusinessById(storeId);
+
+        if (!data.productos) {
+          const productos = await api.getProducts({ id_negocio: storeId });
+          data.productos = productos;
+        }
+
         setStore(data);
-      } catch (err) {
-        console.error('Error cargando tienda:', err);
-        setError('No se pudo cargar la tienda');
-        setStore(null);
+      } catch (err: any) {
+        console.error("❌ Error al cargar tienda:", err);
+        setError("No se pudo cargar la tienda");
       } finally {
         setLoading(false);
       }
@@ -57,48 +74,27 @@ export default function StorePage() {
     fetchStore();
   }, [storeId]);
 
-  if (loading) {
+  if (loading) return <StoreLoading />;
+  if (error || !store)
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="md:col-span-1">
-                <div className="h-64 bg-gray-200 rounded-lg"></div>
-              </div>
-              <div className="md:col-span-2">
-                <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 pt-16 flex flex-col items-center justify-center text-center px-6">
+        <div className="text-6xl mb-4">😞</div>
+        <h1 className="text-2xl font-bold mb-4">{error || "Tienda no encontrada"}</h1>
+        <p className="text-gray-600 mb-6">
+          La tienda que buscas no existe o no está disponible.
+        </p>
+        <Link
+          href="/shop"
+          className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
+        >
+          Volver a tiendas
+        </Link>
       </div>
     );
-  }
-
-  if (error || !store) {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-6xl mx-auto px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Tienda no encontrada</h1>
-          <p className="text-gray-600 mb-8">{error || 'La tienda que buscas no existe o ha sido removida.'}</p>
-          <Link
-            href="/shop"
-            className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
-          >
-            Volver a tiendas
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
+<<<<<<< HEAD
       {/* Header de la tienda */}
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4 py-6">
@@ -260,6 +256,12 @@ export default function StorePage() {
             )}
           </div>
         </div>
+=======
+      <StoreHeader store={store} />
+      <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <StoreSidebar store={store} />
+        <StoreProductList productos={store.productos || []} />
+>>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
       </div>
     </div>
   );
