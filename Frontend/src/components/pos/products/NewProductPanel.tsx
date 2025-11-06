@@ -69,37 +69,13 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
   );
 
   // UX: foco y tecla Esc
-  useEffect(() => {
-    const t = setTimeout(() => {
-      nameInputRef.current?.focus();
-      nameInputRef.current?.select();
-    }, 60);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      } else if (e.key === 'Enter' && !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
-        // Submit dialog with Enter (only when not inside a textarea; here all inputs are single-line)
-        e.preventDefault();
-        if (!saving) {
-          handleSubmit();
-        }
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
-
   const generateSku = () => {
     if (!nombre.trim()) return;
     const gen = nombre.trim().toUpperCase().replace(/\s+/g, '-').slice(0, 16);
     setSku(gen);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     setError('');
     if (!nombre.trim() || precio <= 0) {
       setError('El nombre y el precio son obligatorios.');
@@ -158,7 +134,30 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({ onClose, onPro
     } finally {
       setSaving(false);
     }
-  };
+  }, [nombre, precio, active, sku, category, categories, stock, onProductCreated]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      nameInputRef.current?.focus();
+      nameInputRef.current?.select();
+    }, 60);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'Enter' && !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        if (!saving) {
+          handleSubmit();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose, saving, handleSubmit]);
 
   return (
     <>

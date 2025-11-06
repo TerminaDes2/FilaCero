@@ -1,6 +1,7 @@
 "use client";
 import { useUserStore } from "../../state/userStore";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import UserSidebar from "./sidebar";
@@ -16,7 +17,7 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push("/auth/login");
+  router.push("/auth/login");
     }
   }, [isAuthenticated, loading, router]);
 
@@ -44,11 +45,16 @@ export default function UserProfilePage() {
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">{user.nombre}</span>
-            <img
-              src="/images/profile_picture.png"
-              alt="Avatar"
-              className="w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600"
-            />
+            <div className="relative h-8 w-8 overflow-hidden rounded-full border border-gray-300 dark:border-slate-600">
+              <Image
+                src="/images/profile_picture.png"
+                alt="Avatar"
+                fill
+                className="object-cover"
+                sizes="32px"
+                priority
+              />
+            </div>
             <button
               onClick={logout}
               className="text-sm font-medium bg-brand-500 text-white px-3 py-1.5 rounded-lg hover:bg-brand-600 transition"
@@ -83,7 +89,7 @@ export default function UserProfilePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">
+                <label htmlFor="profile-name" className="text-sm text-gray-500 dark:text-gray-400 block mb-1">
                   Nombre
                 </label>
                 {isEditing ? (
@@ -91,6 +97,7 @@ export default function UserProfilePage() {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    id="profile-name"
                     className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm"
                   />
                 ) : (

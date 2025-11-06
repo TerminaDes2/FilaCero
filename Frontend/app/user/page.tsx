@@ -14,7 +14,7 @@ export default function UserProfilePage() {
   // 🔐 Redirección si no hay sesión
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push("/auth/login");
+  router.push("/auth/login");
     }
   }, [isAuthenticated, loading, router]);
 
@@ -27,6 +27,12 @@ export default function UserProfilePage() {
   }
 
   if (!isAuthenticated || !user) return null;
+
+  const userOrders = (
+    user as typeof user & {
+      orders?: Array<{ id: number; fecha: string; total: number; estado: string }>;
+    }
+  ).orders ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
@@ -66,7 +72,7 @@ export default function UserProfilePage() {
           
           </div>
           <section className="mt-8">
-            <UserOrdersSection orders={user.orders || []} />
+            <UserOrdersSection orders={userOrders} />
           </section>
 
         </main>

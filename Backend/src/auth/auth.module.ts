@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { RegisterAliasController } from './register-alias.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../prisma/prisma.module'; // 👈 ¡Importación crucial para el AuthService!
@@ -28,7 +29,7 @@ import { PrismaModule } from '../prisma/prisma.module'; // 👈 ¡Importación c
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, RegisterAliasController],
   providers: [
     AuthService, 
     JwtStrategy // 👈 La estrategia es esencial para validar el token JWT

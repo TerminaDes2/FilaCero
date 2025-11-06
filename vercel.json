@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/register",
+      "destination": "/auth/register"
+    },
+    {
+      "source": "/login",
+      "destination": "/auth/login"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/legal/privacidad"
+    },
+    {
+      "source": "/terms",
+      "destination": "/legal/terminos"
+    },
+    {
+      "source": "/api/register",
+      "destination": "/api/auth/register"
+    },
+    {
+      "source": "/api/login",
+      "destination": "/api/auth/login"
+    }
+  ]
+}

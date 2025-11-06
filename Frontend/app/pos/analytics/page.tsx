@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useSettingsStore } from '../../../src/state/settingsStore';
@@ -183,6 +183,10 @@ export default function AnalyticsPage() {
     if (stored) setNegocioId(stored);
     else if (process.env.NEXT_PUBLIC_NEGOCIO_ID) setNegocioId(String(process.env.NEXT_PUBLIC_NEGOCIO_ID));
   }, []);
+  const handleBusinessChange = useCallback((id: string) => {
+    setNegocioId(id || null);
+    if (id) activeBusiness.set(id);
+  }, []);
   const { loading, error, data } = useAnalytics(range, negocioId || undefined);
 
   return (
@@ -198,7 +202,7 @@ export default function AnalyticsPage() {
           </h1>
           <div className='flex items-center gap-3'>
             <RangeSelector value={range} onChange={setRange} />
-            <BusinessSelector value={negocioId || ''} onChange={(id)=> { setNegocioId(id || null); if (id) activeBusiness.set(id); }} />
+            <BusinessSelector value={negocioId || ''} onChange={handleBusinessChange} />
             <TopRightInfo businessName='Analítica' />
           </div>
         </div>
@@ -423,7 +427,13 @@ const RangeSelector: React.FC<{ value: RangeKey; onChange: (r: RangeKey)=>void }
 const BusinessSelector: React.FC<{ value: string; onChange: (id: string)=>void }>=({ value, onChange })=> {
   const [list, setList] = useState<Array<{ id_negocio: string; nombre: string }>>([]);
   const [loading, setLoading] = useState(false);
+  const fetchedRef = useRef(false);
   useEffect(() => {
+    if (fetchedRef.current) {
+      if (!value && list[0]) onChange(list[0].id_negocio);
+      return;
+    }
+    fetchedRef.current = true;
     let cancelled = false;
     setLoading(true);
     api.listMyBusinesses()
@@ -436,7 +446,7 @@ const BusinessSelector: React.FC<{ value: string; onChange: (id: string)=>void }
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [onChange, value, list]);
   return (
     <select value={value} onChange={(e)=> onChange(e.target.value)} className='text-[12px] rounded-md px-2' style={{ height: 'var(--pos-control-h)' }} aria-label='Negocio'>
       {list.map(b => <option key={b.id_negocio} value={b.id_negocio}>{b.nombre}</option>)}
