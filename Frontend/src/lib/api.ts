@@ -47,6 +47,16 @@ export interface LoginUserPayload {
   id: string;
   email: string;
   verified?: boolean;
+  verifications?: {
+    email: boolean;
+    sms: boolean;
+    credential: boolean;
+  };
+  verificationTimestamps?: {
+    email: string | null;
+    sms: string | null;
+    credential: string | null;
+  };
   avatarUrl?: string | null;
   credentialUrl?: string | null;
   accountNumber?: string | null;
@@ -74,6 +84,24 @@ export interface UserInfo {
   fecha_registro?: string;
   estado?: string;
   credential_url?: string;
+  verificado?: boolean;
+  verified?: boolean;
+  correo_verificado?: boolean;
+  correo_verificado_en?: string | null;
+  sms_verificado?: boolean;
+  sms_verificado_en?: string | null;
+  credencial_verificada?: boolean;
+  credencial_verificada_en?: string | null;
+  verifications?: {
+    email: boolean;
+    sms: boolean;
+    credential: boolean;
+  };
+  verificationTimestamps?: {
+    email: string | null;
+    sms: string | null;
+    credential: string | null;
+  };
 }
 
 // --- 👇 Objeto principal con métodos actualizados ---

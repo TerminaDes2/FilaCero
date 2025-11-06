@@ -10,7 +10,9 @@ export class VerifiedGuard implements CanActivate {
       return false;
     }
 
-    if (user.verificado || user.verified) {
+    const emailVerified = user.correo_verificado ?? user.verified ?? user.verifications?.email ?? false;
+
+    if (emailVerified) {
       return true;
     }
 

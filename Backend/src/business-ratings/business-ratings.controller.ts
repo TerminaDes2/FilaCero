@@ -80,7 +80,8 @@ export class BusinessRatingsController {
   }
 
   private ensureVerified(req: any) {
-    if (!req?.user?.verificado) {
+    const emailVerified = req?.user?.correo_verificado ?? req?.user?.verified ?? req?.user?.verifications?.email ?? false;
+    if (!emailVerified) {
       throw new ForbiddenException('La cuenta debe estar verificada para valorar un negocio');
     }
   }

@@ -20,6 +20,19 @@ interface JwtPayload {
     email: string;
 }
 
+type VerificationSnapshot = {
+    correo_verificado?: boolean;
+    correo_verificado_en?: Date | null;
+    sms_verificado?: boolean;
+    sms_verificado_en?: Date | null;
+    credencial_verificada?: boolean;
+    credencial_verificada_en?: Date | null;
+    avatar_url?: string | null;
+    credential_url?: string | null;
+    numero_cuenta?: string | null;
+    edad?: number | null;
+};
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -58,7 +71,9 @@ export class AuthService {
                     nombre: registerDto.name,
                     correo_electronico: registerDto.email,
                     password_hash: hashedPassword,
-                    verificado: false,
+                    correo_verificado: false,
+                    sms_verificado: false,
+                    credencial_verificada: false,
                     verification_token: verificationToken,
                     verification_token_expires: verificationExpires,
                     fecha_registro: new Date(),
@@ -100,7 +115,12 @@ export class AuthService {
                 id_usuario: true,
                 correo_electronico: true,
                 password_hash: true,
-                verificado: true,
+                correo_verificado: true,
+                correo_verificado_en: true,
+                sms_verificado: true,
+                sms_verificado_en: true,
+                credencial_verificada: true,
+                credencial_verificada_en: true,
                 avatar_url: true,
                 credential_url: true,
                 numero_cuenta: true,
@@ -146,7 +166,7 @@ export class AuthService {
             throw new NotFoundException('Token de verificación no válido o ya utilizado.');
         }
 
-        if (user.verificado) {
+        if (user.correo_verificado) {
             return {
                 message: 'La cuenta ya estaba verificada.',
                 ...this.generateToken({ id: user.id_usuario.toString(), email: user.correo_electronico }, user),
@@ -160,15 +180,20 @@ export class AuthService {
         const updated = await this.prisma.usuarios.update({
             where: { id_usuario: user.id_usuario },
             data: {
-                verificado: true,
-                fecha_verificacion: new Date(),
+                correo_verificado: true,
+                correo_verificado_en: new Date(),
                 verification_token: null,
                 verification_token_expires: null,
             },
             select: {
                 id_usuario: true,
                 correo_electronico: true,
-                verificado: true,
+                correo_verificado: true,
+                correo_verificado_en: true,
+                sms_verificado: true,
+                sms_verificado_en: true,
+                credencial_verificada: true,
+                credencial_verificada_en: true,
                 avatar_url: true,
                 credential_url: true,
                 numero_cuenta: true,
@@ -181,9 +206,15 @@ export class AuthService {
             email: updated.correo_electronico,
         };
 
+        const emailVerifiedAt = updated.correo_verificado_en
+            ? updated.correo_verificado_en.toISOString()
+            : null;
+        const completionTimestamp = emailVerifiedAt ?? new Date().toISOString();
+
         return {
             message: 'Cuenta verificada correctamente.',
-            verifiedAt: new Date().toISOString(),
+            verifiedAt: completionTimestamp,
+            emailVerifiedAt,
             ...this.generateToken(payload, updated),
         };
     }
@@ -191,21 +222,28 @@ export class AuthService {
     // Función auxiliar para generar el token
     private generateToken(
         payload: JwtPayload,
-        user?: {
-            verificado?: boolean;
-            avatar_url?: string | null;
-            credential_url?: string | null;
-            numero_cuenta?: string | null;
-            edad?: number | null;
-        },
+        user?: VerificationSnapshot,
     ) {
         const token = this.jwtService.sign(payload);
+        const emailVerified = user?.correo_verificado ?? false;
+        const smsVerified = user?.sms_verificado ?? false;
+        const credentialVerified = user?.credencial_verificada ?? false;
         return { 
             token, 
             user: { 
                 id: payload.id, 
                 email: payload.email,
-                verified: user?.verificado ?? false,
+                verified: emailVerified,
+                verifications: {
+                    email: emailVerified,
+                    sms: smsVerified,
+                    credential: credentialVerified,
+                },
+                verificationTimestamps: {
+                    email: user?.correo_verificado_en ? user.correo_verificado_en.toISOString() : null,
+                    sms: user?.sms_verificado_en ? user.sms_verificado_en.toISOString() : null,
+                    credential: user?.credencial_verificada_en ? user.credencial_verificada_en.toISOString() : null,
+                },
                 avatarUrl: user?.avatar_url ?? null,
                 credentialUrl: user?.credential_url ?? null,
                 accountNumber: user?.numero_cuenta ?? null,
