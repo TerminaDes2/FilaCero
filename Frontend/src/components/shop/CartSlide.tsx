@@ -1,19 +1,14 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-import React from 'react';
-import Image from 'next/image';
-import { useCart } from './CartContext';
-=======
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
 import React from "react";
 import { useCart } from "./CartContext";
-import Link from "next/link";
->>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
-=======
-import React from 'react';
-import Image from 'next/image';
-import { useCart } from './CartContext';
-import Link from "next/link";
->>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
+
+const currencyFormatter = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+});
 
 export default function CartSlide() {
   const { open, toggleOpen, items, total, updateQty, removeFromCart, clearCart } = useCart();
@@ -25,7 +20,7 @@ export default function CartSlide() {
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="p-4 flex flex-col border-b" style={{ borderColor: "var(--fc-border-soft)" }}>
+  <div className="p-4 flex flex-col border-b border-gray-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Tu carrito</h3>
             <button onClick={() => toggleOpen(false)} aria-label="Cerrar carrito" className="p-2 rounded hover:bg-gray-100">
@@ -35,23 +30,8 @@ export default function CartSlide() {
           <p className="text-sm text-gray-500 mt-1">Arma tu carrito de productos.</p>
         </div>
 
-        <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+  <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
           {items.length === 0 ? (
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
-            <div className="text-sm text-gray-500">No hay productos en el carrito.</div>
-          ) : items.map((it) => (
-            <div key={it.id} className="flex items-center gap-3">
-              <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100 relative">
-                {it.imagen ? (
-                  <Image src={it.imagen} alt={it.nombre} fill className="object-cover" sizes="64px" unoptimized />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">Img</div>
-                )}
-<<<<<<< HEAD
-=======
             <div className="flex flex-col items-center justify-center text-gray-500 mt-8">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -67,65 +47,47 @@ export default function CartSlide() {
               <p className="text-sm font-medium">No tienes productos en tu carrito</p>
             </div>
           ) : (
-            items.map((it) => (
-              <div key={it.id} className="flex items-center gap-3 p-2 border rounded-lg hover:shadow-sm transition">
-                <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                  {it.imagen ? (
-                    <img src={it.imagen} alt={it.nombre} className="w-full h-full object-cover" />
+            items.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 p-2 border rounded-lg hover:shadow-sm transition">
+                <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100 relative">
+                  {item.imagen ? (
+                    <Image src={item.imagen} alt={item.nombre} fill className="object-cover" sizes="64px" unoptimized />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">Img</div>
+                    <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">Sin imagen</div>
                   )}
-=======
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-sm">{it.nombre}</div>
-                  <div className="text-sm font-semibold">{(it.precio * it.cantidad).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</div>
->>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">{it.nombre}</div>
-                    <div className="text-sm font-semibold">
-                      {(it.precio * it.cantidad).toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "MXN",
-                      })}
-                    </div>
+                    <span className="font-medium text-sm">{item.nombre}</span>
+                    <span className="text-sm font-semibold">{currencyFormatter.format(item.precio * item.cantidad)}</span>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <button className="px-2 py-1 border rounded" onClick={() => updateQty(it.id, it.cantidad - 1)}>
+                    <button className="px-2 py-1 border rounded" onClick={() => updateQty(item.id, item.cantidad - 1)}>
                       -
                     </button>
-                    <span className="px-2">{it.cantidad}</span>
-                    <button className="px-2 py-1 border rounded" onClick={() => updateQty(it.id, it.cantidad + 1)}>
+                    <span className="px-2">{item.cantidad}</span>
+                    <button className="px-2 py-1 border rounded" onClick={() => updateQty(item.id, item.cantidad + 1)}>
                       +
                     </button>
-                    <button className="ml-2 text-sm text-red-600" onClick={() => removeFromCart(it.id)}>
+                    <button className="ml-2 text-sm text-red-600" onClick={() => removeFromCart(item.id)}>
                       Eliminar
                     </button>
                   </div>
                 </div>
-<<<<<<< HEAD
->>>>>>> 4338d8850fee87186cc5d22c785207f090563c40
-=======
->>>>>>> 53b96940f7f20f9c5ba16fab7430fea9dcad3b18
               </div>
             ))
           )}
         </div>
 
         {items.length > 0 && (
-          <div className="p-4 border-t" style={{ borderColor: "var(--fc-border-soft)" }}>
+          <div className="p-4 border-t border-gray-200 dark:border-slate-800">
             <div className="flex items-center justify-between mb-3">
-              <div className="text-sm text-gray-600">Total</div>
-              <div className="text-lg font-bold">
-                {total.toLocaleString(undefined, { style: "currency", currency: "USD" })}
-              </div>
+              <span className="text-sm text-gray-600">Total</span>
+              <span className="text-lg font-bold">{currencyFormatter.format(total)}</span>
             </div>
             <div className="flex gap-2">
               <button
-                className="fc-btn-secondary flex-1 border border-gray-300 rounded-md py-2"
+                className="flex-1 border border-gray-300 rounded-md py-2 text-sm font-medium hover:bg-gray-100 transition"
                 onClick={() => {
                   clearCart();
                   toggleOpen(false);
@@ -133,23 +95,18 @@ export default function CartSlide() {
               >
                 Vaciar carrito
               </button>
-<button
-  className="flex-1 bg-green-600 text-white rounded-md py-2 hover:bg-green-500 transition"
-  onClick={() => toggleOpen(false)}
->
-  <Link
-    href="/checkout"
-    className="block w-full h-full text-center"
-  >
-    Continuar
-  </Link>
-</button>
+              <Link
+                href="/checkout"
+                onClick={() => toggleOpen(false)}
+                className="flex-1 bg-green-600 text-white rounded-md py-2 text-center font-semibold hover:bg-green-500 transition"
+              >
+                Continuar
+              </Link>
             </div>
           </div>
         )}
       </div>
 
-      {/* sombreado */}
       <div
         onClick={() => toggleOpen(false)}
         className={`fixed inset-0 bg-black/30 z-30 transition-opacity ${
