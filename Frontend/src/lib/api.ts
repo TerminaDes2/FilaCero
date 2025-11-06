@@ -85,7 +85,12 @@ export const api = {
   me: () => apiFetch<UserInfo>('auth/me'),
 
   // --- Productos ---
-  getProducts: (params?: { search?: string; status?: string; id_negocio?: string }) => {
+  getProducts: (params?: { 
+    search?: string; 
+    status?: string; 
+    id_negocio?: string;
+    categoria?: string; // ← Agrega este parámetro
+  }) => {
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
       let negocioId: string | undefined = undefined;
@@ -143,12 +148,23 @@ export const api = {
     apiFetch<any>(`categories/${id}`, {
       method: 'DELETE',
     }),
-
   // --- Negocios ---
   createBusiness: (data: { nombre: string; direccion?: string; telefono?: string; correo?: string; logo?: string }) =>
     apiFetch<any>('businesses', { method: 'POST', body: JSON.stringify(data) }),
+  
   listMyBusinesses: () => apiFetch<any[]>('businesses/my'),
-
+  
+  getPublicBusinesses: async () => {
+    try {
+      const businesses = await apiFetch<any[]>('businesses/public');
+      console.log('✅ Negocios cargados desde API:', businesses);
+      return businesses;
+    } catch (error) {
+      console.error('❌ Error cargando negocios públicos:', error);
+      // Retorna array vacío en lugar de lanzar error
+      return [];
+    }
+  },
   // --- Inventario ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();

@@ -10,7 +10,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { CategoriesModule } from './categories/categories.module';
 import { SalesModule } from './sales/sales.module';
 import { BusinessesModule } from './businesses/businesses.module';
-import { EmployeesModule } from './employees/employees.module';
+import { BusinessRatingsModule } from './business-ratings/business-ratings.module';
 
 @Module({
   imports: [
@@ -22,11 +22,9 @@ import { EmployeesModule } from './employees/employees.module';
     ProductsModule, // módulo de productos (Prisma)
     InventoryModule, // módulo de inventario (Prisma)
     CategoriesModule, // módulo de categorías (Prisma)
-    SalesModule, // módulo de ventas (Prisma)
+    SalesModule, // módulo de ventas (Prisma) <-- AQUÍ FALTABA LA COMA
     BusinessesModule, // módulo de negocios (Prisma)
-    EmployeesModule, // módulo de empleados (Prisma)
-    // 👇 si tu ProductModule lo migras a Prisma, puedes dejarlo
-    // ProductModule,
+    BusinessRatingsModule, // módulo de valoraciones
   ],
   controllers: [HealthController],
 })

@@ -19,6 +19,13 @@ cache/
 server/
 static/
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+
 # Archivos de entorno
 .env.local
 .env.*

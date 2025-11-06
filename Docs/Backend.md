@@ -31,7 +31,7 @@ Backend/
 |--------|----------|-------------|-------|
 | Auth | `/api/auth` | Registro, login, verificación y refresh | Retorna JWT con claims de rol y negocio activo |
 | Users | `/api/users` | Perfil, actualización de datos y búsqueda | Requiere JWT, usa Prisma `usuarios` |
-| Businesses | `/api/businesses` | CRUD de negocios, branding, horarios, miembros | Valida asociación en `usuarios_negocio` |
+| Businesses | `/api/businesses` | Listado público, CRUD de negocios, branding, horarios, miembros | Pública: `GET /api/businesses`; operaciones mutables validan `usuarios_negocio` |
 | Categories | `/api/categories` | Listado combinado (global + negocio) y CRUD | Todas las operaciones requieren negocio activo; globales son de solo lectura |
 | Inventory | `/api/inventory` / `/api/movements` | Existencias por producto/negocio y registro de ajustes | Consistente con triggers PostgreSQL |
 | Products | `/api/products` | Catálogo y media. Actualmente TypeORM, se migra a Prisma | Filtra por negocio vía inventario |
@@ -84,3 +84,11 @@ JWT_EXPIRES_IN=3600s
 - Migrar módulo `products` a Prisma para eliminar TypeORM.
 - Implementar rate limiting básico en auth y endpoints sensibles.
 - Publicar documentación OpenAPI (Nest Swagger) para alinear contratos con frontend.
+
+## Documentación Adicional
+Para un análisis exhaustivo del backend, consultar:
+- **`backend-comprehensive-analysis.md`**: Análisis completo de arquitectura, módulos, endpoints, base de datos, testing, deployment y guías de desarrollo.
+- **`backend-db-overview.md`**: Panorama detallado del esquema PostgreSQL y reglas de integridad.
+- **`verificacion-usuarios.md`**: Flujo completo del sistema de verificación de email.
+- **`implementaciones-negocio-rating.md`**: Documentación del módulo de valoraciones.
+- **`backend-linting.md`**: Configuración ESLint y scripts de calidad.

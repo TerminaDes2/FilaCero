@@ -1,3 +1,4 @@
+// backend/src/businesses/dto/create-business.dto.ts
 import { IsEmail, IsOptional, IsString, IsUrl, MinLength, MaxLength } from 'class-validator';
 
 export class CreateBusinessDto {
@@ -22,7 +23,7 @@ export class CreateBusinessDto {
   @IsOptional()
   @IsUrl({}, { message: 'El logo debe ser una URL válida' })
   @MaxLength(2048)
-  logo_url?: string;
+  logo?: string; // Cambiado de logo_url a logo
 
   @IsOptional()
   @IsUrl({}, { message: 'La imagen principal debe ser una URL válida' })
