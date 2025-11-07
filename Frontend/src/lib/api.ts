@@ -244,6 +244,7 @@ export const api = {
       throw error;
     }
   },
+
   // --- Inventario ---
   getInventory: (params: { id_negocio?: string; id_producto?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams(params as any).toString();
@@ -281,6 +282,10 @@ export const api = {
     if (!id_negocio) throw new Error('Se requiere un id_negocio válido');
     return apiFetch<any[]>(`store/${id_negocio}/products`);
   },
+  //Comentarios
+  getBusinessComments: (id_negocio: string | number) =>
+  apiFetch<any[]>(`businesses/${id_negocio}/ratings`),
+
 };
 
 // Helpers para negocio activo en el cliente
@@ -295,3 +300,4 @@ export const activeBusiness = {
     try { if (typeof window !== 'undefined') localStorage.removeItem('active_business_id'); } catch {}
   },
 };
+
