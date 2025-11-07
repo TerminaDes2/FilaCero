@@ -18,7 +18,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ withWordmark = true, class
         alt="FilaCero" 
         width={size} 
         height={size} 
-        className="drop-shadow-sm" 
+        className="drop-shadow-sm"
+        style={{ height: 'auto', width: 'auto', maxHeight: size, maxWidth: size }}
       />
       {withWordmark && (
         <span className="hidden sm:inline text-[2rem] font-extrabold leading-none select-none">

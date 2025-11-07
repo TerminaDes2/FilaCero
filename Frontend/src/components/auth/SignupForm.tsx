@@ -96,9 +96,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				name.trim(),
 				email.trim().toLowerCase(),
 				password,
-				roleName,
-				isOwner ? undefined : accountNumberClean || undefined,
-				isOwner ? undefined : ageValue
+				roleName
 			);
 			if(typeof window !== 'undefined') {
 				window.localStorage.setItem('auth_token', res.token);

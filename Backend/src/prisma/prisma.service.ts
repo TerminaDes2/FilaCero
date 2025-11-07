@@ -11,4 +11,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleDestroy() {
     await this.$disconnect();
   }
+
+  // Fallback getters for models when the generated Prisma Client types are out of date
+  // This ensures TypeScript doesn't block compilation in environments where the client
+  // hasn't been regenerated yet (e.g., outside Docker). At runtime, PrismaClient exposes
+  // these model delegates if they exist in schema.prisma.
+  get empleados(): any {
+    return (this as any).empleados;
+  }
 }

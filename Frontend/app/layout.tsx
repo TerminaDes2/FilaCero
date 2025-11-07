@@ -1,12 +1,10 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
 import React from 'react';
 import { UserProvider } from '../src/state/userStore'; // Ajusta la ruta
 import ClientSettingsApplier from '../src/components/ClientSettingsApplier';
 import { ConfirmProvider } from '../src/components/system/ConfirmProvider';
 
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'FilaCero',
@@ -18,7 +16,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+  <body>
         <UserProvider>
           <ClientSettingsApplier />
           <ConfirmProvider>
