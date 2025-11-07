@@ -34,7 +34,7 @@ export class BusinessesController {
   }
 
   @Get(':id')
-  getById(@Req() req: any, @Param('id') id: string) {
+  getById(@Param('id') id: string) {
     return this.service.getBusinessById(id);
   }
 

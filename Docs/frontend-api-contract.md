@@ -5,8 +5,9 @@ Este documento resume los cambios que el backend introducirá durante la refacto
 ## 1. Nuevos Campos en Recursos Existentes
 
 ### Usuario (`/api/users/:id`)
-- `verificado: boolean`
-- `fecha_verificacion: string | null` (ISO)
+- `verified: boolean`
+- `verifications: { email: boolean; sms: boolean; credential: boolean }`
+- `verificationTimestamps: { email: string | null; sms: string | null; credential: string | null }`
 - `avatar_url: string | null`
 - `credential_url: string | null`
 
@@ -115,8 +116,9 @@ Este documento resume los cambios que el backend introducirá durante la refacto
 
 ## 3. Reglas de Negocio (para UI)
 - Usuarios no verificados:
-  - Mostrar banner solicitando verificación.
-  - Limitar acceso a ciertas funciones de gestión (crear productos, registrar ventas) hasta confirmar correo y subir credencial.
+  - Verificar `user.verified` (correo) para habilitar onboarding básico.
+  - Consultar `user.verifications.sms` y `user.verifications.credential` para liberar POS y acciones presenciales.
+  - Mostrar banner explicando qué canal falta completar.
 - Ratings:
   - Mostrar promedio con fracciones (usar dato backend).
   - Evitar permitir múltiples votos; refrescar conteo tras enviar rating.
