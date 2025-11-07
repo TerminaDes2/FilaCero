@@ -33,8 +33,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const [acceptedTerms, setAcceptedTerms] = useState(false);
 	const [showLegal, setShowLegal] = useState<null | 'terminos' | 'privacidad'>(null);
 	const [error, setError] = useState<string | null>(null);
-	const [accountNumber, setAccountNumber] = useState("");
-	const [age, setAge] = useState("");
 	const router = useRouter();
 	const { role } = useUserStore();
 	const isOwner = role === 'OWNER';

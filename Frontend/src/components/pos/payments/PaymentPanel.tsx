@@ -50,8 +50,6 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalDue, currency =
     // Al elegir tarjeta (crédito/débito), fijar recibido = total y bloquear input
     if (method === 'credito' || method === 'debito') {
       setInput(String(totalDue.toFixed(2)));
-    } else if (amountReceived === totalDue) {
-      // mantener si el usuario ya había puesto exacto
     }
   }, [method, totalDue]);
 

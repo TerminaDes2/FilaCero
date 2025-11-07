@@ -1,10 +1,8 @@
 import '../globals.css';
-import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
 import React from 'react';
 import { ShortcutProvider } from '../../src/components/system/ShortcutProvider';
 
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'FilaCero',
@@ -14,7 +12,7 @@ export const metadata: Metadata = {
 // Nota: En layouts anidados no debemos renderizar <html> ni <body>.
 export default function PosLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={inter.className}>
+    <div>
       <ShortcutProvider>
         {children}
       </ShortcutProvider>

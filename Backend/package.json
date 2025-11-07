@@ -24,7 +24,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.3.9",
     "@nestjs/typeorm": "^10.0.0",
-    "@prisma/client": "^6.16.2",
+    "@prisma/client": "^6.18.0",
     "@types/bcrypt": "^6.0.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",

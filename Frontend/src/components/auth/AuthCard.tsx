@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import Image from 'next/image';
 
 interface AuthCardProps {
   title?: string;
@@ -46,7 +47,7 @@ export function AuthCard({ children }: AuthCardProps) {
               className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow hover:bg-gray-50 transition text-gray-700 font-medium"
               onClick={() => {/* lógica de Google Auth */}}
             >
-              <img src="/images/google.svg" alt="Google" className="w-5 h-5" />
+              <Image src="/images/google.svg" alt="Google" width={20} height={20} />
               Continuar con Google
             </button>
           </div>

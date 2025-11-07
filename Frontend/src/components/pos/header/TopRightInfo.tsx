@@ -29,9 +29,8 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
   const { reset, user } = useUserStore();
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
   const { locale, dateFormat } = useSettingsStore();
+  const { openHelp } = useShortcuts({ optional: true });
   const confirm = useConfirm();
-  let openHelp: (() => void) | null = null;
-  try { ({ openHelp } = useShortcuts()); } catch {}
   const [mounted, setMounted] = useState(false);
   const hasAttemptedLoad = useRef(false);
   

@@ -11,7 +11,7 @@ import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
 import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
-import { useCategoriesStore } from '../../src/pos/categoriesStore';
+import { useCategoriesStore, type CategoryItem } from '../../src/pos/categoriesStore';
 // Categories store not needed here
 
 // Mock product dataset (frontend only)
@@ -46,15 +46,19 @@ export default function POSPage() {
         const data = await res.json();
         if (!Array.isArray(data)) return;
         // Map API (id_categoria, nombre) -> store shape
-        const items = data
-          .map((it: any) => ({
-            id: String(it.id_categoria ?? it.id ?? ''),
-            name: String(it.nombre ?? it.name ?? ''),
+        const items: CategoryItem[] = data.map((it: any) => {
+          const id = String(it.id_categoria ?? it.id ?? it.uuid ?? '');
+          const name = String(it.nombre ?? it.name ?? '').trim();
+          const negocio = it.negocio_id ?? it.negocioId ?? null;
+          const scope: CategoryItem['scope'] = negocio != null ? 'business' : 'global';
+          return {
+            id,
+            name,
             color: 'brand' as const,
-            scope: 'global' as const,
-            businessId: null as null,
-          }))
-          .filter((it: any) => it.id && it.name);
+            scope,
+            businessId: negocio != null ? String(negocio) : null,
+          };
+        }).filter((it) => it.id && it.name);
         if (items.length) replaceAll(items);
       })
       .catch(() => { /* silent: keep empty -> only 'Todas' tab */ })

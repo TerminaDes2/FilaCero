@@ -1,5 +1,10 @@
 // backend/src/businesses/businesses.service.ts
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
@@ -16,6 +21,7 @@ const MAX_PUBLIC_LIMIT = 50;
 export class BusinessesService {
   constructor(private prisma: PrismaService) {}
 
+  // Listado público optimizado con SQL raw (muestra resumen y categorías)
   async listPublicBusinesses(filters: PublicBusinessFilters = {}) {
     const prisma = this.prisma as any;
     const search = filters.search?.trim();
@@ -36,7 +42,7 @@ export class BusinessesService {
         n.correo,
         n.logo_url AS logo,
         n.hero_image_url,
-  COALESCE(ROUND(AVG(r.estrellas)::numeric, 1), 0)::float AS estrellas,
+        COALESCE(ROUND(AVG(r.estrellas)::numeric, 1), 0)::float AS estrellas,
         COALESCE(
           (
             SELECT array_agg(DISTINCT c.nombre ORDER BY c.nombre)
@@ -58,14 +64,15 @@ export class BusinessesService {
     return prisma.$queryRaw(query);
   }
 
+  // Crear negocio y asignar owner_id (si se proporciona userId válido)
   async createBusinessAndAssignOwner(userId: string, dto: CreateBusinessDto) {
     let uid: bigint;
-    try { 
-      uid = BigInt(userId); 
-    } catch { 
-      throw new BadRequestException('Usuario inválido'); 
+    try {
+      uid = BigInt(userId);
+    } catch {
+      throw new BadRequestException('Usuario inválido');
     }
-    
+
     const nombre = dto.nombre?.trim();
     if (!nombre || nombre.length < 2) {
       throw new BadRequestException('Nombre de negocio inválido');
@@ -73,101 +80,99 @@ export class BusinessesService {
 
     const prisma = this.prisma as any;
     try {
-      // Asignamos el propietario usando el campo existente owner_id en la tabla negocio
       const result = await prisma.$transaction(async (tx: any) => {
-        // Crear el negocio
         const negocio = await tx.negocio.create({
           data: {
             nombre,
             direccion: dto.direccion || null,
             telefono: dto.telefono || null,
             correo: dto.correo || null,
-            logo: dto.logo || null,
+            logo_url: dto.logo || null,
+            hero_image_url: dto.hero_image_url || null,
             fecha_registro: new Date(),
-            owner_id: uid, // Asignar el owner directamente
+            owner_id: uid,
           },
         });
+
         return negocio;
       });
-      
-      // Convertir BigInt a Number para la respuesta
+
       return {
         ...result,
         id_negocio: Number(result.id_negocio),
-        owner_id: result.owner_id ? Number(result.owner_id) : null
+        owner_id: (result as any).owner_id ? Number((result as any).owner_id) : null,
       };
     } catch (e: any) {
-      // Manejo de errores de Prisma
+      // Manejo explícito de errores conocidos de Prisma
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        // P2003: FK constraint failed
         if (e.code === 'P2003') {
           throw new BadRequestException('No se pudo asignar el usuario al negocio (clave foránea inválida).');
         }
-        // P2021: Table not found
         if (e.code === 'P2021') {
           throw new InternalServerErrorException('Esquema de base de datos desactualizado. Ejecuta las migraciones de Prisma.');
         }
-        // P2002: Unique constraint failed
         if (e.code === 'P2002') {
           throw new BadRequestException('Ya existe un negocio con ese nombre.');
         }
       }
-      console.error('Error creating business:', e);
+
+      console.error('Error creando negocio:', e);
       throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
+  // Listar negocios asociados a un usuario: owner o empleado
   async listBusinessesForUser(userId: string) {
     let uid: bigint;
-    try { 
-      uid = BigInt(userId); 
-    } catch { 
-      throw new BadRequestException('Usuario inválido'); 
+    try {
+      uid = BigInt(userId);
+    } catch {
+      throw new BadRequestException('Usuario inválido');
     }
-    
+
     const prisma = this.prisma as any;
-    
-    // Buscar negocios donde el usuario es owner o empleado
     const businesses = await prisma.negocio.findMany({
-      where: { 
+      where: {
         OR: [
-          { owner_id: uid }, // Usuario es dueño
-          { empleados: { some: { usuario_id: uid } } } // Usuario es empleado
-        ]
+          { owner_id: uid },
+          { empleados: { some: { usuario_id: uid } } },
+        ],
       },
       orderBy: { id_negocio: 'asc' },
     });
 
-    // Convertir BigInt a Number para la respuesta
-    return businesses.map(business => ({
+    return businesses.map((business: any) => ({
       ...business,
       id_negocio: Number(business.id_negocio),
-      owner_id: business.owner_id ? Number(business.owner_id) : null
+      owner_id: (business as any).owner_id ? Number((business as any).owner_id) : null,
     }));
   }
 
+  // Obtener negocio por ID con validaciones y logs útiles para debugging
   async getBusinessById(id: string) {
-    let nid: bigint;
-    try { 
-      nid = BigInt(id); 
-    } catch { 
-      throw new BadRequestException('ID inválido'); 
+    try {
+      const nid = BigInt(id);
+
+      console.log('📘 Buscando negocio con ID:', nid.toString());
+
+      const negocio = await this.prisma.negocio.findUnique({
+        where: { id_negocio: nid },
+      });
+
+      if (!negocio) {
+        console.warn('⚠️ Negocio no encontrado en la BD');
+        throw new NotFoundException('Negocio no encontrado');
+      }
+
+      return {
+        ...negocio,
+        id_negocio: Number(negocio.id_negocio),
+        owner_id: (negocio as any).owner_id ? Number((negocio as any).owner_id) : null,
+      };
+    } catch (err: any) {
+      console.error('❌ ERROR en getBusinessById:', err);
+      if (err instanceof NotFoundException || err instanceof BadRequestException) throw err;
+      throw new InternalServerErrorException('Error interno al obtener el negocio');
     }
-    
-    const prisma = this.prisma as any;
-    const negocio = await prisma.negocio.findUnique({ 
-      where: { id_negocio: nid } 
-    });
-    
-    if (!negocio) {
-      throw new NotFoundException('Negocio no encontrado');
-    }
-    
-    // Convertir BigInt a Number para la respuesta
-    return {
-      ...negocio,
-      id_negocio: Number(negocio.id_negocio),
-      owner_id: negocio.owner_id ? Number(negocio.owner_id) : null
-    };
   }
 }

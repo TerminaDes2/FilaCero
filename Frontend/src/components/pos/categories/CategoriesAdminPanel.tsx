@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useCategoriesStore, CategoryItem, CategoryColor } from '../../../pos/categoriesStore';
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, MoreVertical } from 'lucide-react';
+import EditCategoryPanel from './EditCategoryPanel';
 import { SearchBox } from '../../pos/controls/SearchBox';
 
 interface CategoriesAdminPanelProps {
@@ -22,6 +23,7 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNe
   const { categories, fetchCategories, update, remove, moveUp, moveDown } = useCategoriesStore();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<CategoryItem | null>(null);
 
   // Reemplazamos el useEffect para que cargue desde la API
   useEffect(() => {
@@ -75,34 +77,50 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNe
         {!loading && filtered.map(c => {
           const t = colorTokens[c.color];
           return (
-            <div key={c.id} className={`group rounded-xl p-3 ring-1 ${t.ring} ${t.bg} transition shadow-sm flex items-center justify-between`}>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`inline-flex w-2 h-2 rounded-full ${t.dot}`} />
-                <div className="truncate">
-                  <div className={`text-sm font-medium truncate ${t.fg}`}>{c.icon ? `${c.icon} ${c.name}` : c.name}</div>
+            <div
+              key={c.id}
+              className={`group relative rounded-2xl border transition shadow-sm hover:shadow-md overflow-visible`} 
+              style={{ background: 'var(--pos-card-bg)', borderColor: 'var(--pos-card-border)' }}
+            >
+              <div className={`flex items-center justify-between gap-3 p-3 ring-1 ${t.ring} ${t.bg}`}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`inline-flex w-2 h-2 rounded-full ${t.dot}`} />
+                  <div className="truncate">
+                    <div className={`text-sm font-semibold truncate ${t.fg}`}>{c.icon ? `${c.icon} ${c.name}` : c.name}</div>
+                    <div className='text-[11px] text-slate-500/80'>Categoría</div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
-                <button onClick={()=>moveUp(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Subir"><ChevronUp className="w-4 h-4"/></button>
-                <button onClick={()=>moveDown(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Bajar"><ChevronDown className="w-4 h-4"/></button>
-                <InlineEdit category={c} onSave={(patch)=>update(c.id, patch)} onDelete={()=>remove(c.id)} />
+                <div className="flex items-center gap-1">
+                  <button onClick={()=>moveUp(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Subir"><ChevronUp className="w-4 h-4"/></button>
+                  <button onClick={()=>moveDown(c.id)} className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center" title="Bajar"><ChevronDown className="w-4 h-4"/></button>
+                  <InlineEdit category={c} onSave={(patch)=>update(c.id, patch)} onDelete={()=>remove(c.id)} onOpenEditPanel={()=>setEditing(c)} />
+                </div>
               </div>
             </div>
           );
         })}
       </div>
+      {editing && (
+        <EditCategoryPanel
+          category={editing}
+          onClose={() => setEditing(null)}
+          onUpdated={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 };
 
 // La sub-función InlineEdit no necesita cambios
-function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onSave:(patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>>) => Promise<void>, onDelete:()=>Promise<void> }) {
+function InlineEdit({ category, onSave, onDelete, onOpenEditPanel }:{ category: CategoryItem, onSave:(patch: Partial<Pick<CategoryItem,'name'|'color'|'icon'>>) => Promise<void>, onDelete:()=>Promise<void>, onOpenEditPanel?: (c: CategoryItem)=>void }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(category.name);
   const [color, setColor] = useState<CategoryColor>(category.color);
   const [icon, setIcon] = useState(category.icon || '');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const t = colorTokens[color];
 
   const commit = async () => {
@@ -128,48 +146,73 @@ function InlineEdit({ category, onSave, onDelete }:{ category: CategoryItem, onS
     }
   };
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    const onClick = (e: MouseEvent) => {
+      const node = rootRef.current;
+      if (node && !node.contains(e.target as Node)) setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('click', onClick);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('click', onClick); };
+  }, []);
+
   if (!editing) {
     return (
-      <div className="inline-flex items-center gap-1">
+      <div ref={rootRef} className="relative" data-menu-root>
         <button
-          onClick={()=>{ setError(null); setEditing(true); setName(category.name); setColor(category.color); setIcon(category.icon || ''); }}
-          className="h-8 px-2 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center gap-1"
-          title="Editar"
+          onClick={(e)=> { e.stopPropagation(); setMenuOpen(v=>!v); }}
+          className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center"
+          title="Opciones"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
           disabled={pending}
         >
-          <Pencil className="w-4 h-4"/>Editar
+          <MoreVertical className="w-4 h-4" />
         </button>
-        <button
-          onClick={async () => {
-            setPending(true);
-            setError(null);
-            try {
-              await onDelete();
-            } catch (e: unknown) {
-              const message = e instanceof Error ? e.message : 'No se pudo eliminar la categoría.';
-              setError(message);
-            } finally {
-              setPending(false);
-            }
-          }}
-          className="h-8 w-8 rounded-lg bg-white/70 ring-1 ring-black/5 inline-flex items-center justify-center text-red-600"
-          title="Eliminar"
-          disabled={pending}
-        >
-          <Trash2 className="w-4 h-4"/>
-        </button>
-  {error && <span className="ml-2 text-xs text-rose-600" title={error ?? undefined}>{error}</span>}
+        {menuOpen && (
+          <div role="menu" className="absolute right-0 mt-1 w-36 rounded-lg bg-white shadow-lg ring-1 ring-black/5 overflow-hidden z-20">
+            <button
+              className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"
+              onClick={()=>{
+                setError(null);
+                setMenuOpen(false);
+                if (onOpenEditPanel) {
+                  onOpenEditPanel(category);
+                  return;
+                }
+                setEditing(true);
+                setName(category.name);
+                setColor(category.color);
+                setIcon(category.icon || '');
+              }}
+            >
+              <Pencil className="w-4 h-4 text-slate-600" /> Editar
+            </button>
+            <button
+              className="w-full text-left px-3 py-2 text-sm hover:bg-rose-50 flex items-center gap-2 text-rose-600"
+              onClick={async ()=>{
+                setPending(true);
+                setError(null);
+                try { await onDelete(); } catch (e: unknown) { const message = e instanceof Error ? e.message : 'No se pudo eliminar la categoría.'; setError(message); } finally { setPending(false); setMenuOpen(false); }
+              }}
+            >
+              <Trash2 className="w-4 h-4" /> Eliminar
+            </button>
+          </div>
+        )}
+        {error && <span className="ml-2 text-xs text-rose-600" title={error ?? undefined}>{error}</span>}
       </div>
     );
   }
 
   return (
-    <div className="inline-flex items-center gap-2">
-      <input value={name} onChange={e=>setName(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm" />
-      <select value={color} onChange={e=>setColor(e.target.value as CategoryColor)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm">
+    <div className="flex flex-wrap items-center gap-2">
+      <input value={name} onChange={e=>setName(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm w-28 sm:w-40" />
+      <select value={color} onChange={e=>setColor(e.target.value as CategoryColor)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm w-[96px] sm:w-[120px]">
         {Object.keys(colorTokens).map(c => <option key={c} value={c}>{colorTokens[c as CategoryColor].label}</option>)}
       </select>
-      <input value={icon} onChange={e=>setIcon(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm w-20" placeholder="Emoji" />
+      <input value={icon} onChange={e=>setIcon(e.target.value)} className="h-8 px-2 rounded-lg bg-white/80 ring-1 ring-black/5 text-sm w-16 sm:w-20" placeholder="Emoji" />
       <button onClick={commit} className={`h-8 px-3 rounded-lg text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75`} disabled={pending}>Guardar</button>
       <button
         onClick={() => {

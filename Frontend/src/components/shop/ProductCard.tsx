@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { useCart } from './CartContext';
 
 export type Product = {
@@ -27,9 +28,9 @@ export default function ProductCard({ product, showPrice = true }: { product: Pr
   return (
     <article className="bg-pos-card-bg border pos-card-border rounded-lg p-3 shadow-sm card-hover">
       <div className="flex gap-3">
-        <div className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+        <div className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 relative">
           {product.imagen ? (
-            <img src={product.imagen} alt={product.nombre} className="w-full h-full object-cover" />
+            <Image src={product.imagen} alt={product.nombre} fill className="object-cover" sizes="96px" unoptimized />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">Imagen</div>
           )}
