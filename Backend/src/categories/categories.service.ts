@@ -9,26 +9,21 @@ export class CategoriesService {
 
   async create(userId: string, dto: CreateCategoryDto) {
     const trimmedName = dto.nombre.trim();
-    const negocioId = dto.negocioId ? this.parseBigInt(dto.negocioId, 'Negocio inválido') : undefined;
-    if (!negocioId) {
-      throw new BadRequestException('Debe especificarse el negocio propietario de la categoría');
-    }
-    await this.ensureOwnership(userId, negocioId);
+    
+    // Por ahora, las categorías son globales (el schema no tiene negocio_id)
     const prisma = this.prismaUnsafe;
     const duplicate = await prisma.categoria.findFirst({
       where: {
-        negocio_id: negocioId,
         nombre: trimmedName,
       },
     });
     if (duplicate) {
-      throw new BadRequestException('Ya existe una categoría con ese nombre en el negocio');
+      throw new BadRequestException('Ya existe una categoría con ese nombre');
     }
     try {
       return await prisma.categoria.create({
         data: {
           nombre: trimmedName,
-          negocio_id: negocioId,
         },
       });
     } catch (e: unknown) {
@@ -41,17 +36,10 @@ export class CategoriesService {
   }
 
   async findAll(userId: string, negocioId?: string) {
-    if (!negocioId) {
-      throw new BadRequestException('Se requiere el identificador del negocio');
-    }
-    const negocio = this.parseBigInt(negocioId, 'Negocio inválido');
-    await this.ensureOwnership(userId, negocio);
+    // Las categorías son globales, retornar todas
     const prisma = this.prismaUnsafe;
     return prisma.categoria.findMany({
-      where: {
-        OR: [{ negocio_id: null }, { negocio_id: negocio }],
-      },
-      orderBy: [{ negocio_id: 'asc' }, { id_categoria: 'asc' }],
+      orderBy: { id_categoria: 'asc' },
     });
   }
 
@@ -60,9 +48,6 @@ export class CategoriesService {
     const categoryId = this.parseBigInt(id, 'Categoría inválida');
     const item = await prisma.categoria.findUnique({ where: { id_categoria: categoryId } });
     if (!item) throw new NotFoundException('Categoría no encontrada');
-    if (item.negocio_id) {
-      await this.ensureOwnership(userId, item.negocio_id);
-    }
     return item;
   }
 
@@ -73,22 +58,18 @@ export class CategoriesService {
     if (!categoria) {
       throw new NotFoundException('Categoría no encontrada');
     }
-    if (!categoria.negocio_id) {
-      throw new ForbiddenException('No puedes modificar categorías globales');
-    }
-    await this.ensureOwnership(userId, categoria.negocio_id);
+    
     const data: Record<string, unknown> = {};
     if (dto.nombre) {
       const trimmed = dto.nombre.trim();
       const duplicate = await prisma.categoria.findFirst({
         where: {
-          negocio_id: categoria.negocio_id,
           nombre: trimmed,
           NOT: { id_categoria: categoryId },
         },
       });
       if (duplicate) {
-        throw new BadRequestException('Ya existe una categoría con ese nombre en el negocio');
+        throw new BadRequestException('Ya existe una categoría con ese nombre');
       }
       data.nombre = trimmed;
     }
@@ -116,10 +97,7 @@ export class CategoriesService {
     if (!categoria) {
       throw new NotFoundException('Categoría no encontrada');
     }
-    if (!categoria.negocio_id) {
-      throw new ForbiddenException('No puedes eliminar categorías globales');
-    }
-    await this.ensureOwnership(userId, categoria.negocio_id);
+    
     try {
       await prisma.categoria.delete({ where: { id_categoria: categoryId } });
       return { deleted: true };
@@ -149,18 +127,6 @@ export class CategoriesService {
       return BigInt(value);
     } catch {
       throw new BadRequestException(message);
-    }
-  }
-
-  private async ensureOwnership(userId: string, negocioId: string | bigint) {
-    const prisma = this.prismaUnsafe;
-    const uid = this.parseBigInt(userId, 'Usuario inválido');
-    const nid = this.parseBigInt(negocioId, 'Negocio inválido');
-    const exists = await prisma.usuarios_negocio.findFirst({
-      where: { id_usuario: uid, id_negocio: nid },
-    });
-    if (!exists) {
-      throw new ForbiddenException('No tienes permisos sobre este negocio');
     }
   }
 }

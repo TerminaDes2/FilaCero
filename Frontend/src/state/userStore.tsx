@@ -1,11 +1,6 @@
+// Unified, conflict-free implementation
 'use client';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { api, type ApiError, type UserInfo } from '../lib/api';
 
 export type AppRole = 'CUSTOMER' | 'OWNER' | null;
@@ -38,66 +33,53 @@ const isPendingVerificationError = (error: unknown): error is ApiError => {
   return Boolean(
     maybeError &&
       maybeError.status === 401 &&
-      typeof maybeError.message === "string" &&
-      maybeError.message.toLowerCase().includes("verificación"),
+      typeof maybeError.message === 'string' &&
+      maybeError.message.toLowerCase().includes('verificación'),
   );
 };
 
 type StorageKeys =
-  | "auth_token"
-  | "auth_user"
-  | "auth_user_fallback_reason"
-  | "selectedRole"
-  | "userRole";
+  | 'auth_token'
+  | 'auth_user'
+  | 'auth_user_fallback_reason'
+  | 'selectedRole'
+  | 'userRole';
 
 const clearStoredAuth = () => {
-  if (typeof window === "undefined") return;
-  const keys: StorageKeys[] = [
-    "auth_token",
-    "auth_user",
-    "auth_user_fallback_reason",
-    "selectedRole",
-    "userRole",
-  ];
-  for (const key of keys) {
-    window.localStorage.removeItem(key);
-  }
+  if (typeof window === 'undefined') return;
+  const keys: StorageKeys[] = ['auth_token', 'auth_user', 'auth_user_fallback_reason', 'selectedRole', 'userRole'];
+  for (const key of keys) window.localStorage.removeItem(key);
 };
 
 const persistUserSnapshot = (userData: UserInfo) => {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem("auth_user", JSON.stringify(userData));
-  window.localStorage.removeItem("auth_user_fallback_reason");
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem('auth_user', JSON.stringify(userData));
+  window.localStorage.removeItem('auth_user_fallback_reason');
 };
 
 const loadStoredUser = (): UserInfo | null => {
-  if (typeof window === "undefined") return null;
-  const stored = window.localStorage.getItem("auth_user");
+  if (typeof window === 'undefined') return null;
+  const stored = window.localStorage.getItem('auth_user');
   if (!stored) return null;
   try {
     return JSON.parse(stored) as UserInfo;
   } catch (error) {
-    console.error("Error parsing stored auth_user", error);
+    console.error('Error parsing stored auth_user', error);
     return null;
   }
 };
 
 const deriveBackendRole = (userData: UserInfo | null): BackendRole => {
   if (!userData) return null;
-  const roleName =
-    (userData as unknown as { role_name?: string }).role_name ??
-    userData.role?.nombre_rol ??
-    null;
+  const roleName = (userData as any).role_name ?? userData.role?.nombre_rol ?? null;
   return roleName as BackendRole;
 };
 
 const deriveAppRole = (userData: UserInfo | null): AppRole => {
   if (!userData) return null;
   const backendRole = deriveBackendRole(userData);
-  if (backendRole === "admin" || backendRole === "superadmin") {
-    return "OWNER";
-  }
-  return userData.id_rol === 2 ? "OWNER" : "CUSTOMER";
+  if (backendRole === 'admin' || backendRole === 'superadmin') return 'OWNER';
+  return userData.id_rol === 2 ? 'OWNER' : 'CUSTOMER';
 };
 
 const deriveDisplayName = (userData: UserInfo | null): string | null => {
@@ -130,32 +112,28 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setBackendRoleState(deriveBackendRole(storedUser));
       setNameState(deriveDisplayName(storedUser));
       const storedRole = deriveAppRole(storedUser);
-      if (storedRole) {
-        setRoleState(storedRole);
-      }
+      if (storedRole) setRoleState(storedRole);
     } else {
-      const storedRole =
-        typeof window !== "undefined"
-          ? (window.localStorage.getItem("userRole") as AppRole | null)
-          : null;
-      if (storedRole === "OWNER" || storedRole === "CUSTOMER") {
-        setRoleState(storedRole);
-      }
+      const storedRole = typeof window !== 'undefined' ? (window.localStorage.getItem('userRole') as AppRole | null) : null;
+      if (storedRole === 'OWNER' || storedRole === 'CUSTOMER') setRoleState(storedRole);
     }
   }, []);
 
   const logout = useCallback(() => {
     applyUserSnapshot(null);
     setTemp({});
-    clearStoredAuth();
-    console.log("✅ Sesión cerrada");
+    if (typeof window !== 'undefined') {
+      // Clean auth and any persisted business selection helpers
+      clearStoredAuth();
+      window.localStorage.removeItem('active-business-storage');
+      window.localStorage.removeItem('active_business_id');
+    }
+    console.log('✅ Sesión cerrada');
   }, [applyUserSnapshot]);
 
   const login = useCallback(
     (token: string, userData: UserInfo) => {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("auth_token", token);
-      }
+      if (typeof window !== 'undefined') window.localStorage.setItem('auth_token', token);
       persistUserSnapshot(userData);
       applyUserSnapshot(userData);
     },
@@ -164,35 +142,20 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const setRole = useCallback((newRole: AppRole) => {
     setRoleState(newRole);
-    if (typeof window !== "undefined") {
-      if (newRole) {
-        window.localStorage.setItem("userRole", newRole);
-      } else {
-        window.localStorage.removeItem("userRole");
-      }
+    if (typeof window !== 'undefined') {
+      if (newRole) window.localStorage.setItem('userRole', newRole);
+      else window.localStorage.removeItem('userRole');
     }
   }, []);
 
-  const setName = useCallback((nextName: string | null) => {
-    setNameState(nextName);
-  }, []);
-
-  const setBackendRole = useCallback((nextRole: BackendRole) => {
-    setBackendRoleState(nextRole);
-  }, []);
-
-  const setTempData = useCallback((key: string, value: unknown) => {
-    setTemp(prev => ({ ...prev, [key]: value }));
-  }, []);
+  const setName = useCallback((nextName: string | null) => setNameState(nextName), []);
+  const setBackendRole = useCallback((nextRole: BackendRole) => setBackendRoleState(nextRole), []);
+  const setTempData = useCallback((key: string, value: unknown) => setTemp(prev => ({ ...prev, [key]: value })), []);
 
   const checkAuth = useCallback(async () => {
     setLoading(true);
     try {
-      const token =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("auth_token")
-          : null;
-
+      const token = typeof window !== 'undefined' ? window.localStorage.getItem('auth_token') : null;
       if (!token) {
         applyUserSnapshot(null);
         return;
@@ -208,16 +171,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           const storedUser = loadStoredUser();
           if (storedUser) {
             applyUserSnapshot(storedUser);
-            console.warn(
-              "⚠️ Sesión restaurada con datos básicos por verificación pendiente.",
-            );
+            console.warn('⚠️ Sesión restaurada con datos básicos por verificación pendiente.');
             return;
           }
         }
         throw error;
       }
     } catch (error) {
-      console.error("Error verificando autenticación:", error);
+      console.error('Error verificando autenticación:', error);
       clearStoredAuth();
       applyUserSnapshot(null);
     } finally {
@@ -258,8 +219,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
 export function useUserStore() {
   const ctx = useContext(UserContext);
-  if (!ctx) {
-    throw new Error("useUserStore must be used within <UserProvider>");
-  }
+  if (!ctx) throw new Error('useUserStore must be used within <UserProvider>');
   return ctx;
 }
