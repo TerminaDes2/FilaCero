@@ -495,3 +495,260 @@ ON CONFLICT (nombre) DO NOTHING;
 -- Índice simple por nombre (búsqueda)
 CREATE INDEX IF NOT EXISTS idx_categoria_nombre ON categoria (nombre);
 
+-- =============================================================
+-- Sistema de Pedidos Online y Notificaciones
+-- =============================================================
+
+-- Tabla pedido: pedidos de la tienda online (separado de ventas POS)
+CREATE TABLE IF NOT EXISTS pedido (
+  id_pedido bigserial PRIMARY KEY,
+  id_negocio bigint NOT NULL REFERENCES negocio(id_negocio) ON DELETE CASCADE,
+  id_usuario bigint REFERENCES usuarios(id_usuario) ON DELETE SET NULL,
+  id_tipo_pago bigint REFERENCES tipo_pago(id_tipo_pago),
+  estado varchar(30) NOT NULL DEFAULT 'pendiente',
+  fecha_creacion timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fecha_confirmacion timestamptz,
+  fecha_preparacion timestamptz,
+  fecha_listo timestamptz,
+  fecha_entrega timestamptz,
+  total numeric(14,2) NOT NULL,
+  notas_cliente text,
+  tiempo_entrega varchar(50),
+  -- Datos de contacto para pedidos anónimos (sin registro)
+  nombre_cliente varchar(100),
+  email_cliente varchar(100),
+  telefono_cliente varchar(20),
+  creado_en timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE pedido ALTER COLUMN actualizado_en SET DEFAULT CURRENT_TIMESTAMP;
+
+-- Tabla detalle_pedido: items de cada pedido
+CREATE TABLE IF NOT EXISTS detalle_pedido (
+  id_detalle bigserial PRIMARY KEY,
+  id_pedido bigint NOT NULL REFERENCES pedido(id_pedido) ON DELETE CASCADE,
+  id_producto bigint NOT NULL REFERENCES producto(id_producto),
+  cantidad int NOT NULL CHECK (cantidad > 0),
+  precio_unitario numeric(10,2) NOT NULL,
+  notas text  -- Ej: "sin cebolla", "extra queso"
+);
+
+-- Tabla notificacion: registro de notificaciones enviadas
+CREATE TABLE IF NOT EXISTS notificacion (
+  id_notificacion bigserial PRIMARY KEY,
+  id_usuario bigint REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+  id_negocio bigint REFERENCES negocio(id_negocio) ON DELETE CASCADE,
+  id_pedido bigint REFERENCES pedido(id_pedido) ON DELETE CASCADE,
+  tipo varchar(30) NOT NULL,  -- 'pedido_nuevo', 'pedido_confirmado', 'pedido_listo', etc.
+  titulo varchar(200) NOT NULL,
+  mensaje text NOT NULL,
+  leida boolean NOT NULL DEFAULT false,
+  canal varchar(20),  -- 'email', 'sms', 'push', 'in_app'
+  enviada_en timestamptz,
+  leida_en timestamptz,
+  creado_en timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla usuarios_negocio: relación usuario-negocio con rol (legacy, mantener para compatibilidad)
+CREATE TABLE IF NOT EXISTS usuarios_negocio (
+  id_asignacion bigserial PRIMARY KEY,
+  id_usuario bigint NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+  id_negocio bigint NOT NULL REFERENCES negocio(id_negocio) ON DELETE CASCADE,
+  rol varchar(30) NOT NULL,
+  fecha_asignacion timestamptz DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Constraints y validaciones para pedidos
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'pedido' AND constraint_name = 'ck_pedido_estado'
+  ) THEN
+    ALTER TABLE pedido ADD CONSTRAINT ck_pedido_estado 
+      CHECK (estado IN ('pendiente','confirmado','en_preparacion','listo','entregado','cancelado'));
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'pedido' AND constraint_name = 'ck_pedido_contacto'
+  ) THEN
+    -- Debe tener al menos usuario o email_cliente para contacto
+    ALTER TABLE pedido ADD CONSTRAINT ck_pedido_contacto 
+      CHECK (id_usuario IS NOT NULL OR email_cliente IS NOT NULL);
+  END IF;
+END $$;
+
+-- Constraint unique para usuarios_negocio
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'usuarios_negocio' AND constraint_name = 'uq_usuarios_negocio_usuario_negocio'
+  ) THEN
+    ALTER TABLE usuarios_negocio ADD CONSTRAINT uq_usuarios_negocio_usuario_negocio 
+      UNIQUE (id_usuario, id_negocio);
+  END IF;
+END $$;
+
+-- Índices para performance de pedidos
+CREATE INDEX IF NOT EXISTS idx_pedido_negocio_estado ON pedido(id_negocio, estado);
+CREATE INDEX IF NOT EXISTS idx_pedido_usuario ON pedido(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_pedido_fecha_creacion ON pedido(fecha_creacion DESC);
+CREATE INDEX IF NOT EXISTS idx_pedido_email_cliente ON pedido(email_cliente) WHERE email_cliente IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_detalle_pedido_pedido ON detalle_pedido(id_pedido);
+CREATE INDEX IF NOT EXISTS idx_notificacion_usuario_leida ON notificacion(id_usuario, leida);
+CREATE INDEX IF NOT EXISTS idx_notificacion_negocio_tipo ON notificacion(id_negocio, tipo);
+CREATE INDEX IF NOT EXISTS idx_notificacion_creado ON notificacion(creado_en DESC);
+
+-- Trigger: actualizar timestamp en pedido
+CREATE OR REPLACE FUNCTION fn_touch_pedido_actualizado()
+RETURNS trigger AS $$
+BEGIN
+  NEW.actualizado_en := CURRENT_TIMESTAMP;
+  RETURN NEW;
+END$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_touch_pedido_actualizado ON pedido;
+CREATE TRIGGER trg_touch_pedido_actualizado
+  BEFORE UPDATE ON pedido
+  FOR EACH ROW EXECUTE FUNCTION fn_touch_pedido_actualizado();
+
+-- Trigger: registrar timestamps de cambio de estado en pedido
+CREATE OR REPLACE FUNCTION fn_pedido_timestamps_estado()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.estado != OLD.estado THEN
+    CASE NEW.estado
+      WHEN 'confirmado' THEN NEW.fecha_confirmacion := CURRENT_TIMESTAMP;
+      WHEN 'en_preparacion' THEN NEW.fecha_preparacion := CURRENT_TIMESTAMP;
+      WHEN 'listo' THEN NEW.fecha_listo := CURRENT_TIMESTAMP;
+      WHEN 'entregado' THEN NEW.fecha_entrega := CURRENT_TIMESTAMP;
+      ELSE NULL;
+    END CASE;
+  END IF;
+  RETURN NEW;
+END$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_pedido_timestamps_estado ON pedido;
+CREATE TRIGGER trg_pedido_timestamps_estado
+  BEFORE UPDATE ON pedido
+  FOR EACH ROW EXECUTE FUNCTION fn_pedido_timestamps_estado();
+
+-- Función: descontar inventario al confirmar pedido (estado -> en_preparacion)
+CREATE OR REPLACE FUNCTION fn_pedido_confirmar_inventario()
+RETURNS trigger AS $$
+DECLARE
+  v_item RECORD;
+  v_inv RECORD;
+BEGIN
+  -- Solo aplicar cuando el estado cambia a 'en_preparacion'
+  IF NEW.estado = 'en_preparacion' AND (OLD.estado IS NULL OR OLD.estado != 'en_preparacion') THEN
+    -- Para cada ítem del pedido, validar y descontar
+    FOR v_item IN SELECT * FROM detalle_pedido WHERE id_pedido = NEW.id_pedido LOOP
+      -- Obtener inventario con lock
+      SELECT * INTO v_inv FROM inventario 
+      WHERE id_negocio = NEW.id_negocio AND id_producto = v_item.id_producto 
+      FOR UPDATE;
+      
+      IF v_inv IS NULL THEN
+        RAISE EXCEPTION 'Inventario no encontrado para producto % en negocio %', v_item.id_producto, NEW.id_negocio;
+      END IF;
+      
+      IF v_inv.cantidad_actual < v_item.cantidad THEN
+        RAISE EXCEPTION 'Stock insuficiente para producto %: disponible % < requerido %', 
+          v_item.id_producto, v_inv.cantidad_actual, v_item.cantidad;
+      END IF;
+      
+      -- Descontar inventario
+      UPDATE inventario
+        SET cantidad_actual = cantidad_actual - v_item.cantidad
+      WHERE id_negocio = NEW.id_negocio AND id_producto = v_item.id_producto;
+      
+      -- Registrar movimiento
+      INSERT INTO movimientos_inventario (id_negocio, id_producto, delta, motivo, id_venta, fecha)
+      VALUES (NEW.id_negocio, v_item.id_producto, -v_item.cantidad, 'pedido_online_confirm', NULL, CURRENT_TIMESTAMP);
+    END LOOP;
+  END IF;
+  
+  RETURN NEW;
+END$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_pedido_after_confirm ON pedido;
+CREATE TRIGGER trg_pedido_after_confirm
+  AFTER UPDATE ON pedido
+  FOR EACH ROW
+  WHEN (OLD.estado IS DISTINCT FROM NEW.estado AND NEW.estado = 'en_preparacion')
+  EXECUTE FUNCTION fn_pedido_confirmar_inventario();
+
+-- Función: restaurar inventario al cancelar pedido
+CREATE OR REPLACE FUNCTION fn_pedido_cancelar_restaurar_inventario()
+RETURNS trigger AS $$
+DECLARE
+  v_item RECORD;
+BEGIN
+  -- Solo restaurar si se cancela desde 'en_preparacion' (inventario ya descontado)
+  IF NEW.estado = 'cancelado' AND OLD.estado = 'en_preparacion' THEN
+    FOR v_item IN SELECT * FROM detalle_pedido WHERE id_pedido = OLD.id_pedido LOOP
+      -- Restaurar inventario
+      UPDATE inventario
+        SET cantidad_actual = cantidad_actual + v_item.cantidad
+      WHERE id_negocio = OLD.id_negocio AND id_producto = v_item.id_producto;
+      
+      -- Registrar movimiento de restauración
+      INSERT INTO movimientos_inventario (id_negocio, id_producto, delta, motivo, id_venta, fecha)
+      VALUES (OLD.id_negocio, v_item.id_producto, v_item.cantidad, 'pedido_cancel_restore', NULL, CURRENT_TIMESTAMP);
+    END LOOP;
+  END IF;
+  
+  RETURN NEW;
+END$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_pedido_after_cancel ON pedido;
+CREATE TRIGGER trg_pedido_after_cancel
+  AFTER UPDATE ON pedido
+  FOR EACH ROW
+  WHEN (OLD.estado IS DISTINCT FROM NEW.estado AND NEW.estado = 'cancelado')
+  EXECUTE FUNCTION fn_pedido_cancelar_restaurar_inventario();
+
+-- Función: recalcular total de pedido
+CREATE OR REPLACE FUNCTION fn_recalcular_total_pedido(p_id_pedido bigint)
+RETURNS void AS $$
+BEGIN
+  UPDATE pedido p
+     SET total = COALESCE((
+       SELECT SUM(d.cantidad * d.precio_unitario) 
+       FROM detalle_pedido d 
+       WHERE d.id_pedido = p.id_pedido
+     ), 0)
+   WHERE p.id_pedido = p_id_pedido;
+END$$ LANGUAGE plpgsql;
+
+-- Trigger: recalcular total al modificar detalle_pedido
+CREATE OR REPLACE FUNCTION fn_trg_detalle_pedido_total()
+RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM fn_recalcular_total_pedido(NEW.id_pedido);
+  ELSIF TG_OP = 'UPDATE' THEN
+    PERFORM fn_recalcular_total_pedido(NEW.id_pedido);
+  ELSIF TG_OP = 'DELETE' THEN
+    PERFORM fn_recalcular_total_pedido(OLD.id_pedido);
+  END IF;
+  RETURN NEW;
+END$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_detalle_pedido_total ON detalle_pedido;
+CREATE TRIGGER trg_detalle_pedido_total
+  AFTER INSERT OR UPDATE OF cantidad, precio_unitario ON detalle_pedido
+  FOR EACH ROW EXECUTE FUNCTION fn_trg_detalle_pedido_total();
+
+DROP TRIGGER IF EXISTS trg_detalle_pedido_total_del ON detalle_pedido;
+CREATE TRIGGER trg_detalle_pedido_total_del
+  AFTER DELETE ON detalle_pedido
+  FOR EACH ROW EXECUTE FUNCTION fn_trg_detalle_pedido_total();
+
+-- =============================================================
+-- Fin del sistema de pedidos y notificaciones
+-- =============================================================
+

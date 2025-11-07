@@ -46,6 +46,9 @@ model usuarios {
   negocio_rating             negocio_rating[]
   role                       roles?                   @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
   venta                      venta[]
+  pedidos                    pedido[]
+  notificaciones             notificacion[]
+  usuarios_negocio           usuarios_negocio[]
 
   @@map("usuarios")
 }
@@ -168,6 +171,9 @@ model negocio {
   producto_metricas_semanales producto_metricas_semanales[]
   reporte_ventas              reporte_ventas[]
   venta                       venta[]
+  pedidos                     pedido[]
+  notificaciones              notificacion[]
+  usuarios_negocio            usuarios_negocio[]
 }
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
@@ -187,6 +193,7 @@ model producto {
   categoria                   categoria?                    @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
   producto_media              producto_media[]
   producto_metricas_semanales producto_metricas_semanales[]
+  detalle_pedido              detalle_pedido[]
 }
 
 model reporte_ventas {
@@ -202,10 +209,11 @@ model reporte_ventas {
 }
 
 model tipo_pago {
-  id_tipo_pago BigInt  @id @default(autoincrement())
-  tipo         String  @unique @db.VarChar(50)
+  id_tipo_pago BigInt   @id @default(autoincrement())
+  tipo         String   @unique @db.VarChar(50)
   descripcion  String?
   venta        venta[]
+  pedidos      pedido[]
 }
 
 model venta {
@@ -273,4 +281,85 @@ model producto_metricas_semanales {
   producto     producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([id_producto, id_negocio, anio, semana])
+}
+
+model pedido {
+  id_pedido            BigInt            @id @default(autoincrement())
+  id_negocio           BigInt
+  id_usuario           BigInt?
+  id_tipo_pago         BigInt?
+  estado               String            @default("pendiente") @db.VarChar(30)
+  fecha_creacion       DateTime          @default(now()) @db.Timestamptz(6)
+  fecha_confirmacion   DateTime?         @db.Timestamptz(6)
+  fecha_preparacion    DateTime?         @db.Timestamptz(6)
+  fecha_listo          DateTime?         @db.Timestamptz(6)
+  fecha_entrega        DateTime?         @db.Timestamptz(6)
+  total                Decimal           @db.Decimal(14, 2)
+  notas_cliente        String?           @db.Text
+  tiempo_entrega       String?           @db.VarChar(50)
+  nombre_cliente       String?           @db.VarChar(100)
+  email_cliente        String?           @db.VarChar(100)
+  telefono_cliente     String?           @db.VarChar(20)
+  creado_en            DateTime          @default(now()) @db.Timestamptz(6)
+  actualizado_en       DateTime          @updatedAt @db.Timestamptz(6)
+  detalle_pedido       detalle_pedido[]
+  notificaciones       notificacion[]
+  negocio              negocio           @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+  usuario              usuarios?         @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
+  tipo_pago            tipo_pago?        @relation(fields: [id_tipo_pago], references: [id_tipo_pago])
+
+  @@index([id_negocio, estado])
+  @@index([id_usuario])
+  @@index([fecha_creacion])
+  @@map("pedido")
+}
+
+model detalle_pedido {
+  id_detalle      BigInt   @id @default(autoincrement())
+  id_pedido       BigInt
+  id_producto     BigInt
+  cantidad        Int
+  precio_unitario Decimal  @db.Decimal(10, 2)
+  notas           String?  @db.Text
+  pedido          pedido   @relation(fields: [id_pedido], references: [id_pedido], onDelete: Cascade)
+  producto        producto @relation(fields: [id_producto], references: [id_producto])
+
+  @@index([id_pedido])
+  @@map("detalle_pedido")
+}
+
+model notificacion {
+  id_notificacion BigInt    @id @default(autoincrement())
+  id_usuario      BigInt?
+  id_negocio      BigInt?
+  id_pedido       BigInt?
+  tipo            String    @db.VarChar(30)
+  titulo          String    @db.VarChar(200)
+  mensaje         String    @db.Text
+  leida           Boolean   @default(false)
+  canal           String?   @db.VarChar(20)
+  enviada_en      DateTime? @db.Timestamptz(6)
+  leida_en        DateTime? @db.Timestamptz(6)
+  creado_en       DateTime  @default(now()) @db.Timestamptz(6)
+  usuario         usuarios? @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+  negocio         negocio?  @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+  pedido          pedido?   @relation(fields: [id_pedido], references: [id_pedido], onDelete: Cascade)
+
+  @@index([id_usuario, leida])
+  @@index([id_negocio, tipo])
+  @@index([creado_en])
+  @@map("notificacion")
+}
+
+model usuarios_negocio {
+  id_asignacion    BigInt    @id @default(autoincrement())
+  id_usuario       BigInt
+  id_negocio       BigInt
+  rol              String    @db.VarChar(30)
+  fecha_asignacion DateTime? @db.Timestamptz(6)
+  usuario          usuarios  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+  negocio          negocio   @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+
+  @@unique([id_usuario, id_negocio])
+  @@map("usuarios_negocio")
 }
