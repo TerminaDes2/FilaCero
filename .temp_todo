@@ -1,0 +1,14 @@
+## Todo List
+
+- [x] Analizar cambio solicitado en verificaciones de usuario
+	- Revisar campos actuales (`verificado`, `fecha_verificacion`, etc.) y definir nuevos atributos (correo, sms, credencial).
+- [x] Actualizar esquema Prisma y SQL base
+	- Modificar `Backend/prisma/schema.prisma` y `Docker/db/db_filacero.sql` con los nuevos campos de verificación.
+- [x] Generar migración Prisma
+	- Crear carpeta en `Backend/prisma/migrations/` con ALTER TABLE correspondiente.
+- [x] Ajustar servicios y guards
+	- Actualizar `AuthService`, `JwtStrategy`, guardas y controladores que usan `verificado` para usar el nuevo modelo.
+- [x] Actualizar DTOs y documentación
+	- Ajustar `RegisterDto`, payloads y docs (`Docs/` pertinentes) para reflejar las tres verificaciones.
+- [x] Validar compilación
+	- Ejecutar `npm.cmd run build` en `Backend/` tras los cambios.

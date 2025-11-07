@@ -14,7 +14,7 @@ Este documento resume el estado actual del esquema PostgreSQL que respalda a Fil
   - Clave primaria `id_usuario` (bigint autoincremental).
   - Campos de perfil: `nombre`, `correo_electronico` (único), `numero_telefono`, `avatar_url`, `credential_url`.
   - **Nuevos campos**: `numero_cuenta` (único, pensado para estudiantes) y `edad` (smallint).
-  - Ciclo de verificación: `verificado`, `fecha_verificacion`, `verification_token`, `verification_token_expires`.
+  - Ciclo de verificación: banderas por canal (`correo_verificado`, `sms_verificado`, `credencial_verificada`) con sus fechas (`*_en`) más `verification_token` y `verification_token_expires` para correo.
   - Relación opcional con `roles` mediante `id_rol`.
 
 ### 2.2 Negocios y Asignaciones
@@ -66,7 +66,7 @@ Este documento resume el estado actual del esquema PostgreSQL que respalda a Fil
 1. **Registro y verificación**
    - Los DTO (`RegisterDto`, `VerifyEmailDto`) validan entrada.
    - `AuthService.register` crea el usuario, asigna `numero_cuenta`/`edad` si se proporcionan y genera token de verificación.
-   - `AuthService.verifyAccount` marca `verificado=true` y limpia tokens.
+  - `AuthService.verifyAccount` marca `correo_verificado=true`, registra `correo_verificado_en` y limpia tokens.
    - El JWT entregado incluye `verified`, URLs de medios, `numero_cuenta` y `edad` para hidratar el frontend.
 
 2. **Gestión de perfil**

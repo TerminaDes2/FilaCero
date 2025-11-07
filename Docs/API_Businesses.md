@@ -11,7 +11,7 @@ Documentación de los endpoints disponibles para administrar y consumir la infor
 ---
 
 ## Autenticación
-- `GET /api/businesses` es público.
+- `GET /api/businesses` y `GET /api/businesses/:id` son públicos.
 - El resto de endpoints requiere JWT válido y pertenencia al negocio (`usuarios_negocio`).
 
 ---
@@ -92,8 +92,7 @@ Documentación de los endpoints disponibles para administrar y consumir la infor
 
 ### 4. Obtener negocio por ID
 - **Ruta:** `GET /api/businesses/:id`
-- **Headers:** `Authorization: Bearer <token>`
-- **Descripción:** Recupera un negocio en particular. Si el negocio no existe se responde con `404`.
+- **Descripción:** Recupera un negocio en particular sin necesidad de autenticación. Si el negocio no existe se responde con `404`.
 
 ---
 
@@ -126,4 +125,4 @@ La ruta `/api/stores` actúa como proxy en Next.js y reenvía parámetros al bac
 ## Pruebas sugeridas
 - `npm run lint` y `npm run test` en `Backend/` para asegurar integridad tras cambios.
 - Probar manualmente `GET /api/businesses` y `GET /api/stores` verificando que devuelvan la misma información.
-- Verificar que usuarios sin token no puedan acceder a `POST /api/businesses`, `GET /api/businesses/my` ni `GET /api/businesses/:id`.
+- Verificar que usuarios sin token no puedan acceder a `POST /api/businesses` ni `GET /api/businesses/my` y que sí puedan consultar `GET /api/businesses/:id`.

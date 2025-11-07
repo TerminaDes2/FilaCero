@@ -7,10 +7,11 @@
 
 ## 2. Database & Prisma Updates
 - **Usuarios (`usuarios`)**
-  - Added verification lifecycle fields: `verificado`, `fecha_verificacion`, `verification_token`, `verification_token_expires`.
+  - Replaced legacy `verificado/fecha_verificacion` pair with channel-specific flags: `correo_verificado`, `sms_verificado`, `credencial_verificada` más sus timestamps `*_en`.
   - Added media/document fields: `avatar_url`, `credential_url`.
   - Added student profile data: optional `numero_cuenta` (unique) and `edad` (smallint) to support cafeteria accounts.
   - Linked to new `negocio_rating` relation.
+  - Persist `verification_token` y `verification_token_expires` para flujo de correo.
 - **Negocio (`negocio`)**
   - Renamed branding fields to `logo_url`, `hero_image_url`.
   - Declared back-relations for ratings and product metrics.
