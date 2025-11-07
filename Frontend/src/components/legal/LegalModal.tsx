@@ -51,18 +51,21 @@ export const LegalModal: React.FC<LegalModalProps> = ({ open, initialTab = 'term
   // Reset active tab whenever opening with a different initialTab
   useEffect(()=>{ if(open) setActive(initialTab); }, [open, initialTab]);
 
-  // Handle opening animation
-  useEffect(()=>{
-    if(open) {
-      setAnimState('enter');
-      const id = requestAnimationFrame(()=> setAnimState('idle'));
-      return () => cancelAnimationFrame(id);
-    } else if(animState !== null) {
-      setAnimState('exit');
-      const t = setTimeout(()=> setAnimState(null), 160);
-      return () => clearTimeout(t);
-    }
+  // Handle opening transitions
+  useEffect(() => {
+    if (!open) return;
+    setAnimState('enter');
+    const id = requestAnimationFrame(() => setAnimState('idle'));
+    return () => cancelAnimationFrame(id);
   }, [open]);
+
+  // Handle closing transitions
+  useEffect(() => {
+    if (open || animState === null) return;
+    setAnimState('exit');
+    const t = setTimeout(() => setAnimState(null), 160);
+    return () => clearTimeout(t);
+  }, [open, animState]);
 
   const handleBackdrop = (e: React.MouseEvent) => {
     if(e.target === backdropRef.current) onClose();

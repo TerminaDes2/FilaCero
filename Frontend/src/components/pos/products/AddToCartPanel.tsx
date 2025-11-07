@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { POSProduct, useCart } from '../../../pos/cartContext';
 
@@ -32,6 +32,16 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
     if (mounted) qtyInputRef.current?.focus();
   }, [mounted]);
 
+  const handleAdd = useCallback(() => {
+    if (qty <= 0) return;
+    if (lineId) {
+      updateLine(lineId, qty, note);
+    } else {
+      add(product, qty, note);
+    }
+    onClose();
+  }, [qty, lineId, updateLine, note, add, product, onClose]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -42,17 +52,7 @@ export const AddToCartPanel: React.FC<AddToCartPanelProps> = ({ product, onClose
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [qty, note]);
-
-  const handleAdd = () => {
-    if (qty <= 0) return;
-    if (lineId) {
-      updateLine(lineId, qty, note);
-    } else {
-      add(product, qty, note);
-    }
-    onClose();
-  };
+  }, [handleAdd, onClose]);
 
   const accent = 'var(--pos-accent-green)';
   const candy = 'var(--pos-badge-stock-bg)';

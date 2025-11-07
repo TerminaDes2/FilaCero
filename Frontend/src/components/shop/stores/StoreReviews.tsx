@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { api } from "../../../lib/api";
 
 type Review = {
@@ -70,14 +71,18 @@ export default function StoreReviews({ storeId }: { storeId: string }) {
       {reviews.map((r) => (
         <div
           key={r.id}
-          className="flex gap-4 border rounded-lg p-4 hover:shadow-md transition-all"
-          style={{ width: "500px", height: "170px" }}
+          className="flex h-[170px] w-[500px] gap-4 rounded-lg border p-4 transition-all hover:shadow-md"
         >
-          <img
-            src={r.usuario.avatar_url || "/images/profile_picture.png"}
-            alt={r.usuario.nombre}
-            className="w-16 h-16 rounded-full object-cover"
-          />
+          <div className="relative h-16 w-16 overflow-hidden rounded-full">
+            <Image
+              src={r.usuario.avatar_url || "/images/profile_picture.png"}
+              alt={r.usuario.nombre}
+              fill
+              className="object-cover"
+              sizes="64px"
+              unoptimized
+            />
+          </div>
           <div className="flex flex-col flex-1 overflow-hidden">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-semibold truncate">{r.usuario.nombre}</h3>

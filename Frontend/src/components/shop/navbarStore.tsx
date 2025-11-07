@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useUserStore } from "../../state/userStore";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Store, Home, Bell } from "lucide-react";
 import UserDropdown from "../UserDropdown";
 import { useCart } from "./CartContext"; // 👈 se importa el carrito
@@ -16,7 +16,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
   const [scrolled, setScrolled] = useState(false);
   const [openNotifications, setOpenNotifications] = useState(false);
   const { isAuthenticated, loading } = useUserStore();
-  const { open, toggleOpen, items } = useCart(); // 👈 contexto del carrito
+  const { toggleOpen, items } = useCart(); // 👈 contexto del carrito
   const router = useRouter();
 
   const [notifications] = useState([
@@ -40,6 +40,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
   const handleToggleCart = () => {
     toggleOpen(true);
     setOpenNotifications(false); // 👈 cierra notificaciones si el carrito se abre
+    onToggleCart?.(true);
   };
 
   const handleToggleNotifications = () => {
@@ -61,8 +62,8 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
           <Link href="/" className="flex items-center gap-2 font-semibold text-gray-800">
             <Image src="/LogoFilaCero.svg" alt="FilaCero" width={36} height={36} className="drop-shadow-sm" />
             <span className="text-[2rem] font-extrabold select-none">
-              <span style={{ color: "var(--fc-brand-600)" }}>Fila</span>
-              <span style={{ color: "var(--fc-teal-500)" }}>Cero</span>
+              <span className="text-[var(--fc-brand-600)]">Fila</span>
+              <span className="text-[var(--fc-teal-500)]">Cero</span>
             </span>
           </Link>
           <div className="h-6 w-px bg-gray-300 dark:bg-slate-600"></div>
@@ -91,6 +92,8 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
               <button
                 onClick={handleToggleNotifications}
                 className="border-2 border-green-500 rounded-full p-2 hover:bg-green-50 transition flex items-center justify-center"
+                aria-label="Abrir notificaciones"
+                type="button"
               >
                 <Bell
                   className={`w-5 h-5 transition-all ${
@@ -118,7 +121,14 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
                       ))
                     ) : (
                       <div className="p-6 flex flex-col items-center justify-center text-gray-400">
-                        <img src="https://via.placeholder.com/120x120?text=📭" alt="Sin notificaciones" className="opacity-70 mb-2" />
+                        <Image
+                          src="https://via.placeholder.com/120x120?text=%F0%9F%93%AD"
+                          alt="Sin notificaciones"
+                          width={120}
+                          height={120}
+                          className="mb-2 opacity-70"
+                          unoptimized
+                        />
                         <p className="text-sm font-medium">Aún no tienes notificaciones.</p>
                       </div>
                     )}
@@ -133,6 +143,8 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
             <button
               className="relative flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-full transition-colors"
               onClick={handleToggleCart}
+              aria-label="Abrir carrito"
+              type="button"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 3h2l.4 2M7 13h10l4-8H5.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -152,10 +164,16 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
             <UserDropdown />
           ) : (
             <div className="flex items-center gap-3">
-              <Link href="/auth/login" className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:border-brand-500 hover:text-brand-600 transition">
+              <Link
+                href="/auth/login"
+                className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
+              >
                 Iniciar sesión
               </Link>
-              <Link href="/auth/register" className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-500 transition shadow-glow">
+              <Link
+                href="/auth/register"
+                className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-500 transition shadow-glow"
+              >
                 Crear cuenta
               </Link>
             </div>

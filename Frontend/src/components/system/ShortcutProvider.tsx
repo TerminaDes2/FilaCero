@@ -10,12 +10,28 @@ type ShortcutContextValue = {
   openHelp: () => void;
 };
 
+type UseShortcutsOptions = {
+  optional?: boolean;
+  fallback?: Partial<ShortcutContextValue>;
+};
+
 const ShortcutContext = createContext<ShortcutContextValue | null>(null);
 
-export function useShortcuts() {
+const shortcutFallback: ShortcutContextValue = {
+  registerSearchInput: () => {},
+  openHelp: () => {}
+};
+
+export function useShortcuts(options?: UseShortcutsOptions): ShortcutContextValue {
   const ctx = useContext(ShortcutContext);
-  if (!ctx) throw new Error('useShortcuts must be used within ShortcutProvider');
-  return ctx;
+  if (ctx) return ctx;
+  if (options?.optional) {
+    return {
+      registerSearchInput: options.fallback?.registerSearchInput ?? shortcutFallback.registerSearchInput,
+      openHelp: options.fallback?.openHelp ?? shortcutFallback.openHelp
+    };
+  }
+  throw new Error('useShortcuts must be used within ShortcutProvider');
 }
 
 function isEditableTarget(t: EventTarget | null): boolean {
@@ -101,7 +117,7 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  }, [confirm, reset, router]);
 
   const openHelp = useCallback(() => setShowHelp(true), []);
 

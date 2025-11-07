@@ -27,8 +27,8 @@ export function Footer() {
               <li><Link href="/productos" className="hover:text-brand-300">Panel</Link></li>
               <li><a href="#cta" className="hover:text-brand-300">Empezar</a></li>
               <li><a href="#testimonials" className="hover:text-brand-300">Testimonios</a></li>
-              <li><Link href="/auth/login" className="hover:text-brand-300">Iniciar sesión</Link></li>
-              <li><Link href="/auth/register" className="hover:text-brand-300">Crear cuenta</Link></li>
+              <li><Link href="/login" className="hover:text-brand-300">Iniciar sesión</Link></li>
+              <li><Link href="/register" className="hover:text-brand-300">Crear cuenta</Link></li>
             </ul>
           </div>
           <div>

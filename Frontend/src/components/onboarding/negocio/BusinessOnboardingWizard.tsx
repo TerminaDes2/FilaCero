@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, ChevronLeft, ChevronRight, Store, MapPin, Cog, ClipboardList } from 'lucide-react'
 import { useUserStore } from '../../../state/userStore'
@@ -233,7 +234,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
               <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
               {draft.identidad.logoDataUrl && (
                 <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
-                  <img src={draft.identidad.logoDataUrl} alt="Logo preview" className="w-10 h-10 object-contain" />
+                  <Image src={draft.identidad.logoDataUrl} alt="Logo preview" width={40} height={40} className="w-10 h-10 object-contain" unoptimized />
                   <span className="text-xs text-gray-600">Vista previa</span>
                 </div>
               )}
@@ -381,7 +382,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
               <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
               {draft.identidad.logoDataUrl && (
                 <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
-                  <img src={draft.identidad.logoDataUrl} alt="Logo preview" className="w-10 h-10 object-contain" />
+                  <Image src={draft.identidad.logoDataUrl} alt="Logo preview" width={40} height={40} className="w-10 h-10 object-contain" unoptimized />
                   <span className="text-xs text-gray-600">Vista previa</span>
                 </div>
               )}
@@ -536,9 +537,9 @@ function Preview({ draft }: { draft: Draft }) {
       <div className="text-xs font-semibold text-gray-600 mb-2">Vista previa</div>
       <div className="rounded-xl p-4 bg-white/80 ring-1 ring-black/5">
         <div className="flex items-center gap-3">
-          {draft.identidad.logoDataUrl ? (
-            <img src={draft.identidad.logoDataUrl} alt="Logo" className="w-10 h-10 rounded object-contain" />
-          ) : (
+            {draft.identidad.logoDataUrl ? (
+              <Image src={draft.identidad.logoDataUrl} alt="Logo" width={40} height={40} className="w-10 h-10 rounded object-contain" unoptimized />
+            ) : (
             <div className={`w-10 h-10 rounded flex items-center justify-center bg-brand-600/10 text-brand-700 ring-1 ring-brand-600/20`}>
               <Store className="w-5 h-5"/>
             </div>

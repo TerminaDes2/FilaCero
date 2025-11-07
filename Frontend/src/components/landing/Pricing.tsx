@@ -67,9 +67,7 @@ function PlanDetailModal({
         >
           ×
         </button>
-        <h2 className="text-2xl font-bold mb-2 text-brand-600">
-          {plan.name}
-        </h2>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">{plan.name}</h2>
         <div className="text-3xl font-semibold mb-4 text-gray-900">
           {plan.price}{" "}
           <span className="text-base font-medium text-gray-500">
@@ -94,10 +92,10 @@ function PlanDetailModal({
         <Link
           href={
             plan.name === "Gratis"
-              ? "/auth/register?plan=free"
+              ? "/register?plan=free"
               : plan.name === "Pro"
-              ? "/auth/register?plan=pro"
-              : "/auth/register?contact=institucional"
+              ? "/register?plan=pro"
+              : "/register?contact=institucional"
           }
           className={`w-full block text-center font-semibold py-3 rounded-xl transition relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${
             plan.highlight
