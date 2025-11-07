@@ -17,14 +17,26 @@ Base URL (desarrollo): `http://localhost:3000/api/users`
   "avatarUrl": "string | null",
   "credentialUrl": "string | null",
   "verified": true,
-  "verifiedAt": "ISODate | null"
+  "verifiedAt": "ISODate | null",
+  "verifications": {
+    "email": true,
+    "sms": false,
+    "credential": false
+  },
+  "verificationTimestamps": {
+    "email": "ISODate | null",
+    "sms": "ISODate | null",
+    "credential": "ISODate | null"
+  }
 }
 ```
 
 ### Campos destacados
 - `accountNumber`: número de cuenta del estudiante (5-20 dígitos). Único por usuario.
 - `age`: edad declarada (rango permitido 16-120). Cuando no se suministra se devuelve `null`.
-- `verified` / `verifiedAt`: estado del flujo de verificación por correo.
+- `verified` / `verifiedAt`: sinónimo del estado de verificación por correo.
+- `verifications`: banderas para correo, SMS y validación de credenciales físicas.
+- `verificationTimestamps`: marca temporal (ISO) de cada verificación cuando exista.
 
 ## Autenticación y guards
 - Todos los endpoints están protegidos con `AuthGuard('jwt')`.

@@ -453,7 +453,7 @@ Actualiza `comentario.actualizado_en` al recibir feedback.
 
 ### 4.1 Flujo de Autenticación
 1. **Registro:** `POST /api/auth/register` → crea usuario, genera `verification_token`
-2. **Verificación:** `POST /api/auth/verify` → valida token, marca `verificado=true`
+2. **Verificación:** `POST /api/auth/verify` → valida token, marca `correo_verificado=true` y libera otros flujos
 3. **Login:** `POST /api/auth/login` → valida contraseña (bcrypt), genera JWT
 4. **Autorización:** Header `Authorization: Bearer <token>` en requests protegidos
 
@@ -465,6 +465,16 @@ Actualiza `comentario.actualizado_en` al recibir feedback.
   "role": "empleado",
   "role_name": "empleado",
   "verified": true,
+  "verifications": {
+    "email": true,
+    "sms": false,
+    "credential": false
+  },
+  "verificationTimestamps": {
+    "email": "2025-10-14T15:00:00.000Z",
+    "sms": null,
+    "credential": null
+  },
   "avatar_url": "https://...",
   "credential_url": "https://...",
   "numero_cuenta": "A01234567",
@@ -475,7 +485,7 @@ Actualiza `comentario.actualizado_en` al recibir feedback.
 ### 4.3 Guardas
 - `AuthGuard('jwt')`: valida token
 - `RolesGuard`: valida roles con decorador `@Roles(...)`
-- Verificación manual en algunos endpoints: `if (!req.user.verificado) throw ForbiddenException`
+- Verificación manual en algunos endpoints: `if (!req.user.correo_verificado) throw ForbiddenException`
 
 ### 4.4 Estrategias de Seguridad
 - Contraseñas hasheadas con bcrypt (salt rounds: 10)

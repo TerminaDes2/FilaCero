@@ -4,7 +4,8 @@
 Base URL (dev): `http://localhost:3000/api/sales`
 
 ## Autenticación
-Todas las rutas requieren JWT válido con roles `superadmin`, `admin` o `empleado`.
+Todas las rutas requieren JWT válido con roles `superadmin`, `admin`, `empleado` o `usuario`.
+Para crear ventas (`POST /api/sales`) la cuenta debe estar verificada; usuarios sin verificación recibirán `403`.
 
 ## Crear venta
 `POST /api/sales`
@@ -28,6 +29,7 @@ Notas:
 - Se valida que exista inventario suficiente para cada producto en el negocio indicado.
 - El precio unitario se toma del producto salvo que se especifique.
 - Respuesta incluye encabezado y detalle (`detalle_venta`).
+- Usuarios no verificados recibirán `403 Forbidden` con mensaje _"La cuenta debe estar verificada para completar esta acción"_.
 
 ## Listar ventas
 `GET /api/sales`

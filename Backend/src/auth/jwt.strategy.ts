@@ -30,8 +30,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         id_rol: true,
         avatar_url: true,
         credential_url: true,
-        verificado: true,
-        fecha_verificacion: true,
+        correo_verificado: true,
+        correo_verificado_en: true,
+        sms_verificado: true,
+        sms_verificado_en: true,
+        credencial_verificada: true,
+        credencial_verificada_en: true,
         numero_cuenta: true,
         edad: true,
         role: { select: { nombre_rol: true } },
@@ -42,8 +46,25 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
-    // 2. Si es válido, 'user' se adjunta a req.user
-    // Adjuntamos también el nombre del rol (si existe) para evitar otra consulta en Guards
-    return { ...user, role_name: user.role?.nombre_rol ?? 'usuario' } as any;
+    const emailVerified = user.correo_verificado ?? false;
+    const smsVerified = user.sms_verificado ?? false;
+    const credentialVerified = user.credencial_verificada ?? false;
+
+    return {
+      ...user,
+      verificado: emailVerified,
+      verified: emailVerified,
+      verifications: {
+        email: emailVerified,
+        sms: smsVerified,
+        credential: credentialVerified,
+      },
+      verificationTimestamps: {
+        email: user.correo_verificado_en ? user.correo_verificado_en.toISOString() : null,
+        sms: user.sms_verificado_en ? user.sms_verificado_en.toISOString() : null,
+        credential: user.credencial_verificada_en ? user.credencial_verificada_en.toISOString() : null,
+      },
+      role_name: user.role?.nombre_rol ?? 'usuario',
+    };
   }
 }

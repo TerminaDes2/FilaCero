@@ -78,7 +78,7 @@ model producto_metricas_semanales {
 3. Generar migración: `npx prisma migrate dev --name add_verification_media_metrics`.
 4. `npx prisma generate`.
 5. Preparar script de backfill:
-   - Rellenar `verificado=false`, `avatar_url=null`, etc.
+  - Rellenar banderas `correo_verificado=false`, `sms_verificado=false`, `credencial_verificada=false`, `avatar_url=null`, etc.
    - Migrar datos de columnas renombradas (`logo` → `logo_url`, `imagen` → `imagen_url`).
 6. Actualizar seeds (si se usan) y `Docker/db/db_filacero.sql` para reflejar estructura (solo como referencia).
 7. Ejecutar batería de tests backend (`npm run test` en `Backend`).
@@ -87,7 +87,7 @@ model producto_metricas_semanales {
 ### 4.1 Módulo Auth / Users
 - Extender DTOs (`CreateUserDto`, `UpdateUserDto`) con campos de verificación e imágenes. ✅ (`UpdateUserDto` y selects actualizados).
 - Crear servicio de verificación:
-  - ✅ `verifyEmail(token)` → expone `POST /auth/verify`, marca `verificado`, registra `fecha_verificacion` y regenera JWT.
+  - ✅ `verifyEmail(token)` → expone `POST /auth/verify`, marca `correo_verificado`, registra `correo_verificado_en` y regenera JWT.
   - ⏳ `requestVerification(email)` → pendiente de servicio de mailing.
   - ⏳ Endpoint protegido para subir `credential_url` (almacenar en S3/local y guardar URL).
 - Añadir guard que restrinja ciertas operaciones a usuarios verificados. ⏳ (diseñar guardia custom una vez definido alcance).
@@ -115,7 +115,7 @@ model producto_metricas_semanales {
 - Añadir validaciones `class-validator` y reglas Prisma (índices únicos, longitud URLs, etc.). 🔄 (URLs y medios cubiertos; revisar métricas/ratings al implementarlos).
 ## 5. Documentación para Frontend
 Crear/actualizar `Docs/frontend-api-contract.md` con:
-- Nuevos campos en recursos (`usuario.verificado`, `usuario.avatar_url`, `producto.descripcion_larga`, etc.).
+- Nuevos campos en recursos (`usuario.verifications`, `usuario.avatar_url`, `producto.descripcion_larga`, etc.).
 - Endpoints:
   - `POST /auth/verify` (body: `{ token }`). ✅
   - `POST /auth/request-verification` (body: `{ email }`). ⏳
