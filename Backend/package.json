@@ -15,6 +15,9 @@
     "dev": "npx prisma generate && ts-node-dev --respawn --transpile-only --ignore-watch node_modules --watch src --no-notify src/main.ts",
     "watch:prisma": "chokidar \"prisma/**/*.prisma\" -c \"npx prisma generate\""
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@nestjs/common": "^10.3.9",
     "@nestjs/config": "^3.2.2",
