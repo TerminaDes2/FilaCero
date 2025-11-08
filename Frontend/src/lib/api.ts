@@ -121,6 +121,9 @@ export const api = {
       body: JSON.stringify({ correo_electronico, password }),
     }),
 
+  // Información del usuario autenticado
+  me: () => apiFetch<UserInfo>("auth/me"),
+
   register: (
     name: string,
     email: string,
