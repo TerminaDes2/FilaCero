@@ -127,14 +127,9 @@ export const api = {
     if (role) payload.role = role;
     if (accountNumber) payload.accountNumber = accountNumber;
     if (typeof age === 'number') payload.age = age;
-
-  register: (name: string, email: string, password: string, role?: 'usuario' | 'admin') => {
-    console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
-    console.log('📦 Datos enviados:', { name, email, password, role });
-    
     return apiFetch<LoginResponse>('auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, ...(role ? { role } : {}) }),
+      body: JSON.stringify(payload),
     });
   },
 
@@ -215,39 +210,6 @@ export const api = {
     apiFetch<any>(`categories/${id}`, {
       method: 'DELETE',
     }),
-
-  // --- Categorías ---
-  getCategories: (params?: { id_negocio?: string }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.id_negocio) {
-      queryParams.append('id_negocio', params.id_negocio);
-    }
-    const query = queryParams.toString();
-    const path = query ? `categories?${query}` : 'categories';
-    return apiFetch<any[]>(path);
-  },
-  getCategoryById: (id: string) =>
-    apiFetch<any>(`categories/${id}`),
-  createCategory: (categoryData: { nombre: string; negocioId?: string }) => {
-    // Enviar campos según DTO del backend: nombre y negocioId (camelCase)
-    const body: any = { nombre: categoryData.nombre };
-    if (categoryData.negocioId) {
-      body.negocioId = categoryData.negocioId;
-    }
-    return apiFetch<any>('categories', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
-  },
-  updateCategory: (id: string, categoryData: { nombre: string }) =>
-    apiFetch<any>(`categories/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(categoryData),
-    }),
-  deleteCategory: (id: string) =>
-    apiFetch<any>(`categories/${id}`, {
-      method: 'DELETE',
-    }),
   // --- Empleados ---
   getEmployeesByBusiness: (businessId: string) =>
     apiFetch<any[]>(`employees/business/${businessId}`),
