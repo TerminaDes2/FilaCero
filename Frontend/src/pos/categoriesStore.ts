@@ -81,15 +81,27 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
           const id = String(rawId);
           const name = (item.nombre ?? (item as any)?.name ?? '').toString().trim();
           const prev = prevById.get(id);
-          const rawNegocio = item.negocio_id ?? (item as any)?.negocioId ?? null;
-          const businessScoped = rawNegocio != null;
+          // Detectar id de negocio de forma robusta (backends mezclan nombres)
+          const rawNegocioAny =
+            (item as any)?.negocio_id ??
+            (item as any)?.negocioId ??
+            (item as any)?.id_negocio ??
+            (item as any)?.idNegocio ??
+            (item as any)?.businessId ??
+            null;
+          const hasBusiness = rawNegocioAny !== null && rawNegocioAny !== undefined && rawNegocioAny !== '';
+          const explicitScope = (item as any)?.scope as 'global' | 'business' | undefined;
+          // Si el backend no devuelve el id de negocio pero nosotros filtramos por uno, considera que pertenece a ese negocio
+          const inferredBizId = hasBusiness ? String(rawNegocioAny) : (negocioId ? String(negocioId) : null);
+          const scope: 'global' | 'business' = explicitScope ?? (inferredBizId ? 'business' : 'global');
+          const businessId = inferredBizId;
           return {
             id,
             name,
             color: prev?.color ?? CATEGORY_COLOR_PALETTE[index % CATEGORY_COLOR_PALETTE.length],
             icon: prev?.icon,
-            scope: businessScoped ? ('business' as const) : ('global' as const),
-            businessId: businessScoped ? String(rawNegocio) : null,
+            scope,
+            businessId,
           };
         },
       );
@@ -149,7 +161,8 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
     const updates: Partial<CategoryItem> = { ...patch };
 
     if (patch.name !== undefined) {
-      if (category.scope === 'global') {
+      // Permitir renombrar si pertenece a un negocio aunque el scope viniera mal desde el backend
+      if (category.scope === 'global' && !category.businessId) {
         throw new Error('No puedes renombrar categorías predeterminadas.');
       }
       const trimmed = patch.name.trim();
@@ -168,7 +181,7 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
   },
   remove: async (id: string) => {
     const category = get().categories.find((item) => item.id === id);
-    if (category?.scope === 'global') {
+    if (category && category.scope === 'global' && !category.businessId) {
       throw new Error('No puedes eliminar categorías predeterminadas.');
     }
     await api.deleteCategory(id);

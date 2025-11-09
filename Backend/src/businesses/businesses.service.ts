@@ -22,7 +22,7 @@ const MAX_PUBLIC_LIMIT = 50;
 export class BusinessesService {
   constructor(private prisma: PrismaService) {}
 
-  // ... (tu función listPublicBusinesses se queda igual) ...
+  // Listado público optimizado con SQL raw (muestra resumen y categorías)
   async listPublicBusinesses(filters: PublicBusinessFilters = {}) {
     const prisma = this.prisma as any;
     const search = filters.search?.trim();
@@ -49,8 +49,7 @@ export class BusinessesService {
     `;
   }
 
-
-  // ✅ Crear negocio (¡CORREGIDO! Ya no intenta guardar owner_id)
+  // Crear negocio y asignar owner_id (si se proporciona userId válido)
   async createBusinessAndAssignOwner(userId: string, dto: CreateBusinessDto) {
     // Aunque recibimos el 'userId' del controlador, no lo usaremos
     // para la base de datos, tal como lo pediste.
@@ -77,18 +76,32 @@ export class BusinessesService {
             logo_url: dto.logo || null,
             hero_image_url: dto.hero_image_url || null,
             fecha_registro: new Date(),
-            // --- ¡CAMBIO CRÍTICO! ---
-            // owner_id: uid, // <- ESTA LÍNEA SE QUITA
+            owner_id: uid,
           },
         });
+
         return negocio;
       });
 
       return {
         ...result,
         id_negocio: Number(result.id_negocio),
+        owner_id: (result as any).owner_id ? Number((result as any).owner_id) : null,
       };
     } catch (e: any) {
+      // Manejo explícito de errores conocidos de Prisma
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2003') {
+          throw new BadRequestException('No se pudo asignar el usuario al negocio (clave foránea inválida).');
+        }
+        if (e.code === 'P2021') {
+          throw new InternalServerErrorException('Esquema de base de datos desactualizado. Ejecuta las migraciones de Prisma.');
+        }
+        if (e.code === 'P2002') {
+          throw new BadRequestException('Ya existe un negocio con ese nombre.');
+        }
+      }
+
       console.error('Error creando negocio:', e);
       if (e && e.code === 'P2002') {
         throw new BadRequestException('Ya existe un negocio con ese nombre');
@@ -101,7 +114,7 @@ export class BusinessesService {
     }
   }
 
-  // ✅ Negocios por usuario (¡CORREGIDO! Ya no filtra por owner_id)
+  // Listar negocios asociados a un usuario: owner o empleado
   async listBusinessesForUser(userId: string) {
     let uid: bigint;
     try {
@@ -110,39 +123,46 @@ export class BusinessesService {
       throw new BadRequestException('Usuario inválido');
     }
 
-    // Devuelve todos los negocios, como en tu lógica original
-    const businesses = await this.prisma.negocio.findMany({
+    const prisma = this.prisma as any;
+    const businesses = await prisma.negocio.findMany({
+      where: {
+        OR: [
+          { owner_id: uid },
+          { empleados: { some: { usuario_id: uid } } },
+        ],
+      },
       orderBy: { id_negocio: 'asc' },
     });
 
-    return businesses.map((business) => ({
+    return businesses.map((business: any) => ({
       ...business,
       id_negocio: Number(business.id_negocio),
+      owner_id: (business as any).owner_id ? Number((business as any).owner_id) : null,
     }));
   }
 
-  // ... (tu función getBusinessById se queda igual) ...
+  // Obtener negocio por ID con validaciones y logs útiles para debugging
   async getBusinessById(id: string) {
     try {
-      const nid = Number(id);
-      if (isNaN(nid)) {
-        throw new BadRequestException('ID inválido');
-      }
+      const nid = BigInt(id);
+
+      console.log('📘 Buscando negocio con ID:', nid.toString());
+
       const negocio = await this.prisma.negocio.findUnique({
         where: { id_negocio: nid },
       });
       if (!negocio) {
         throw new NotFoundException('Negocio no encontrado');
       }
+
       return {
         ...negocio,
         id_negocio: Number(negocio.id_negocio),
+        owner_id: (negocio as any).owner_id ? Number((negocio as any).owner_id) : null,
       };
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ ERROR en getBusinessById:', err);
-      if (err instanceof NotFoundException || err instanceof BadRequestException) {
-         throw err;
-      }
+      if (err instanceof NotFoundException || err instanceof BadRequestException) throw err;
       throw new InternalServerErrorException('Error interno al obtener el negocio');
     }
   }
