@@ -159,6 +159,7 @@ model negocio {
   correo                      String?                       @db.VarChar(254)
   logo_url                    String?
   hero_image_url              String?
+  owner_id                    BigInt?                       // Dueño del negocio (FK a usuarios)
   fecha_registro              DateTime?                     @default(now()) @db.Timestamptz(6)
   corte_caja                  corte_caja[]
   empleados                   empleados[]
