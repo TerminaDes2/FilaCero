@@ -12,7 +12,7 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "jest",
-    "dev": "npx prisma generate && ts-node-dev --respawn --transpile-only --ignore-watch node_modules --watch src --no-notify src/main.ts",
+    "dev": "npx prisma migrate deploy && npx prisma generate && ts-node-dev --respawn --transpile-only --ignore-watch node_modules --watch src --no-notify src/main.ts",
     "watch:prisma": "chokidar \"prisma/**/*.prisma\" -c \"npx prisma generate\""
   },
   "prisma": {
