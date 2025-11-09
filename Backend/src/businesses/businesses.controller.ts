@@ -9,27 +9,28 @@ import { CreateBusinessDto } from './dto/create-business.dto';
 export class BusinessesController {
   constructor(private readonly service: BusinessesService) {}
 
+  // 👇 IMPORTANTE: Rutas específicas ANTES de rutas dinámicas
+  @Get('my')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
+  myBusinesses(@Req() req: any) {
+    const userId = this.extractUserId(req);
+    console.log('🔍 GET /api/businesses/my - userId:', userId);
+    return this.service.listBusinessesForUser(userId);
+  }
+
   @Get()
   async listPublic(@Query('search') search?: string, @Query('limit') limit?: string) {
     const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
     return this.service.listPublicBusinesses({ search, limit: parsedLimit });
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'superadmin', 'empleado', 'usuario')
   create(@Req() req: any, @Body() dto: CreateBusinessDto) {
     const userId = this.extractUserId(req);
     return this.service.createBusinessAndAssignOwner(userId, dto);
-  }
-
-  @Get('my')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'superadmin', 'empleado', 'usuario')
-  myBusinesses(@Req() req: any) {
-    const userId = this.extractUserId(req);
-    return this.service.listBusinessesForUser(userId);
   }
 
   @Get(':id')

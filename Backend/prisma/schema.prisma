@@ -160,7 +160,6 @@ model negocio {
   logo_url                    String?
   hero_image_url              String?
   fecha_registro              DateTime?                     @default(now()) @db.Timestamptz(6)
-  owner_id                    BigInt?
   corte_caja                  corte_caja[]
   empleados                   empleados[]
   inventario                  inventario[]
