@@ -11,6 +11,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { SalesModule } from './sales/sales.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { BusinessRatingsModule } from './business-ratings/business-ratings.module';
+import { PedidosModule } from './pedidos/pedidos.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { BusinessRatingsModule } from './business-ratings/business-ratings.modul
     SalesModule, // módulo de ventas (Prisma) <-- AQUÍ FALTABA LA COMA
     BusinessesModule, // módulo de negocios (Prisma)
     BusinessRatingsModule, // módulo de valoraciones
+    PedidosModule, // módulo de pedidos online
   ],
   controllers: [HealthController],
 })
