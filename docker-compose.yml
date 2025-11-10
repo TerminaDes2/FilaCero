@@ -15,9 +15,14 @@ services:
     environment:
       - PORT=3000
       - DATABASE_URL=postgres://user:password@postgres:5432/filacero
+      # Redis config used by src/config/envs.ts
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # - REDIS_PASSWORD=your_redis_password # opcional si la instancia tiene password
     restart: unless-stopped
     depends_on:
       - postgres
+      - redis
 
   frontend:
     build:
@@ -31,6 +36,7 @@ services:
       - NEXT_PUBLIC_API_BASE=http://localhost:3000/api
       - NEXT_PUBLIC_NEGOCIO_ID=1
       - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./Frontend:/app
       - /app/node_modules
@@ -54,8 +60,19 @@ services:
       - POSTGRES_PASSWORD=password
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: filacero-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 networks:
   default:
     name: filacero-net
 volumes:
   postgres_data:
+  redis_data:
