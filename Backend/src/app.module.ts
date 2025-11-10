@@ -11,6 +11,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { SalesModule } from './sales/sales.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { BusinessRatingsModule } from './business-ratings/business-ratings.module';
+import { PedidosModule } from './pedidos/pedidos.module';
 import { EmployeesModule } from './employees/employees.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { EmployeesModule } from './employees/employees.module';
     SalesModule, // módulo de ventas (Prisma)
     BusinessesModule, // módulo de negocios (Prisma)
     BusinessRatingsModule, // módulo de valoraciones
+    PedidosModule, // módulo de pedidos online
     EmployeesModule, // módulo de empleados (Prisma)
   ],
   controllers: [HealthController],

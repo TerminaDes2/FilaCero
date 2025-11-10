@@ -953,22 +953,29 @@ sequenceDiagram
 
 ## 3. Plan de Implementación por Fases
 
-### **Fase 1: Base de Datos y Modelos (Semana 1)**
-- [ ] Crear migración Prisma para `pedido`, `detalle_pedido`, `notificacion`
-- [ ] Actualizar relaciones en modelos existentes
-- [ ] Aplicar migración: `npx prisma migrate dev --name add_orders_system`
-- [ ] Generar cliente: `npx prisma generate`
-- [ ] Verificar schema en PostgreSQL
+### **Fase 1: Base de Datos y Modelos** ✅ Completada (7 Nov 2025)
+- [x] Crear migración Prisma para `pedido`, `detalle_pedido`, `notificacion`
+- [x] Actualizar relaciones en modelos existentes
+- [x] Aplicar migración: `npx prisma migrate dev --name add_orders_system`
+- [x] Generar cliente: `npx prisma generate`
+- [x] Verificar schema en PostgreSQL
+- [x] Crear 4 triggers para gestión automática (inventario, totales, timestamps)
 
-### **Fase 2: Backend - Módulo Orders (Semana 2)**
-- [ ] Generar módulo: `nest g module orders`
-- [ ] Generar controlador: `nest g controller orders`
-- [ ] Generar servicio: `nest g service orders`
-- [ ] Implementar DTOs (`create-order`, `update-order-state`)
-- [ ] Implementar endpoints CRUD básicos
-- [ ] Implementar lógica de transiciones de estado
-- [ ] Agregar validación de stock antes de confirmar
-- [ ] Tests unitarios (`orders.service.spec.ts`)
+**Resultado:** Base de datos completa con triggers funcionales probados.
+
+### **Fase 2: Backend - Módulo Orders** ✅ Completada (9 Nov 2025)
+- [x] Generar módulo: `nest g module pedidos`
+- [x] Generar controlador: `nest g controller pedidos`
+- [x] Generar servicio: `nest g service pedidos`
+- [x] Implementar DTOs (`create-pedido`, `update-pedido-estado`)
+- [x] Implementar 6 endpoints REST completos
+- [x] Implementar lógica de transiciones de estado (6 estados)
+- [x] Validación de flujo de estados
+- [x] Integración con triggers de BD para inventario
+- [x] Vista Kanban para POS
+- [x] Testing completo de todos los endpoints
+
+**Resultado:** API REST completa con 6 endpoints, validaciones robustas y vista Kanban. Ver `SISTEMA_PEDIDOS_FASE2_BACKEND.md`
 
 ### **Fase 3: Backend - Módulo Notifications + WebSockets (Semana 3)**
 - [ ] Instalar dependencias: `npm install @nestjs/websockets @nestjs/platform-socket.io socket.io`
