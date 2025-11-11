@@ -100,7 +100,7 @@ export const api = {
     });
   },
 
-  // --- 👇 NUEVO: Obtener información del usuario actual ---
+  // ---  NUEVO: Obtener información del usuario actual ---
   me: () => apiFetch<UserInfo>('auth/me'),
 
   // --- Productos ---
@@ -235,7 +235,13 @@ export const api = {
   
   // --- Ventas ---
   createSale: (data: { id_negocio: string; id_tipo_pago?: string; items: Array<{ id_producto: string; cantidad: number; precio_unitario?: number }>; cerrar?: boolean }) =>
-    apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }).then((sale) => {
+      try {
+        // Emit custom event so kitchen board can append ticket instantly
+        window.dispatchEvent(new CustomEvent('pos:new-sale', { detail: sale }));
+      } catch {}
+      return sale;
+    }),
 
   // Historial de ventas
   getSales: (params?: { id_negocio?: string; id_usuario?: string; estado?: string; desde?: string; hasta?: string }) => {
