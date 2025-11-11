@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LegalModal } from '../../components/legal/LegalModal';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
 import { useUserStore } from '../../state/userStore';
+import { EmailVerificationModal } from './EmailVerificationModal';
 
 interface SignupFormProps {
 	onSuccess?: () => void;
@@ -36,6 +37,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const router = useRouter();
 	const { role } = useUserStore();
 	const isOwner = role === 'OWNER';
+	const [showVerificationModal, setShowVerificationModal] = useState(false);
+	const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+	const [verificationExpiresAt, setVerificationExpiresAt] = useState<string | null>(null);
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordStrength = computeStrength(password);
@@ -92,9 +96,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		setError(null);
 		try {
 			const roleName: 'usuario' | 'admin' = isOwner ? 'admin' : 'usuario';
+			const normalizedEmail = email.trim().toLowerCase();
 			const res = await api.register(
 				name.trim(),
-				email.trim().toLowerCase(),
+				normalizedEmail,
 				password,
 				roleName
 			);
@@ -102,8 +107,14 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				window.localStorage.setItem('auth_token', res.token);
 				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 			}
-			onSuccess?.();
-			router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
+			if (res.requiresVerification) {
+				setPendingEmail(normalizedEmail);
+				setVerificationExpiresAt(res.verification?.expiresAt ?? null);
+				setShowVerificationModal(true);
+			} else {
+				onSuccess?.();
+				router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
+			}
 		} catch (err: any) {
 			setError(err?.message || 'Error al crear la cuenta');
 		} finally {
@@ -111,7 +122,22 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		}
 	};
 
+	const handleVerificationClosed = useCallback(() => {
+		setShowVerificationModal(false);
+		setPendingEmail(null);
+		setVerificationExpiresAt(null);
+	}, []);
+
+	const handleVerificationSuccess = useCallback(() => {
+		setShowVerificationModal(false);
+		setPendingEmail(null);
+		setVerificationExpiresAt(null);
+		onSuccess?.();
+		router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
+	}, [isOwner, onSuccess, router]);
+
 	return (
+		<>
 		<form onSubmit={submit} className="space-y-6" noValidate>
 			{error && (
 				<div className="text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2">
@@ -255,6 +281,15 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
 
 		</form>
-
+		{pendingEmail && (
+			<EmailVerificationModal
+				open={showVerificationModal}
+				email={pendingEmail}
+				expiresAt={verificationExpiresAt}
+				onClose={handleVerificationClosed}
+				onVerified={() => handleVerificationSuccess()}
+			/>
+		)}
+		</>
 	);
 };

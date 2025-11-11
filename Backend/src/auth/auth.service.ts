@@ -3,7 +3,6 @@ import {
     Injectable, 
     UnauthorizedException,
     ConflictException,
-    NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -11,8 +10,8 @@ import { PrismaService } from '../prisma/prisma.service'; // Asegura la ruta cor
 import { RegisterDto } from './dto/register.dto'; // Importación necesaria para el método register
 import { LoginDto } from './dto/login.dto'; // Importación necesaria para el método login
 import { VerifyEmailDto } from './dto/verify-email.dto';
-import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
+import { EmailVerificationService } from '../users/email-verification/email-verification.service';
 
 // Interfaz para el Payload del JWT
 interface JwtPayload {
@@ -36,8 +35,9 @@ type VerificationSnapshot = {
 @Injectable()
 export class AuthService {
     constructor(
-        private prisma: PrismaService, 
-        private jwtService: JwtService,
+        private readonly prisma: PrismaService, 
+        private readonly jwtService: JwtService,
+        private readonly emailVerificationService: EmailVerificationService,
     ) {}
 
     // --- (C)reate - REGISTER API ---
@@ -63,8 +63,6 @@ export class AuthService {
             // Determinar rol solicitado (admin/usuario) o usar 'usuario' por defecto
             const desiredRoleName = registerDto.role ?? 'usuario';
             const desiredRole = await this.prisma.roles.findUnique({ where: { nombre_rol: desiredRoleName } });
-            const verificationToken = randomUUID();
-            const verificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
 
             const user = await this.prisma.usuarios.create({
                 data: {
@@ -74,14 +72,20 @@ export class AuthService {
                     correo_verificado: false,
                     sms_verificado: false,
                     credencial_verificada: false,
-                    verification_token: verificationToken,
-                    verification_token_expires: verificationExpires,
                     fecha_registro: new Date(),
                     ...(desiredRole ? { id_rol: desiredRole.id_rol } : {}),
                     ...(normalizedAccountNumber ? { numero_cuenta: normalizedAccountNumber } : {}),
                     ...(normalizedAge !== null ? { edad: normalizedAge } : {}),
                 },
             });
+
+            let verificationMeta: { delivery: 'email'; expiresAt: string };
+            try {
+                verificationMeta = await this.emailVerificationService.issue(user.correo_electronico);
+            } catch (issueError) {
+                await this.prisma.usuarios.delete({ where: { id_usuario: user.id_usuario } }).catch(() => undefined);
+                throw issueError;
+            }
 
             // 4. Generar Token JWT
             const payload: JwtPayload = { 
@@ -93,8 +97,7 @@ export class AuthService {
             return {
                 ...authResponse,
                 requiresVerification: true,
-                verificationToken,
-                verificationTokenExpiresAt: verificationExpires.toISOString(),
+                verification: verificationMeta,
             };
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -158,64 +161,19 @@ export class AuthService {
             throw new BadRequestException('Token de verificación inválido.');
         }
 
-        const user = await this.prisma.usuarios.findUnique({
-            where: { verification_token: token },
-        });
-
-        if (!user) {
-            throw new NotFoundException('Token de verificación no válido o ya utilizado.');
-        }
-
-        if (user.correo_verificado) {
-            return {
-                message: 'La cuenta ya estaba verificada.',
-                ...this.generateToken({ id: user.id_usuario.toString(), email: user.correo_electronico }, user),
-            };
-        }
-
-        if (user.verification_token_expires && user.verification_token_expires.getTime() < Date.now()) {
-            throw new UnauthorizedException('El token de verificación ha expirado.');
-        }
-
-        const updated = await this.prisma.usuarios.update({
-            where: { id_usuario: user.id_usuario },
-            data: {
-                correo_verificado: true,
-                correo_verificado_en: new Date(),
-                verification_token: null,
-                verification_token_expires: null,
-            },
-            select: {
-                id_usuario: true,
-                correo_electronico: true,
-                correo_verificado: true,
-                correo_verificado_en: true,
-                sms_verificado: true,
-                sms_verificado_en: true,
-                credencial_verificada: true,
-                credencial_verificada_en: true,
-                avatar_url: true,
-                credential_url: true,
-                numero_cuenta: true,
-                edad: true,
-            },
-        });
+        const result = await this.emailVerificationService.verifyByToken(token);
 
         const payload: JwtPayload = {
-            id: updated.id_usuario.toString(),
-            email: updated.correo_electronico,
+            id: result.updated.id_usuario.toString(),
+            email: result.updated.correo_electronico,
         };
 
-        const emailVerifiedAt = updated.correo_verificado_en
-            ? updated.correo_verificado_en.toISOString()
-            : null;
-        const completionTimestamp = emailVerifiedAt ?? new Date().toISOString();
+        const authPayload = this.generateToken(payload, result.updated);
 
         return {
-            message: 'Cuenta verificada correctamente.',
-            verifiedAt: completionTimestamp,
-            emailVerifiedAt,
-            ...this.generateToken(payload, updated),
+            message: result.alreadyVerified ? 'La cuenta ya estaba verificada.' : 'Cuenta verificada correctamente.',
+            verifiedAt: result.verifiedAt,
+            ...authPayload,
         };
     }
     

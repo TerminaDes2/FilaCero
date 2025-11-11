@@ -75,9 +75,37 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 // --- Interfaces actualizadas ---
+export interface AuthUser {
+  id: string;
+  email: string;
+  verified?: boolean;
+  verifications?: {
+    email: boolean;
+    sms: boolean;
+    credential: boolean;
+  };
+  verificationTimestamps?: {
+    email: string | null;
+    sms: string | null;
+    credential: string | null;
+  };
+  avatarUrl?: string | null;
+  credentialUrl?: string | null;
+  accountNumber?: string | null;
+  age?: number | null;
+}
+
 export interface LoginResponse {
   token: string;
-  user: { id: string; email: string };
+  user: AuthUser;
+}
+
+export interface RegisterResponse extends LoginResponse {
+  requiresVerification?: boolean;
+  verification?: {
+    delivery: 'email';
+    expiresAt: string;
+  };
 }
 
 export interface UserInfo {
@@ -136,11 +164,31 @@ export const api = {
     if (role) payload.role = role;
     if (accountNumber) payload.accountNumber = accountNumber;
     if (typeof age === "number") payload.age = age;
-    return apiFetch<LoginResponse>("auth/register", {
+    return apiFetch<RegisterResponse>("usuarios/register", {
       method: "POST",
       body: JSON.stringify(payload),
     });
-  }, // --- Productos ---
+  },
+
+  verifyEmail: (correo_electronico: string, codigo: string) =>
+    apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
+      "usuarios/verificar-correo",
+      {
+        method: "POST",
+        body: JSON.stringify({ correo_electronico, codigo }),
+      }
+    ),
+
+  resendVerification: (correo_electronico: string) =>
+    apiFetch<{ message: string; delivery: "email"; expiresAt: string }>(
+      "usuarios/enviar-verificacion",
+      {
+        method: "POST",
+        body: JSON.stringify({ correo_electronico }),
+      }
+    ),
+
+  // --- Productos ---
 
   getProducts: (params?: {
     search?: string;
