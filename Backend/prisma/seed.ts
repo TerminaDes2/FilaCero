@@ -228,6 +228,54 @@ async function main() {
 
   console.log('✅ Notificación de ejemplo creada');
 
+  // 9. Crear historial de precios para productos
+  console.log('📊 Creando historial de precios...');
+
+  // Obtener algunos productos para crear historial
+  const productosConHistorial = await prisma.producto.findMany({ take: 3 });
+
+  for (const producto of productosConHistorial) {
+    const precioActual = Number(producto.precio);
+    
+    // Crear 3 registros históricos por producto
+    await prisma.producto_historial_precio.createMany({
+      data: [
+        {
+          id_producto: producto.id_producto,
+          precio: precioActual * 0.85, // Precio hace 2 meses (15% más barato)
+          fecha_inicio: new Date('2025-09-01'),
+          fecha_fin: new Date('2025-09-30'),
+          vigente: false,
+          motivo: 'Precio de lanzamiento',
+          id_usuario: testUser.id_usuario,
+          creado_en: new Date('2025-09-01'),
+        },
+        {
+          id_producto: producto.id_producto,
+          precio: precioActual * 0.95, // Precio hace 1 mes (5% más barato)
+          fecha_inicio: new Date('2025-10-01'),
+          fecha_fin: new Date('2025-10-31'),
+          vigente: false,
+          motivo: 'Ajuste de mercado',
+          id_usuario: testUser.id_usuario,
+          creado_en: new Date('2025-10-01'),
+        },
+        {
+          id_producto: producto.id_producto,
+          precio: precioActual, // Precio actual
+          fecha_inicio: new Date('2025-11-01'),
+          fecha_fin: null,
+          vigente: true,
+          motivo: 'Precio noviembre - inflación ajustada',
+          id_usuario: testUser.id_usuario,
+          creado_en: new Date('2025-11-01'),
+        },
+      ],
+    });
+  }
+
+  console.log(`✅ Historial de precios creado para ${productosConHistorial.length} productos`);
+
   console.log('🎉 Seed completado exitosamente!');
 }
 
