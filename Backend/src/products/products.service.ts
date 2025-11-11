@@ -1,9 +1,12 @@
+// Backend/src/products/products.service.ts
+
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { Prisma, producto, producto_media, producto_metricas_semanales, categoria } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductMediaInputDto } from './dto/product-media.dto';
+import { ConfigService } from '@nestjs/config'; // <-- 1. IMPORTAR ConfigService
 
 type SanitizedMedia = { url: string; principal: boolean; tipo: string | null };
 
@@ -21,9 +24,14 @@ type ProductWithRelations = producto & {
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  // --- 2. INYECTAR ConfigService ---
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService, // <-- Añadido
+  ) {}
 
   private mapProduct(product: ProductWithRelations, stock?: number | null) {
+    // ... (tu función mapProduct sin cambios)
     const {
       categoria,
       producto_media: mediaRecords,
@@ -66,6 +74,7 @@ export class ProductsService {
   }
 
   private sanitizeMediaPayload(media?: ProductMediaInputDto[]) {
+    // ... (tu función sanitizeMediaPayload sin cambios)
     if (!media || media.length === 0) {
       return [] as SanitizedMedia[];
     }
@@ -91,7 +100,8 @@ export class ProductsService {
   }
 
   private async replaceProductMedia(productId: bigint, media: SanitizedMedia[]) {
-  await this.prisma.$transaction(async (tx) => {
+    // ... (tu función replaceProductMedia sin cambios)
+    await this.prisma.$transaction(async (tx) => {
       await tx.producto_media.deleteMany({ where: { id_producto: productId } });
       if (media.length > 0) {
         await tx.producto_media.createMany({
@@ -105,34 +115,28 @@ export class ProductsService {
   }
 
   private async fetchProductWithRelations(id: bigint) {
+    // ... (tu función fetchProductWithRelations sin cambios)
     const product = await this.prisma.producto.findUnique({
       where: { id_producto: id },
       include: productInclude as unknown as Prisma.productoInclude,
     });
-  return product as unknown as ProductWithRelations | null;
+    return product as unknown as ProductWithRelations | null;
   }
 
-  /**
-   * Resuelve un identificador de categoría que puede venir como:
-   *  - undefined / vacío: no asigna categoría
-   *  - un string numérico (id autoincrement BigInt)
-   *  - un nombre de categoría (ej: "General") -> busca o crea la categoría
-   */
   private async resolveCategoryId(idOrName?: string): Promise<bigint | undefined> {
+    // ... (tu función resolveCategoryId sin cambios)
     if (!idOrName) return undefined;
     const value = idOrName.trim();
     if (!value) return undefined;
 
-    // Si es numérico puro asumimos que es el id
     if (/^\d+$/.test(value)) {
       try {
         return BigInt(value);
       } catch {
-        return undefined; // fallback silencioso
+        return undefined;
       }
     }
 
-    // Interpretamos como nombre de categoría. Usamos upsert para evitar condición de carrera.
     const cat = await this.prisma.categoria.upsert({
       where: { nombre: value },
       update: {},
@@ -141,16 +145,39 @@ export class ProductsService {
     return cat.id_categoria;
   }
 
-  // ✅ Ahora async para poder resolver la categoría por nombre o id
-  async create(createProductDto: CreateProductDto) {
+  // --- 3. MÉTODO 'create' MODIFICADO ---
+  async create(createProductDto: CreateProductDto, file?: Express.Multer.File) {
+    // La firma ahora acepta (dto, file), arreglando el error del controlador
     const { id_categoria, media, ...rest } = createProductDto;
 
     const resolvedCategory = await this.resolveCategoryId(id_categoria);
-    const sanitizedMedia = this.sanitizeMediaPayload(media);
+    
+    // --- 4. LÓGICA DE INTEGRACIÓN DE ARCHIVO ---
+    const mediaInput = media || []; // Usa el 'media' del DTO si existe
+
+    if (file) {
+      // Construir la URL del archivo subido localmente
+      // Asegúrate de tener 'API_BASE_URL' en tu .env del backend (ej: API_BASE_URL=http://localhost:3000)
+      const baseUrl = this.configService.get<string>('API_BASE_URL') || 'http://localhost:3000';
+      const imageUrl = `${baseUrl}/uploads/${file.filename}`;
+      
+      // Añadir la nueva imagen a la lista, marcándola como principal.
+      // 'sanitizeMediaPayload' se encargará de que solo haya una 'principal'.
+      mediaInput.unshift({ 
+        url: imageUrl, 
+        principal: true, 
+        tipo: file.mimetype 
+      });
+    }
+    // --- FIN DE LA LÓGICA ---
+
+    const sanitizedMedia = this.sanitizeMediaPayload(mediaInput);
 
     const product = await this.prisma.producto.create({
       data: {
         ...rest,
+        // Asegurarse de que el precio es un número (viene de un JSON.parse)
+        precio: Number(rest.precio),
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
         ...(sanitizedMedia.length > 0 && {
           producto_media: {
@@ -161,10 +188,12 @@ export class ProductsService {
       include: productInclude as unknown as Prisma.productoInclude,
     });
 
-  return this.mapProduct(product as unknown as ProductWithRelations);
+    return this.mapProduct(product as unknown as ProductWithRelations);
   }
+  // --- FIN DE LA MODIFICACIÓN ---
 
   async findAll(params: { search?: string; status?: string; id_negocio?: string }) {
+    // ... (tu función findAll sin cambios)
     const { search, status, id_negocio } = params;
     const where: Prisma.productoWhereInput = {};
 
@@ -234,10 +263,10 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    // Convertimos el ID a BigInt para la consulta
+    // ... (tu función findOne sin cambios)
     const productId = BigInt(id);
 
-  const product = await this.fetchProductWithRelations(productId);
+    const product = await this.fetchProductWithRelations(productId);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID #${id} no encontrado`);
@@ -248,11 +277,13 @@ export class ProductsService {
     });
     const stockValue = stockAgg._sum.cantidad_actual;
     const normalizedStock = stockValue == null ? null : Number(stockValue);
-  return this.mapProduct(product as unknown as ProductWithRelations, normalizedStock);
+    return this.mapProduct(product as unknown as ProductWithRelations, normalizedStock);
   }
 
-  // ✅ Lógica de actualización corregida.
   async update(id: string, updateProductDto: UpdateProductDto) {
+    // ... (tu función update sin cambios)
+    // NOTA: Esta función 'update' NO está preparada para recibir un archivo,
+    // solo para actualizar los datos JSON y las URLs de 'media'.
     const { id_categoria, media, ...rest } = updateProductDto;
     const productId = BigInt(id);
 
@@ -274,21 +305,20 @@ export class ProductsService {
       if (!refreshed) {
         throw new NotFoundException(`Producto con ID #${id} no encontrado luego de actualizar media.`);
       }
-  return this.mapProduct(refreshed as unknown as ProductWithRelations);
+      return this.mapProduct(refreshed as unknown as ProductWithRelations);
     }
 
-  return this.mapProduct(product as unknown as ProductWithRelations);
+    return this.mapProduct(product as unknown as ProductWithRelations);
   }
 
   async remove(id: string) {
+    // ... (tu función remove sin cambios)
     const productId = BigInt(id);
 
-    // Verificar existencia previa para devolver 404 coherente
     await this.findOne(id);
 
     try {
       await this.prisma.$transaction(async (tx) => {
-        // Limpiamos dependencias directas antes de eliminar el producto
         const movimientoTable = await tx.$queryRaw<Array<{ exists: boolean }>>`
           SELECT EXISTS (
             SELECT 1
@@ -307,7 +337,6 @@ export class ProductsService {
       });
     } catch (e: any) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
-        // Existen registros dependientes (p.ej. ventas) que impiden eliminarlo
         throw new ConflictException('No se puede eliminar el producto porque tiene dependencias activas (ventas u otros registros).');
       }
       throw e;

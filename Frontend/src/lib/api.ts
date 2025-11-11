@@ -16,6 +16,8 @@ function getToken(): string | null {
   return null;
 }
 
+// --- MODIFICADO: apiFetch ---
+// Ahora detecta si el 'body' es FormData y elimina el Content-Type
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = path.startsWith("http")
     ? path
@@ -73,6 +75,8 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   return data as T;
 }
+// --- FIN DE MODIFICACIÓN apiFetch ---
+
 
 // --- Interfaces actualizadas ---
 export interface AuthUser {
@@ -169,6 +173,7 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  // --- FIN DE MODIFICACIÓN createProduct ---
 
   verifyEmail: (correo_electronico: string, codigo: string) =>
     apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
@@ -276,10 +281,13 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(categoryData),
     }),
+
   deleteCategory: (id: string) =>
     apiFetch<any>(`categories/${id}`, {
       method: "DELETE",
     }),
+
+  // ... (El resto de las funciones: Empleados, Negocios, Inventario, Ventas) ...
   // --- Empleados ---
   getEmployeesByBusiness: (businessId: string) =>
     apiFetch<any[]>(`employees/business/${businessId}`),

@@ -7,11 +7,9 @@ services:
     ports:
       - "3000:3000"
       - "9229:9229"
-  # Volúmenes deshabilitados temporalmente por error de montaje read-only en /opt/lampp
-  # Para desarrollo con hot-reload cambiar comando a start:dev y reactivar estos volúmenes fuera de /opt
-  # volumes:
-  #   - ./Backend/src:/app/src
-  #   - ./Backend/public:/app/public
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
     environment:
       - PORT=3000
       - DATABASE_URL=postgres://user:password@postgres:5432/filacero
@@ -41,7 +39,7 @@ services:
       - ./Frontend:/app
       - /app/node_modules
       - /app/.next
-    command: ["npm","run","dev"]
+    command: ["npm", "run", "dev"]
     depends_on:
       - backend
     restart: unless-stopped
@@ -73,6 +71,7 @@ services:
 networks:
   default:
     name: filacero-net
+
 volumes:
   postgres_data:
   redis_data:
