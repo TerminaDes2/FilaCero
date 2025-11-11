@@ -138,10 +138,9 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
         }
         
         // --- 2. ¡AQUÍ ESTÁ LA MODIFICACIÓN FINAL! ---
-        // Llamamos a la nueva api.createProduct (del Paso 2)
-        // Pasamos el JSON y el Archivo de imagen (que puede ser null)
-        const created = await api.createProduct(productPayload, imageFile);
-        
+        // Llamamos a la nueva api.createProductWithImage que soporta imagen opcional
+        const created = await api.createProductWithImage(productPayload, imageFile);
+              
         const productId = String(created?.id_producto ?? created?.id);
 
         // 3. Lógica de inventario (sin cambios)
