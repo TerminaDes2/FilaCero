@@ -19,6 +19,9 @@ interface JwtPayload {
     email: string;
 }
 
+const OWNER_ROLE_ID = 2n;
+const CUSTOMER_ROLE_ID = 4n;
+
 type VerificationSnapshot = {
     correo_verificado?: boolean;
     correo_verificado_en?: Date | null;
@@ -58,11 +61,17 @@ export class AuthService {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(registerDto.password, salt);
 
-        // 3. Crear y guardar en la base de datos
+        // 3. Determinar rol objetivo según flujo (negocio vs cliente)
+        const requestedRole = registerDto.role ?? 'usuario';
+        const roleId = requestedRole === 'admin' ? OWNER_ROLE_ID : CUSTOMER_ROLE_ID;
+        const desiredRole = await this.prisma.roles.findUnique({ where: { id_rol: roleId } });
+
+        if (!desiredRole) {
+            throw new BadRequestException('No se encontró un rol válido para el usuario.');
+        }
+
+        // 4. Crear y guardar en la base de datos
         try {
-            // Determinar rol solicitado (admin/usuario) o usar 'usuario' por defecto
-            const desiredRoleName = registerDto.role ?? 'usuario';
-            const desiredRole = await this.prisma.roles.findUnique({ where: { nombre_rol: desiredRoleName } });
 
             const user = await this.prisma.usuarios.create({
                 data: {
@@ -73,7 +82,7 @@ export class AuthService {
                     sms_verificado: false,
                     credencial_verificada: false,
                     fecha_registro: new Date(),
-                    ...(desiredRole ? { id_rol: desiredRole.id_rol } : {}),
+                    id_rol: desiredRole.id_rol,
                     ...(normalizedAccountNumber ? { numero_cuenta: normalizedAccountNumber } : {}),
                     ...(normalizedAge !== null ? { edad: normalizedAge } : {}),
                 },
