@@ -43,6 +43,12 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
   if (token) normalizedHeaders.Authorization = `Bearer ${token}`;
 
+  // If the body is a FormData, let the browser set the Content-Type (with boundary)
+  // so remove any explicit Content-Type header in that case.
+  if (init.body && typeof FormData !== "undefined" && init.body instanceof FormData) {
+    delete normalizedHeaders["Content-Type"];
+  }
+
   const res = await fetch(url, { ...init, headers: normalizedHeaders });
 
   if (
@@ -235,6 +241,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify(productData),
     }),
+
+  // Nueva versión: acepta opcionalmente un archivo de imagen.
+  // Si se recibe `imageFile`, envía multipart/form-data con `payload` y `image`.
+  createProductWithImage: (productData: any, imageFile?: File | null) => {
+    if (imageFile) {
+      const fd = new FormData();
+      // 'payload' es la parte JSON; el backend puede adaptarse a esto.
+      fd.append("payload", JSON.stringify(productData));
+      fd.append("image", imageFile);
+      return apiFetch<any>("products", {
+        method: "POST",
+        body: fd,
+      });
+    }
+    return api.createProduct(productData);
+  },
 
   updateProduct: (id: string, productData: any) =>
     apiFetch<any>(`products/${id}`, {
