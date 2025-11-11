@@ -4,9 +4,17 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
 import { json, urlencoded } from 'express';
+import { envs } from './config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true
+    })
+  );
   // Recordar quitar esto en caso de no ser necesario
   // --- IGNORE ---
   const bodyLimit = process.env.REQUEST_BODY_LIMIT || '10mb';
@@ -61,7 +69,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalInterceptors(new BigIntInterceptor());
-  const port = process.env.PORT || 3000;
+  const port = envs.port || 3000;
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`Nest backend escuchando en puerto ${port}`);
