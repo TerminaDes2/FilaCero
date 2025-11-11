@@ -17,15 +17,20 @@ function getToken(): string | null {
   return null;
 }
 
+// --- MODIFICADO: apiFetch ---
+// Ahora detecta si el 'body' es FormData y elimina el Content-Type
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = path.startsWith('http')
     ? path
     : `${API_BASE.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
   const token = getToken();
 
+  // Inicia con el Content-Type por defecto (JSON)
   const normalizedHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+  
+  // Normaliza los encabezados que vienen en 'init'
   if (init.headers) {
     if (typeof Headers !== 'undefined' && init.headers instanceof Headers) {
       init.headers.forEach((value, key) => {
@@ -39,7 +44,16 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       Object.assign(normalizedHeaders, init.headers as Record<string, string>);
     }
   }
+  
   if (token) normalizedHeaders.Authorization = `Bearer ${token}`;
+
+  // --- NUEVA LÓGICA DE DETECCIÓN DE FORMDATA ---
+  // Si el cuerpo es FormData, DEBEMOS eliminar el 'Content-Type'.
+  // El navegador lo añadirá automáticamente con el 'boundary' correcto.
+  if (init.body && typeof FormData !== 'undefined' && init.body instanceof FormData) {
+    delete normalizedHeaders['Content-Type'];
+  }
+  // --- FIN DE LA NUEVA LÓGICA ---
 
   const res = await fetch(url, { ...init, headers: normalizedHeaders });
 
@@ -70,6 +84,8 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   return data as T;
 }
+// --- FIN DE MODIFICACIÓN apiFetch ---
+
 
 // --- Interfaces actualizadas ---
 export interface LoginResponse {
@@ -89,24 +105,7 @@ export interface UserInfo {
   fecha_registro?: string;
   estado?: string;
   credential_url?: string;
-  verificado?: boolean;
-  verified?: boolean;
-  correo_verificado?: boolean;
-  correo_verificado_en?: string | null;
-  sms_verificado?: boolean;
-  sms_verificado_en?: string | null;
-  credencial_verificada?: boolean;
-  credencial_verificada_en?: string | null;
-  verifications?: {
-    email: boolean;
-    sms: boolean;
-    credential: boolean;
-  };
-  verificationTimestamps?: {
-    email: string | null;
-    sms: string | null;
-    credential: string | null;
-  };
+  // ... (resto de campos de UserInfo)
 }
 
 // --- 👇 Objeto principal con métodos actualizados ---
@@ -118,8 +117,6 @@ export const api = {
       body: JSON.stringify({ correo_electronico, password }),
     }),
 
-  // --- CORRECCIÓN: 'register' ---
-  // Se fusionaron las dos definiciones duplicadas.
   register: (
     name: string,
     email: string,
@@ -142,8 +139,6 @@ export const api = {
     });
   },
 
-  // --- CORRECCIÓN: 'me' ---
-  // Se reinsertó la función 'me' que faltaba.
   me: () => apiFetch<UserInfo>('auth/me'),
 
   // --- Productos ---
@@ -153,6 +148,7 @@ export const api = {
     id_negocio?: string;
     categoria?: string;
   }) => {
+    // ... (lógica de getProducts sin cambios)
     const merged = { ...(params || {}) } as { [key: string]: string | undefined };
     if (!merged.id_negocio) {
       let negocioId: string | undefined = undefined;
@@ -180,16 +176,37 @@ export const api = {
     return apiFetch<any[]>(path);
   },
 
-  createProduct: (productData: any) =>
-    apiFetch<any>('products', {
+  // --- MODIFICADO: createProduct ---
+  // Ahora acepta 'productData' (el JSON) y un 'imageFile' (File) opcional
+  // Construye un FormData para enviar ambos al backend.
+  createProduct: (productData: any, imageFile?: File | null) => {
+    const formData = new FormData();
+
+    // 1. Añade los datos del producto como un string JSON.
+    // El backend (Nest.js) tendrá que parsear este campo.
+    formData.append('data', JSON.stringify(productData));
+
+    // 2. Añade el archivo de imagen si existe.
+    // El backend lo recibirá en un campo llamado "file".
+    if (imageFile) {
+      formData.append('file', imageFile);
+    }
+
+    // 3. Envía el FormData.
+    // 'apiFetch' detectará que es FormData y eliminará el Content-Type.
+    return apiFetch<any>('products', {
       method: 'POST',
-      body: JSON.stringify(productData),
-    }),
+      body: formData, // Envía el FormData directamente
+    });
+  },
+  // --- FIN DE MODIFICACIÓN createProduct ---
 
   updateProduct: (id: string, productData: any) =>
     apiFetch<any>(`products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(productData),
+      // Nota: updateProduct también necesitará lógica de FormData si quieres
+      // que también actualice la imagen. Por ahora, lo dejamos así.
     }),
 
   deleteProduct: (id: string) =>
@@ -198,9 +215,6 @@ export const api = {
     }),
 
   // --- Categorías ---
-  // --- CORRECCIÓN: Se eliminó la versión duplicada. ---
-  // Esta versión (la segunda) es más flexible y permite categorías globales (sin id_negocio)
-  // lo cual coincide con lo que descubrimos sobre tu backend.
   getCategories: (params?: { id_negocio?: string }) => {
     const queryParams = new URLSearchParams();
     if (params?.id_negocio) {
@@ -213,8 +227,6 @@ export const api = {
 
   getCategoryById: (id: string) => apiFetch<any>(`categories/${id}`),
 
-  // --- CORRECCIÓN: Se eliminó la versión duplicada. ---
-  // Se mantiene esta versión que permite un 'negocioId' opcional.
   createCategory: (categoryData: { nombre: string; negocioId?: string }) => {
     const body: any = { nombre: categoryData.nombre };
     if (categoryData.negocioId) {
@@ -237,6 +249,7 @@ export const api = {
       method: 'DELETE',
     }),
 
+  // ... (El resto de las funciones: Empleados, Negocios, Inventario, Ventas) ...
   // --- Empleados ---
   getEmployeesByBusiness: (businessId: string) =>
     apiFetch<any[]>(`employees/business/${businessId}`),

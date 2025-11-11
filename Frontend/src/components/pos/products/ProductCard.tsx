@@ -1,7 +1,9 @@
 "use client";
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { POSProduct } from '../../../pos/cartContext'; // Este tipo es la clave
+// Asumimos que POSProduct ahora incluye 'imagen_url' y 'media'
+// (lo arreglaremos en el Paso 2)
+import { POSProduct } from '../../../pos/cartContext'; 
 import { useCart } from '../../../pos/cartContext';
 import { AddToCartPanel } from './AddToCartPanel';
 import { useSettingsStore } from '../../../state/settingsStore';
@@ -18,6 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
   const outOfStock = product.stock <= 0;
   const base = 'group relative rounded-2xl border transition overflow-hidden shadow-sm hover:shadow-md';
   type BadgeVariant = 'category' | 'price' | 'stock';
+
+  // Tu componente 'CandyBadge'
   const CandyBadge: React.FC<{
     children: React.ReactNode;
     size?: 'sm' | 'md';
@@ -25,13 +29,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
     variant?: BadgeVariant;
     danger?: boolean;
   }> = ({ children, size = 'sm', className, variant = 'category', danger = false }) => {
-    // Pastel candy-like palettes by variant
     const palettes: Record<BadgeVariant, { bg1: string; bg2: string; text: string; stroke?: string }> = {
-      category: { bg1: '#FBECD8', bg2: '#F6E0C6', text: '#604a3c', stroke: 'rgba(0,0,0,0.05)' }, // peach/cream
-      price: { bg1: '#E6F7EF', bg2: '#D9F1E6', text: '#204E42', stroke: 'rgba(0,0,0,0.05)' }, // mint/cream
-      stock: { bg1: '#FFE0E6', bg2: '#FFD1DB', text: '#7A3747', stroke: 'rgba(0,0,0,0.06)' }, // soft strawberry (fresa suave)
+      category: { bg1: '#FBECD8', bg2: '#F6E0C6', text: '#604a3c', stroke: 'rgba(0,0,0,0.05)' },
+      price: { bg1: '#E6F7EF', bg2: '#D9F1E6', text: '#204E42', stroke: 'rgba(0,0,0,0.05)' },
+      stock: { bg1: '#FFE0E6', bg2: '#FFD1DB', text: '#7A3747', stroke: 'rgba(0,0,0,0.06)' },
     };
-    const dangerPalette = { bg1: '#F8D9DF', bg2: '#F2C5CE', text: '#7a2c39', stroke: 'rgba(0,0,0,0.06)' }; // berry/rose
+    const dangerPalette = { bg1: '#F8D9DF', bg2: '#F2C5CE', text: '#7a2c39', stroke: 'rgba(0,0,0,0.06)' };
     const pal = danger ? dangerPalette : palettes[variant];
     return (
       <span className={`relative z-0 inline-flex items-center ${size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-sm'} font-medium rounded-md ${className || ''}`}>
@@ -45,18 +48,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
       </span>
     );
   };
+
+  // Definimos la URL de la imagen buscando en los campos correctos
+  // (Este error desaparecerá después del Paso 2)
+  const imageUrl = product.imagen_url || product.media?.[0]?.url || '/images/POS-OrdenarMenu.png';
+
   return (
     <div className={`${base} ${view === 'list' ? 'flex gap-4 p-3 items-center' : ''}`}
       style={{
         background: 'var(--pos-card-bg)',
         borderColor: 'var(--pos-card-border)'
       }}>
+      
+      {/* Usamos la variable 'imageUrl' en el 'src' */}
       <div className={view === 'grid' ? 'relative w-full h-36 overflow-hidden' : 'relative w-24 h-20 rounded-lg overflow-hidden flex-shrink-0'} style={{ background: '#f2e2c5' }}>
-        <Image src={product.image || '/images/POS-OrdenarMenu.png'} alt={product.name} fill className='object-cover transition-transform duration-500 group-hover:scale-105' />
+        <Image src={imageUrl} alt={product.name} fill className='object-cover transition-transform duration-500 group-hover:scale-105' />
         {outOfStock && (
           <span className='absolute inset-0 bg-[rgba(255,255,255,0.78)] backdrop-blur-sm flex items-center justify-center text-[11px] font-semibold tracking-wide' style={{ color: 'var(--pos-danger-text)' }}>Sin stock</span>
         )}
       </div>
+
       <div className={`${view === 'grid' ? 'p-3' : 'flex-1 min-w-0'} relative z-0`}>
         <div className='flex items-start justify-between gap-2'>
           <h3 className='text-sm font-semibold leading-tight line-clamp-2' style={{ color: 'var(--pos-text-heading)' }}>{product.name}</h3>
@@ -72,9 +83,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
         )}
         <div className='mt-2 flex items-center justify-between'>
           <div className='flex flex-col'>
+            
+            {/* --- CORRECCIÓN DEL TYPO --- */}
             <CandyBadge size='md' variant='price' className='w-max'>
               {new Intl.NumberFormat(locale, { style: 'currency', currency }).format(product.price)}
             </CandyBadge>
+            {/* --- FIN DE LA CORRECCIÓN --- */}
+
             {showStock && (
               <CandyBadge size='sm' variant='stock' danger={outOfStock} className='mt-1 w-max'>
                 {outOfStock ? 'Sin stock' : `${product.stock} stock`}

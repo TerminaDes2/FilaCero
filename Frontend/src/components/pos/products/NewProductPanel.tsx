@@ -25,6 +25,32 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const isMounted = useRef(true);
 
+  // --- Estados de Imagen (Paso 1) ---
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // --- Manejador de Imagen (Paso 1) ---
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  // --- Limpieza de Imagen (Paso 1) ---
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
   const categories = useCategoriesStore((state) => state.categories);
   const fetchCategories = useCategoriesStore((state) => state.fetchCategories);
 
@@ -75,6 +101,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
     setSku(gen);
   };
 
+  // --- handleSubmit (MODIFICADO - Paso 6) ---
   const handleSubmit = useCallback(
     async () => {
       setError("");
@@ -85,22 +112,23 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
       setSaving(true);
 
       try {
+        // 1. Preparamos el payload de datos JSON
         const productPayload: any = {
           nombre: nombre.trim(),
           precio: Number(precio),
           estado: active ? "activo" : "inactivo",
+          media: [], // Tu backend avanzado espera esto
         };
 
         if (sku) productPayload.codigo_barras = sku;
 
+        // Lógica para resolver ID de categoría
         if (category) {
           const categoryFromStore = categories.find((cat) => cat.id === category);
-
           if (categoryFromStore) {
             const idCandidate = categoryFromStore.id.trim();
             const nameCandidate = categoryFromStore.name.trim();
             const identifier = /^\d+$/.test(idCandidate) ? idCandidate : nameCandidate;
-
             if (identifier) {
               productPayload.id_categoria = identifier;
             }
@@ -108,13 +136,17 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
             productPayload.id_categoria = category.trim();
           }
         }
-
-        const created = await api.createProduct(productPayload);
+        
+        // --- 2. ¡AQUÍ ESTÁ LA MODIFICACIÓN FINAL! ---
+        // Llamamos a la nueva api.createProduct (del Paso 2)
+        // Pasamos el JSON y el Archivo de imagen (que puede ser null)
+        const created = await api.createProduct(productPayload, imageFile);
+        
         const productId = String(created?.id_producto ?? created?.id);
 
+        // 3. Lógica de inventario (sin cambios)
         const negocioId =
           activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || "";
-
         const stockInicial = Math.max(Number(stock) || 0, 0);
 
         if (negocioId && productId) {
@@ -138,17 +170,18 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
         if (err?.status === 401) msg = "No autenticado. Inicia sesión para crear productos.";
         if (err?.status === 403) msg = "No tienes permisos para crear productos (requiere rol admin).";
         if (err?.status === 400)
-          msg = "Datos inválidos o relaciones inexistentes (revisa categoría).";
+          msg = "Datos inválidos (JSON) o error de archivo (ej. no es imagen).";
         setError(msg);
         console.error("Error al crear producto:", err);
       } finally {
         setSaving(false);
       }
     },
-    [nombre, precio, active, sku, category, categories, stock, onProductCreated],
+    [nombre, precio, active, sku, category, categories, stock, onProductCreated, imageFile],
   );
+  // --- FIN DE handleSubmit ---
 
-  // ✅ Foco inicial
+  // Foco inicial
   useEffect(() => {
     const t = setTimeout(() => {
       nameInputRef.current?.focus();
@@ -157,7 +190,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
     return () => clearTimeout(t);
   }, []);
 
-  // ✅ Listeners de teclado
+  // Listeners de teclado
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -415,6 +448,57 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                 )}
               </div>
             </div>
+          </section>
+
+          {/* Sección de Imagen */}
+          <section 
+            className='rounded-2xl p-4 space-y-3' 
+            style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}
+          >
+            <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>
+              Imagen del producto
+            </h3>
+            
+            {/* Vista previa de la imagen */}
+            {imagePreview && (
+              <div className='relative group'>
+                <img 
+                  src={imagePreview} 
+                  alt="Vista previa del producto" 
+                  className='w-full h-48 object-cover rounded-lg border' 
+                  style={{ borderColor: 'var(--pos-card-border)' }} 
+                />
+                <button
+                  type='button'
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreview(null);
+                  }}
+                  className='absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none'
+                  aria-label="Quitar imagen"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Botón para subir (oculta el input real) */}
+            {!imagePreview && (
+              <label 
+                className='w-full h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-colors hover:bg-black/5' 
+                style={{ borderColor: 'var(--pos-card-border)', color: 'var(--pos-text-muted)' }}
+              >
+                <svg className='w-8 h-8' fill='none' stroke='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' /></svg>
+                <span className='mt-2 text-sm font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Subir una imagen</span>
+                <span className='text-xs'>Click para seleccionar</span>
+                <input 
+                  type='file' 
+                  className='hidden' 
+                  accept="image/png, image/jpeg" 
+                  onChange={handleImageChange} 
+                />
+              </label>
+            )}
           </section>
 
           {/* Precio y stock */}
