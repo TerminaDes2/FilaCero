@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:3000/api';
+// Requiere que NEXT_PUBLIC_API_BASE esté definida para evitar apuntar a localhost.
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+if (!RAW_API_BASE) {
+  console.error('[Stores API] Falta NEXT_PUBLIC_API_BASE en el entorno');
+}
+const API_BASE = (RAW_API_BASE ?? '').replace(/\/+$/, '');
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  if (!API_BASE) {
+    return NextResponse.json({ message: 'Config error: NEXT_PUBLIC_API_BASE no está definida' }, { status: 500 });
+  }
   const backendUrl = new URL('businesses', API_BASE.endsWith('/') ? API_BASE : `${API_BASE}/`);
 
   const search = searchParams.get('search');

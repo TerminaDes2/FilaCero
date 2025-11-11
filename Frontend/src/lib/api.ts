@@ -1,6 +1,8 @@
+// Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
+// que será proxyada por Next.js según las rewrites del next.config.mjs.
 export const API_BASE =
   (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE ||
-  "http://localhost:3000/api";
+  "/api";
 
 export interface ApiError {
   status: number;
