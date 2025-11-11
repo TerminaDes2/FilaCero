@@ -1,7 +1,6 @@
-/* lib/api.ts */
 export const API_BASE =
   (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE ||
-  'http://localhost:3000/api';
+  "http://localhost:3000/api";
 
 export interface ApiError {
   status: number;
@@ -10,8 +9,8 @@ export interface ApiError {
 
 function getToken(): string | null {
   try {
-    if (typeof window !== 'undefined') {
-      return window.localStorage.getItem('auth_token');
+    if (typeof window !== "undefined") {
+      return window.localStorage.getItem("auth_token");
     }
   } catch {}
   return null;
@@ -20,48 +19,37 @@ function getToken(): string | null {
 // --- MODIFICADO: apiFetch ---
 // Ahora detecta si el 'body' es FormData y elimina el Content-Type
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const url = path.startsWith('http')
+  const url = path.startsWith("http")
     ? path
-    : `${API_BASE.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
-  const token = getToken();
-
-  // Inicia con el Content-Type por defecto (JSON)
+    : `${API_BASE.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+  const token = getToken(); // Normalize headers into a plain object to avoid issues when `init.headers` is // a Headers instance or an array of tuples. Keep Content-Type by default and // add Authorization when token is present.
   const normalizedHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
-  
-  // Normaliza los encabezados que vienen en 'init'
   if (init.headers) {
-    if (typeof Headers !== 'undefined' && init.headers instanceof Headers) {
+    // Headers instance
+    if (typeof Headers !== "undefined" && init.headers instanceof Headers) {
       init.headers.forEach((value, key) => {
         normalizedHeaders[key] = value;
       });
     } else if (Array.isArray(init.headers)) {
+      // Array of tuples
       (init.headers as [string, string][]).forEach(([key, value]) => {
         normalizedHeaders[key] = value;
       });
-    } else if (typeof init.headers === 'object') {
+    } else if (typeof init.headers === "object") {
       Object.assign(normalizedHeaders, init.headers as Record<string, string>);
     }
   }
-  
   if (token) normalizedHeaders.Authorization = `Bearer ${token}`;
-
-  // --- NUEVA LÓGICA DE DETECCIÓN DE FORMDATA ---
-  // Si el cuerpo es FormData, DEBEMOS eliminar el 'Content-Type'.
-  // El navegador lo añadirá automáticamente con el 'boundary' correcto.
-  if (init.body && typeof FormData !== 'undefined' && init.body instanceof FormData) {
-    delete normalizedHeaders['Content-Type'];
-  }
-  // --- FIN DE LA NUEVA LÓGICA ---
 
   const res = await fetch(url, { ...init, headers: normalizedHeaders });
 
   if (
-    typeof window !== 'undefined' &&
-    (globalThis as any).process?.env?.NODE_ENV !== 'production'
+    typeof window !== "undefined" &&
+    (globalThis as any).process?.env?.NODE_ENV !== "production"
   ) {
-    console.debug('[apiFetch]', init.method || 'GET', url);
+    console.debug("[apiFetch]", init.method || "GET", url);
   }
 
   const text = await res.text();
@@ -70,6 +58,8 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     try {
       data = JSON.parse(text);
     } catch (e) {
+      // If response isn't JSON, keep the raw text. This avoids throwing during
+      // JSON.parse for non-JSON endpoints while preserving the response body.
       data = text;
     }
   }
@@ -77,7 +67,8 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     const err: ApiError = {
       status: res.status,
-      message: (data && (data.message || data.error)) || res.statusText || 'Error',
+      message:
+        (data && (data.message || data.error)) || res.statusText || "Error",
     };
     throw err;
   }
@@ -88,16 +79,44 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 
 // --- Interfaces actualizadas ---
+export interface AuthUser {
+  id: string;
+  email: string;
+  verified?: boolean;
+  verifications?: {
+    email: boolean;
+    sms: boolean;
+    credential: boolean;
+  };
+  verificationTimestamps?: {
+    email: string | null;
+    sms: string | null;
+    credential: string | null;
+  };
+  avatarUrl?: string | null;
+  credentialUrl?: string | null;
+  accountNumber?: string | null;
+  age?: number | null;
+}
+
 export interface LoginResponse {
   token: string;
-  user: { id: string; email: string };
+  user: AuthUser;
+}
+
+export interface RegisterResponse extends LoginResponse {
+  requiresVerification?: boolean;
+  verification?: {
+    delivery: 'email';
+    expiresAt: string;
+  };
 }
 
 export interface UserInfo {
   id_usuario: number;
   nombre: string;
   correo_electronico: string;
-  id_rol: number;
+  id_rol: number; // nombre del rol plano desde backend (JwtStrategy agrega role_name)
   role_name?: string;
   role?: { id_rol: number; nombre_rol: string };
   numero_telefono?: string;
@@ -105,57 +124,92 @@ export interface UserInfo {
   fecha_registro?: string;
   estado?: string;
   credential_url?: string;
-  // ... (resto de campos de UserInfo)
+  verificado?: boolean;
+  verified?: boolean;
+  correo_verificado?: boolean;
+  correo_verificado_en?: string | null;
+  sms_verificado?: boolean;
+  sms_verificado_en?: string | null;
+  credencial_verificada?: boolean;
+  credencial_verificada_en?: string | null;
+  verifications?: {
+    email: boolean;
+    sms: boolean;
+    credential: boolean;
+  };
+  verificationTimestamps?: {
+    email: string | null;
+    sms: string | null;
+    credential: string | null;
+  };
 }
 
 // --- 👇 Objeto principal con métodos actualizados ---
 export const api = {
   // --- Auth ---
   login: (correo_electronico: string, password: string) =>
-    apiFetch<LoginResponse>('auth/login', {
-      method: 'POST',
+    apiFetch<LoginResponse>("auth/login", {
+      method: "POST",
       body: JSON.stringify({ correo_electronico, password }),
     }),
+
+  // Información del usuario autenticado
+  me: () => apiFetch<UserInfo>("auth/me"),
 
   register: (
     name: string,
     email: string,
     password: string,
-    role?: 'usuario' | 'admin',
+    role?: "usuario" | "admin",
     accountNumber?: string,
     age?: number
   ) => {
     const payload: Record<string, unknown> = { name, email, password };
     if (role) payload.role = role;
     if (accountNumber) payload.accountNumber = accountNumber;
-    if (typeof age === 'number') payload.age = age;
-
-    console.log('📤 Enviando registro a:', `${API_BASE}/auth/register`);
-    console.log('📦 Datos enviados:', payload);
-
-    return apiFetch<LoginResponse>('auth/register', {
-      method: 'POST',
+    if (typeof age === "number") payload.age = age;
+    return apiFetch<RegisterResponse>("usuarios/register", {
+      method: "POST",
       body: JSON.stringify(payload),
     });
   },
+  // --- FIN DE MODIFICACIÓN createProduct ---
 
-  me: () => apiFetch<UserInfo>('auth/me'),
+  verifyEmail: (correo_electronico: string, codigo: string) =>
+    apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
+      "usuarios/verificar-correo",
+      {
+        method: "POST",
+        body: JSON.stringify({ correo_electronico, codigo }),
+      }
+    ),
+
+  resendVerification: (correo_electronico: string) =>
+    apiFetch<{ message: string; delivery: "email"; expiresAt: string }>(
+      "usuarios/enviar-verificacion",
+      {
+        method: "POST",
+        body: JSON.stringify({ correo_electronico }),
+      }
+    ),
 
   // --- Productos ---
+
   getProducts: (params?: {
     search?: string;
     status?: string;
     id_negocio?: string;
-    categoria?: string;
+    categoria?: string; // ← Agrega este parámetro
   }) => {
-    // ... (lógica de getProducts sin cambios)
-    const merged = { ...(params || {}) } as { [key: string]: string | undefined };
+    const merged = { ...(params || {}) } as {
+      [key: string]: string | undefined;
+    };
     if (!merged.id_negocio) {
       let negocioId: string | undefined = undefined;
       try {
         negocioId =
-          typeof window !== 'undefined'
-            ? localStorage.getItem('active_business_id') || undefined
+          typeof window !== "undefined"
+            ? localStorage.getItem("active_business_id") || undefined
             : undefined;
       } catch {}
       if (!negocioId) {
@@ -167,148 +221,126 @@ export const api = {
     }
     const queryParams = new URLSearchParams();
     for (const [key, value] of Object.entries(merged)) {
-      if (value != null && value !== '') {
+      if (value != null && value !== "") {
         queryParams.append(key, String(value));
       }
     }
     const query = queryParams.toString();
-    const path = query ? `products?${query}` : 'products';
+    const path = query ? `products?${query}` : "products";
     return apiFetch<any[]>(path);
   },
 
-  // --- MODIFICADO: createProduct ---
-  // Ahora acepta 'productData' (el JSON) y un 'imageFile' (File) opcional
-  // Construye un FormData para enviar ambos al backend.
-  createProduct: (productData: any, imageFile?: File | null) => {
-    const formData = new FormData();
-
-    // 1. Añade los datos del producto como un string JSON.
-    // El backend (Nest.js) tendrá que parsear este campo.
-    formData.append('data', JSON.stringify(productData));
-
-    // 2. Añade el archivo de imagen si existe.
-    // El backend lo recibirá en un campo llamado "file".
-    if (imageFile) {
-      formData.append('file', imageFile);
-    }
-
-    // 3. Envía el FormData.
-    // 'apiFetch' detectará que es FormData y eliminará el Content-Type.
-    return apiFetch<any>('products', {
-      method: 'POST',
-      body: formData, // Envía el FormData directamente
-    });
-  },
-  // --- FIN DE MODIFICACIÓN createProduct ---
+  createProduct: (productData: any) =>
+    apiFetch<any>("products", {
+      method: "POST",
+      body: JSON.stringify(productData),
+    }),
 
   updateProduct: (id: string, productData: any) =>
     apiFetch<any>(`products/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(productData),
-      // Nota: updateProduct también necesitará lógica de FormData si quieres
-      // que también actualice la imagen. Por ahora, lo dejamos así.
     }),
 
   deleteProduct: (id: string) =>
     apiFetch<any>(`products/${id}`, {
-      method: 'DELETE',
-    }),
+      method: "DELETE",
+    }), // --- Categorías ---
 
-  // --- Categorías ---
   getCategories: (params?: { id_negocio?: string }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.id_negocio) {
-      queryParams.append('id_negocio', params.id_negocio);
+    let negocioId = params?.id_negocio;
+    if (!negocioId) {
+      try {
+        negocioId =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("active_business_id") || undefined
+            : undefined;
+      } catch {}
     }
-    const query = queryParams.toString();
-    const path = query ? `categories?${query}` : 'categories';
-    return apiFetch<any[]>(path);
+    if (!negocioId) {
+      const envNegocio = (globalThis as any).process?.env
+        ?.NEXT_PUBLIC_NEGOCIO_ID;
+      if (envNegocio) negocioId = envNegocio;
+    }
+    if (!negocioId) {
+      throw new Error("Se requiere un negocio activo para cargar categorías");
+    }
+    const query = new URLSearchParams({
+      id_negocio: String(negocioId),
+    }).toString();
+    return apiFetch<any[]>(`categories?${query}`);
   },
-
   getCategoryById: (id: string) => apiFetch<any>(`categories/${id}`),
-
-  createCategory: (categoryData: { nombre: string; negocioId?: string }) => {
-    const body: any = { nombre: categoryData.nombre };
-    if (categoryData.negocioId) {
-      body.negocioId = categoryData.negocioId;
-    }
-    return apiFetch<any>('categories', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
-  },
-
+  createCategory: (categoryData: { nombre: string; negocioId: string }) =>
+    apiFetch<any>("categories", {
+      method: "POST",
+      body: JSON.stringify(categoryData),
+    }),
   updateCategory: (id: string, categoryData: { nombre: string }) =>
     apiFetch<any>(`categories/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(categoryData),
     }),
 
   deleteCategory: (id: string) =>
     apiFetch<any>(`categories/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     }),
 
   // ... (El resto de las funciones: Empleados, Negocios, Inventario, Ventas) ...
   // --- Empleados ---
   getEmployeesByBusiness: (businessId: string) =>
     apiFetch<any[]>(`employees/business/${businessId}`),
-
   createEmployee: (
     businessId: string,
     payload: { correo_electronico: string; nombre?: string }
   ) =>
     apiFetch<any>(`employees/business/${businessId}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(payload),
     }),
-
   updateEmployee: (employeeId: string, payload: { estado: string }) =>
     apiFetch<any>(`employees/${employeeId}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(payload),
     }),
-
   deleteEmployee: (employeeId: string) =>
-    apiFetch<any>(`employees/${employeeId}`, { method: 'DELETE' }),
-
+    apiFetch<any>(`employees/${employeeId}`, { method: "DELETE" }),
   // --- Negocios ---
+  // --- 👇 CAMBIO AQUÍ: Añadido 'hero_image_url' ---
   createBusiness: (data: {
     nombre: string;
     direccion?: string;
     telefono?: string;
     correo?: string;
     logo?: string;
-    hero_image_url?: string;
+    hero_image_url?: string; // <- AÑADIDO
   }) =>
-    apiFetch<any>('businesses', { method: 'POST', body: JSON.stringify(data) }),
-
-  listMyBusinesses: () => apiFetch<any[]>('businesses/my'),
-
+    apiFetch<any>("businesses", { method: "POST", body: JSON.stringify(data) }),
+  listMyBusinesses: () => apiFetch<any[]>("businesses/my"),
   getPublicBusinesses: async () => {
     try {
-      const businesses = await apiFetch<any[]>('businesses');
-      console.log('✅ Negocios cargados desde API:', businesses);
+      const businesses = await apiFetch<any[]>("businesses");
+      console.log("✅ Negocios cargados desde API:", businesses);
       return businesses;
     } catch (error) {
-      console.error('❌ Error cargando negocios públicos:', error);
+      console.error("❌ Error cargando negocios públicos:", error); // Retorna array vacío en lugar de lanzar error
       return [];
     }
   },
-
   getBusinessById: async (id: string | number) => {
     try {
+      // Asegúrate de que el ID sea string para la comparación
       const businessId = String(id);
       const business = await apiFetch<any>(`businesses/${businessId}`);
-      console.log('✅ Tienda cargada desde API:', business);
+      console.log("✅ Tienda cargada desde API:", business);
       return business;
     } catch (error) {
-      console.error('❌ Error cargando tienda:', error);
+      console.error("❌ Error cargando tienda:", error);
       throw error;
     }
-  },
+  }, // --- Inventario ---
 
-  // --- Inventario ---
   getInventory: (params: {
     id_negocio?: string;
     id_producto?: string;
@@ -325,21 +357,19 @@ export const api = {
     cantidad_actual?: number;
     stock_minimo?: number;
   }) =>
-    apiFetch<any>('inventory', { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch<any>("inventory", { method: "POST", body: JSON.stringify(data) }),
 
   updateInventory: (
     id: string,
     data: Partial<{ cantidad_actual: number; stock_minimo: number }>
   ) =>
     apiFetch<any>(`inventory/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(data),
     }),
 
   deleteInventory: (id: string) =>
-    apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
-
-  // --- Ventas ---
+    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }), // --- Ventas ---
   createSale: (data: {
     id_negocio: string;
     id_tipo_pago?: string;
@@ -349,7 +379,7 @@ export const api = {
       precio_unitario?: number;
     }>;
     cerrar?: boolean;
-  }) => apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }),
+  }) => apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }), // Historial de ventas
 
   getSales: (params?: {
     id_negocio?: string;
@@ -363,28 +393,27 @@ export const api = {
       let negocioId: string | undefined;
       try {
         negocioId =
-          typeof window !== 'undefined'
-            ? localStorage.getItem('active_business_id') || undefined
+          typeof window !== "undefined"
+            ? localStorage.getItem("active_business_id") || undefined
             : undefined;
       } catch {}
       if (!negocioId)
-        negocioId = (globalThis as any).process?.env
-          ?.NEXT_PUBLIC_NEGOCIO_ID as string | undefined;
+        negocioId = (globalThis as any).process?.env?.NEXT_PUBLIC_NEGOCIO_ID as
+          | string
+          | undefined;
       if (negocioId) merged.id_negocio = negocioId;
     }
     const query = new URLSearchParams(
-      Object.entries(merged).filter(([_, v]) => v != null && v !== '') as any
+      Object.entries(merged).filter(([_, v]) => v != null && v !== "") as any
     ).toString();
-    return apiFetch<any[]>(`sales${query ? `?${query}` : ''}`);
+    return apiFetch<any[]>(`sales${query ? `?${query}` : ""}`);
   },
-
-  getSale: (id: string) => apiFetch<any>(`sales/${id}`),
+  getSale: (id: string) => apiFetch<any>(`sales/${id}`), // Legacy helper (si se usa en algún lugar)
 
   getStoreProducts: (id_negocio: string | number) => {
-    if (!id_negocio) throw new Error('Se requiere un id_negocio válido');
+    if (!id_negocio) throw new Error("Se requiere un id_negocio válido");
     return apiFetch<any[]>(`store/${id_negocio}/products`);
-  },
-
+  }, //Comentarios
   getBusinessComments: (id_negocio: string | number) =>
     apiFetch<any[]>(`businesses/${id_negocio}/ratings`),
 };
@@ -393,8 +422,8 @@ export const api = {
 export const activeBusiness = {
   get(): string | null {
     try {
-      return typeof window !== 'undefined'
-        ? localStorage.getItem('active_business_id')
+      return typeof window !== "undefined"
+        ? localStorage.getItem("active_business_id")
         : null;
     } catch {
       return null;
@@ -402,14 +431,14 @@ export const activeBusiness = {
   },
   set(id: string) {
     try {
-      if (typeof window !== 'undefined')
-        localStorage.setItem('active_business_id', id);
+      if (typeof window !== "undefined")
+        localStorage.setItem("active_business_id", id);
     } catch {}
   },
   clear() {
     try {
-      if (typeof window !== 'undefined')
-        localStorage.removeItem('active_business_id');
+      if (typeof window !== "undefined")
+        localStorage.removeItem("active_business_id");
     } catch {}
   },
 };

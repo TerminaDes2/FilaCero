@@ -33,4 +33,10 @@ export class RegisterAliasController {
   registerAtApi(@Body() registerDto: RegisterDto) {
     return this.handleRegister(registerDto);
   }
+
+  /** Alias específico solicitado para el flujo de alta en español */
+  @Post('api/usuarios/register')
+  registerAtUsuarios(@Body() registerDto: RegisterDto) {
+    return this.handleRegister(registerDto);
+  }
 }

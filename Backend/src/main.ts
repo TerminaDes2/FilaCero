@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
 import { json, urlencoded } from 'express';
+import { envs } from './config';
 
 // --- 1. IMPORTAR NestExpressApplication ---
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -12,9 +13,14 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
-  // --- 3. ESPECIFICAR EL TIPO de 'app' ---
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  
+  const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true
+    })
+  );
   // Recordar quitar esto en caso de no ser necesario
   // --- IGNORE ---
   const bodyLimit = process.env.REQUEST_BODY_LIMIT || '10mb';
@@ -65,16 +71,7 @@ async function bootstrap() {
   );
   
   app.useGlobalInterceptors(new BigIntInterceptor());
-
-  // --- 4. AÑADIR SERVIDOR DE ARCHIVOS ESTÁTICOS ---
-  // Esto hace que la carpeta './uploads' (relativa a 'dist') sea accesible.
-  // 'join(__dirname, '..', 'uploads')' resuelve la ruta a /app/uploads dentro del contenedor
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/', // La URL será http://localhost:3000/uploads/archivo.jpg
-  });
-  // --- FIN DE LA MODIFICACIÓN ---
-
-  const port = process.env.PORT || 3000;
+  const port = envs.port || 3000;
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`Nest backend escuchando en puerto ${port}`);

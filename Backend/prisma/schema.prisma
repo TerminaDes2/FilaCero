@@ -161,6 +161,7 @@ model negocio {
   hero_image_url              String?
   owner_id                    BigInt?                       // Dueño del negocio (FK a usuarios)
   fecha_registro              DateTime?                     @default(now()) @db.Timestamptz(6)
+  owner_id                    BigInt?                       @map("owner_id")
   corte_caja                  corte_caja[]
   empleados                   empleados[]
   inventario                  inventario[]
