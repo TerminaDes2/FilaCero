@@ -8,6 +8,11 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ProductPriceHistoryService } from './product-price-history.service';
 
+// --- 2. IMPORTACIONES PARA SUBIDA LOCAL ---
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+
 @Controller('api/products')
 export class ProductsController {
   constructor(
@@ -15,12 +20,50 @@ export class ProductsController {
     private readonly priceHistoryService: ProductPriceHistoryService,
   ) {}
 
+  // --- 3. RUTA 'CREATE' MODIFICADA ---
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'superadmin', 'empleado', 'usuario')
-  create(@Body() dto: CreateProductDto) {
-    return this.service.create(dto);
+  @UseInterceptors(FileInterceptor('file', { // 'file' DEBE coincidir con la clave de FormData
+    storage: diskStorage({
+      destination: './uploads', // Guarda los archivos en /app/uploads (dentro del contenedor)
+      filename: (req, file, cb) => {
+        // Genera un nombre de archivo único
+        const randomName = Array(32)
+          .fill(null)
+          .map(() => Math.round(Math.random() * 16).toString(16))
+          .join('');
+        cb(null, `${randomName}${extname(file.originalname)}`);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      // Valida que solo sean imágenes
+      if (!file.originalname.match(/\.(jpg|jpeg|png)$/i)) {
+        return cb(
+          new BadRequestException('Solo se permiten archivos de imagen (png, jpg, jpeg)'),
+          false,
+        );
+      }
+      cb(null, true);
+    },
+  }))
+  create(
+    @Body('data') data: string, // <-- 4. Recibe el JSON como un string
+    @UploadedFile() file: Express.Multer.File, // <-- 5. Recibe el archivo
+  ) {
+    let dto: CreateProductDto;
+    
+    try {
+      // 6. Parseamos el string 'data' de vuelta a un objeto DTO
+      dto = JSON.parse(data) as CreateProductDto;
+    } catch (e) {
+      throw new BadRequestException('Datos de producto mal formados (JSON inválido).');
+    }
+
+    // 7. Pasamos el DTO y el archivo al servicio (lo modificaremos en el siguiente paso)
+    return this.service.create(dto, file);
   }
+  // --- FIN DE LA MODIFICACIÓN ---
 
   @Get()
   list(
@@ -97,6 +140,7 @@ export class ProductsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'superadmin', 'empleado', 'usuario')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
+    // Nota: 'update' sigue esperando JSON. No subirá imágenes aún.
     return this.service.update(id, dto);
   }
 

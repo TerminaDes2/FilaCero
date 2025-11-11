@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Iniciando seed de la base de datos...');
 
+  // --- CORREGIDO: Roles actualizados ---
   // 1. Crear roles si no existen
   const adminRole = await prisma.roles.upsert({
     where: { nombre_rol: 'admin' },
@@ -14,23 +15,32 @@ async function main() {
     },
   });
 
-  const ownerRole = await prisma.roles.upsert({
-    where: { nombre_rol: 'owner' },
+  const superAdminRole = await prisma.roles.upsert({
+    where: { nombre_rol: 'superadmin' },
     update: {},
     create: {
-      nombre_rol: 'owner',
+      nombre_rol: 'superadmin',
     },
   });
 
-  const employeeRole = await prisma.roles.upsert({
-    where: { nombre_rol: 'employee' },
+  const empleadoRole = await prisma.roles.upsert({
+    where: { nombre_rol: 'empleado' },
     update: {},
     create: {
-      nombre_rol: 'employee',
+      nombre_rol: 'empleado',
+    },
+  });
+
+  const usuarioRole = await prisma.roles.upsert({
+    where: { nombre_rol: 'usuario' },
+    update: {},
+    create: {
+      nombre_rol: 'usuario',
     },
   });
 
   console.log('✅ Roles creados');
+  // --- FIN DE LA CORRECCIÓN ---
 
   // 2. Crear usuario de prueba
   const testUser = await prisma.usuarios.upsert({
@@ -41,7 +51,8 @@ async function main() {
       password_hash: '$2b$10$rM9ZwJ1Q2XYZ9kFQ9ZwJ1u', // Password: "demo123"
       nombre: 'Usuario Demo',
       numero_telefono: '555-0100',
-      id_rol: ownerRole.id_rol,
+      // --- CORREGIDO: Asignado a superAdminRole ---
+      id_rol: superAdminRole.id_rol,
       correo_verificado: true,
       correo_verificado_en: new Date(),
     },
@@ -51,6 +62,7 @@ async function main() {
 
   // 3. Crear negocio de ejemplo
   const testBusiness = await prisma.negocio.upsert({
+    // @ts-ignore
     where: { id_negocio: 1 },
     update: {},
     create: {
@@ -123,9 +135,9 @@ async function main() {
       where: { nombre: prod.nombre },
     });
 
-    const created = existing || await prisma.producto.create({
+    const created = existing || (await prisma.producto.create({
       data: prod,
-    });
+    }));
 
     // Crear inventario para cada producto
     await prisma.inventario.upsert({
