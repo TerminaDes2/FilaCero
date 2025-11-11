@@ -38,7 +38,7 @@ export default function POSPage() {
   // Fetch categories from backend (DB source of truth) on first load
   useEffect(() => {
     if (storeCategories.length > 0) return;
-    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
+  const base = process.env.NEXT_PUBLIC_API_BASE || '/api';
     const controller = new AbortController();
     fetch(`${base}/categories`, { signal: controller.signal })
       .then(async (res) => {
