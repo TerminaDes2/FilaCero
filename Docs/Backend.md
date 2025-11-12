@@ -76,6 +76,41 @@ JWT_EXPIRES_IN=3600s
 3. Confirmar generación de cliente Prisma (`npx prisma generate`).
 4. Sincronizar cambios con `Docker/db/db_filacero.sql` para instalaciones limpias.
 
+### Resolución de error P3006 (columna ya existe: owner_id)
+El error `P3006` aparece cuando una migración intenta ejecutar un `ADD COLUMN` sobre una columna que ya está presente en la base. En el historial existe un caso duplicado para `owner_id` en `negocio`:
+
+- `20251107140629_implement_owner_id` añade la columna y FK.
+- `20251108123000_add_negocio_owner` intentaba repetir la operación provocando el conflicto.
+
+Se hizo el segundo script idempotente usando un bloque `DO $$ BEGIN ... END $$` que:
+1. Verifica existencia de la columna en `information_schema.columns` antes de `ALTER TABLE ADD COLUMN`.
+2. Verifica existencia de la constraint en `pg_constraint` antes de agregar la FK.
+
+Esto evita fallos al re-aplicar migraciones en entornos frescos vs. bases parcialmente inicializadas.
+
+#### Pasos recomendados si reaparece P3006
+1. Confirmar la migración conflictiva (`prisma migrate dev` mostrará el nombre del folder).
+2. Revisar el SQL en `Backend/prisma/migrations/<folder>/migration.sql` para detectar operaciones no idempotentes.
+3. Convertir `ADD COLUMN` / `ADD CONSTRAINT` en chequeos condicionales (como se hizo con `owner_id`).
+4. Si la columna existe pero la migración debe marcarse como aplicada, usar:
+  ```bash
+  docker exec -it filacero-backend npx prisma migrate resolve --applied <migration_folder_name>
+  ```
+  Esto actualiza el historial sin ejecutar el SQL.
+5. Re-ejecutar:
+  ```bash
+  docker exec -it filacero-backend npx prisma migrate dev
+  ```
+
+#### Prevención
+- Evitar crear dos migraciones seguidas que toquen la misma columna antes de haber corrido `migrate dev`.
+- No modificar la base manualmente sin reflejarlo en `schema.prisma` y una migración.
+- Revisar diffs (`git diff`) del folder `prisma/migrations` antes de hacer commit.
+- Nombrar migraciones claramente para detectar superposición (ej: `add_negocio_owner` vs `implement_owner_id`).
+
+#### Limpieza futura
+Cuando se confirme que la primera migración ya cubre el cambio y no se requiere la segunda para entornos legacy, puede eliminarse el folder duplicado en una rama de mantenimiento, anotando en la PR que se consolidó el historial. Mientras tanto, la versión idempotente evita bloqueos.
+
 ## Testing y calidad
 - Actualmente los tests unitarios/e2e están en planeación. Se recomienda cubrir primero `Auth`, `Categories` e `Inventory`.
 - Cada refactor debe incluir smoke manual: login → selección de negocio → CRUD de categorías → registro de movimiento.
