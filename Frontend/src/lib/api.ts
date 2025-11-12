@@ -1,6 +1,8 @@
+// Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
+// que será proxyada por Next.js según las rewrites del next.config.mjs.
 export const API_BASE =
   (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE ||
-  "http://localhost:3000/api";
+  "/api";
 
 export interface ApiError {
   status: number;
@@ -179,7 +181,6 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
-  // --- FIN DE MODIFICACIÓN createProduct ---
 
   verifyEmail: (correo_electronico: string, codigo: string) =>
     apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
@@ -391,7 +392,9 @@ export const api = {
     }),
 
   deleteInventory: (id: string) =>
-    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }), // --- Ventas ---
+    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }),
+  
+  // --- Ventas ---
   createSale: (data: {
     id_negocio: string;
     id_tipo_pago?: string;
@@ -401,7 +404,14 @@ export const api = {
       precio_unitario?: number;
     }>;
     cerrar?: boolean;
-  }) => apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }), // Historial de ventas
+  }) =>
+    apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }).then((sale) => {
+      try {
+        // Emit custom event so kitchen board can append ticket instantly
+        window.dispatchEvent(new CustomEvent('pos:new-sale', { detail: sale }));
+      } catch {}
+      return sale;
+    }),
 
   getSales: (params?: {
     id_negocio?: string;

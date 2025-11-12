@@ -2,16 +2,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { PosSidebar } from '../../src/components/pos/sidebar';
 import { CartProvider } from '../../src/pos/cartContext';
-import { CategoryTabs } from '../../src/components/pos/filters/CategoryTabs';
+// Category tabs removed in favor of a compact filter button
 import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
 import { ProductGrid } from '../../src/components/pos/products/ProductGrid';
+import Link from 'next/link';
+import CategoryFilterButton from '../../src/components/pos/controls/CategoryFilterButton';
+import { usePOSView } from '../../src/state/posViewStore';
+import { KitchenBoard } from '../../src/components/pos/kitchen/KitchenBoard';
+import { useKitchenBoard } from '../../src/state/kitchenBoardStore';
 // Categories CRUD lives on its own page
 import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
 import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
-import { useCategoriesStore, type CategoryItem } from '../../src/pos/categoriesStore';
+import { useCategoriesStore } from '../../src/pos/categoriesStore';
 // Categories store not needed here
 
 // Mock product dataset (frontend only)
@@ -32,40 +37,32 @@ export default function POSPage() {
   const settings = useSettingsStore();
   const [view, setView] = useState<'grid'|'list'>(settings.defaultView);
   const [search, setSearch] = useState('');
-  const { categories: storeCategories, selected, setSelected, replaceAll } = useCategoriesStore();
+  const { categories: storeCategories, selected, setSelected } = useCategoriesStore();
+  const fetchCategories = () => useCategoriesStore.getState().fetchCategories();
   const categories = useMemo(() => storeCategories.map(c => c.name), [storeCategories]);
+  const { view: posView } = usePOSView();
+  const { hydrateFromAPI } = useKitchenBoard();
 
-  // Fetch categories from backend (DB source of truth) on first load
+  // Fetch categories (store handles normalization & business scoping)
   useEffect(() => {
-    if (storeCategories.length > 0) return;
-    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
-    const controller = new AbortController();
-    fetch(`${base}/categories`, { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!Array.isArray(data)) return;
-        // Map API (id_categoria, nombre) -> store shape
-        const items: CategoryItem[] = data.map((it: any) => {
-          const id = String(it.id_categoria ?? it.id ?? it.uuid ?? '');
-          const name = String(it.nombre ?? it.name ?? '').trim();
-          const negocio = it.negocio_id ?? it.negocioId ?? null;
-          const scope: CategoryItem['scope'] = negocio != null ? 'business' : 'global';
-          return {
-            id,
-            name,
-            color: 'brand' as const,
-            scope,
-            businessId: negocio != null ? String(negocio) : null,
-          };
-        }).filter((it) => it.id && it.name);
-        if (items.length) replaceAll(items);
-      })
-      .catch(() => { /* silent: keep empty -> only 'Todas' tab */ })
-      .finally(() => { /* no-op */ });
-    return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (storeCategories.length === 0) {
+      fetchCategories().catch(() => {});
+    }
+  }, [storeCategories.length]);
+  
+  // Re-fetch when returning to POS sell view (in case login just happened or business changed)
+  useEffect(() => {
+    if (posView === 'sell' && storeCategories.length === 0) {
+      fetchCategories().catch(() => {});
+    }
+  }, [posView, storeCategories.length]);
+  
+  // Hydrate when switching into kitchen view
+  useEffect(() => {
+    if (posView === 'kitchen') {
+      hydrateFromAPI();
+    }
+  }, [posView, hydrateFromAPI]);
   
   // Keyboard: 'v' toggles view (grid/list) when not typing in input
   useEffect(() => {
@@ -104,38 +101,46 @@ export default function POSPage() {
             </h1>
             <TopRightInfo showLogout />
           </div>
-          {/* Columns wrapper: products (left) + cart (right) */}
-          <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
-            {/* Products section */}
-            <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
-              {/* Tabs outside panel to simulate panel tabs */}
-              <div className='relative z-20 px-5 -mb-1'>
-                <CategoryTabs categories={categories} value={selected} onChange={setSelected} />
-              </div>
-              {/* Panel container under tabs */}
-              <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
-                <header className='space-y-3 mb-3 flex-none'>
-                  <div className='flex flex-col md:flex-row md:items-center gap-3'>
-                    <SearchBox value={search} onChange={setSearch} />
-                    <div className='flex items-center gap-2'>
-                      <ViewToggle value={view} onChange={setView} />
+          {/* Dynamic content wrapper */}
+          {posView === 'kitchen' ? (
+            <div className='flex-1 flex flex-col gap-5 overflow-hidden min-h-0 px-5'>
+              <KitchenBoard />
+            </div>
+          ) : (
+            <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
+              {/* Products section */}
+              <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
+                {/* Category filter moved into header controls */}
+                <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
+                  <header className='space-y-3 mb-3 flex-none'>
+                    <div className='flex flex-col md:flex-row md:items-center gap-3'>
+                      <SearchBox value={search} onChange={setSearch} />
+                      <div className='flex items-center gap-2'>
+                        <CategoryFilterButton
+                          categories={categories}
+                          value={selected}
+                          onChange={setSelected}
+                        />
+                        <ViewToggle value={view} onChange={setView} />
+                      </div>
                     </div>
+                  </header>
+                  <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
+                    <ProductGrid category={selected} search={search} view={view} />
                   </div>
-                  {/* Categories admin is available in /pos/categories */}
-                </header>
-                <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
-                  <ProductGrid category={selected} search={search} view={view} />
+                </section>
+              </div>
+              <section className='w-full lg:w-72 xl:w-80 lg:pl-4 pt-4 lg:pt-0 flex flex-col flex-shrink-0 min-h-0'>
+                <div className='flex-1 rounded-t-2xl px-4 pt-4 pb-2 flex flex-col overflow-hidden w-full max-w-sm mx-auto lg:max-w-none lg:mx-0' style={{background:'var(--pos-summary-bg)', boxShadow:'0 2px 4px rgba(0,0,0,0.06)'}}>
+                  <CartPanel />
                 </div>
               </section>
             </div>
-            <section className='w-full lg:w-72 xl:w-80 lg:pl-4 pt-4 lg:pt-0 flex flex-col flex-shrink-0 min-h-0'>
-              <div className='flex-1 rounded-t-2xl px-4 pt-4 pb-2 flex flex-col overflow-hidden w-full max-w-sm mx-auto lg:max-w-none lg:mx-0' style={{background:'var(--pos-summary-bg)', boxShadow:'0 2px 4px rgba(0,0,0,0.06)'}}>
-                <CartPanel />
-              </div>
-            </section>
-          </div>
+          )}
         </main>
       </div>
     </CartProvider>
   );
 }
+
+// Removed stray styled-jsx block; Tailwind classes applied directly on the link.
