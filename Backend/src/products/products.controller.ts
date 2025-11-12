@@ -1,4 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards, Query, Request } from '@nestjs/common';
+import { 
+  Body, 
+  Controller, 
+  Delete, 
+  Get, 
+  Param, 
+  Patch, 
+  Post, 
+  Put, 
+  UseGuards, 
+  Query, 
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException
+} from '@nestjs/common';
 import { ProductsService } from './index';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -7,6 +22,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ProductPriceHistoryService } from './product-price-history.service';
+import type { Express } from 'express';
 
 // --- 2. IMPORTACIONES PARA SUBIDA LOCAL ---
 import { FileInterceptor } from '@nestjs/platform-express';
