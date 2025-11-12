@@ -11,7 +11,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { SalesModule } from './sales/sales.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { BusinessRatingsModule } from './business-ratings/business-ratings.module';
+import { PedidosModule } from './pedidos/pedidos.module';
 import { EmployeesModule } from './employees/employees.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -27,7 +29,10 @@ import { EmployeesModule } from './employees/employees.module';
     BusinessesModule, // módulo de negocios (Prisma)
     BusinessRatingsModule, // módulo de valoraciones
     EmployeesModule, // módulo de empleados (Prisma)
+    EmailModule, // módulo de email (Prisma)
+    PedidosModule, // módulo de pedidos online
   ],
   controllers: [HealthController],
+  providers: [],
 })
 export class AppModule {}
