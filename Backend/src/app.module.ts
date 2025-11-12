@@ -1,3 +1,5 @@
+// Backend/src/app.module.ts
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
@@ -14,6 +16,7 @@ import { BusinessRatingsModule } from './business-ratings/business-ratings.modul
 import { PedidosModule } from './pedidos/pedidos.module';
 import { EmployeesModule } from './employees/employees.module';
 import { EmailModule } from './email/email.module';
+import { MetricsModule } from './metrics/metrics.module'; // <-- 1. Importa el módulo
 
 @Module({
   imports: [
@@ -31,6 +34,7 @@ import { EmailModule } from './email/email.module';
     EmployeesModule, // módulo de empleados (Prisma)
     EmailModule, // módulo de email (Prisma)
     PedidosModule, // módulo de pedidos online
+    MetricsModule, // <-- 2. Añádelo a la lista
   ],
   controllers: [HealthController],
   providers: [],
