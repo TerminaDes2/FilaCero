@@ -14,6 +14,7 @@ import { BusinessRatingsModule } from './business-ratings/business-ratings.modul
 import { PedidosModule } from './pedidos/pedidos.module';
 import { EmployeesModule } from './employees/employees.module';
 import { EmailModule } from './email/email.module';
+import { SmsModule } from './sms/sms.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { EmailModule } from './email/email.module';
     EmployeesModule, // módulo de empleados (Prisma)
     EmailModule, // módulo de email (Prisma)
     PedidosModule, // módulo de pedidos online
+    SmsModule, // módulo de SMS (Twilio Verify)
   ],
   controllers: [HealthController],
   providers: [],
