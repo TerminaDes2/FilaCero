@@ -1,27 +1,8 @@
 // Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
 // que será proxyada por Next.js según las rewrites del next.config.mjs.
-const RAW_ENV_BASE = (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE as string | undefined;
-
-function resolveApiBase(): string {
-  // 1) Honor explicit env
-  if (RAW_ENV_BASE && RAW_ENV_BASE.trim()) {
-    return RAW_ENV_BASE.replace(/\/+$/, "");
-  }
-  // 2) Heuristic for local dev: if running on localhost but not on 3000, target backend 3000
-  try {
-    if (typeof window !== 'undefined') {
-      const isLocalhost = /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
-      const port = window.location.port;
-      if (isLocalhost && port && port !== '3000') {
-        return 'http://localhost:3000/api';
-      }
-    }
-  } catch {}
-  // 3) Fallback: relative /api (used typically behind a reverse proxy in prod)
-  return '/api';
-}
-
-export const API_BASE = resolveApiBase();
+export const API_BASE =
+  (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE ||
+  "/api";
 
 export interface ApiError {
   status: number;
@@ -236,7 +217,6 @@ export const api = {
       cache: 'no-store',
     });
   },
-  // --- FIN DE MODIFICACIÓN createProduct ---
 
   verifyEmail: (correo_electronico: string, codigo: string) =>
     apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
@@ -447,11 +427,21 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
+  deleteInventory: (id: string) =>
+    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }),
   
   // --- Ventas ---
-  createSale: (data: { id_negocio: string; id_tipo_pago?: string; items: Array<{ id_producto: string; cantidad: number; precio_unitario?: number }>; cerrar?: boolean }) =>
-    apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }).then((sale) => {
+  createSale: (data: {
+    id_negocio: string;
+    id_tipo_pago?: string;
+    items: Array<{
+      id_producto: string;
+      cantidad: number;
+      precio_unitario?: number;
+    }>;
+    cerrar?: boolean;
+  }) =>
+    apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }).then((sale) => {
       try {
         // Emit custom event so kitchen board can append ticket instantly
         window.dispatchEvent(new CustomEvent('pos:new-sale', { detail: sale }));

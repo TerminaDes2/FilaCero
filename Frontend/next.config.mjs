@@ -7,7 +7,6 @@
 // Base de la API externa a la que se debe proxyar. Se obtiene de la variable de entorno.
 // Se eliminan barras finales para evitar dobles // al componer rutas.
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? '').replace(/\/+$/, '');
-const IS_EXTERNAL_API = /^https?:\/\//i.test(API_BASE);
 
 const nextConfig = {
   /**
@@ -19,9 +18,7 @@ const nextConfig = {
     // Si no está definida la base de la API, no reescribimos /api hacia fuera.
     // Esto permite que en entornos sin la variable (p.ej. desarrollo puntual)
     // los endpoints locales de Next sigan funcionando si existieran.
-    // Only create rewrites when API_BASE is an absolute external URL.
-    // This prevents accidental self-rewrite loops like /api -> /api.
-    const apiRewrites = IS_EXTERNAL_API
+    const apiRewrites = API_BASE
       ? [
           // Catch-all para cualquier llamada a /api/* que deba ir al backend.
           { source: '/api/:path*', destination: `${API_BASE}/:path*` },

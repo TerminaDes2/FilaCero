@@ -652,7 +652,76 @@ Garantiza atomicidad: si falla la creación de items, el pedido tampoco se crea.
 
 ---
 
-## 🚀 Pasos para Aplicar
+## � Sistema de Notificaciones Asociado
+
+La API de pedidos se integra con el modelo `notificacion` para dejar trazabilidad sobre los eventos relevantes de cada pedido. Aunque el módulo de notificaciones en NestJS aún no existe (se implementará en la Fase 4), la persistencia y la lectura de datos ya están resueltas.
+
+### 1. Estructura del modelo `notificacion`
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `id_notificacion` | `BigInt` | Identificador autoincremental |
+| `id_usuario` | `BigInt?` | Usuario destinatario (null = notificación general) |
+| `id_negocio` | `BigInt?` | Negocio asociado |
+| `id_pedido` | `BigInt?` | Pedido que originó el evento |
+| `tipo` | `String` | Categoría (`pedido_nuevo`, `pedido_confirmado`, etc.) |
+| `titulo` | `String` | Título legible para UI |
+| `mensaje` | `String` | Detalle del evento |
+| `leida` | `Boolean` | Estado de lectura |
+| `canal` | `String?` | Canal utilizado (`email`, `in_app`, etc.) |
+| `enviada_en` | `DateTime?` | Timestamp del envío |
+| `leida_en` | `DateTime?` | Timestamp de lectura |
+| `creado_en` | `DateTime` | Timestamp de creación (por defecto `now()`) |
+
+### 2. ¿Cómo se recuperan las notificaciones desde la API?
+
+- El método `PedidosService.findOne` incluye la relación `notificaciones`, ordenada de forma descendente (`creado_en desc`).
+- El endpoint `GET /api/pedidos/:id` retorna todas las notificaciones asociadas al pedido, permitiendo al frontend mostrar la línea de tiempo de eventos.
+- Respuesta parcial:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id_pedido": 5,
+    "estado": "en_preparacion",
+    "notificaciones": [
+      {
+        "id_notificacion": 12,
+        "tipo": "pedido_confirmado",
+        "titulo": "Pedido #5 confirmado",
+        "mensaje": "El pedido fue confirmado por la cocina",
+        "leida": false,
+        "creado_en": "2025-11-09T18:40:10.321Z"
+      }
+    ]
+  }
+}
+```
+
+### 3. Generación actual vs. futura
+
+- **Estado actual:** la API aún no emite notificaciones de manera automática; se espera que otro proceso (triggers, cron o el futuro `NotificationsModule`) inserte los registros en la tabla `notificacion`.
+- **Próximos pasos (Fase 4):**
+  1. Crear `NotificationsModule` con servicio y gateway WebSocket.
+  2. Emitir notificaciones en `PedidosService.updateEstado` (después de un cambio válido).
+  3. Sincronizar canales (in-app, email) y registrar `canal`, `enviada_en`.
+  4. Exponer endpoints REST / WebSocket para que empleados y clientes reciban actualizaciones en tiempo real.
+- **Compatibilidad:** la estructura actual permite que, una vez creado el módulo, no se requieran cambios en la API de pedidos; bastará con insertar una fila en `notificacion` por cada evento.
+
+### 4. Consumo en el frontend (actual / planeado)
+
+- POS / Kanban: el frontend puede pedir `GET /api/pedidos/:id` para mostrar la historia de notificaciones en un panel lateral.
+- Cliente final: en la Fase 4 se implementará un feed que escuchará eventos via WebSocket (`order:state_changed`) y actualizará la vista en tiempo real.
+- Manual de integración sugerido:
+  1. Llamar a `PATCH /api/pedidos/:id/estado`.
+  2. Backend actualiza estado, triggers ajustan inventario, y **futuro** `NotificationsService` insertará la notificación y la publicará.
+
+> ℹ️ **Resumen**: la API de pedidos ya expone las notificaciones asociadas; la lógica de emisión se completará en la siguiente fase sin requerir cambios adicionales en los endpoints existentes.
+
+---
+
+## �🚀 Pasos para Aplicar
 
 ### Para Desarrolladores (Pull de `mod/pedido`)
 
