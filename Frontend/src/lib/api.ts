@@ -254,9 +254,22 @@ export const api = {
     if (!id_negocio) throw new Error('Se requiere un id_negocio válido');
     return apiFetch<any[]>(`store/${id_negocio}/products`);
   },
-  //Comentarios
+  // --- Comentarios / Reseñas ---
   getBusinessComments: (id_negocio: string | number) =>
-  apiFetch<any[]>(`businesses/${id_negocio}/ratings`),
+    apiFetch<any>(`businesses/${id_negocio}/ratings`),
+
+  // Crear una reseña
+  createBusinessComment: (id_negocio: string | number, data: any) =>
+    apiFetch<any>(`businesses/${id_negocio}/ratings`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  // Eliminar una reseña
+  deleteBusinessComment: (id_negocio: string | number, id: number) =>
+    apiFetch<any>(`businesses/${id_negocio}/ratings/${id}`, {
+      method: "DELETE",
+    }),
 
 };
 
