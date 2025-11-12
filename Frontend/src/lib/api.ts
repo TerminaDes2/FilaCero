@@ -1,8 +1,27 @@
 // Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
 // que será proxyada por Next.js según las rewrites del next.config.mjs.
-export const API_BASE =
-  (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE ||
-  "/api";
+const RAW_ENV_BASE = (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE as string | undefined;
+
+function resolveApiBase(): string {
+  // 1) Honor explicit env
+  if (RAW_ENV_BASE && RAW_ENV_BASE.trim()) {
+    return RAW_ENV_BASE.replace(/\/+$/, "");
+  }
+  // 2) Heuristic for local dev: if running on localhost but not on 3000, target backend 3000
+  try {
+    if (typeof window !== 'undefined') {
+      const isLocalhost = /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+      const port = window.location.port;
+      if (isLocalhost && port && port !== '3000') {
+        return 'http://localhost:3000/api';
+      }
+    }
+  } catch {}
+  // 3) Fallback: relative /api (used typically behind a reverse proxy in prod)
+  return '/api';
+}
+
+export const API_BASE = resolveApiBase();
 
 export interface ApiError {
   status: number;
@@ -43,7 +62,10 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       Object.assign(normalizedHeaders, init.headers as Record<string, string>);
     }
   }
-  if (token) normalizedHeaders.Authorization = `Bearer ${token}`;
+  // Avoid sending Authorization on auth endpoints (login/register)
+  const pathKey = path.replace(/^\/+/, "");
+  const isAuthEndpoint = /^(auth\/(login|register)|usuarios\/register)/.test(pathKey);
+  if (token && !isAuthEndpoint) normalizedHeaders.Authorization = `Bearer ${token}`;
 
   // If the body is a FormData, let the browser set the Content-Type (with boundary)
   // so remove any explicit Content-Type header in that case.
@@ -51,7 +73,36 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     delete normalizedHeaders["Content-Type"];
   }
 
-  const res = await fetch(url, { ...init, headers: normalizedHeaders });
+  // Force no-cookies by default to prevent 431s due to large Cookie headers when
+  // using Next.js rewrites (/api -> backend). Callers can override via init.credentials.
+  const baseInit: RequestInit = { ...init, headers: normalizedHeaders };
+  if (typeof baseInit.credentials === "undefined") {
+    baseInit.credentials = "omit";
+  }
+
+  // Debug instrumentation for 431 header issues
+  const isLoginDebug = /auth\/login$/.test(pathKey);
+  if (isLoginDebug) {
+    try {
+      const headerSnapshot = { ...normalizedHeaders };
+      if (headerSnapshot.Authorization) {
+        headerSnapshot.Authorization = `Bearer <len:${headerSnapshot.Authorization.length}>`;
+      }
+      // Compute cookie header length if browser would attach (we forced omit, but log anyway)
+      console.debug('[login-debug] request', {
+        url,
+        method: init.method || 'GET',
+        headers: headerSnapshot,
+        bodyBytes: typeof init.body === 'string' ? init.body.length : (init.body ? 'form/mixed' : 0),
+        tokenPresent: !!token,
+      });
+    } catch {}
+  }
+
+  const res = await fetch(url, baseInit).catch(err => {
+    if (isLoginDebug) console.error('[login-debug] network error', err);
+    throw err;
+  });
 
   if (
     typeof window !== "undefined" &&
@@ -159,6 +210,8 @@ export const api = {
     apiFetch<LoginResponse>("auth/login", {
       method: "POST",
       body: JSON.stringify({ correo_electronico, password }),
+      credentials: 'omit',
+      cache: 'no-store',
     }),
 
   // Información del usuario autenticado
@@ -179,6 +232,8 @@ export const api = {
     return apiFetch<RegisterResponse>("usuarios/register", {
       method: "POST",
       body: JSON.stringify(payload),
+      credentials: 'omit',
+      cache: 'no-store',
     });
   },
   // --- FIN DE MODIFICACIÓN createProduct ---
@@ -392,18 +447,17 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  deleteInventory: (id: string) =>
-    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }), // --- Ventas ---
-  createSale: (data: {
-    id_negocio: string;
-    id_tipo_pago?: string;
-    items: Array<{
-      id_producto: string;
-      cantidad: number;
-      precio_unitario?: number;
-    }>;
-    cerrar?: boolean;
-  }) => apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }), // Historial de ventas
+  deleteInventory: (id: string) => apiFetch<any>(`inventory/${id}`, { method: 'DELETE' }),
+  
+  // --- Ventas ---
+  createSale: (data: { id_negocio: string; id_tipo_pago?: string; items: Array<{ id_producto: string; cantidad: number; precio_unitario?: number }>; cerrar?: boolean }) =>
+    apiFetch<any>('sales', { method: 'POST', body: JSON.stringify(data) }).then((sale) => {
+      try {
+        // Emit custom event so kitchen board can append ticket instantly
+        window.dispatchEvent(new CustomEvent('pos:new-sale', { detail: sale }));
+      } catch {}
+      return sale;
+    }),
 
   getSales: (params?: {
     id_negocio?: string;
