@@ -1,6 +1,10 @@
 "use client";
 
 import { create, type StateCreator } from 'zustand';
+// Declaración ligera para evitar error de types en entornos sin @types/node durante build frontend
+// (Next.js inyecta process.env en runtime pero el tipo puede faltar aquí)
+// Tipado mínimo para `process.env` usado en este módulo.
+declare const process: { env?: { NEXT_PUBLIC_NEGOCIO_ID?: string } } | undefined;
 import { api, activeBusiness } from '../lib/api';
 
 export type CategoryColor = 'brand' | 'teal' | 'amber' | 'gray' | 'rose';
@@ -43,8 +47,10 @@ function uid(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const categoriesStore: CategoriesStoreCreator = (set, get) => ({
-  categories: [],
+// Tipado explícito de parámetros para evitar implicit any (Zustand infiere en runtime)
+// Usamos tipos amplios aquí porque Zustand usa funciones dinámicas en runtime.
+const categoriesStore: CategoriesStoreCreator = (set: any, get: any) => ({
+  categories: [] as CategoryItem[],
   selected: 'all',
   bootstrap: (names: string[]) => {
     const curr = get().categories;
@@ -60,20 +66,21 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
     set({ categories: seeded });
   },
   fetchCategories: async () => {
+    // Ajuste: las categorías son globales (schema no tiene negocio_id),
+    // así que ya no forzamos la selección de un negocio. Si hay negocio activo lo enviamos
+    // por compatibilidad futura, pero no es obligatorio.
     let negocioId: string | undefined;
     try { negocioId = activeBusiness.get() || undefined; } catch {}
     if (!negocioId) {
-      const envNegocio = process.env.NEXT_PUBLIC_NEGOCIO_ID;
+  const envNegocio: string | undefined = (process?.env?.NEXT_PUBLIC_NEGOCIO_ID as string | undefined);
       if (envNegocio) negocioId = envNegocio;
     }
-    if (!negocioId) {
-      set({ categories: [] });
-      throw new Error('Selecciona un negocio activo para cargar categorías.');
-    }
     try {
-      const data = await api.getCategories({ id_negocio: negocioId });
+      const data = negocioId
+        ? await api.getCategories({ id_negocio: negocioId })
+        : await api.getCategories();
       const prevById = new Map<string, CategoryItem>(
-        get().categories.map((category) => [category.id, category]),
+        get().categories.map((category: CategoryItem) => [category.id, category]),
       );
       const normalized: CategoryItem[] = (Array.isArray(data) ? (data as ApiCategory[]) : []).map(
         (item, index) => {
@@ -111,14 +118,14 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
       throw error;
     }
   },
-  add: async (name: string, color: CategoryColor = 'brand', icon?: string) => {
+  add: async (name: string, color: CategoryColor = 'brand', icon?: string, options?: { aplicarTodos?: boolean; sucursal?: string }) => {
     const trimmed = name.trim();
     if (!trimmed) {
       throw new Error('El nombre es obligatorio.');
     }
 
     const exists = get().categories.some(
-      (category) => category.name.toLowerCase() === trimmed.toLowerCase(),
+      (category: CategoryItem) => category.name.toLowerCase() === trimmed.toLowerCase(),
     );
     if (exists) {
       throw new Error('Ya existe una categoría con ese nombre.');
@@ -127,14 +134,14 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
     let negocioId: string | undefined;
     try { negocioId = activeBusiness.get() || undefined; } catch {}
     if (!negocioId) {
-      const envNegocio = process.env.NEXT_PUBLIC_NEGOCIO_ID;
+  const envNegocio: string | undefined = (process?.env?.NEXT_PUBLIC_NEGOCIO_ID as string | undefined);
       if (envNegocio) negocioId = envNegocio;
     }
     if (!negocioId) {
       throw new Error('Selecciona un negocio activo antes de crear categorías.');
     }
 
-    const created = await api.createCategory({ nombre: trimmed, negocioId });
+  const created = await api.createCategoryAdvanced({ nombre: trimmed, negocioId, aplicarTodos: options?.aplicarTodos, sucursal: options?.sucursal });
     const rawId =
       (created as ApiCategory)?.id_categoria ?? (created as Record<string, unknown>)?.id ??
       (created as Record<string, unknown>)?.uuid ??
@@ -154,7 +161,7 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
     return newItem;
   },
   update: async (id: string, patch: Partial<Pick<CategoryItem, 'name' | 'icon' | 'color'>>) => {
-    const category = get().categories.find((item) => item.id === id);
+  const category = get().categories.find((item: CategoryItem) => item.id === id);
     if (!category) {
       throw new Error('Categoría no encontrada.');
     }
@@ -174,26 +181,26 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
     }
 
     set({
-      categories: get().categories.map((category) =>
+      categories: get().categories.map((category: CategoryItem) =>
         category.id === id ? { ...category, ...updates } : category,
       ),
     });
   },
   remove: async (id: string) => {
-    const category = get().categories.find((item) => item.id === id);
+  const category = get().categories.find((item: CategoryItem) => item.id === id);
     if (category && category.scope === 'global' && !category.businessId) {
       throw new Error('No puedes eliminar categorías predeterminadas.');
     }
     await api.deleteCategory(id);
 
-    const next = get().categories.filter((category) => category.id !== id);
+  const next = get().categories.filter((category: CategoryItem) => category.id !== id);
     const selected = get().selected;
-    const stillExists = next.some((category) => category.name === selected);
+  const stillExists = next.some((category: CategoryItem) => category.name === selected);
     set({ categories: next, selected: stillExists ? selected : 'all' });
   },
   moveUp: (id: string) => {
     const items = get().categories.slice();
-    const idx = items.findIndex((category) => category.id === id);
+  const idx = items.findIndex((category: CategoryItem) => category.id === id);
     if (idx > 0) {
       const [item] = items.splice(idx, 1);
       items.splice(idx - 1, 0, item);
@@ -202,7 +209,7 @@ const categoriesStore: CategoriesStoreCreator = (set, get) => ({
   },
   moveDown: (id: string) => {
     const items = get().categories.slice();
-    const idx = items.findIndex((category) => category.id === id);
+  const idx = items.findIndex((category: CategoryItem) => category.id === id);
     if (idx >= 0 && idx < items.length - 1) {
       const [item] = items.splice(idx, 1);
       items.splice(idx + 1, 0, item);

@@ -97,6 +97,18 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     baseInit.credentials = "omit";
   }
 
+  // For auth endpoints, explicitly remove problematic headers and force minimal config
+  if (isAuthEndpoint) {
+    baseInit.credentials = "omit";
+    baseInit.cache = "no-store";
+    baseInit.mode = "cors";
+    // Remove headers that might be too large
+    delete normalizedHeaders["Cookie"];
+    delete normalizedHeaders["cookie"];
+    delete normalizedHeaders["Referer"];
+    delete normalizedHeaders["User-Agent"];
+  }
+
   // Debug instrumentation for 431 header issues
   const isLoginDebug = /auth\/login$/.test(pathKey);
   if (isLoginDebug) {
@@ -316,37 +328,28 @@ export const api = {
     return apiFetch<any[]>(path);
   },
 
-  // --- CORREGIDO: createProduct (para FormData) ---
-  createProduct: (productData: any, imageFile?: File | null) => {
-    const formData = new FormData();
-    // 1. Añade los datos del producto como un string JSON.
-    formData.append('data', JSON.stringify(productData));
-    // 2. Añade el archivo de imagen si existe.
-    if (imageFile) {
-      formData.append('file', imageFile);
-    }
-    // 3. Envía el FormData.
-    return apiFetch<any>('products', {
-      method: 'POST',
-      body: formData, // 'apiFetch' detectará que es FormData
+  // Crear producto: siempre enviar multipart/form-data con campo 'data'
+  createProduct: (productData: any) => {
+    const fd = new FormData();
+    fd.append("data", JSON.stringify(productData));
+    return apiFetch<any>("products", {
+      method: "POST",
+      body: fd,
     });
   },
 
-  // Nueva versión: acepta opcionalmente un archivo de imagen.
-  // Si se recibe `imageFile`, envía multipart/form-data con `data` (JSON string) y `file` (imagen).
+  // Nueva versión: siempre multipart/form-data.
+  // Campo JSON: 'data'; Campo de archivo (opcional): 'file'
   createProductWithImage: (productData: any, imageFile?: File | null) => {
+    const fd = new FormData();
+    fd.append("data", JSON.stringify(productData));
     if (imageFile) {
-      const fd = new FormData();
-      // 'data' es la parte JSON esperada por el backend
-      fd.append("data", JSON.stringify(productData));
-      // 'file' es el nombre de campo esperado por el backend (Multer FileInterceptor('file'))
       fd.append("file", imageFile);
-      return apiFetch<any>("products", {
-        method: "POST",
-        body: fd,
-      });
     }
-    return api.createProduct(productData);
+    return apiFetch<any>("products", {
+      method: "POST",
+      body: fd,
+    });
   },
 
   updateProduct: (id: string, productData: any) =>
@@ -362,14 +365,28 @@ export const api = {
 
   // --- Categorías (CORREGIDO: Duplicados eliminados) ---
   getCategories: (params?: { id_negocio?: string }) => {
-    // Mantenemos la versión que permite 'id_negocio' opcional
-    const queryParams = new URLSearchParams();
-    if (params?.id_negocio) {
-      queryParams.append('id_negocio', params.id_negocio);
+    // Las categorías actualmente son globales en el backend (no requieren id_negocio).
+    // Si se proporciona o se puede inferir un id_negocio lo enviamos para futura compatibilidad,
+    // pero si no existe simplemente retornamos todas las categorías sin filtrar.
+    let negocioId = params?.id_negocio;
+    if (!negocioId) {
+      try {
+        negocioId =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("active_business_id") || undefined
+            : undefined;
+      } catch {}
     }
-    const query = queryParams.toString();
-    const path = query ? `categories?${query}` : 'categories';
-    return apiFetch<any[]>(path);
+    if (!negocioId) {
+      const envNegocio = (globalThis as any).process?.env?.NEXT_PUBLIC_NEGOCIO_ID;
+      if (envNegocio) negocioId = envNegocio;
+    }
+    // Si no hay negocioId → petición global sin parámetros.
+    if (!negocioId) {
+      return apiFetch<any[]>("categories");
+    }
+    const query = new URLSearchParams({ id_negocio: String(negocioId) }).toString();
+    return apiFetch<any[]>(`categories?${query}`);
   },
   
   getCategoryById: (id: string) => apiFetch<any>(`categories/${id}`),
@@ -382,10 +399,10 @@ export const api = {
     }
     return apiFetch<any>("categories", {
       method: "POST",
-      body: JSON.stringify(body),
-    });
-  },
-
+      body: JSON.stringify(categoryData),
+    }),
+  createCategoryAdvanced: (payload: { nombre: string; sucursal?: string; aplicarTodos?: boolean; negocioId?: string }) =>
+    apiFetch<any>("categories", { method: "POST", body: JSON.stringify(payload) }),
   updateCategory: (id: string, categoryData: { nombre: string }) =>
     apiFetch<any>(`categories/${id}`, {
       method: "PATCH",
