@@ -1,7 +1,9 @@
 /* lib/api.ts */
+// Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
+// que será proxyada por Next.js según las rewrites del next.config.mjs.
 export const API_BASE =
   (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE ||
-  "http://localhost:3000/api";
+  "/api";
 
 export interface ApiError {
   status: number;
@@ -42,18 +44,47 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       Object.assign(normalizedHeaders, init.headers as Record<string, string>);
     }
   }
-  
-  if (token) normalizedHeaders.Authorization = `Bearer ${token}`;
+  // Avoid sending Authorization on auth endpoints (login/register)
+  const pathKey = path.replace(/^\/+/, "");
+  const isAuthEndpoint = /^(auth\/(login|register)|usuarios\/register)/.test(pathKey);
+  if (token && !isAuthEndpoint) normalizedHeaders.Authorization = `Bearer ${token}`;
 
-  // --- LÓGICA DE FORMDATA RE-APLICADA ---
-  // Si el body es FormData (para subir archivos), eliminamos el Content-Type.
-  // El navegador lo pondrá automáticamente con el 'boundary' correcto.
-  if (init.body && typeof FormData !== 'undefined' && init.body instanceof FormData) {
-    delete normalizedHeaders['Content-Type'];
+  // If the body is a FormData, let the browser set the Content-Type (with boundary)
+  // so remove any explicit Content-Type header in that case.
+  if (init.body && typeof FormData !== "undefined" && init.body instanceof FormData) {
+    delete normalizedHeaders["Content-Type"];
   }
-  // --- FIN DE LA LÓGICA ---
 
-  const res = await fetch(url, { ...init, headers: normalizedHeaders });
+  // Force no-cookies by default to prevent 431s due to large Cookie headers when
+  // using Next.js rewrites (/api -> backend). Callers can override via init.credentials.
+  const baseInit: RequestInit = { ...init, headers: normalizedHeaders };
+  if (typeof baseInit.credentials === "undefined") {
+    baseInit.credentials = "omit";
+  }
+
+  // Debug instrumentation for 431 header issues
+  const isLoginDebug = /auth\/login$/.test(pathKey);
+  if (isLoginDebug) {
+    try {
+      const headerSnapshot = { ...normalizedHeaders };
+      if (headerSnapshot.Authorization) {
+        headerSnapshot.Authorization = `Bearer <len:${headerSnapshot.Authorization.length}>`;
+      }
+      // Compute cookie header length if browser would attach (we forced omit, but log anyway)
+      console.debug('[login-debug] request', {
+        url,
+        method: init.method || 'GET',
+        headers: headerSnapshot,
+        bodyBytes: typeof init.body === 'string' ? init.body.length : (init.body ? 'form/mixed' : 0),
+        tokenPresent: !!token,
+      });
+    } catch {}
+  }
+
+  const res = await fetch(url, baseInit).catch(err => {
+    if (isLoginDebug) console.error('[login-debug] network error', err);
+    throw err;
+  });
 
   if (
     typeof window !== "undefined" &&
@@ -159,6 +190,8 @@ export const api = {
     apiFetch<LoginResponse>("auth/login", {
       method: "POST",
       body: JSON.stringify({ correo_electronico, password }),
+      credentials: 'omit',
+      cache: 'no-store',
     }),
 
   // Información del usuario autenticado
@@ -183,6 +216,8 @@ export const api = {
     return apiFetch<RegisterResponse>("auth/register", { 
       method: "POST",
       body: JSON.stringify(payload),
+      credentials: 'omit',
+      cache: 'no-store',
     });
   },
 
@@ -254,6 +289,22 @@ export const api = {
       method: 'POST',
       body: formData, // 'apiFetch' detectará que es FormData
     });
+  },
+
+  // Nueva versión: acepta opcionalmente un archivo de imagen.
+  // Si se recibe `imageFile`, envía multipart/form-data con `payload` y `image`.
+  createProductWithImage: (productData: any, imageFile?: File | null) => {
+    if (imageFile) {
+      const fd = new FormData();
+      // 'payload' es la parte JSON; el backend puede adaptarse a esto.
+      fd.append("payload", JSON.stringify(productData));
+      fd.append("image", imageFile);
+      return apiFetch<any>("products", {
+        method: "POST",
+        body: fd,
+      });
+    }
+    return api.createProduct(productData);
   },
 
   updateProduct: (id: string, productData: any) =>
@@ -388,8 +439,8 @@ export const api = {
     }),
 
   deleteInventory: (id: string) =>
-    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }), 
-
+    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }),
+  
   // --- Ventas ---
   createSale: (data: {
     id_negocio: string;
@@ -400,7 +451,14 @@ export const api = {
       precio_unitario?: number;
     }>;
     cerrar?: boolean;
-  }) => apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }), 
+  }) =>
+    apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }).then((sale) => {
+      try {
+        // Emit custom event so kitchen board can append ticket instantly
+        window.dispatchEvent(new CustomEvent('pos:new-sale', { detail: sale }));
+      } catch {}
+      return sale;
+    }),
 
   getSales: (params?: {
     id_negocio?: string;
@@ -454,6 +512,23 @@ export const api = {
     return apiFetch<any>(`metrics?${qp.toString()}`); 
   },
   // --- FIN DE LO NUEVO ---
+  // --- Verificación SMS ---
+  startSmsVerification: (telefono: string, canal: string = "sms") =>
+    apiFetch<{ message: string; telefono: string; canal: string; expiresAt?: string }>(
+      "sms/verify/start",
+      {
+        method: "POST",
+        body: JSON.stringify({ telefono, canal }),
+      }
+    ),
+  checkSmsVerification: (telefono: string, codigo: string) =>
+    apiFetch<{ message: string; telefono: string; verified: boolean; verifiedAt?: string }>(
+      "sms/verify/check",
+      {
+        method: "POST",
+        body: JSON.stringify({ telefono, codigo }),
+      }
+    ),
 };
 
 // Helpers para negocio activo en el cliente

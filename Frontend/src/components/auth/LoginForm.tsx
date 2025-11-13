@@ -35,6 +35,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 		
 		try {
 			// 1. Hacer login para obtener el token
+			// Evita enviar Authorization viejo en la petición de login
+			if (typeof window !== 'undefined') {
+				try { window.localStorage.removeItem('auth_token'); } catch {}
+			}
 			const res = await api.login(email.trim().toLowerCase(), password);
 			
 			if (typeof window !== 'undefined') {

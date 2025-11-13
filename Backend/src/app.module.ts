@@ -17,6 +17,7 @@ import { PedidosModule } from './pedidos/pedidos.module';
 import { EmployeesModule } from './employees/employees.module';
 import { EmailModule } from './email/email.module';
 import { MetricsModule } from './metrics/metrics.module'; // <-- 1. Importa el módulo
+import { SmsModule } from './sms/sms.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { MetricsModule } from './metrics/metrics.module'; // <-- 1. Importa el m
     EmailModule, // módulo de email (Prisma)
     PedidosModule, // módulo de pedidos online
     MetricsModule, // <-- 2. Añádelo a la lista
+    SmsModule, // módulo de SMS (Twilio Verify)
   ],
   controllers: [HealthController],
   providers: [],

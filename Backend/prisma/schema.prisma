@@ -48,6 +48,7 @@ model usuarios {
   venta                      venta[]
   pedidos                    pedido[]
   notificaciones             notificacion[]
+  producto_historial_precios producto_historial_precio[]
   usuarios_negocio           usuarios_negocio[]
 
   @@map("usuarios")
@@ -160,7 +161,7 @@ model negocio {
   logo_url                    String?
   hero_image_url              String?
   fecha_registro              DateTime?                     @default(now()) @db.Timestamptz(6)
-  owner_id                    BigInt?                       @map("owner_id")
+  owner_id                    BigInt?                       @map("owner_id") // Dueño del negocio (FK a usuarios)
   corte_caja                  corte_caja[]
   empleados                   empleados[]
   inventario                  inventario[]
@@ -193,7 +194,27 @@ model producto {
   categoria                   categoria?                    @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
   producto_media              producto_media[]
   producto_metricas_semanales producto_metricas_semanales[]
+  historial_precios           producto_historial_precio[]
   detalle_pedido              detalle_pedido[]
+}
+
+model producto_historial_precio {
+  id_historial   BigInt    @id @default(autoincrement())
+  id_producto    BigInt
+  precio         Decimal   @db.Decimal(12, 2)
+  fecha_inicio   DateTime  @default(now()) @db.Timestamptz(6)
+  fecha_fin      DateTime? @db.Timestamptz(6)
+  vigente        Boolean   @default(true)
+  motivo         String?   @db.VarChar(200)
+  id_usuario     BigInt?
+  creado_en      DateTime  @default(now()) @db.Timestamptz(6)
+
+  producto       producto  @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade)
+  usuario        usuarios? @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
+
+  @@index([id_producto, vigente])
+  @@index([id_producto, fecha_inicio])
+  @@map("producto_historial_precio")
 }
 
 model reporte_ventas {

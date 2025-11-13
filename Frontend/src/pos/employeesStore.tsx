@@ -27,7 +27,7 @@ interface EmployeesState {
   removeEmployee: (employeeId: string) => Promise<void>;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000';
+// Nota: este módulo usa el cliente `api` que ya resuelve la base de API.
 
 export const useEmployeesStore = create<EmployeesState>((set, get) => ({
   employees: [],
