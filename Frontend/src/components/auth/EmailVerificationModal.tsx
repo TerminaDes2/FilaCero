@@ -27,6 +27,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   const [info, setInfo] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(expiresAt ?? null);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (open) {
@@ -45,12 +46,21 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     return () => clearTimeout(timer);
   }, [resendCooldown, open]);
 
+  useEffect(() => {
+    if (!open || !currentExpiresAt) return;
+    setNow(Date.now());
+    const tick = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, [open, currentExpiresAt]);
+
   const expirationSummary = useMemo(() => {
     if (!currentExpiresAt) return null;
     try {
       const expiresDate = new Date(currentExpiresAt);
       if (Number.isNaN(expiresDate.getTime())) return null;
-      const remainingMs = expiresDate.getTime() - Date.now();
+      const remainingMs = expiresDate.getTime() - now;
       if (remainingMs <= 0) return 'El código actual ha expirado.';
       const totalMinutes = Math.floor(remainingMs / 60000);
       const totalSeconds = Math.floor((remainingMs % 60000) / 1000);
@@ -58,7 +68,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     } catch {
       return null;
     }
-  }, [currentExpiresAt]);
+  }, [currentExpiresAt, now]);
 
   const handleChange = (value: string) => {
     const sanitized = value.replace(/\D/g, '').slice(0, 6);

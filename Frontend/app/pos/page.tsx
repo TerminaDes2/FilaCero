@@ -57,12 +57,14 @@ export default function POSPage() {
       fetchCategories().catch(() => {});
     }
   }, [storeCategories.length]);
+  
   // Re-fetch when returning to POS sell view (in case login just happened or business changed)
   useEffect(() => {
     if (posView === 'sell' && storeCategories.length === 0) {
       fetchCategories().catch(() => {});
     }
   }, [posView, storeCategories.length]);
+  
   // Hydrate when switching into kitchen view
   useEffect(() => {
     if (posView === 'kitchen') {
