@@ -161,6 +161,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         return;
       }
 
+      // Prevent 431 by guarding against corrupted or oversized tokens
+      if (token.length > 4096) {
+        console.warn('⚠️ Token demasiado grande; limpiando sesión para evitar 431.');
+        clearStoredAuth();
+        applyUserSnapshot(null);
+        return;
+      }
+
       try {
         const userData = await api.me();
         persistUserSnapshot(userData);
@@ -175,7 +183,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             return;
           }
         }
-        throw error;
+        // Si la API respondió 431/401/403 o similar, limpiar y continuar anónimo
+        console.warn('⚠️ Falla en /auth/me, limpiando sesión.', error);
+        clearStoredAuth();
+        applyUserSnapshot(null);
+        return;
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error);

@@ -5,6 +5,7 @@ import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
 import { useUserStore } from "../../state/userStore";
 import { useBusinessStore } from "../../state/businessStore";
+import { BusinessPickerDialog } from "../business/BusinessPickerDialog";
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -20,6 +21,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const router = useRouter();
   const { setName, setBackendRole, login } = useUserStore();
   const { setActiveBusiness } = useBusinessStore();
+	const [businessesForPicker, setBusinessesForPicker] = useState<any[] | null>(null);
+	const [showBusinessPicker, setShowBusinessPicker] = useState(false);
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordValid = password.length >= 6;
@@ -76,14 +79,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					const businesses = await api.listMyBusinesses();
 					
 					console.log('📦 Negocios recibidos:', businesses);
-					
-					if (businesses && businesses.length > 0) {
-						// Establecer el primer negocio como activo por defecto
-						setActiveBusiness(businesses[0]);
-						console.log('✅ Negocio activo establecido:', businesses[0]);
-					} else {
-						console.warn('⚠️ No se encontraron negocios para este usuario');
-					}
+					// Abrir selector siempre para admins (incluso si hay 1)
+					setBusinessesForPicker(businesses || []);
+					setShowBusinessPicker(true);
 				} catch (busErr) {
 					console.error('❌ Error al cargar negocios:', busErr);
 					// No bloquear el login si falla la carga de negocios
@@ -97,8 +95,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
 			// Admin/superadmin -> POS; otros -> Shop
 			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
-				console.log('🎯 Redirigiendo ADMIN a /pos');
-				router.push('/pos');
+				// Para admins, la navegación sucede después de elegir el negocio
+				console.log('⏸️ Esperando selección de negocio...');
 			} else {
 				console.log('🎯 Redirigiendo a /shop');
 				router.push('/shop');
@@ -202,6 +200,27 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					</p>
 				</div>
 			</div>		
+		{showBusinessPicker && (
+			<BusinessPickerDialog
+				open={showBusinessPicker}
+				businesses={businessesForPicker || []}
+				onChoose={(b)=>{
+					setActiveBusiness(b);
+					setShowBusinessPicker(false);
+					console.log('🎯 Redirigiendo ADMIN a /pos con negocio', b);
+					router.push('/pos');
+				}}
+				onCreateNew={()=>{
+					setShowBusinessPicker(false);
+					router.push('/onboarding/negocio');
+				}}
+				onClose={()=>{
+					// Si el usuario cierra sin elegir, mantenemos la sesión pero salimos a la landing
+					setShowBusinessPicker(false);
+					router.push('/');
+				}}
+			/>
+		)}
 		</form>
 	);
 };

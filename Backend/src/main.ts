@@ -11,6 +11,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 // --- 2. IMPORTAR 'join' DE 'path' ---
 import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 async function bootstrap() {
   // --- 3. AUMENTAR LÍMITES DE HEADERS PARA EVITAR 431 ---
@@ -76,6 +77,14 @@ async function bootstrap() {
   );
   
   app.useGlobalInterceptors(new BigIntInterceptor());
+
+  // Static serving for uploaded files and ensure uploads directory exists
+  const uploadsDir = join(process.cwd(), 'uploads');
+  try {
+    if (!existsSync(uploadsDir)) mkdirSync(uploadsDir, { recursive: true });
+  } catch {}
+  app.useStaticAssets(uploadsDir, { prefix: '/uploads' });
+
   const port = envs.port || 3000;
   await app.listen(port);
   // eslint-disable-next-line no-console

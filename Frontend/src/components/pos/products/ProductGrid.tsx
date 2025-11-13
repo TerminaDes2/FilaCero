@@ -8,12 +8,13 @@ interface ApiProduct {
   id_producto: string | number;
   nombre: string;
   descripcion: string | null;
-  precio: string;
-  imagen: string | null;
+  precio: string | number;
+  imagen_url?: string | null;
   estado: string | null;
   stock?: number | string | null;
   category?: string | null;
   id_categoria?: string | number | null;
+  media?: Array<{ id_media?: string | number; url: string; principal: boolean; tipo?: string | null }>
 }
 
 interface ProductGridProps {
@@ -33,9 +34,21 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
       setLoading(true);
       try {
         const apiProducts: ApiProduct[] = await api.getProducts({ search });
+        // Backend origin derivado de la variable pública. Eliminamos sufijo /api si existe.
+        const apiBase = (process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '');
+        const backendOrigin = apiBase.replace(/\/api$/i, '');
+        const normalizeUrl = (u?: string | null) => {
+          if (!u) return undefined;
+          if (/^https?:\/\//i.test(u)) return u; // ya absoluta
+            // Si comienza por /uploads/ asumimos que es ruta del backend
+          if (u.startsWith('/uploads/')) {
+            return backendOrigin ? `${backendOrigin}${u}` : u; // si no tenemos origin, devolvemos tal cual
+          }
+          return u;
+        };
         const adaptedProducts: POSProduct[] = apiProducts.map(p => {
           const idStr = String(p.id_producto);
-          const priceNum = typeof (p as any).precio === 'number' ? (p as any).precio : parseFloat(String((p as any).precio ?? 0));
+          const priceNum = typeof p.precio === 'number' ? p.precio : parseFloat(String(p.precio ?? 0));
           let stockValue: number | null = null;
           if (p.stock !== undefined) {
             if (p.stock === null) {
@@ -46,12 +59,34 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
             }
           }
           const categoryLabel = (p.category ?? '').trim();
+          // Soporte retrocompatibilidad: algunos builds antiguos devolvían 'imagen' en lugar de 'imagen_url'
+          const imagenUrl = (p as any).imagen_url ?? (p as any).imagen ?? undefined;
+          // Soporte retrocompatibilidad: 'media' o 'producto_media'
+          const rawMedia = Array.isArray((p as any).media)
+            ? (p as any).media
+            : (Array.isArray((p as any).producto_media) ? (p as any).producto_media : undefined);
+          // Normalizar URLs (soporta productos antiguos con rutas relativas)
+          const normalizedMedia = Array.isArray(rawMedia)
+            ? (rawMedia
+                .map((m: any) => {
+                  const u = normalizeUrl(m.url);
+                  if (!u) return null;
+                  return {
+                    id_media: m.id_media !== undefined ? String(m.id_media) : undefined,
+                    url: u,
+                    principal: !!m.principal,
+                  };
+                })
+                .filter(Boolean) as { id_media?: string; url: string; principal: boolean }[])
+            : undefined;
           return {
             id: idStr,
             name: p.nombre,
             price: isNaN(priceNum) ? 0 : priceNum,
             description: p.descripcion || undefined,
-            image: p.imagen || undefined,
+            // Mantener compatibilidad con tarjetas que usan imagen_url y media
+            imagen_url: normalizeUrl(imagenUrl),
+            media: normalizedMedia,
             stock: stockValue ?? 0,
             category: categoryLabel || 'Sin categoría',
           };
