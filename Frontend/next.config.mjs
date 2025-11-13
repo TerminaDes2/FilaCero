@@ -37,7 +37,6 @@ const nextConfig = {
       ...apiRewrites,
     ];
   },
-
   /**
    * Headers configuration to prevent 431 errors by controlling which headers
    * are passed through to the backend when proxying /api requests
