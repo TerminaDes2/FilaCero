@@ -209,3 +209,7 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 .fc-btn-primary { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition active:scale-[0.985]; }
 .fc-btn-secondary { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 bg-white/70 ring-1 ring-black/5 hover:bg-white; }
 
+/* Hide scrollbars utility (keeps scroll functionality) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+

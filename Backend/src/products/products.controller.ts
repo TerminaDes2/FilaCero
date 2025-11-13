@@ -14,6 +14,7 @@ import {
   UploadedFile,
   BadRequestException
 } from '@nestjs/common';
+import type { Express } from 'express';
 import { ProductsService } from './index';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -22,11 +23,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ProductPriceHistoryService } from './product-price-history.service';
-import type { Express } from 'express';
 
 // --- 2. IMPORTACIONES PARA SUBIDA LOCAL ---
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { existsSync, mkdirSync } from 'fs';
 import { extname } from 'path';
 
 @Controller('api/products')
@@ -42,9 +43,16 @@ export class ProductsController {
   @Roles('admin', 'superadmin', 'empleado', 'usuario')
   @UseInterceptors(FileInterceptor('file', { // 'file' DEBE coincidir con la clave de FormData
     storage: diskStorage({
-      destination: './uploads', // Guarda los archivos en /app/uploads (dentro del contenedor)
+      destination: (req, file, cb) => {
+        const dir = './uploads';
+        try {
+          if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        } catch (e) {
+          // Ignorar; si falla se delegará al callback de multer
+        }
+        cb(null, dir);
+      },
       filename: (req, file, cb) => {
-        // Genera un nombre de archivo único
         const randomName = Array(32)
           .fill(null)
           .map(() => Math.round(Math.random() * 16).toString(16))
@@ -53,12 +61,8 @@ export class ProductsController {
       },
     }),
     fileFilter: (req, file, cb) => {
-      // Valida que solo sean imágenes
       if (!file.originalname.match(/\.(jpg|jpeg|png)$/i)) {
-        return cb(
-          new BadRequestException('Solo se permiten archivos de imagen (png, jpg, jpeg)'),
-          false,
-        );
+        return cb(new BadRequestException('Solo se permiten archivos de imagen (png, jpg, jpeg)'), false);
       }
       cb(null, true);
     },

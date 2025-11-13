@@ -2,6 +2,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { api } from "../lib/api";
+import { useBusinessStore } from "../state/businessStore";
+import { BusinessPickerDialog } from "./business/BusinessPickerDialog";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../state/userStore";
 import { 
@@ -47,6 +50,9 @@ const getRoleInfo = (id_rol: any) => {
 export default function UserDropdown() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
+  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const [showBizPicker, setShowBizPicker] = useState(false);
+  const [bizList, setBizList] = useState<any[]>([]);
   const router = useRouter();
 
   // Cerrar menú al hacer click fuera
@@ -147,15 +153,44 @@ export default function UserDropdown() {
           {/* Opciones del menú */}
           <div className="py-2">
             {shouldShowAdminPanel && (
-              <Link 
-                href="/pos" 
-                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
-                onClick={() => setUserMenuOpen(false)}
+              <button
+                type="button"
+                className="flex w-full text-left items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
+                onClick={async () => {
+                  if (!activeBusiness) {
+                    // Cargar lista y mostrar picker en la landing, no navegar aún
+                    try { const list = await api.listMyBusinesses(); setBizList(list || []); } catch { setBizList([]); }
+                    setShowBizPicker(true);
+                    setUserMenuOpen(false);
+                    return;
+                  }
+                  setUserMenuOpen(false);
+                  router.push('/pos');
+                }}
               >
                 <LayoutDashboard className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 <span>Panel Administrador</span>
-              </Link>
+              </button>
             )}
+      {showBizPicker && (
+        <BusinessPickerDialog
+          open={showBizPicker}
+          businesses={bizList}
+          onChoose={(b) => {
+            setActiveBusiness(b);
+            setShowBizPicker(false);
+            router.push('/pos');
+          }}
+          onCreateNew={() => {
+            setShowBizPicker(false);
+            router.push('/onboarding/negocio');
+          }}
+          onClose={() => {
+            // Si cierra sin elegir, permanecer en la landing
+            setShowBizPicker(false);
+          }}
+        />
+      )}
             
             <Link 
               href="/user" 

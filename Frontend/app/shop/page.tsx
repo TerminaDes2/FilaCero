@@ -4,12 +4,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { CartProvider } from "../../src/components/shop/CartContext";
 import { useUserStore } from "../../src/state/userStore"; // ✅ nuevo hook global
-import DesayunosSection from "../../src/components/shop/sections/DesayunosSection";
-import PopularSection from "../../src/components/shop/sections/PopularSection";
-import StoresSection from "../../src/components/shop/sections/StoresSection";
+// New layout pieces
+// import ShopSidebar from "../../src/components/shop/ShopSidebar"; // removed per new layout
 import CartSlide from "../../src/components/shop/CartSlide";
 import NavbarStore from "../../src/components/shop/navbarStore";
 import { FAQ } from "../../src/components/landing/FAQ";
+import ShopHero from "../../src/components/shop/sections/ShopHero";
+import StoryRail from "../../src/components/shop/sections/StoryRail";
+import Curations from "../../src/components/shop/sections/Curations";
+import SortBar from "../../src/components/shop/sections/SortBar";
+import ProductsFeed from "../../src/components/shop/sections/ProductsFeed";
 
 const HomePage: React.FC = () => {
   const { isAuthenticated } = useUserStore();
@@ -65,9 +69,22 @@ const HomePage: React.FC = () => {
           </section>
         ) : (
           <>
-            {/* 🛍️ Mostrar módulos del shop */}
-            <DesayunosSection />
-            <StoresSection />
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+              <div className="flex gap-6">
+                <div className="flex-1 min-w-0">
+                  <ShopHero />
+                  <StoryRail />
+                  <Curations />
+                </div>
+              </div>
+            </div>
+
+            {/* Sticky sort bar tied to scroll context */}
+            <SortBar />
+
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+              <ProductsFeed />
+            </div>
           </>
         )}
 

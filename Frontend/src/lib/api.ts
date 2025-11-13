@@ -47,7 +47,11 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   // Avoid sending Authorization on auth endpoints (login/register)
   const pathKey = path.replace(/^\/+/, "");
   const isAuthEndpoint = /^(auth\/(login|register)|usuarios\/register)/.test(pathKey);
-  if (token && !isAuthEndpoint) normalizedHeaders.Authorization = `Bearer ${token}`;
+  // Hard cap token size to prevent 431 (proxies with strict header limits)
+  const TOKEN_MAX = 4096; // bytes-ish length cap
+  if (token && !isAuthEndpoint && token.length < TOKEN_MAX) {
+    normalizedHeaders.Authorization = `Bearer ${token}`;
+  }
 
   // If the body is a FormData, let the browser set the Content-Type (with boundary)
   // so remove any explicit Content-Type header in that case.
@@ -292,13 +296,14 @@ export const api = {
   },
 
   // Nueva versión: acepta opcionalmente un archivo de imagen.
-  // Si se recibe `imageFile`, envía multipart/form-data con `payload` y `image`.
+  // Si se recibe `imageFile`, envía multipart/form-data con `data` (JSON string) y `file` (imagen).
   createProductWithImage: (productData: any, imageFile?: File | null) => {
     if (imageFile) {
       const fd = new FormData();
-      // 'payload' es la parte JSON; el backend puede adaptarse a esto.
-      fd.append("payload", JSON.stringify(productData));
-      fd.append("image", imageFile);
+      // 'data' es la parte JSON esperada por el backend
+      fd.append("data", JSON.stringify(productData));
+      // 'file' es el nombre de campo esperado por el backend (Multer FileInterceptor('file'))
+      fd.append("file", imageFile);
       return apiFetch<any>("products", {
         method: "POST",
         body: fd,

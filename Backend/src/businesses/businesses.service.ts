@@ -67,18 +67,19 @@ export class BusinessesService {
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
-        const negocio = await tx.negocio.create({
-          data: {
-            nombre,
-            direccion: dto.direccion || null,
-            telefono: dto.telefono || null,
-            correo: dto.correo || null,
-            logo_url: dto.logo || null,
-            hero_image_url: dto.hero_image_url || null,
-            fecha_registro: new Date(),
-            owner_id: uid,
-          },
-        });
+        // Construimos los campos de forma flexible para evitar desajustes de tipos en clientes Prisma distintos
+        const data: any = {
+          nombre,
+          direccion: dto.direccion || null,
+          telefono: dto.telefono || null,
+          correo: dto.correo || null,
+          fecha_registro: new Date(),
+          owner_id: uid,
+        };
+        if (typeof dto.logo === 'string') data.logo = dto.logo;
+        if (typeof dto.hero_image_url === 'string') data.hero_image_url = dto.hero_image_url;
+
+        const negocio = await tx.negocio.create({ data });
 
         return negocio;
       });
