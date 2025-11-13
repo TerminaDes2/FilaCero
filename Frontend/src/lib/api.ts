@@ -61,6 +61,18 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     baseInit.credentials = "omit";
   }
 
+  // For auth endpoints, explicitly remove problematic headers and force minimal config
+  if (isAuthEndpoint) {
+    baseInit.credentials = "omit";
+    baseInit.cache = "no-store";
+    baseInit.mode = "cors";
+    // Remove headers that might be too large
+    delete normalizedHeaders["Cookie"];
+    delete normalizedHeaders["cookie"];
+    delete normalizedHeaders["Referer"];
+    delete normalizedHeaders["User-Agent"];
+  }
+
   // Debug instrumentation for 431 header issues
   const isLoginDebug = /auth\/login$/.test(pathKey);
   if (isLoginDebug) {

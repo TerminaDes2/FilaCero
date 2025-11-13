@@ -13,7 +13,17 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // --- 3. AUMENTAR LÍMITES DE HEADERS PARA EVITAR 431 ---
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false, // Lo configuraremos manualmente con límites más grandes
+  });
+
+  // Configurar límites de headers y body más generosos
+  const bodyLimit = process.env.REQUEST_BODY_LIMIT || '50mb';
+  const maxHeaderSize = parseInt(process.env.MAX_HTTP_HEADER_SIZE || '16384', 10); // 16KB default
+  
+  app.use(json({ limit: bodyLimit }));
+  app.use(urlencoded({ limit: bodyLimit, extended: true }));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -21,11 +31,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true
     })
   );
-  // Recordar quitar esto en caso de no ser necesario
-  // --- IGNORE ---
-  const bodyLimit = process.env.REQUEST_BODY_LIMIT || '10mb';
-  app.use(json({ limit: bodyLimit }));
-  app.use(urlencoded({ limit: bodyLimit, extended: true }));
   // CORS
   // ... (toda tu configuración de CORS se mantiene igual)
   const defaultOrigins = [

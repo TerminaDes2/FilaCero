@@ -37,6 +37,28 @@ const nextConfig = {
       ...apiRewrites,
     ];
   },
+
+  /**
+   * Headers configuration to prevent 431 errors by controlling which headers
+   * are passed through to the backend when proxying /api requests
+   */
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'X-Forwarded-For',
+            value: 'localhost',
+          },
+          {
+            key: 'X-Real-IP',
+            value: 'localhost',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
