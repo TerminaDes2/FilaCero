@@ -3,8 +3,8 @@
 import { create, type StateCreator } from 'zustand';
 // Declaración ligera para evitar error de types en entornos sin @types/node durante build frontend
 // (Next.js inyecta process.env en runtime pero el tipo puede faltar aquí)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
+// Tipado mínimo para `process.env` usado en este módulo.
+declare const process: { env?: { NEXT_PUBLIC_NEGOCIO_ID?: string } } | undefined;
 import { api, activeBusiness } from '../lib/api';
 
 export type CategoryColor = 'brand' | 'teal' | 'amber' | 'gray' | 'rose';
@@ -48,7 +48,7 @@ function uid(): string {
 }
 
 // Tipado explícito de parámetros para evitar implicit any (Zustand infiere en runtime)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Usamos tipos amplios aquí porque Zustand usa funciones dinámicas en runtime.
 const categoriesStore: CategoriesStoreCreator = (set: any, get: any) => ({
   categories: [] as CategoryItem[],
   selected: 'all',
