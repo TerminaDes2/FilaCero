@@ -1,9 +1,37 @@
 /* lib/api.ts */
 // Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
 // que será proxyada por Next.js según las rewrites del next.config.mjs.
-export const API_BASE =
-  (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE ||
-  "/api";
+function resolveApiBase(): string {
+  const raw = (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE as string | undefined;
+  if (raw && raw.trim()) {
+    return raw.replace(/\/+$/, "");
+  }
+  try {
+    if (typeof window !== "undefined") {
+      const { protocol, hostname, port } = window.location;
+      if (/^(localhost|127\.0\.0\.1)$/i.test(hostname)) {
+        if (port && port !== "3000") {
+          return `${protocol}//${hostname}:3000/api`;
+        }
+        return `${protocol}//${hostname}${port ? `:${port}` : ""}/api`;
+      }
+    }
+  } catch {}
+  return "/api";
+}
+
+export const API_BASE = resolveApiBase();
+
+function clearAuthStorage() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem("auth_token");
+    window.localStorage.removeItem("auth_user");
+    window.localStorage.removeItem("auth_user_fallback_reason");
+    window.localStorage.removeItem("selectedRole");
+    window.localStorage.removeItem("userRole");
+  } catch {}
+}
 
 export interface ApiError {
   status: number;
@@ -27,9 +55,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     : `${API_BASE.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
   const token = getToken();
 
-  const normalizedHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const normalizedHeaders: Record<string, string> = {};
   
   if (init.headers) {
     if (typeof Headers !== "undefined" && init.headers instanceof Headers) {
@@ -48,7 +74,10 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const pathKey = path.replace(/^\/+/, "");
   const isAuthEndpoint = /^(auth\/(login|register)|usuarios\/register)/.test(pathKey);
   // Hard cap token size to prevent 431 (proxies with strict header limits)
-  const TOKEN_MAX = 4096; // bytes-ish length cap
+  const TOKEN_MAX = 2048; // conservative bytes-ish length cap
+  if (token && token.length >= TOKEN_MAX) {
+    clearAuthStorage();
+  }
   if (token && !isAuthEndpoint && token.length < TOKEN_MAX) {
     normalizedHeaders.Authorization = `Bearer ${token}`;
   }
@@ -57,6 +86,8 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   // so remove any explicit Content-Type header in that case.
   if (init.body && typeof FormData !== "undefined" && init.body instanceof FormData) {
     delete normalizedHeaders["Content-Type"];
+  } else if (init.body && !normalizedHeaders["Content-Type"]) {
+    normalizedHeaders["Content-Type"] = "application/json";
   }
 
   // Force no-cookies by default to prevent 431s due to large Cookie headers when
@@ -108,6 +139,12 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
+    if (res.status === 431) {
+      clearAuthStorage();
+      if (typeof window !== "undefined") {
+        console.warn("[apiFetch] 431 recibido. Autenticación reseteada para evitar headers grandes.");
+      }
+    }
     const err: ApiError = {
       status: res.status,
       message:
