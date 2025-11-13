@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,6 +9,18 @@ export class SmsService {
   private readonly logger = new Logger(SmsService.name);
   private client: Twilio;
   private verifyServiceSid: string;
+  // Minimal, typed surface of Twilio Verify we actually use (para evitar any/unsafe)
+  private get verifyApi() {
+    type VerifyService = {
+      services: (
+        sid: string,
+      ) => {
+        verifications: { create: (args: { to: string; channel: 'sms' | 'call' }) => Promise<unknown> };
+        verificationChecks: { create: (args: { to: string; code: string }) => Promise<unknown> };
+      };
+    };
+    return (this.client.verify as unknown as { v2: VerifyService }).v2;
+  }
 
   constructor(private readonly config: ConfigService, private readonly prisma: PrismaService) {
     const accountSid = this.normalizeEnv(this.config.get<string>('TWILIO_ACCOUNT_SID'));
@@ -37,13 +50,13 @@ export class SmsService {
     return v.trim();
   }
 
-  async startVerification(to: string, channel: 'sms' | 'call' = 'sms') {
+  async startVerification(to: string, channel: 'sms' | 'call' = 'sms', _userId?: bigint) {
+    // keep signature for future auditing needs
+    void _userId;
     try {
-      const res = await this.client.verify.v2
-        .services(this.verifyServiceSid)
-        .verifications.create({ to, channel });
+      await this.verifyApi.services(this.verifyServiceSid).verifications.create({ to, channel });
 
-      return { sid: res.sid, status: res.status, to: res.to, channel: res.channel };
+      return { to, channel };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'No se pudo iniciar la verificación';
       this.logger.error(`Error iniciando verificación para ${to}: ${message}`);
@@ -51,24 +64,32 @@ export class SmsService {
     }
   }
 
-  async checkVerification(to: string, code: string) {
+  async checkVerification(to: string, code: string, userId?: bigint) {
     try {
-      const res = await this.client.verify.v2
-        .services(this.verifyServiceSid)
-        .verificationChecks.create({ to, code });
+      const res: unknown = await this.verifyApi.services(this.verifyServiceSid).verificationChecks.create({ to, code });
+
+      const hasStatus = (o: unknown): o is { status?: string } => typeof o === 'object' && o !== null && 'status' in o;
 
       // Si aprobado, actualizar usuario si coincide su numero_telefono
-      if (res.status === 'approved') {
+      if (hasStatus(res) && res.status === 'approved') {
         try {
-          await this.prisma.usuarios.updateMany({
-            where: { numero_telefono: to },
-            data: { sms_verificado: true, sms_verificado_en: new Date() },
-          });
+          if (userId != null) {
+            await this.prisma.usuarios.update({
+              where: { id_usuario: userId },
+              data: { numero_telefono: to, sms_verificado: true, sms_verificado_en: new Date() },
+            });
+          } else {
+            await this.prisma.usuarios.updateMany({
+              where: { numero_telefono: to },
+              data: { sms_verificado: true, sms_verificado_en: new Date() },
+            });
+          }
         } catch (e) {
           this.logger.warn(`Verificación aprobada pero no se pudo actualizar usuario (${to}): ${(e as Error).message}`);
         }
+        return { to, verified: true };
       }
-      return { sid: res.sid, status: res.status, to: res.to, verified: res.status === 'approved' };
+      throw new BadRequestException('Código inválido o expirado');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Código inválido o expirado';
       this.logger.warn(`Código inválido para ${to}: ${message}`);

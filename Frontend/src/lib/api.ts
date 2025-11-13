@@ -416,6 +416,24 @@ export const api = {
   }, //Comentarios
   getBusinessComments: (id_negocio: string | number) =>
     apiFetch<any[]>(`businesses/${id_negocio}/ratings`),
+
+  // --- Verificación SMS ---
+  startSmsVerification: (telefono: string, canal: string = "sms") =>
+    apiFetch<{ message: string; telefono: string; canal: string; expiresAt?: string }>(
+      "sms/verify/start",
+      {
+        method: "POST",
+        body: JSON.stringify({ telefono, canal }),
+      }
+    ),
+  checkSmsVerification: (telefono: string, codigo: string) =>
+    apiFetch<{ message: string; telefono: string; verified: boolean; verifiedAt?: string }>(
+      "sms/verify/check",
+      {
+        method: "POST",
+        body: JSON.stringify({ telefono, codigo }),
+      }
+    ),
 };
 
 // Helpers para negocio activo en el cliente
