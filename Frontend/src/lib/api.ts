@@ -43,7 +43,10 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       Object.assign(normalizedHeaders, init.headers as Record<string, string>);
     }
   }
-  if (token) normalizedHeaders.Authorization = `Bearer ${token}`;
+  // Avoid sending Authorization on auth endpoints (login/register)
+  const pathKey = path.replace(/^\/+/, "");
+  const isAuthEndpoint = /^(auth\/(login|register)|usuarios\/register)/.test(pathKey);
+  if (token && !isAuthEndpoint) normalizedHeaders.Authorization = `Bearer ${token}`;
 
   // If the body is a FormData, let the browser set the Content-Type (with boundary)
   // so remove any explicit Content-Type header in that case.
@@ -51,7 +54,36 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     delete normalizedHeaders["Content-Type"];
   }
 
-  const res = await fetch(url, { ...init, headers: normalizedHeaders });
+  // Force no-cookies by default to prevent 431s due to large Cookie headers when
+  // using Next.js rewrites (/api -> backend). Callers can override via init.credentials.
+  const baseInit: RequestInit = { ...init, headers: normalizedHeaders };
+  if (typeof baseInit.credentials === "undefined") {
+    baseInit.credentials = "omit";
+  }
+
+  // Debug instrumentation for 431 header issues
+  const isLoginDebug = /auth\/login$/.test(pathKey);
+  if (isLoginDebug) {
+    try {
+      const headerSnapshot = { ...normalizedHeaders };
+      if (headerSnapshot.Authorization) {
+        headerSnapshot.Authorization = `Bearer <len:${headerSnapshot.Authorization.length}>`;
+      }
+      // Compute cookie header length if browser would attach (we forced omit, but log anyway)
+      console.debug('[login-debug] request', {
+        url,
+        method: init.method || 'GET',
+        headers: headerSnapshot,
+        bodyBytes: typeof init.body === 'string' ? init.body.length : (init.body ? 'form/mixed' : 0),
+        tokenPresent: !!token,
+      });
+    } catch {}
+  }
+
+  const res = await fetch(url, baseInit).catch(err => {
+    if (isLoginDebug) console.error('[login-debug] network error', err);
+    throw err;
+  });
 
   if (
     typeof window !== "undefined" &&
@@ -159,6 +191,8 @@ export const api = {
     apiFetch<LoginResponse>("auth/login", {
       method: "POST",
       body: JSON.stringify({ correo_electronico, password }),
+      credentials: 'omit',
+      cache: 'no-store',
     }),
 
   // Información del usuario autenticado
@@ -179,9 +213,10 @@ export const api = {
     return apiFetch<RegisterResponse>("usuarios/register", {
       method: "POST",
       body: JSON.stringify(payload),
+      credentials: 'omit',
+      cache: 'no-store',
     });
   },
-  // --- FIN DE MODIFICACIÓN createProduct ---
 
   verifyEmail: (correo_electronico: string, codigo: string) =>
     apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
@@ -393,7 +428,9 @@ export const api = {
     }),
 
   deleteInventory: (id: string) =>
-    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }), // --- Ventas ---
+    apiFetch<any>(`inventory/${id}`, { method: "DELETE" }),
+  
+  // --- Ventas ---
   createSale: (data: {
     id_negocio: string;
     id_tipo_pago?: string;
@@ -403,7 +440,14 @@ export const api = {
       precio_unitario?: number;
     }>;
     cerrar?: boolean;
-  }) => apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }), // Historial de ventas
+  }) =>
+    apiFetch<any>("sales", { method: "POST", body: JSON.stringify(data) }).then((sale) => {
+      try {
+        // Emit custom event so kitchen board can append ticket instantly
+        window.dispatchEvent(new CustomEvent('pos:new-sale', { detail: sale }));
+      } catch {}
+      return sale;
+    }),
 
   getSales: (params?: {
     id_negocio?: string;
