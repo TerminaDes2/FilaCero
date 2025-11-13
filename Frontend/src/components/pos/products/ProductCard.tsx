@@ -51,7 +51,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
 
   // Definimos la URL de la imagen buscando en los campos correctos
   // (Este error desaparecerá después del Paso 2)
-  const imageUrl = product.imagen_url || product.media?.[0]?.url || '/images/POS-OrdenarMenu.png';
+  // Determinar la imagen preferida: primero media principal, luego imagen_url, luego fallback
+  const principalMedia = product.media?.find(m => m.principal) || product.media?.[0];
+  const imageUrl = principalMedia?.url || product.imagen_url || '/images/POS-OrdenarMenu.png';
 
   return (
     <div className={`${base} ${view === 'list' ? 'flex gap-4 p-3 items-center' : ''}`}
@@ -62,7 +64,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
       
       {/* Usamos la variable 'imageUrl' en el 'src' */}
       <div className={view === 'grid' ? 'relative w-full h-36 overflow-hidden' : 'relative w-24 h-20 rounded-lg overflow-hidden flex-shrink-0'} style={{ background: '#f2e2c5' }}>
-        <Image src={imageUrl} alt={product.name} fill className='object-cover transition-transform duration-500 group-hover:scale-105' />
+        <Image
+          src={imageUrl}
+          alt={product.name}
+          fill
+          unoptimized
+          className='object-cover transition-transform duration-500 group-hover:scale-105'
+        />
         {outOfStock && (
           <span className='absolute inset-0 bg-[rgba(255,255,255,0.78)] backdrop-blur-sm flex items-center justify-center text-[11px] font-semibold tracking-wide' style={{ color: 'var(--pos-danger-text)' }}>Sin stock</span>
         )}

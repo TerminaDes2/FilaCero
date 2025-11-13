@@ -57,17 +57,14 @@ PORT=3000
 DATABASE_URL=postgres://user:password@postgres:5432/filacero
 JWT_SECRET=... (definido en despliegue)
 JWT_EXPIRES_IN=3600s
+API_BASE_URL=http://localhost:3000
 ```
 - En el entorno Docker se leen desde `docker-compose.yml`.
 - Si se ejecuta local fuera de Docker, crear `.env` en `Backend/`.
 
 ## Scripts npm
 | Script | Descripción |
-|--------|-------------|
-| `npm run start` | Server productivo (sin watch) |
-| `npm run start:dev` | Desarrollo con recarga |
-| `npm run start:debug` | Igual que dev + inspector (`9229`) |
-| `npm run build` | Compila a `dist/` |
+|------run build` | Compila a `dist/` |
 | `npm run lint` | Reglas ESLint/TSLint aplicadas al backend |
 
 ## Ciclo de migraciones
@@ -127,3 +124,43 @@ Para un análisis exhaustivo del backend, consultar:
 - **`verificacion-usuarios.md`**: Flujo completo del sistema de verificación de email.
 - **`implementaciones-negocio-rating.md`**: Documentación del módulo de valoraciones.
 - **`backend-linting.md`**: Configuración ESLint y scripts de calidad.
+
+## Subida de imágenes en Productos
+
+Desde 2025-11 se habilitó la creación de productos con imagen adjunta. El endpoint acepta `multipart/form-data` con las siguientes claves:
+
+- `file`: archivo de imagen (png/jpg/jpeg). Es el campo capturado por `FileInterceptor('file')`.
+- `data`: string JSON con el payload del producto, por ejemplo:
+
+```
+{
+  "nombre": "Café Latte",
+  "precio": 3.5,
+  "estado": "activo",
+  "id_categoria": "Bebidas calientes", // puede ser ID numérico como string o nombre de categoría
+  "media": [
+    { "url": "https://..." } // opcional; si se sube `file`, no es necesario
+  ]
+}
+```
+
+Detalles de implementación:
+- Los archivos se almacenan en `./uploads` (ruta del proceso). En Docker es `/app/uploads`.
+- Los archivos se exponen estáticamente bajo `/uploads/...` gracias a `app.useStaticAssets(...)` en `main.ts`.
+- La URL pública se construye usando `API_BASE_URL` (por defecto `http://localhost:3000`).
+- Si el payload incluye `media[]`, y además se sube `file`, se normaliza para que haya una sola imagen principal.
+
+Ejemplo de cURL:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  -F "data={\"nombre\":\"Café Latte\",\"precio\":3.5,\"estado\":\"activo\"};type=application/json" \
+  -F "file=@/ruta/local/latte.jpg;type=image/jpeg" \
+  http://localhost:3000/api/products
+```
+
+Errores comunes:
+- 400: no es JSON válido en `data` o formato de archivo no permitido.
+- 401/403: token inválido o rol insuficiente.
+- 413/431: cuerpo o cabeceras muy grandes (limitar tamaño y evitar cookies en proxys).

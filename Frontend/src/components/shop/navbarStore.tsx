@@ -3,10 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useUserStore } from "../../state/userStore";
-import { useRouter } from "next/navigation";
-import { Store, Home, Bell } from "lucide-react";
 import UserDropdown from "../UserDropdown";
-import { useCart } from "./CartContext"; // 👈 se importa el carrito
+import { useCart } from "./CartContext";
 
 interface NavbarStoreProps {
   onToggleCart?: (open: boolean) => void;
@@ -14,20 +12,10 @@ interface NavbarStoreProps {
 
 export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
   const [scrolled, setScrolled] = useState(false);
-  const [openNotifications, setOpenNotifications] = useState(false);
+  const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<'delivery' | 'pickup'>("delivery");
   const { isAuthenticated, loading } = useUserStore();
-  const { toggleOpen, items } = useCart(); // 👈 contexto del carrito
-  const router = useRouter();
-
-  const [notifications] = useState([
-    {
-      id: 1,
-      title: "Nueva promoción 🎉",
-      description: "Aprovecha 2x1 en productos seleccionados hasta el 25 de octubre.",
-      date: "22/10/2025",
-      time: "14:35",
-    },
-  ]);
+  const { toggleOpen, items } = useCart();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -35,167 +23,93 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleGoHome = () => router.push("/");
-
-  const handleToggleCart = () => {
+  const clear = () => setQuery("");
+  const openCart = () => {
     toggleOpen(true);
-    setOpenNotifications(false); // 👈 cierra notificaciones si el carrito se abre
     onToggleCart?.(true);
-  };
-
-  const handleToggleNotifications = () => {
-    setOpenNotifications(!openNotifications);
-    toggleOpen(false); // 👈 cierra carrito si se abren notificaciones
   };
 
   if (loading) return null;
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-xl ${
-        scrolled ? "bg-white/90 dark:bg-slate-900/90 shadow-lg" : "bg-white/70"
-      } border-b border-gray-200 dark:border-slate-700 transition`}
-    >
-      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-gray-800">
-            <Image src="/LogoFilaCero.svg" alt="FilaCero" width={36} height={36} className="drop-shadow-sm" />
-            <span className="text-[2rem] font-extrabold select-none">
-              <span className="text-[var(--fc-brand-600)]">Fila</span>
-              <span className="text-[var(--fc-teal-500)]">Cero</span>
-            </span>
-          </Link>
-          <div className="h-6 w-px bg-gray-300 dark:bg-slate-600"></div>
-          <span className="text-sm font-medium text-gray-600 dark:text-slate-300 flex items-center gap-1">
-            <Store className="w-4 h-4" />
-            Tienda
+    <header className={`fixed top-0 left-0 right-0 z-40 border-b border-slate-200/80 ${scrolled ? "bg-white/95 shadow" : "bg-white/80"} backdrop-blur bg-[radial-gradient(1200px_160px_at_10%_-60px,rgba(233,74,111,0.08),transparent_60%),radial-gradient(900px_140px_at_90%_-70px,rgba(76,193,173,0.08),transparent_60%)]`}> 
+      <nav className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 h-14 flex items-center gap-3">
+        {/* Left: Brand */}
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <Image
+            src="/LogoFilaCero.svg"
+            alt="FilaCero"
+            width={28}
+            height={28}
+            priority
+            className="w-7 h-7"
+          />
+          <span className="hidden sm:inline text-[1.25rem] leading-none font-extrabold select-none">
+            <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
+            <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </span>
-        </div>
+        </Link>
 
-        {/* Botón Inicio */}
-        <div className="hidden md:flex items-center gap-6">
-          <button
-            onClick={handleGoHome}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/10 transition"
-          >
-            <Home className="w-4 h-4" />
-            Volver al Inicio
-          </button>
-        </div>
-
-        {/* Lado derecho */}
-        <div className="flex items-center gap-4 relative">
-          {/* 🔔 Notificaciones */}
-          {isAuthenticated && (
-            <div className="relative">
-              <button
-                onClick={handleToggleNotifications}
-                className="border-2 border-green-500 rounded-full p-2 hover:bg-green-50 transition flex items-center justify-center"
-                aria-label="Abrir notificaciones"
-                type="button"
-              >
-                <Bell
-                  className={`w-5 h-5 transition-all ${
-                    openNotifications ? "fill-green-600 text-green-600" : "text-green-600"
-                  }`}
-                />
+        {/* Middle: Search */}
+        <div className="flex-1 min-w-0">
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="restaurants"
+              className="w-full h-10 pl-8 pr-8 rounded-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-slate-300 outline-none text-sm text-slate-800 placeholder:text-slate-400 transition"
+            />
+            {query && (
+              <button onClick={clear} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
+            )}
+          </div>
+        </div>
 
-              {openNotifications && (
-                <div className="absolute right-0 mt-3 w-80 bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden animate-fadeIn z-50">
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-sm font-semibold text-gray-800">Notificaciones</h3>
-                  </div>
-
-                  <div className="max-h-72 overflow-y-auto">
-                    {notifications.length > 0 ? (
-                      notifications.map((n) => (
-                        <div key={n.id} className="p-4 border-b border-gray-100 hover:bg-gray-50 transition">
-                          <h4 className="font-medium text-gray-900">{n.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{n.description}</p>
-                          <span className="text-xs text-gray-400 block mt-2">
-                            {n.date} • {n.time}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-6 flex flex-col items-center justify-center text-gray-400">
-                        <Image
-                          src="https://via.placeholder.com/120x120?text=%F0%9F%93%AD"
-                          alt="Sin notificaciones"
-                          width={120}
-                          height={120}
-                          className="mb-2 opacity-70"
-                          unoptimized
-                        />
-                        <p className="text-sm font-medium">Aún no tienes notificaciones.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+        {/* Mode segmented control (innovative slider) */}
+        <div className="hidden sm:flex items-center">
+          <div className="relative h-9 w-[180px] bg-slate-100 rounded-full p-0.5">
+            <span
+              className={`absolute top-0.5 left-0.5 h-8 w-[calc(50%-4px)] rounded-full transition-transform duration-300 ease-out shadow-sm bg-gradient-to-r from-[var(--fc-brand-600)] to-[var(--fc-teal-500)] ${mode==='pickup' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'}`}
+            />
+            <div className="relative z-[1] grid grid-cols-2 text-sm font-medium h-full">
+              <button onClick={() => setMode('delivery')} className={`rounded-full ${mode==='delivery' ? 'text-white' : 'text-slate-700 hover:text-slate-900'}`}>Delivery</button>
+              <button onClick={() => setMode('pickup')} className={`rounded-full ${mode==='pickup' ? 'text-white' : 'text-slate-700 hover:text-slate-900'}`}>Pickup</button>
             </div>
-          )}
+          </div>
+        </div>
 
-          {/* 🛒 Carrito */}
-          {isAuthenticated && (
-            <button
-              className="relative flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-full transition-colors"
-              onClick={handleToggleCart}
-              aria-label="Abrir carrito"
-              type="button"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 3h2l.4 2M7 13h10l4-8H5.4" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="10" cy="20" r="1" />
-                <circle cx="18" cy="20" r="1" />
-              </svg>
-              {items.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-white text-pink-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                  {items.length}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* 👤 Usuario */}
+        {/* Right: actions */}
+        <div className="ml-1 flex items-center gap-2">
+          {/* Bell */}
+          <button aria-label="Notifications" className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 5 3 9H3c0-4 3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          </button>
+          {/* Cart */}
+          <button onClick={openCart} className="relative inline-flex items-center gap-2 pl-3 pr-3 h-10 rounded-full bg-[var(--fc-brand-600)] text-white hover:bg-[var(--fc-brand-500)]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span className="text-sm font-semibold">{items.length}</span>
+            {items.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white text-[11px] font-bold text-[var(--fc-brand-600)] grid place-items-center shadow-sm">
+                {items.length}
+              </span>
+            )}
+          </button>
+          {/* Auth */}
           {isAuthenticated ? (
             <UserDropdown />
           ) : (
-            <div className="flex items-center gap-3">
-              <Link
-                href="/auth/login"
-                className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-300/70 dark:border-white/15 text-gray-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:border-brand-400 dark:hover:text-brand-300 transition"
-              >
-                Iniciar sesión
-              </Link>
-              <Link
-                href="/auth/register"
-                className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-500 transition shadow-glow"
-              >
-                Crear cuenta
-              </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/auth/login" className="hidden sm:inline-flex h-10 items-center px-3 rounded-full text-sm font-medium text-slate-700 hover:bg-slate-50 border border-slate-200">Sign In</Link>
+              <Link href="/auth/register" className="inline-flex h-10 items-center px-3 rounded-full text-sm font-semibold text-white bg-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)] shadow-sm">Sign Up</Link>
             </div>
           )}
         </div>
       </nav>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-5px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.25s ease-out forwards;
-        }
-      `}</style>
     </header>
   );
 }

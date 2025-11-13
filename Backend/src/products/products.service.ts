@@ -1,7 +1,8 @@
 // Backend/src/products/products.service.ts
 
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { Prisma, producto, producto_media, producto_metricas_semanales, categoria } from '@prisma/client';
+import type { Express } from 'express';
+import { Prisma, producto, categoria } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -18,8 +19,8 @@ const productInclude = {
 
 type ProductWithRelations = producto & {
   categoria: Pick<categoria, 'nombre'> | null;
-  producto_media: producto_media[];
-  producto_metricas_semanales: producto_metricas_semanales[];
+  producto_media: any[];
+  producto_metricas_semanales: any[];
 };
 
 @Injectable()
@@ -31,7 +32,8 @@ export class ProductsService {
   ) {}
 
   private mapProduct(product: ProductWithRelations, stock?: number | null) {
-    // ... (tu función mapProduct sin cambios)
+    // Normalización de URLs de media para asegurar rutas absolutas
+    const baseUrl = this.configService.get<string>('API_BASE_URL') || 'http://localhost:3000';
     const {
       categoria,
       producto_media: mediaRecords,
@@ -41,13 +43,21 @@ export class ProductsService {
       precio,
       ...rest
     } = product;
-    const mediaList = (mediaRecords ?? []).map((item) => ({
-      id_media: item.id_media.toString(),
-      url: item.url,
-      principal: item.principal,
-      tipo: item.tipo,
-      creado_en: item.creado_en?.toISOString() ?? null,
-    }));
+    const mediaList = (mediaRecords ?? []).map((item) => {
+      let url = item.url;
+      if (url && !/^https?:\/\//i.test(url)) {
+        if (url.startsWith('/uploads/')) {
+          url = `${baseUrl}${url}`;
+        }
+      }
+      return {
+        id_media: item.id_media.toString(),
+        url,
+        principal: item.principal,
+        tipo: item.tipo,
+        creado_en: item.creado_en?.toISOString() ?? null,
+      };
+    });
 
     const metricList = (metricRecords ?? []).map((metric) => ({
       id_metricas: metric.id_metricas.toString(),
@@ -100,16 +110,20 @@ export class ProductsService {
   }
 
   private async replaceProductMedia(productId: bigint, media: SanitizedMedia[]) {
-    // ... (tu función replaceProductMedia sin cambios)
+    // Usamos SQL crudo para evitar dependencia del cliente Prisma si el modelo aún no expone 'producto_media'
     await this.prisma.$transaction(async (tx) => {
-      await tx.producto_media.deleteMany({ where: { id_producto: productId } });
-      if (media.length > 0) {
-        await tx.producto_media.createMany({
-          data: media.map((item) => ({
-            ...item,
-            id_producto: productId,
-          })),
-        });
+      await tx.$executeRawUnsafe(
+        `DELETE FROM producto_media WHERE id_producto = $1`,
+        productId.toString(),
+      );
+      for (const item of media) {
+        await tx.$executeRawUnsafe(
+          `INSERT INTO producto_media (id_producto, url, principal, tipo) VALUES ($1, $2, $3, $4)`,
+          productId.toString(),
+          item.url,
+          item.principal,
+          item.tipo,
+        );
       }
     });
   }

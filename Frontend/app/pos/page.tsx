@@ -17,6 +17,10 @@ import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
 import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
+import { useUserStore } from '../../src/state/userStore';
+import { useBusinessStore } from '../../src/state/businessStore';
+import { api } from '../../src/lib/api';
+import { BusinessPickerDialog } from '../../src/components/business/BusinessPickerDialog';
 // Categories store not needed here
 
 // Mock product dataset (frontend only)
@@ -42,6 +46,10 @@ export default function POSPage() {
   const categories = useMemo(() => storeCategories.map(c => c.name), [storeCategories]);
   const { view: posView } = usePOSView();
   const { hydrateFromAPI } = useKitchenBoard();
+  const { user } = useUserStore();
+  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const [needBusiness, setNeedBusiness] = useState(false);
+  const [bizList, setBizList] = useState<any[]>([]);
 
   // Fetch categories (store handles normalization & business scoping)
   useEffect(() => {
@@ -61,6 +69,21 @@ export default function POSPage() {
       hydrateFromAPI();
     }
   }, [posView, hydrateFromAPI]);
+
+  // Guard: if admin and no active business, prompt to choose before using POS
+  useEffect(() => {
+    const roleName = (user as any)?.role_name || user?.role?.nombre_rol || '';
+    const idRol = user?.id_rol;
+    const isAdmin = roleName === 'admin' || roleName === 'superadmin' || idRol === 2;
+    if (isAdmin && !activeBusiness) {
+      api.listMyBusinesses()
+        .then((list) => {
+          setBizList(list || []);
+          setNeedBusiness(true);
+        })
+        .catch(() => setNeedBusiness(true));
+    }
+  }, [user, activeBusiness]);
   
   // Keyboard: 'v' toggles view (grid/list) when not typing in input
   useEffect(() => {
@@ -136,6 +159,21 @@ export default function POSPage() {
             </div>
           )}
         </main>
+        {needBusiness && (
+          <BusinessPickerDialog
+            open={needBusiness}
+            businesses={bizList}
+            onChoose={(b)=>{
+              setActiveBusiness(b);
+              setNeedBusiness(false);
+            }}
+            onClose={()=>{
+              // Si no selecciona, salimos del POS para evitar estado inconsistente
+              setNeedBusiness(false);
+              window.location.href = '/';
+            }}
+          />
+        )}
       </div>
     </CartProvider>
   );

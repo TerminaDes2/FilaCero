@@ -10,6 +10,15 @@ const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? '').replace(/\/+$/, '');
 const IS_EXTERNAL_API = /^https?:\/\//i.test(API_BASE);
 
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: 'http', hostname: 'localhost', port: '3000' },
+      { protocol: 'http', hostname: '127.0.0.1', port: '3000' },
+      // Permite /uploads cuando el frontend y backend comparten host a través de proxy
+      { protocol: 'https', hostname: '**' },
+      { protocol: 'http', hostname: '**' },
+    ],
+  },
   /**
    * Rewrites run both in development and in production (Vercel), ensuring that
    * navigation and direct requests to the prettified paths resolve the same
