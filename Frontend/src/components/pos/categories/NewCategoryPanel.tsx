@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
 import { useCategoriesStore, CategoryColor } from '../../../pos/categoriesStore';
+import { api } from '../../../lib/api';
 
 interface NewCategoryPanelProps {
   onClose: () => void;
@@ -17,6 +18,9 @@ const colorTokens: Record<CategoryColor, { bg: string; fg: string; ring: string;
 
 export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onCreated }) => {
   const { add, categories } = useCategoriesStore();
+  const [businesses, setBusinesses] = useState<any[]>([]);
+  const [selectedBusiness, setSelectedBusiness] = useState<string>('');
+  const [applyAll, setApplyAll] = useState(false);
   const [name, setName] = useState('');
   const [color, setColor] = useState<CategoryColor>('brand');
   const [icon, setIcon] = useState('');
@@ -44,6 +48,21 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
   }, [onClose]);
 
   // --- 👇 CÓDIGO MODIFICADO ---
+  useEffect(() => {
+    // Cargar negocios del usuario para permitir selección sucursal
+    (async () => {
+      try {
+        const list = await api.listMyBusinesses();
+        setBusinesses(list || []);
+        if (list?.length === 1) {
+          setSelectedBusiness(String(list[0].id_negocio));
+        }
+      } catch (e) {
+        console.warn('No se pudieron cargar negocios', e);
+      }
+    })();
+  }, []);
+
   const handleSubmit = async () => {
     setError('');
     const n = name.trim();
@@ -61,9 +80,18 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
       return;
     }
     
+    // Validaciones negocio / aplicarTodos
+    if (businesses.length > 1 && !applyAll && !selectedBusiness) {
+      setError('Selecciona una sucursal o marca "Aplicar a todos".');
+      return;
+    }
     setSaving(true);
     try {
-      await add(n, color, icon || undefined);
+      const opts = {
+        aplicarTodos: applyAll || businesses.length === 1,
+        sucursal: !applyAll && businesses.length > 1 ? businesses.find(b => String(b.id_negocio) === selectedBusiness)?.nombre : undefined,
+      };
+      await add(n, color, icon || undefined, opts);
       onCreated?.();
       onClose();
     } catch (e: unknown) {
@@ -132,6 +160,33 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
                 <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Emoji (opcional)</label>
                 <input value={icon} onChange={e => setIcon(e.target.value)} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' placeholder='🍹' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
               </div>
+            </div>
+            {/* Negocio / Aplicar a todos */}
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between'>
+                <label className='block text-xs font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Sucursal</label>
+                <label className='inline-flex items-center gap-2 text-xs'>
+                  <input type='checkbox' className='accent-[var(--pos-accent-green)]' checked={applyAll} onChange={e => setApplyAll(e.target.checked)} />
+                  <span style={{ color: 'var(--pos-text-muted)' }}>Aplicar a todos</span>
+                </label>
+              </div>
+              <select
+                value={selectedBusiness}
+                onChange={e => setSelectedBusiness(e.target.value)}
+                disabled={applyAll || businesses.length <= 1}
+                className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2'
+                style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}
+              >
+                {businesses.length === 0 && <option value=''>Sin negocios</option>}
+                {businesses.length === 1 && <option value={String(businesses[0].id_negocio)}>{businesses[0].nombre}</option>}
+                {businesses.length > 1 && !applyAll && <option value=''>Selecciona…</option>}
+                {businesses.map(b => (
+                  <option key={b.id_negocio} value={String(b.id_negocio)}>{b.nombre}</option>
+                ))}
+              </select>
+              {businesses.length > 1 && !applyAll && !selectedBusiness && (
+                <p className='text-[11px] text-amber-600'>Requerido si no aplicas a todos.</p>
+              )}
             </div>
           </section>
 

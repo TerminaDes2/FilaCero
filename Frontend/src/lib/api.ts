@@ -285,26 +285,28 @@ export const api = {
     return apiFetch<any[]>(path);
   },
 
-  createProduct: (productData: any) =>
-    apiFetch<any>("products", {
+  // Crear producto: siempre enviar multipart/form-data con campo 'data'
+  createProduct: (productData: any) => {
+    const fd = new FormData();
+    fd.append("data", JSON.stringify(productData));
+    return apiFetch<any>("products", {
       method: "POST",
-      body: JSON.stringify(productData),
-    }),
+      body: fd,
+    });
+  },
 
-  // Nueva versión: acepta opcionalmente un archivo de imagen.
-  // Si se recibe `imageFile`, envía multipart/form-data con `payload` y `image`.
+  // Nueva versión: siempre multipart/form-data.
+  // Campo JSON: 'data'; Campo de archivo (opcional): 'file'
   createProductWithImage: (productData: any, imageFile?: File | null) => {
+    const fd = new FormData();
+    fd.append("data", JSON.stringify(productData));
     if (imageFile) {
-      const fd = new FormData();
-      // 'payload' es la parte JSON; el backend puede adaptarse a esto.
-      fd.append("payload", JSON.stringify(productData));
-      fd.append("image", imageFile);
-      return apiFetch<any>("products", {
-        method: "POST",
-        body: fd,
-      });
+      fd.append("file", imageFile);
     }
-    return api.createProduct(productData);
+    return apiFetch<any>("products", {
+      method: "POST",
+      body: fd,
+    });
   },
 
   updateProduct: (id: string, productData: any) =>
@@ -319,6 +321,9 @@ export const api = {
     }), // --- Categorías ---
 
   getCategories: (params?: { id_negocio?: string }) => {
+    // Las categorías actualmente son globales en el backend (no requieren id_negocio).
+    // Si se proporciona o se puede inferir un id_negocio lo enviamos para futura compatibilidad,
+    // pero si no existe simplemente retornamos todas las categorías sin filtrar.
     let negocioId = params?.id_negocio;
     if (!negocioId) {
       try {
@@ -329,16 +334,14 @@ export const api = {
       } catch {}
     }
     if (!negocioId) {
-      const envNegocio = (globalThis as any).process?.env
-        ?.NEXT_PUBLIC_NEGOCIO_ID;
+      const envNegocio = (globalThis as any).process?.env?.NEXT_PUBLIC_NEGOCIO_ID;
       if (envNegocio) negocioId = envNegocio;
     }
+    // Si no hay negocioId → petición global sin parámetros.
     if (!negocioId) {
-      throw new Error("Se requiere un negocio activo para cargar categorías");
+      return apiFetch<any[]>("categories");
     }
-    const query = new URLSearchParams({
-      id_negocio: String(negocioId),
-    }).toString();
+    const query = new URLSearchParams({ id_negocio: String(negocioId) }).toString();
     return apiFetch<any[]>(`categories?${query}`);
   },
   getCategoryById: (id: string) => apiFetch<any>(`categories/${id}`),
@@ -347,6 +350,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(categoryData),
     }),
+  createCategoryAdvanced: (payload: { nombre: string; sucursal?: string; aplicarTodos?: boolean; negocioId?: string }) =>
+    apiFetch<any>("categories", { method: "POST", body: JSON.stringify(payload) }),
   updateCategory: (id: string, categoryData: { nombre: string }) =>
     apiFetch<any>(`categories/${id}`, {
       method: "PATCH",
