@@ -1,168 +1,240 @@
 "use client";
-import { UserInfo } from "../../lib/api";
-import { User, Mail, Phone, IdCard, Edit3, Package } from "lucide-react";
+
 import { useState } from "react";
+import { BadgeCheck, Bell, ChevronDown, Compass, Milestone, Save, Sparkles } from "lucide-react";
+import { UserInfo } from "../../lib/api";
 
 interface UserMetricsProps {
   user: UserInfo;
 }
 
-export default function UserMetrics({ user }: UserMetricsProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState(user);
+const notificationOptions = [
+  {
+    id: "email",
+    label: "Alertas por correo",
+    description: "Confirma ventas, recolecciones y recordatorios por email.",
+  },
+  {
+    id: "push",
+    label: "Notificaciones push",
+    description: "Recibe avisos inmediatos en el POS y la app móvil.",
+  },
+  {
+    id: "digest",
+    label: "Resumen semanal",
+    description: "Un reporte compacto cada lunes con tus métricas clave.",
+  },
+];
 
-  const handleSave = () => {
-    console.log("Guardando cambios:", editedUser);
-    setIsEditing(false);
-    // api.updateUser(editedUser) ...
+const trustHighlights = [
+  {
+    title: "Certificación de higiene alimentaria",
+    detail: "Expira: 12 de febrero 2026 • Responsable: Operaciones",
+    accent: "brand",
+  },
+  {
+    title: "Capacitación POS inteligente",
+    detail: "Completado 100% • Última actualización: hace 4 semanas",
+    accent: "teal",
+  },
+  {
+    title: "Validación de identidad",
+    detail: "Verificada con credencial UDEM • Vencimiento: 2027",
+    accent: "neutral",
+  },
+];
+
+export default function UserMetrics({ user }: UserMetricsProps) {
+  const [personalInfoOpen, setPersonalInfoOpen] = useState(true);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [trustPanelOpen, setTrustPanelOpen] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState(true);
+  const [notifyPush, setNotifyPush] = useState(true);
+  const [notifyDigest, setNotifyDigest] = useState(false);
+
+  const [formValues, setFormValues] = useState({
+    nombre: user.nombre ?? "",
+    correo_electronico: user.correo_electronico ?? "",
+    numero_telefono: user.numero_telefono ?? "",
+  });
+
+  const handleInputChange = (field: keyof typeof formValues, value: string) => {
+    setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Información Personal
-        </h2>
+    <div className="grid gap-6">
+      <section className="rounded-3xl border border-white/70 bg-white p-6 shadow-[0_30px_120px_-80px_rgba(222,53,95,0.35)]">
         <button
-          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-          className="flex items-center space-x-2 px-3 py-1 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+          onClick={() => setPersonalInfoOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between gap-2 text-left"
+          type="button"
         >
-          <Edit3 className="w-4 h-4" />
-          <span>{isEditing ? "Guardar" : "Editar"}</span>
+          <div className="flex items-center gap-3 text-[var(--fc-brand-700)]">
+            <BadgeCheck className="h-5 w-5" />
+            <div>
+              <h3 className="text-base font-semibold">Información personal</h3>
+              <p className="text-sm text-slate-500">Sincronizamos con tus pedidos y POS en tiempo real</p>
+            </div>
+          </div>
+          <ChevronDown className={`h-5 w-5 text-slate-400 transition ${personalInfoOpen ? "rotate-180" : ""}`} />
         </button>
-      </div>
 
-      {/* Contenido en dos columnas */}
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Columna izquierda */}
-        <div className="space-y-6">
-          {/* Nombre */}
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-brand-100 dark:bg-brand-900 rounded-lg">
-              <User className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+        {personalInfoOpen && (
+          <div className="mt-6 grid gap-4 text-sm text-slate-600">
+            <div className="grid gap-1">
+              <label className="text-xs uppercase tracking-[0.28em] text-[var(--fc-brand-500)]">Nombre completo</label>
+              <input
+                value={formValues.nombre}
+                onChange={(event) => handleInputChange("nombre", event.target.value)}
+                className="rounded-xl border border-[var(--fc-brand-100)] bg-white px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-[var(--fc-brand-400)] focus:ring-2 focus:ring-[var(--fc-brand-100)]"
+              />
             </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nombre completo
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedUser.nombre}
-                  onChange={(e) =>
-                    setEditedUser({ ...editedUser, nombre: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                />
-              ) : (
-                <p className="text-gray-900 dark:text-white">
-                  {user.nombre || "No especificado"}
-                </p>
-              )}
+            <div className="grid gap-1">
+              <label className="text-xs uppercase tracking-[0.28em] text-[var(--fc-brand-500)]">Correo electrónico</label>
+              <input
+                value={formValues.correo_electronico}
+                onChange={(event) => handleInputChange("correo_electronico", event.target.value)}
+                className="rounded-xl border border-[var(--fc-brand-100)] bg-white px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-[var(--fc-brand-400)] focus:ring-2 focus:ring-[var(--fc-brand-100)]"
+              />
+            </div>
+            <div className="grid gap-1">
+              <label className="text-xs uppercase tracking-[0.28em] text-[var(--fc-brand-500)]">Teléfono</label>
+              <input
+                value={formValues.numero_telefono}
+                onChange={(event) => handleInputChange("numero_telefono", event.target.value)}
+                className="rounded-xl border border-[var(--fc-brand-100)] bg-white px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-[var(--fc-brand-400)] focus:ring-2 focus:ring-[var(--fc-brand-100)]"
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--fc-brand-500)]">
+                <Save className="h-4 w-4" /> Guardar cambios
+              </button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--fc-brand-200)] px-4 py-2 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-300)]">
+                <Sparkles className="h-4 w-4" /> Exportar reporte perfil
+              </button>
             </div>
           </div>
+        )}
+      </section>
 
-          {/* Email */}
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Correo electrónico
-              </label>
-              <p className="text-gray-900 dark:text-white">
-                {user.correo_electronico}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Verificado ✓
-              </p>
+      <section className="rounded-3xl border border-white/70 bg-white p-6 shadow-[0_30px_120px_-80px_rgba(38,198,183,0.3)]">
+        <button
+          onClick={() => setNotificationsOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between gap-2 text-left"
+          type="button"
+        >
+          <div className="flex items-center gap-3 text-[var(--fc-teal-700)]">
+            <Bell className="h-5 w-5" />
+            <div>
+              <h3 className="text-base font-semibold">Alertas y notificaciones</h3>
+              <p className="text-sm text-slate-500">Preferencias para tus recordatorios omnicanal</p>
             </div>
           </div>
+          <ChevronDown className={`h-5 w-5 text-slate-400 transition ${notificationsOpen ? "rotate-180" : ""}`} />
+        </button>
 
-          {/* Teléfono */}
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Teléfono
-              </label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  value={editedUser.numero_telefono || ""}
-                  onChange={(e) =>
-                    setEditedUser({
-                      ...editedUser,
-                      numero_telefono: e.target.value,
-                    })
-                  }
-                  placeholder="Ingresa tu número de teléfono"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                />
-              ) : (
-                <p className="text-gray-900 dark:text-white">
-                  {user.numero_telefono || "No especificado"}
-                </p>
-              )}
+        {notificationsOpen && (
+          <div className="mt-6 grid gap-4 text-sm text-slate-600">
+            {notificationOptions.map((option) => {
+              const toggles = {
+                email: [notifyEmail, setNotifyEmail],
+                push: [notifyPush, setNotifyPush],
+                digest: [notifyDigest, setNotifyDigest],
+              } as const;
+              const [active, setActive] = toggles[option.id as keyof typeof toggles];
+
+              return (
+                <div
+                  key={option.id}
+                  className="flex items-center justify-between rounded-2xl border border-[var(--fc-teal-100)] bg-[var(--fc-teal-50)] px-4 py-3"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium text-[var(--fc-teal-700)]">{option.label}</span>
+                    <span className="text-xs text-[var(--fc-teal-500)]">{option.description}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActive((prev) => !prev)}
+                    className={`relative h-6 w-12 rounded-full transition ${active ? "bg-[var(--fc-teal-400)]" : "bg-white"}`}
+                    aria-pressed={active}
+                  >
+                    <span
+                      className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white shadow transition ${
+                        active ? "left-7" : "left-1"
+                      }`}
+                    />
+                    <span className="sr-only">Cambiar {option.id}</span>
+                  </button>
+                </div>
+              );
+            })}
+            <button className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--fc-teal-200)] px-4 py-2 text-sm font-semibold text-[var(--fc-teal-700)] transition hover:border-[var(--fc-teal-300)]">
+              <Sparkles className="h-4 w-4" /> Programar recordatorio semanal
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-3xl border border-white/70 bg-white p-6 shadow-[0_30px_120px_-90px_rgba(15,23,42,0.2)]">
+        <button
+          onClick={() => setTrustPanelOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between gap-2 text-left"
+          type="button"
+        >
+          <div className="flex items-center gap-3 text-[var(--fc-brand-700)]">
+            <Milestone className="h-5 w-5" />
+            <div>
+              <h3 className="text-base font-semibold">Confianza y credenciales</h3>
+              <p className="text-sm text-slate-500">Potencia tu reputación con el resto del equipo</p>
             </div>
           </div>
+          <ChevronDown className={`h-5 w-5 text-slate-400 transition ${trustPanelOpen ? "rotate-180" : ""}`} />
+        </button>
 
-          {/* Credencial */}
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <IdCard className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        {trustPanelOpen && (
+          <div className="mt-6 grid gap-4 text-sm text-slate-600">
+            <div className="grid gap-1">
+              <span className="text-xs uppercase tracking-[0.28em] text-[var(--fc-brand-500)]">Puntuación de confianza</span>
+              <div className="flex items-center gap-3">
+                <div className="font-mono text-3xl font-semibold text-slate-900">92</div>
+                <div className="text-xs text-slate-500">
+                  Basado en puntualidad de pedidos, feedback del equipo y registros de capacitación.
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Credencial Estudiantil
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedUser.credential_url || ""}
-                  onChange={(e) =>
-                    setEditedUser({
-                      ...editedUser,
-                      credential_url: e.target.value,
-                    })
-                  }
-                  placeholder="Ingresa tu ID de credencial"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                />
-              ) : (
-                <p className="text-gray-900 dark:text-white">
-                  {user.credential_url || "No registrada"}
-                </p>
-              )}
+
+            <div className="grid gap-3">
+              {trustHighlights.map((highlight) => {
+                const palette = {
+                  brand: "border-[var(--fc-brand-100)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)]",
+                  teal: "border-[var(--fc-teal-100)] bg-[var(--fc-teal-50)] text-[var(--fc-teal-700)]",
+                  neutral: "border-slate-200 bg-slate-50 text-slate-700",
+                } as const;
+
+                return (
+                  <div
+                    key={highlight.title}
+                    className={`rounded-2xl border px-4 py-3 ${palette[highlight.accent as keyof typeof palette]}`}
+                  >
+                    <p className="text-sm font-semibold">{highlight.title}</p>
+                    <p className="text-xs opacity-80">{highlight.detail}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--fc-brand-500)]">
+                <Sparkles className="h-4 w-4" /> Agendar evaluación de confianza
+              </button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--fc-brand-200)] px-4 py-2 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-300)]">
+                <Compass className="h-4 w-4" /> Explorar casos de éxito
+              </button>
             </div>
           </div>
-        </div>
-
-        {/* Columna derecha: Resumen de pedidos */}
-        <div className="space-y-6">
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <Package className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Número de pedidos realizados
-              </label>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                10
-                {/* {user.totalPedidos ?? 0} */}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Tus compras totales registradas
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        )}
+      </section>
     </div>
   );
 }

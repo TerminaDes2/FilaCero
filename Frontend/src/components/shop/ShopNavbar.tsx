@@ -3,11 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 
-type Mode = 'delivery' | 'pickup';
-
 export default function ShopNavbar() {
   const [query, setQuery] = React.useState('');
-  const [mode, setMode] = React.useState<Mode>('delivery');
 
   const clear = () => setQuery('');
 
@@ -41,22 +38,6 @@ export default function ShopNavbar() {
                 </button>
               )}
             </div>
-          </div>
-
-          {/* Mode toggle */}
-          <div className="hidden sm:flex items-center bg-slate-100 rounded-full p-0.5">
-            <button
-              onClick={() => setMode('delivery')}
-              className={`px-3 h-9 rounded-full text-sm font-medium transition ${mode==='delivery' ? 'bg-slate-900 text-white shadow' : 'text-slate-700 hover:text-slate-900'}`}
-            >
-              Delivery
-            </button>
-            <button
-              onClick={() => setMode('pickup')}
-              className={`px-3 h-9 rounded-full text-sm font-medium transition ${mode==='pickup' ? 'bg-slate-900 text-white shadow' : 'text-slate-700 hover:text-slate-900'}`}
-            >
-              Pickup
-            </button>
           </div>
 
           {/* Actions */}

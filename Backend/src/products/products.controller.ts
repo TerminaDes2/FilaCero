@@ -90,8 +90,16 @@ export class ProductsController {
     @Query('search') search?: string,
     @Query('status') status?: string,
     @Query('id_negocio') id_negocio?: string,
+    @Query('categoria') categoria?: string,
   ) {
-    return this.service.findAll({ search, status, id_negocio });
+    return this.service.findAll({ search, status, id_negocio, categoria });
+  }
+
+  @Get('catalog/categories')
+  catalogCategories(
+    @Query('id_negocio') id_negocio?: string,
+  ) {
+    return this.service.listCategories({ id_negocio });
   }
 
   // ===== Endpoints de Historial de Precios (ANTES de :id) =====

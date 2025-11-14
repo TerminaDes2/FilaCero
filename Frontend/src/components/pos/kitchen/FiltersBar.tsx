@@ -28,7 +28,7 @@ export const FiltersBar: React.FC = () => {
       <div className="flex items-center gap-2">
         <input
           type="text"
-          placeholder="Buscar por código/mesa…"
+          placeholder="Buscar código, mesa o cliente…"
           value={filters.search}
           onChange={(e) => setFilters({ search: e.target.value })}
           className="px-3 py-2 rounded-lg border bg-white text-sm"
