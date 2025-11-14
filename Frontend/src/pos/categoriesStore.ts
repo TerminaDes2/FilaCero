@@ -30,7 +30,7 @@ interface CategoriesState {
   selected: string;
   bootstrap: (names: string[]) => void;
   fetchCategories: () => Promise<void>;
-  add: (name: string, color?: CategoryColor, icon?: string) => Promise<CategoryItem>;
+  add: (name: string, color?: CategoryColor, icon?: string, options?: { aplicarTodos?: boolean; sucursal?: string }) => Promise<CategoryItem>;
   update: (id: string, patch: Partial<Pick<CategoryItem, 'name' | 'icon' | 'color'>>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   moveUp: (id: string) => void;
