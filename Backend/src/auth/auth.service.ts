@@ -3,6 +3,7 @@ import {
     Injectable, 
     UnauthorizedException,
     ConflictException,
+    Logger,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -37,6 +38,8 @@ type VerificationSnapshot = {
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+
     constructor(
         private readonly prisma: PrismaService, 
         private readonly jwtService: JwtService,
@@ -96,6 +99,16 @@ export class AuthService {
                 throw issueError;
             }
 
+            try {
+                await this.emailVerificationService.sendLegalDocumentsEmail({
+                    to: user.correo_electronico,
+                    name: user.nombre,
+                });
+            } catch (legalError) {
+                const reason = legalError instanceof Error ? legalError.message : String(legalError);
+                this.logger.warn(`[LEGAL_EMAIL_FAILED] userId=${user.id_usuario.toString()} reason=${reason}`);
+            }
+
             // 4. Generar Token JWT
             const payload: JwtPayload = { 
                 id: user.id_usuario.toString(), 
@@ -112,7 +125,8 @@ export class AuthService {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
                 throw new ConflictException('El correo o número de cuenta ya se encuentra registrado.');
             }
-            console.error(error);
+            const message = error instanceof Error ? `${error.name}: ${error.message}` : 'Error desconocido al crear usuario';
+            this.logger.error(`[USER_REGISTER_ERROR] ${message}`);
             throw new BadRequestException('Error al crear el usuario. Revise los datos.');
         }
     }
