@@ -399,8 +399,9 @@ export const api = {
     }
     return apiFetch<any>("categories", {
       method: "POST",
-      body: JSON.stringify(categoryData),
-    }),
+      body: JSON.stringify(body),
+    });
+  },
   createCategoryAdvanced: (payload: { nombre: string; sucursal?: string; aplicarTodos?: boolean; negocioId?: string }) =>
     apiFetch<any>("categories", { method: "POST", body: JSON.stringify(payload) }),
   updateCategory: (id: string, categoryData: { nombre: string }) =>
