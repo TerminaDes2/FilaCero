@@ -20,7 +20,7 @@ services:
     volumes:
       - ./Backend:/app            # bind mount para ver cambios en tiempo real (incluye nuevos/removed files)
       - /app/node_modules        # volumen anónimo para node_modules dentro del contenedor
-    command: ["npm","run","dev"] # script dev que genera prisma y arranca ts-node-dev
+    command: ["sh","-c","npm install && npm run dev"] # instala deps (incl. twilio) antes de arrancar ts-node-dev
     depends_on:
       - postgres
       - redis
@@ -36,10 +36,10 @@ services:
     ports:
       - "3001:3000"
     environment:
-      NEXT_PUBLIC_API_BASE: http://localhost:3000/api
-      NODE_ENV: development
-      CHOKIDAR_USEPOLLING: 'true'
-      WATCHPACK_POLLING: 'true'
+      - NEXT_PUBLIC_API_BASE=http://backend:3000/api
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING='true'
+      - WATCHPACK_POLLING='true'
     volumes:
       - ./Frontend:/app
       - /app/node_modules

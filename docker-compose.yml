@@ -17,6 +17,10 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       # - REDIS_PASSWORD=your_redis_password # opcional si la instancia tiene password
+      # Límites para evitar error 431
+      - REQUEST_BODY_LIMIT=50mb
+      - MAX_HTTP_HEADER_SIZE=32768
+      - NODE_OPTIONS=--max-http-header-size=32768
     restart: unless-stopped
     depends_on:
       - postgres
@@ -31,7 +35,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE=http://localhost:3000/api
+      - NEXT_PUBLIC_API_BASE=http://backend:3000/api
       - NEXT_PUBLIC_NEGOCIO_ID=1
       - NODE_ENV=development
       - REDIS_URL=redis://redis:6379
@@ -39,7 +43,7 @@ services:
       - ./Frontend:/app
       - /app/node_modules
       - /app/.next
-    command: ["npm", "run", "dev"]
+    command: ["sh", "-c", "npm install && npm run dev"]
     depends_on:
       - backend
     restart: unless-stopped

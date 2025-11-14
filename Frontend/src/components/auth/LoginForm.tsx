@@ -37,11 +37,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 		setError(null);
 		
 		try {
-			// 1. Hacer login para obtener el token
-			// Evita enviar Authorization viejo en la petición de login
+			// 1. Limpiar completamente el storage antes del login para evitar headers grandes
 			if (typeof window !== 'undefined') {
-				try { window.localStorage.removeItem('auth_token'); } catch {}
+				try { 
+					window.localStorage.removeItem('auth_token');
+					window.localStorage.removeItem('auth_user');
+					// Limpiar todas las cookies para evitar 431
+					document.cookie.split(";").forEach((c) => {
+						document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+					});
+				} catch {}
 			}
+			
+			// 2. Hacer login para obtener el token
 			const res = await api.login(email.trim().toLowerCase(), password);
 			
 			if (typeof window !== 'undefined') {

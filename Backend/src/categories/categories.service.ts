@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -9,38 +9,73 @@ export class CategoriesService {
 
   async create(userId: string, dto: CreateCategoryDto) {
     const trimmedName = dto.nombre.trim();
-    
-    // Por ahora, las categorías son globales (el schema no tiene negocio_id)
     const prisma = this.prismaUnsafe;
-    const duplicate = await prisma.categoria.findFirst({
-      where: {
-        nombre: trimmedName,
-      },
-    });
-    if (duplicate) {
-      throw new BadRequestException('Ya existe una categoría con ese nombre');
+
+    // 1. Validar duplicado global (mismo nombre ya asociado a TODOS los negocios del usuario?)
+    const existing = await prisma.categoria.findFirst({ where: { nombre: trimmedName } });
+    if (existing) {
+      // Si aplica a todos y ya existe, simplemente vincular
+      // Si no, también podemos vincular si no está ya asociado al negocio específico
+      return await this.attachToBusinesses(userId, existing, dto);
     }
+
+    // 2. Crear categoría global
+    let created;
     try {
-      return await prisma.categoria.create({
-        data: {
-          nombre: trimmedName,
-        },
-      });
+      created = await prisma.categoria.create({ data: { nombre: trimmedName } });
     } catch (e: unknown) {
       const code = this.extractPrismaCode(e);
-      if (code === 'P2002') {
-        throw new BadRequestException('El nombre de categoría ya existe');
-      }
+      if (code === 'P2002') throw new BadRequestException('El nombre de categoría ya existe');
       throw e;
     }
+
+    // 3. Asociar a negocios según flags
+    await this.attachToBusinesses(userId, created, dto);
+    return created;
   }
 
   async findAll(userId: string, negocioId?: string) {
-    // Las categorías son globales, retornar todas
     const prisma = this.prismaUnsafe;
-    return prisma.categoria.findMany({
+    // Fallback: si el cliente Prisma aún no tiene el modelo (no migrado / no generado) devolver categorías globales.
+    if (!prisma.negocio_categoria) {
+      const globalCats = await prisma.categoria.findMany({ orderBy: { id_categoria: 'asc' } });
+      return globalCats.map((c: any) => ({ id_categoria: c.id_categoria, nombre: c.nombre, negocio_id: null }));
+    }
+
+    const negocioIds = await this.resolveUserBusinessIds(userId);
+    if (!negocioIds.length) {
+      // Sin negocios: devolver globales (sin asociación) para no romper UI.
+      const globalCats = await prisma.categoria.findMany({ orderBy: { id_categoria: 'asc' } });
+      return globalCats.map((c: any) => ({ id_categoria: c.id_categoria, nombre: c.nombre, negocio_id: null }));
+    }
+
+    let targetIds = negocioIds;
+    if (negocioId) {
+      try {
+        const parsed = this.safeBigInt(negocioId);
+        if (negocioIds.includes(parsed)) targetIds = [parsed];
+      } catch {
+        // ignora negocioId inválido y usa todos
+      }
+    }
+
+    const links = await prisma.negocio_categoria.findMany({
+      where: { id_negocio: { in: targetIds } },
+      include: { categoria: true },
       orderBy: { id_categoria: 'asc' },
     });
+
+    // Si no hay enlaces (p.ej. después de migrar pero sin asociación) devolver globales para evitar lista vacía confusa.
+    if (!links.length) {
+      const globalCats = await prisma.categoria.findMany({ orderBy: { id_categoria: 'asc' } });
+      return globalCats.map((c: any) => ({ id_categoria: c.id_categoria, nombre: c.nombre, negocio_id: null }));
+    }
+
+    return links.map((l: any) => ({
+      id_categoria: l.id_categoria,
+      nombre: l.categoria?.nombre,
+      negocio_id: l.id_negocio,
+    }));
   }
 
   async findOne(userId: string, id: string) {
@@ -118,6 +153,71 @@ export class CategoriesService {
 
   private get prismaUnsafe() {
     return this.prisma as any;
+  }
+
+  private safeBigInt(v: string | number | bigint): bigint {
+    try {
+      if (typeof v === 'bigint') return v;
+      if (typeof v === 'number') return BigInt(v);
+      return BigInt(String(v));
+    } catch {
+      throw new BadRequestException('Identificador inválido');
+    }
+  }
+
+  private async resolveUserBusinessIds(userId: string): Promise<bigint[]> {
+    const prisma = this.prismaUnsafe;
+    const uid = this.safeBigInt(userId);
+    const owned = await prisma.negocio.findMany({ where: { owner_id: uid } });
+    const assigned = await prisma.usuarios_negocio.findMany({ where: { id_usuario: uid }, include: { negocio: true } });
+    const ids: bigint[] = [];
+    for (const n of owned) ids.push(this.safeBigInt(n.id_negocio));
+    for (const a of assigned) if (a.negocio) ids.push(this.safeBigInt(a.negocio.id_negocio));
+    return Array.from(new Set(ids));
+  }
+
+  private async attachToBusinesses(userId: string, categoria: any, dto: CreateCategoryDto) {
+    const prisma = this.prismaUnsafe;
+    const businessIds = await this.resolveUserBusinessIds(userId);
+    if (!businessIds.length) return;
+
+    let target: bigint[] = businessIds;
+    if (dto.aplicarTodos) {
+      // all businesses
+      target = businessIds;
+    } else if (dto.negocioId) {
+      const parsed = this.safeBigInt(dto.negocioId);
+      if (businessIds.includes(parsed)) target = [parsed];
+      else throw new BadRequestException('negocioId no pertenece al usuario');
+    } else if (dto.sucursal) {
+      const name = dto.sucursal.trim().toLowerCase();
+      const match = await prisma.negocio.findFirst({ where: { owner_id: this.safeBigInt(userId), nombre: { equals: dto.sucursal, mode: 'insensitive' } } });
+      if (match) target = [this.safeBigInt(match.id_negocio)];
+      else {
+        // intentar entre asignados
+        const assigned = await prisma.negocio.findFirst({ where: { nombre: { equals: dto.sucursal, mode: 'insensitive' }, OR: [{ owner_id: this.safeBigInt(userId) }] } });
+        if (assigned) target = [this.safeBigInt(assigned.id_negocio)];
+        else throw new NotFoundException('Sucursal no encontrada en negocios del usuario');
+      }
+    } else if (businessIds.length === 1) {
+      target = businessIds; // único negocio
+    } else {
+      // Sin elección explícita y múltiples negocios: no asociar (requiere selección)
+      throw new BadRequestException('Selecciona sucursal o usar aplicarTodos');
+    }
+
+    for (const bid of target) {
+      try {
+        // Si el modelo aún no existe (no migrado), simplemente continuar sin error.
+        if (!prisma.negocio_categoria) return;
+        await prisma.negocio_categoria.create({ data: { id_negocio: bid, id_categoria: this.safeBigInt(categoria.id_categoria) } });
+      } catch (e: unknown) {
+        const code = this.extractPrismaCode(e);
+        if (code === 'P2002') {
+          // ya existe vínculo, ignorar
+        } else throw e;
+      }
+    }
   }
 
   private parseBigInt(value: string | number | bigint, message: string): bigint {

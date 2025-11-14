@@ -3,18 +3,31 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
-import { json, urlencoded } from 'express';
+import express, { json, urlencoded } from 'express';
 import { envs } from './config';
 
 // --- 1. IMPORTAR NestExpressApplication ---
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { NestExpressApplication, ExpressAdapter } from '@nestjs/platform-express';
 
 // --- 2. IMPORTAR 'join' DE 'path' ---
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import { createServer } from 'http';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // --- 3. AUMENTAR LÍMITES DE HEADERS PARA EVITAR 431 ---
+  const maxHeaderSize = parseInt(process.env.MAX_HTTP_HEADER_SIZE || '32768', 10);
+  const expressInstance = express();
+  const adapter = new ExpressAdapter(expressInstance);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, adapter, {
+    bodyParser: false, // Lo configuraremos manualmente con límites más grandes
+  });
+
+  // Configurar límites de headers y body más generosos
+  const bodyLimit = process.env.REQUEST_BODY_LIMIT || '50mb';
+  
+  app.use(json({ limit: bodyLimit }));
+  app.use(urlencoded({ limit: bodyLimit, extended: true }));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -22,11 +35,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true
     })
   );
-  // Recordar quitar esto en caso de no ser necesario
-  // --- IGNORE ---
-  const bodyLimit = process.env.REQUEST_BODY_LIMIT || '10mb';
-  app.use(json({ limit: bodyLimit }));
-  app.use(urlencoded({ limit: bodyLimit, extended: true }));
   // CORS
   // ... (toda tu configuración de CORS se mantiene igual)
   const defaultOrigins = [
@@ -45,7 +53,24 @@ async function bootstrap() {
   const allowCredentials = (process.env.CORS_CREDENTIALS || 'false') === 'true';
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (requestOrigin, callback) => {
+      if (!requestOrigin) {
+        return callback(null, true);
+      }
+
+      const localhostPattern = /^http:\/\/localhost:\d+$/i;
+      const loopbackPattern = /^http:\/\/127\.0\.0\.1:\d+$/;
+
+      if (
+        allowedOrigins.includes(requestOrigin) ||
+        localhostPattern.test(requestOrigin) ||
+        loopbackPattern.test(requestOrigin)
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
@@ -80,9 +105,13 @@ async function bootstrap() {
   } catch {}
   app.useStaticAssets(uploadsDir, { prefix: '/uploads' });
 
+  await app.init();
+
   const port = envs.port || 3000;
-  await app.listen(port);
-  // eslint-disable-next-line no-console
-  console.log(`Nest backend escuchando en puerto ${port}`);
+  const httpServer = createServer({ maxHeaderSize }, expressInstance);
+  httpServer.listen(port, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Nest backend escuchando en puerto ${port}`);
+  });
 }
 bootstrap();

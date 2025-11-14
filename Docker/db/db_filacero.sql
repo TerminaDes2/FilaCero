@@ -43,6 +43,25 @@ CREATE TABLE "categoria" (
   "nombre" varchar(120) UNIQUE NOT NULL
 );
 
+-- Tabla puente: asociación de categorías a negocios (multi-tenancy flexible)
+CREATE TABLE IF NOT EXISTS "negocio_categoria" (
+  "id_asignacion" bigserial PRIMARY KEY,
+  "id_negocio" bigint NOT NULL REFERENCES "negocio"("id_negocio") ON DELETE CASCADE,
+  "id_categoria" bigint NOT NULL REFERENCES "categoria"("id_categoria") ON DELETE CASCADE
+);
+-- Unicidad de vínculo negocio-categoría
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'negocio_categoria' AND constraint_name = 'negocio_categoria_id_negocio_id_categoria_key'
+  ) THEN
+    ALTER TABLE "negocio_categoria" ADD CONSTRAINT negocio_categoria_id_negocio_id_categoria_key UNIQUE (id_negocio, id_categoria);
+  END IF;
+END $$;
+-- Índices de apoyo
+CREATE INDEX IF NOT EXISTS idx_negocio_categoria_negocio ON "negocio_categoria"("id_negocio");
+CREATE INDEX IF NOT EXISTS idx_negocio_categoria_categoria ON "negocio_categoria"("id_categoria");
+
 CREATE TABLE "producto" (
   "id_producto" bigserial PRIMARY KEY,
   "id_categoria" bigint,
@@ -491,6 +510,16 @@ INSERT INTO categoria (nombre) VALUES
   ('Snacks'),
   ('Otros')
 ON CONFLICT (nombre) DO NOTHING;
+
+-- Asociación inicial opcional: enlazar TODAS las categorías a TODOS los negocios existentes.
+-- Si no se desea comportamiento global, comentar este bloque.
+DO $$ BEGIN
+  INSERT INTO negocio_categoria (id_negocio, id_categoria)
+  SELECT n.id_negocio, c.id_categoria
+  FROM negocio n
+  CROSS JOIN categoria c
+  ON CONFLICT (id_negocio, id_categoria) DO NOTHING;
+END $$;
 
 -- Índice simple por nombre (búsqueda)
 CREATE INDEX IF NOT EXISTS idx_categoria_nombre ON categoria (nombre);

@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../email/email.service';
 import { MailOptions, SendEmailDto, SmtpConfig } from '../../common/dto';
+import { buildLegalEmailContent } from './legal-content';
 
 const TOKEN_LENGTH = 6;
 const TOKEN_TTL_MINUTES = 10;
@@ -39,6 +40,14 @@ const verificationSelect = {
 } satisfies Prisma.usuariosSelect;
 
 type VerificationRecord = Prisma.usuariosGetPayload<{ select: typeof verificationSelect }>;
+
+type MailAccountKey = 'contact' | 'noreply' | 'privacy';
+
+const MAIL_ACCOUNT_PREFIXES: Record<MailAccountKey, string> = {
+    contact: 'MAIL_CONTACT',
+    noreply: 'MAIL_NOREPLY',
+    privacy: 'MAIL_PRIVACY',
+};
 
 type IssueResult = {
     delivery: 'email';
@@ -88,6 +97,7 @@ export class EmailVerificationService {
             name: user.nombre,
             code: tokenData.code,
             expiresAt: tokenData.expiresAt,
+            sender: 'noreply',
         });
 
         this.logger.log(
@@ -225,9 +235,10 @@ export class EmailVerificationService {
         }
     }
 
-    private async enqueueEmail(params: { to: string; name?: string | null; code: string; expiresAt: Date }) {
-        const smtpConfig = this.resolveSmtpConfig();
-        const mailOptions = this.buildMailOptions(params);
+    private async enqueueEmail(params: { to: string; name?: string | null; code: string; expiresAt: Date; sender?: MailAccountKey }) {
+        const { sender, ...baseParams } = params;
+        const { smtpConfig, from } = this.resolveMailAccount(sender ?? 'noreply');
+        const mailOptions = this.buildMailOptions({ ...baseParams, from });
 
         const dto: SendEmailDto = {
             smtpConfig,
@@ -237,35 +248,48 @@ export class EmailVerificationService {
         await this.emailService.sendEmail(dto);
     }
 
-    private resolveSmtpConfig(): SmtpConfig {
-        const host = this.configService.get<string>('SMTP_HOST') ?? DEFAULT_SMTP.host;
-        const portRaw = this.configService.get<string>('SMTP_PORT');
-        const secureRaw = this.configService.get<string>('SMTP_SECURE');
-        const user = this.configService.get<string>('SMTP_USER') ?? DEFAULT_SMTP.auth.user;
-        const pass = this.configService.get<string>('SMTP_PASS') ?? DEFAULT_SMTP.auth.pass;
+    private resolveMailAccount(account: MailAccountKey = 'noreply'): { smtpConfig: SmtpConfig; from: string } {
+        const host = this.configService.get<string>('MAIL_HOST')
+            ?? this.configService.get<string>('SMTP_HOST')
+            ?? DEFAULT_SMTP.host;
 
+        const portRaw = this.configService.get<string>('MAIL_PORT')
+            ?? this.configService.get<string>('SMTP_PORT');
         const port = portRaw ? Number(portRaw) : DEFAULT_SMTP.port;
         if (Number.isNaN(port)) {
             throw new InternalServerErrorException('SMTP_PORT debe ser un número válido.');
         }
 
+        const secureRaw = this.configService.get<string>('MAIL_SECURE')
+            ?? this.configService.get<string>('SMTP_SECURE');
         const secure = typeof secureRaw === 'string'
             ? ['true', '1', 'yes'].includes(secureRaw.toLowerCase())
             : DEFAULT_SMTP.secure;
 
-        const config: SmtpConfig = {
+        const prefix = MAIL_ACCOUNT_PREFIXES[account];
+        const accountUser = this.configService.get<string>(`${prefix}_USER`);
+        const accountPass = this.configService.get<string>(`${prefix}_PASS`);
+        const fallbackUser = this.configService.get<string>('SMTP_USER');
+        const fallbackPass = this.configService.get<string>('SMTP_PASS');
+
+        const authUser = accountUser ?? fallbackUser ?? DEFAULT_SMTP.auth.user;
+        const authPass = accountPass ?? fallbackPass ?? DEFAULT_SMTP.auth.pass;
+
+        const from = this.configService.get<string>(`${prefix}_FROM`)
+            ?? this.configService.get<string>('MAIL_FROM')
+            ?? `FilaCero <${DEFAULT_SMTP.from}>`;
+
+        const smtpConfig: SmtpConfig = {
             host,
             port,
             secure,
-            auth: user && pass ? { user, pass } : undefined,
+            auth: authUser && authPass ? { user: authUser, pass: authPass } : undefined,
         };
 
-        return config;
+        return { smtpConfig, from };
     }
 
-    private buildMailOptions(params: { to: string; name?: string | null; code: string; expiresAt: Date }): MailOptions {
-    const fromEnv = this.configService.get<string>('MAIL_FROM');
-    const from = fromEnv ?? `FilaCero <${DEFAULT_SMTP.from}>`;
+    private buildMailOptions(params: { to: string; name?: string | null; code: string; expiresAt: Date; from: string }): MailOptions {
         const friendlyName = this.sanitizeDisplayName(params.name);
         const expiresInMinutes = Math.round((params.expiresAt.getTime() - Date.now()) / 60000);
         const humanizedExpiration = expiresInMinutes <= 1 ? '1 minuto' : `${expiresInMinutes} minutos`;
@@ -286,12 +310,39 @@ export class EmailVerificationService {
         const text = `Hola ${friendlyName}, tu código de verificación de FilaCero es ${params.code}. Expira en ${humanizedExpiration}.`;
 
         return {
-            from,
+            from: params.from,
             to: params.to,
             subject: 'Tu código de verificación - FilaCero',
             html,
             text,
         };
+    }
+
+    async sendLegalDocumentsEmail(params: { to: string; name?: string | null }): Promise<void> {
+        const normalizedEmail = this.normalizeEmail(params.to);
+        const { smtpConfig, from } = this.resolveMailAccount('privacy');
+        const friendlyName = this.sanitizeDisplayName(params.name);
+        const privacyUrl = this.configService.get<string>('LEGAL_PRIVACY_URL') ?? 'https://filacero.store/legal/privacidad';
+        const termsUrl = this.configService.get<string>('LEGAL_TERMS_URL') ?? 'https://filacero.store/legal/terminos';
+
+        const content = buildLegalEmailContent({
+            friendlyName,
+            privacyUrl,
+            termsUrl,
+        });
+
+        await this.emailService.sendEmail({
+            smtpConfig,
+            mailOptions: {
+                from,
+                to: normalizedEmail,
+                subject: 'Documentación legal de tu cuenta FilaCero',
+                html: content.html,
+                text: content.text,
+            },
+        });
+
+        this.logger.log(`[LEGAL_DOCS_EMAIL] email=${normalizedEmail}`);
     }
 
     private mapToResponseUser(user: VerificationRecord) {

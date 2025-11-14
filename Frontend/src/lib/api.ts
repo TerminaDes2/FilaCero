@@ -50,9 +50,11 @@ function getToken(): string | null {
 // --- MODIFICADO: apiFetch ---
 // Corregido para manejar FormData (subida de archivos)
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const url = path.startsWith("http")
+  const isAbsolutePath = /^https?:/i.test(path);
+  const sanitizedPath = path.replace(/^\/+/, "");
+  const baseUrl = isAbsolutePath
     ? path
-    : `${API_BASE.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+    : `${API_BASE.replace(/\/$/, "")}/${sanitizedPath}`;
   const token = getToken();
 
   const normalizedHeaders: Record<string, string> = {};
@@ -97,6 +99,19 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     baseInit.credentials = "omit";
   }
 
+  // For auth endpoints, explicitly remove problematic headers and force minimal config
+  if (isAuthEndpoint) {
+    baseInit.credentials = "omit";
+    baseInit.cache = "no-store";
+    baseInit.mode = "cors";
+    baseInit.referrerPolicy = "no-referrer";
+    // Remove headers that might be too large
+    delete normalizedHeaders["Cookie"];
+    delete normalizedHeaders["cookie"];
+    delete normalizedHeaders["Referer"];
+    delete normalizedHeaders["User-Agent"];
+  }
+
   // Debug instrumentation for 431 header issues
   const isLoginDebug = /auth\/login$/.test(pathKey);
   if (isLoginDebug) {
@@ -107,7 +122,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       }
       // Compute cookie header length if browser would attach (we forced omit, but log anyway)
       console.debug('[login-debug] request', {
-        url,
+        url: baseUrl,
         method: init.method || 'GET',
         headers: headerSnapshot,
         bodyBytes: typeof init.body === 'string' ? init.body.length : (init.body ? 'form/mixed' : 0),
@@ -116,16 +131,72 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     } catch {}
   }
 
-  const res = await fetch(url, baseInit).catch(err => {
-    if (isLoginDebug) console.error('[login-debug] network error', err);
-    throw err;
-  });
+  const candidateUrls: string[] = [baseUrl];
+  const pushCandidate = (candidate: string) => {
+    if (!candidateUrls.includes(candidate)) {
+      candidateUrls.push(candidate);
+    }
+  };
+  if (typeof window !== "undefined") {
+    try {
+      if (isAbsolutePath) {
+        const parsed = new URL(baseUrl);
+        if (parsed.hostname === "localhost") {
+          const currentHost = window.location.hostname;
+          if (currentHost && currentHost !== "localhost") {
+            const aligned = new URL(baseUrl);
+            aligned.hostname = currentHost;
+            pushCandidate(aligned.toString());
+          }
+          const ipv4 = new URL(baseUrl);
+          ipv4.hostname = "127.0.0.1";
+          pushCandidate(ipv4.toString());
+        }
+      }
+    } catch {}
+
+    if (!isAbsolutePath) {
+      const origin = window.location.origin.replace(/\/$/, "");
+      const relativePath = sanitizedPath.startsWith("api/") ? sanitizedPath : `api/${sanitizedPath}`;
+      pushCandidate(`${origin}/${relativePath}`);
+    }
+  }
+
+  let res: Response | null = null;
+  let lastError: unknown = null;
+
+  let effectiveUrl = baseUrl;
+  for (let index = 0; index < candidateUrls.length; index += 1) {
+    const targetUrl = candidateUrls[index];
+    if (index > 0 && (globalThis as any).process?.env?.NODE_ENV !== "production") {
+      console.warn(`[apiFetch] Intento alternativo (${index + 1}/${candidateUrls.length}) → ${targetUrl}`);
+    }
+    try {
+      res = await fetch(targetUrl, baseInit);
+      effectiveUrl = targetUrl;
+      if (targetUrl !== baseUrl && isLoginDebug) {
+        console.debug('[login-debug] fallback success', targetUrl);
+      }
+      break;
+    } catch (err) {
+      lastError = err;
+      if (isLoginDebug) console.error('[login-debug] network error', err);
+      const isNetworkError = err instanceof TypeError;
+      if (!isNetworkError || index === candidateUrls.length - 1) {
+        throw err;
+      }
+    }
+  }
+
+  if (!res) {
+    throw lastError ?? new Error('Fetch failed');
+  }
 
   if (
     typeof window !== "undefined" &&
     (globalThis as any).process?.env?.NODE_ENV !== "production"
   ) {
-    console.debug("[apiFetch]", init.method || "GET", url);
+    console.debug("[apiFetch]", init.method || "GET", effectiveUrl);
   }
 
   const text = await res.text();
@@ -156,6 +227,16 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   return data as T;
 }
 // --- FIN DE MODIFICACIÓN apiFetch ---
+
+
+function buildProductFormData(productData: any, imageFile?: File | null) {
+  const fd = new FormData();
+  fd.append("data", JSON.stringify(productData));
+  if (imageFile) {
+    fd.append("file", imageFile);
+  }
+  return fd;
+}
 
 
 // --- Interfaces actualizadas ---
@@ -326,37 +407,19 @@ export const api = {
     return apiFetch<Array<{ id: string | null; nombre: string; totalProductos: number; value: string }>>(path);
   },
 
-  // --- CORREGIDO: createProduct (para FormData) ---
-  createProduct: (productData: any, imageFile?: File | null) => {
-    const formData = new FormData();
-    // 1. Añade los datos del producto como un string JSON.
-    formData.append('data', JSON.stringify(productData));
-    // 2. Añade el archivo de imagen si existe.
-    if (imageFile) {
-      formData.append('file', imageFile);
-    }
-    // 3. Envía el FormData.
-    return apiFetch<any>('products', {
-      method: 'POST',
-      body: formData, // 'apiFetch' detectará que es FormData
-    });
-  },
+  createProduct: (productData: any, imageFile?: File | null) =>
+    apiFetch<any>("products", {
+      method: "POST",
+      body: buildProductFormData(productData, imageFile),
+    }),
 
-  // Nueva versión: acepta opcionalmente un archivo de imagen.
-  // Si se recibe `imageFile`, envía multipart/form-data con `data` (JSON string) y `file` (imagen).
+  // Nueva versión: siempre multipart/form-data.
+  // Campo JSON: 'data'; Campo de archivo (opcional): 'file'
   createProductWithImage: (productData: any, imageFile?: File | null) => {
-    if (imageFile) {
-      const fd = new FormData();
-      // 'data' es la parte JSON esperada por el backend
-      fd.append("data", JSON.stringify(productData));
-      // 'file' es el nombre de campo esperado por el backend (Multer FileInterceptor('file'))
-      fd.append("file", imageFile);
-      return apiFetch<any>("products", {
-        method: "POST",
-        body: fd,
-      });
-    }
-    return api.createProduct(productData);
+    return apiFetch<any>("products", {
+      method: "POST",
+      body: buildProductFormData(productData, imageFile),
+    });
   },
 
   updateProduct: (id: string, productData: any) =>
@@ -372,14 +435,28 @@ export const api = {
 
   // --- Categorías (CORREGIDO: Duplicados eliminados) ---
   getCategories: (params?: { id_negocio?: string }) => {
-    // Mantenemos la versión que permite 'id_negocio' opcional
-    const queryParams = new URLSearchParams();
-    if (params?.id_negocio) {
-      queryParams.append('id_negocio', params.id_negocio);
+    // Las categorías actualmente son globales en el backend (no requieren id_negocio).
+    // Si se proporciona o se puede inferir un id_negocio lo enviamos para futura compatibilidad,
+    // pero si no existe simplemente retornamos todas las categorías sin filtrar.
+    let negocioId = params?.id_negocio;
+    if (!negocioId) {
+      try {
+        negocioId =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("active_business_id") || undefined
+            : undefined;
+      } catch {}
     }
-    const query = queryParams.toString();
-    const path = query ? `categories?${query}` : 'categories';
-    return apiFetch<any[]>(path);
+    if (!negocioId) {
+      const envNegocio = (globalThis as any).process?.env?.NEXT_PUBLIC_NEGOCIO_ID;
+      if (envNegocio) negocioId = envNegocio;
+    }
+    // Si no hay negocioId → petición global sin parámetros.
+    if (!negocioId) {
+      return apiFetch<any[]>("categories");
+    }
+    const query = new URLSearchParams({ id_negocio: String(negocioId) }).toString();
+    return apiFetch<any[]>(`categories?${query}`);
   },
   
   getCategoryById: (id: string) => apiFetch<any>(`categories/${id}`),
@@ -395,7 +472,8 @@ export const api = {
       body: JSON.stringify(body),
     });
   },
-
+  createCategoryAdvanced: (payload: { nombre: string; sucursal?: string; aplicarTodos?: boolean; negocioId?: string }) =>
+    apiFetch<any>("categories", { method: "POST", body: JSON.stringify(payload) }),
   updateCategory: (id: string, categoryData: { nombre: string }) =>
     apiFetch<any>(`categories/${id}`, {
       method: "PATCH",
