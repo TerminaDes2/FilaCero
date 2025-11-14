@@ -5,7 +5,7 @@ import { BoardColumn } from './BoardColumn';
 import { FiltersBar } from './FiltersBar';
 
 export const KitchenBoard: React.FC = () => {
-  const { hydrateFromAPI, tickets, move, filters } = useKitchenBoard();
+  const { hydrateFromAPI, tickets, move, filters, loading, lastSyncAt, error } = useKitchenBoard();
 
   useEffect(() => { hydrateFromAPI(); }, [hydrateFromAPI]);
 
@@ -13,14 +13,36 @@ export const KitchenBoard: React.FC = () => {
     const q = filters.search.trim().toLowerCase();
     return tickets.filter(t => {
       if (q && !(t.code?.toLowerCase().includes(q) || t.table?.toLowerCase().includes(q))) return false;
-      if (!filters.statuses[t.status]) return false;
+      const enabled = filters.statuses[t.status];
+      if (enabled === false) return false;
       if (filters.onlyPriority && t.priority !== 'high') return false;
       return true;
     });
   }, [tickets, filters]);
 
-  const byStatus: Record<KitchenStatus, typeof filtered> = { new: [], prep: [], ready: [], served: [] };
+  const byStatus: Record<KitchenStatus, typeof filtered> = { pending: [], prepping: [], ready: [], served: [] };
   filtered.forEach(t => { byStatus[t.status].push(t); });
+
+  const columns: { title: string; status: KitchenStatus }[] = [
+    { title: 'Pendientes', status: 'pending' },
+    { title: 'En preparación', status: 'prepping' },
+    { title: 'Listos', status: 'ready' },
+    { title: 'Entregados', status: 'served' },
+  ];
+
+  const relativeSync = React.useMemo(() => {
+    if (!lastSyncAt) return null;
+    const diffMs = Date.now() - new Date(lastSyncAt).getTime();
+    if (Number.isNaN(diffMs)) return null;
+    const minutes = Math.round(diffMs / 60000);
+    if (minutes < 1) return 'actualizado hace segundos';
+    if (minutes === 1) return 'actualizado hace 1 minuto';
+    if (minutes < 60) return `actualizado hace ${minutes} minutos`;
+    const hours = Math.round(minutes / 60);
+    if (hours === 1) return 'actualizado hace 1 hora';
+    if (hours < 6) return `actualizado hace ${hours} horas`;
+    return new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }, [lastSyncAt]);
 
   return (
     <section
@@ -30,14 +52,17 @@ export const KitchenBoard: React.FC = () => {
       <header className="mb-3">
         <div className="rounded-2xl px-3 md:px-4 py-3 bg-white border shadow-sm" style={{ borderColor: 'var(--pos-card-border)' }}>
           <FiltersBar />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+            <span>{loading ? 'Sincronizando cocina…' : relativeSync ?? 'Esperando datos de cocina'}</span>
+            {error && <span className="text-rose-600 font-medium">{error}</span>}
+          </div>
         </div>
       </header>
       <div className="flex-1 min-h-0 overflow-auto custom-scroll-area">
         <div className="flex gap-4 pr-1 pb-2 min-w-max">
-          <BoardColumn title="Nuevos" status="new" tickets={byStatus.new} onMove={move} />
-          <BoardColumn title="Preparando" status="prep" tickets={byStatus.prep} onMove={move} />
-          <BoardColumn title="Listos" status="ready" tickets={byStatus.ready} onMove={move} />
-          <BoardColumn title="Entregados" status="served" tickets={byStatus.served} onMove={move} />
+          {columns.map(({ title, status }) => (
+            <BoardColumn key={status} title={title} status={status} tickets={byStatus[status]} onMove={move} />
+          ))}
         </div>
       </div>
     </section>

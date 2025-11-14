@@ -316,6 +316,16 @@ export const api = {
     return apiFetch<any[]>(path);
   },
 
+  getProductCategories: (params?: { id_negocio?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.id_negocio) {
+      queryParams.append("id_negocio", params.id_negocio);
+    }
+    const query = queryParams.toString();
+    const path = query ? `products/catalog/categories?${query}` : "products/catalog/categories";
+    return apiFetch<Array<{ id: string | null; nombre: string; totalProductos: number; value: string }>>(path);
+  },
+
   // --- CORREGIDO: createProduct (para FormData) ---
   createProduct: (productData: any, imageFile?: File | null) => {
     const formData = new FormData();
@@ -531,6 +541,28 @@ export const api = {
   },
   
   getSale: (id: string) => apiFetch<any>(`sales/${id}`), 
+
+  // --- Cocina / Pedidos ---
+  getKitchenBoard: async (businessId: string | number) => {
+    if (businessId === undefined || businessId === null) {
+      throw new Error('Se requiere un id_negocio para consultar la cocina');
+    }
+    const bizId = String(businessId);
+    return apiFetch<any>(`pedidos/kanban/${bizId}`);
+  },
+
+  updateKitchenOrderStatus: (
+    pedidoId: string | number,
+    estado: 'pendiente' | 'confirmado' | 'en_preparacion' | 'listo' | 'entregado' | 'cancelado',
+    notas?: string
+  ) => {
+    const payload: Record<string, unknown> = { estado };
+    if (notas && notas.trim()) payload.notas = notas.trim();
+    return apiFetch<any>(`pedidos/${pedidoId}/estado`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
 
   getStoreProducts: (id_negocio: string | number) => {
     if (!id_negocio) throw new Error("Se requiere un id_negocio válido");

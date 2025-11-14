@@ -7,7 +7,7 @@ interface Props {
   title: string;
   status: KitchenStatus;
   tickets: Ticket[];
-  onMove: (id: string, to: KitchenStatus) => void;
+  onMove: (id: string, to: KitchenStatus) => void | Promise<void>;
 }
 
 export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove }) => {
@@ -22,7 +22,7 @@ export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove })
         e.preventDefault();
         setOver(false);
         const id = e.dataTransfer.getData('text/plain');
-        if (id) onMove(id, status);
+        if (id) void onMove(id, status);
       }}
     >
       <h3 className="text-sm font-semibold px-1" style={{ color: 'var(--pos-text-heading)' }}>{title} ({tickets.length})</h3>

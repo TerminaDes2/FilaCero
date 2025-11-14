@@ -68,9 +68,9 @@ export default function POSPage() {
   // Hydrate when switching into kitchen view
   useEffect(() => {
     if (posView === 'kitchen') {
-      hydrateFromAPI();
+      void hydrateFromAPI();
     }
-  }, [posView, hydrateFromAPI]);
+  }, [posView, hydrateFromAPI, activeBusiness]);
 
   // Guard: if admin and no active business, prompt to choose before using POS
   useEffect(() => {

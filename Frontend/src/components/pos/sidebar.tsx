@@ -160,9 +160,11 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 						return (
 							<button
 								key={item.key}
-								onClick={async () => {
-									try { await useKitchenBoard.getState().hydrateFromAPI(); } catch {}
+								onClick={() => {
 									setView('kitchen');
+									try {
+										void useKitchenBoard.getState().hydrateFromAPI();
+									} catch {}
 								}}
 								aria-current={active ? 'page' : undefined}
 								className={`w-full text-left group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-semibold tracking-tight transition-colors focus:outline-none focus-visible:ring-2 ring-white/60 ${active ? 'bg-[rgba(255,255,255,0.92)] text-[rgb(80,32,38)] shadow-sm' : 'text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.3)]'}`}
