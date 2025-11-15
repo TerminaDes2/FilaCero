@@ -214,12 +214,5 @@ Proyecto desarrollado en la **Universidad de Colima** por:
 
 ---
 
-## 🖼️ Branding y animaciones (opcional)
-- Coloca tu logo en `Frontend/public/images/logo.png` y descomenta la imagen del encabezado.
-- Puedes añadir un GIF corto de la app (ej. flujo de venta) en `Frontend/public/images/demo.gif` y referenciarlo aquí:
-	- `![Demo](Frontend/public/images/demo.gif)`
-
----
-
 ## 📄 Licencia
 Este proyecto se distribuye bajo licencia MIT (ver `Backend/package.json`).
