@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
@@ -45,15 +45,11 @@ export default function UserProfilePage() {
 
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
-  const verifiedChannels = useMemo(
-    () =>
-      [
-        Boolean(hydratedUser.correo_electronico),
-        Boolean(hydratedUser.numero_telefono),
-        Boolean(hydratedUser.credential_url),
-      ].filter(Boolean).length,
-    [hydratedUser.correo_electronico, hydratedUser.numero_telefono, hydratedUser.credential_url],
-  );
+  const verifiedChannels = [
+    Boolean(hydratedUser?.correo_verificado),
+    Boolean(hydratedUser?.sms_verificado),
+    Boolean(hydratedUser?.credencial_verificada),
+  ].filter(Boolean).length;
 
   const handleScrollTo = (id: string) => {
     const el = document.getElementById(id);

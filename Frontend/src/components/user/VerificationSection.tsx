@@ -1,5 +1,5 @@
 "use client";
-import type { ComponentType, ReactNode, SVGProps } from "react";
+import type { ReactNode, ElementType } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -22,7 +22,7 @@ interface VerificationItem {
   label: string;
   status: VerificationStatus;
   description: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  icon: ElementType;
   action?: string;
 }
 
@@ -78,6 +78,12 @@ const STATUS_TEXT: Record<VerificationStatus, string> = {
 };
 
 export default function VerificationSection({ user }: VerificationSectionProps) {
+  const phoneStatus: VerificationStatus = user.sms_verificado
+    ? "verified"
+    : user.numero_telefono
+    ? "pending"
+    : "missing";
+
   const verificationItems: VerificationItem[] = [
     {
       id: "email",
@@ -92,12 +98,14 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
     {
       id: "phone",
       label: "Número de teléfono",
-      status: user.numero_telefono ? "pending" : "missing",
+      status: phoneStatus,
       description: user.numero_telefono
-        ? "Confirma tu número para coordinar entregas rápidas."
+        ? user.sms_verificado
+          ? `Número verificado: ${user.numero_telefono}`
+          : `Número registrado: ${user.numero_telefono}. Falta verificar con código SMS.`
         : "Registra un número para recibir recordatorios y alertas.",
       icon: Phone,
-      action: "/verification/phone",
+      action: user.sms_verificado ? undefined : "/verification/phone",
     },
     {
       id: "credential",
