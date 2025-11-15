@@ -37,6 +37,7 @@ model usuarios {
   credential_url             String?                  @map("credential_url") @db.VarChar(512)
   edad                       Int?                     @map("edad") @db.SmallInt
   estado                     String?                  @map("estado") @db.VarChar(20)
+  stripe_customer_id         String?                  @unique @map("stripe_customer_id") @db.VarChar(255)
   comentario                 comentario[]
   corte_caja                 corte_caja[]
   empleados                  empleados[]
@@ -50,6 +51,7 @@ model usuarios {
   notificaciones             notificacion[]
   producto_historial_precios producto_historial_precio[]
   usuarios_negocio           usuarios_negocio[]
+  metodos_pago               metodo_pago_guardado[]
 
   @@map("usuarios")
 }
@@ -327,6 +329,7 @@ model pedido {
   actualizado_en       DateTime          @updatedAt @db.Timestamptz(6)
   detalle_pedido       detalle_pedido[]
   notificaciones       notificacion[]
+  transacciones        transaccion_pago[]
   negocio              negocio           @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
   usuario              usuarios?         @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
   tipo_pago            tipo_pago?        @relation(fields: [id_tipo_pago], references: [id_tipo_pago])
@@ -335,6 +338,57 @@ model pedido {
   @@index([id_usuario])
   @@index([fecha_creacion])
   @@map("pedido")
+}
+
+model metodo_pago_guardado {
+  id_metodo              BigInt    @id @default(autoincrement())
+  id_usuario             BigInt
+  stripe_payment_method  String    @unique @map("stripe_payment_method_id") @db.VarChar(255)
+  stripe_customer_id     String    @map("stripe_customer_id") @db.VarChar(255)
+  tipo                   String    @db.VarChar(20)
+  marca                  String?   @db.VarChar(20)
+  ultima_4_digitos       String    @db.VarChar(4)
+  mes_expiracion         Int?
+  anio_expiracion        Int?
+  nombre_tarjeta         String?   @db.VarChar(100)
+  is_default             Boolean   @default(false)
+  activo                 Boolean   @default(true)
+  creado_en              DateTime  @default(now()) @db.Timestamptz(6)
+  actualizado_en         DateTime  @updatedAt @db.Timestamptz(6)
+  usuario                usuarios  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@index([id_usuario, activo])
+  @@index([stripe_customer_id])
+  @@map("metodo_pago_guardado")
+}
+
+model transaccion_pago {
+  id_transaccion      BigInt    @id @default(autoincrement())
+  id_pedido           BigInt
+  stripe_payment_id   String?   @unique @db.VarChar(255)
+  stripe_customer_id  String?   @db.VarChar(255)
+  monto               Decimal   @db.Decimal(12, 2)
+  moneda              String    @default("mxn") @db.VarChar(3)
+  estado              String    @default("pending") @db.VarChar(30)
+  metodo_pago         String    @db.VarChar(50)
+  ultima_4_digitos    String?   @db.VarChar(4)
+  marca_tarjeta       String?   @db.VarChar(20)
+  tipo_tarjeta        String?   @db.VarChar(20)
+  error_codigo        String?   @db.VarChar(50)
+  error_mensaje       String?   @db.Text
+  metadata            Json?
+  stripe_fee          Decimal?  @db.Decimal(12, 2)
+  net_amount          Decimal?  @db.Decimal(12, 2)
+  refund_id           String?   @db.VarChar(255)
+  refunded_at         DateTime? @db.Timestamptz(6)
+  creado_en           DateTime  @default(now()) @db.Timestamptz(6)
+  actualizado_en      DateTime  @updatedAt @db.Timestamptz(6)
+  pedido              pedido    @relation(fields: [id_pedido], references: [id_pedido], onDelete: Cascade)
+
+  @@index([id_pedido])
+  @@index([estado])
+  @@index([creado_en])
+  @@map("transaccion_pago")
 }
 
 model detalle_pedido {

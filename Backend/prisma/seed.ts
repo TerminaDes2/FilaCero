@@ -162,7 +162,8 @@ async function main() {
   // 6. Crear tipos de pago si no existen
   const tiposPago = [
     { tipo: 'efectivo', descripcion: 'Pago en efectivo' },
-    { tipo: 'tarjeta', descripcion: 'Pago con tarjeta de crédito/débito' },
+    { tipo: 'tarjeta', descripcion: 'Pago con tarjeta de crédito/débito (Stripe)' },
+    { tipo: 'spei', descripcion: 'Transferencia SPEI' },
     { tipo: 'transferencia', descripcion: 'Transferencia bancaria' },
   ];
 
