@@ -24,15 +24,22 @@ type CartContextShape = {
 const CartContext = createContext<CartContextShape | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('cart_v1') : null;
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [items, setItems] = useState<CartItem[]>([]);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('cart_v1');
+      if (raw) {
+        const parsed: CartItem[] = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+        }
+      }
+    } catch {
+      // ignore malformed storage
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('cart_v1', JSON.stringify(items));

@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUserStore } from "../../state/userStore";
 import UserDropdown from "../UserDropdown";
 import { useCart } from "./CartContext";
@@ -12,10 +13,13 @@ interface NavbarStoreProps {
 
 export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
   const [scrolled, setScrolled] = useState(false);
-  const [query, setQuery] = useState("");
-  const [mode, setMode] = useState<'delivery' | 'pickup'>("delivery");
   const { isAuthenticated, loading } = useUserStore();
   const { toggleOpen, items } = useCart();
+  const router = useRouter();
+  const params = useSearchParams();
+  const searchParam = params.get("search") ?? "";
+  const [query, setQuery] = useState(searchParam);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -23,7 +27,41 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const clear = () => setQuery("");
+  useEffect(() => {
+    setQuery(searchParam);
+  }, [searchParam]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  const applySearch = useCallback((value: string) => {
+    const entries = Array.from(params.entries());
+    const nextParams = new URLSearchParams(entries);
+    const trimmed = value.trim();
+    if (trimmed) {
+      nextParams.set("search", trimmed);
+    } else {
+      nextParams.delete("search");
+    }
+    const queryString = nextParams.toString();
+    router.push(queryString ? `?${queryString}` : "?", { scroll: false });
+  }, [params, router]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setQuery(value);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      applySearch(value);
+    }, 250);
+  }, [applySearch]);
+
   const openCart = () => {
     toggleOpen(true);
     onToggleCart?.(true);
@@ -58,28 +96,25 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
             </span>
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="restaurants"
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Buscar en la tienda"
               className="w-full h-10 pl-8 pr-8 rounded-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-slate-300 outline-none text-sm text-slate-800 placeholder:text-slate-400 transition"
             />
             {query && (
-              <button onClick={clear} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => {
+                  if (debounceRef.current) {
+                    clearTimeout(debounceRef.current);
+                  }
+                  setQuery("");
+                  applySearch("");
+                }}
+                aria-label="Limpiar búsqueda"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             )}
-          </div>
-        </div>
-
-        {/* Mode segmented control (innovative slider) */}
-        <div className="hidden sm:flex items-center">
-          <div className="relative h-9 w-[180px] bg-slate-100 rounded-full p-0.5">
-            <span
-              className={`absolute top-0.5 left-0.5 h-8 w-[calc(50%-4px)] rounded-full transition-transform duration-300 ease-out shadow-sm bg-gradient-to-r from-[var(--fc-brand-600)] to-[var(--fc-teal-500)] ${mode==='pickup' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'}`}
-            />
-            <div className="relative z-[1] grid grid-cols-2 text-sm font-medium h-full">
-              <button onClick={() => setMode('delivery')} className={`rounded-full ${mode==='delivery' ? 'text-white' : 'text-slate-700 hover:text-slate-900'}`}>Delivery</button>
-              <button onClick={() => setMode('pickup')} className={`rounded-full ${mode==='pickup' ? 'text-white' : 'text-slate-700 hover:text-slate-900'}`}>Pickup</button>
-            </div>
           </div>
         </div>
 

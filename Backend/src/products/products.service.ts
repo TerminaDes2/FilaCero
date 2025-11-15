@@ -206,16 +206,31 @@ export class ProductsService {
   }
   // --- FIN DE LA MODIFICACIÓN ---
 
-  async findAll(params: { search?: string; status?: string; id_negocio?: string }) {
+  async findAll(params: { search?: string; status?: string; id_negocio?: string; categoria?: string }) {
     // ... (tu función findAll sin cambios)
-    const { search, status, id_negocio } = params;
+    const { search, status, id_negocio, categoria } = params;
     const where: Prisma.productoWhereInput = {};
+
+    let categoryFilter: bigint | undefined;
+    const wantsUncategorized = categoria === '__none__';
+    if (categoria && !wantsUncategorized) {
+      try {
+        categoryFilter = BigInt(categoria);
+      } catch {
+        throw new BadRequestException('categoria inválida');
+      }
+    }
 
     if (search) {
       where.nombre = { contains: search, mode: 'insensitive' };
     }
     if (status) {
       where.estado = status;
+    }
+    if (wantsUncategorized) {
+      where.id_categoria = { equals: null } as Prisma.BigIntNullableFilter;
+    } else if (categoryFilter !== undefined) {
+      where.id_categoria = categoryFilter;
     }
 
     let negocioIdFilter: bigint | undefined;
@@ -274,6 +289,83 @@ export class ProductsService {
       const normalizedStock = hasStockInfo ? Number(stockValue ?? 0) : null;
       return this.mapProduct(product, normalizedStock);
     });
+  }
+
+  async listCategories(params: { id_negocio?: string }) {
+    const { id_negocio } = params;
+    const where: Prisma.productoWhereInput = {};
+
+    let negocioIdFilter: bigint | undefined;
+    if (id_negocio) {
+      try {
+        negocioIdFilter = BigInt(id_negocio);
+      } catch {
+        throw new BadRequestException('id_negocio inválido');
+      }
+    }
+
+    if (negocioIdFilter !== undefined) {
+      const inventoryRows = await this.prisma.inventario.findMany({
+        where: { id_negocio: negocioIdFilter },
+        select: { id_producto: true },
+      });
+
+      const productIds = Array.from(
+        new Set(
+          inventoryRows
+            .map((row) => row.id_producto)
+            .filter((value): value is bigint => value != null),
+        ),
+      );
+
+      if (productIds.length === 0) {
+        return [];
+      }
+
+      where.id_producto = { in: productIds };
+    }
+
+    const products = await this.prisma.producto.findMany({
+      where,
+      select: {
+        id_categoria: true,
+        categoria: {
+          select: { nombre: true },
+        },
+      },
+    });
+
+    if (products.length === 0) {
+      return [];
+    }
+
+    const bucket = new Map<string, { id: string | null; nombre: string; total: number }>();
+
+    for (const product of products) {
+      const idCategoria = product.id_categoria ? product.id_categoria.toString() : null;
+      const key = idCategoria ?? '__none__';
+      const nombre = product.categoria?.nombre?.trim() || 'Sin categoría';
+      const existing = bucket.get(key);
+      if (existing) {
+        existing.total += 1;
+      } else {
+        bucket.set(key, { id: idCategoria, nombre, total: 1 });
+      }
+    }
+
+    const ordered = Array.from(bucket.values()).sort((a, b) => {
+      if (b.total !== a.total) {
+        return b.total - a.total;
+      }
+      return a.nombre.localeCompare(b.nombre);
+    });
+
+    return ordered.map((cat) => ({
+      id: cat.id,
+      nombre: cat.nombre,
+      totalProductos: cat.total,
+      value: cat.id ?? '__none__',
+    }));
   }
 
   async findOne(id: string) {

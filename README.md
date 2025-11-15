@@ -2,38 +2,39 @@
 	<h1>FilaCero ☕💻</h1>
 	<p><em>POS moderno para cafeterías escolares: rápido, simple y listo para producción.</em></p>
 
-		<p>
-			<a href="https://nextjs.org" title="Next.js">
-				<img alt="Next.js" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" height="40" />
-			</a>
-			<a href="https://react.dev" title="React">
-				<img alt="React" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" height="40" />
-			</a>
-			<a href="https://tailwindcss.com" title="Tailwind CSS">
-				<img alt="Tailwind CSS" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" height="40" />
-			</a>
-			<a href="https://nestjs.com/" title="NestJS">
-				<img alt="NestJS" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-plain.svg" height="40" />
-			</a>
-			<a href="https://nodejs.org" title="Node.js">
-				<img alt="Node.js" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" height="40" />
-			</a>
-			<a href="https://www.prisma.io/" title="Prisma">
-				<img alt="Prisma" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" height="40" />
-			</a>
-			<a href="https://www.postgresql.org/" title="PostgreSQL">
-				<img alt="PostgreSQL" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" height="40" />
-			</a>
-			<a href="https://redis.io" title="Redis">
-				<img alt="Redis" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg" height="40" />
-			</a>
-			<a href="https://www.docker.com/" title="Docker">
-				<img alt="Docker" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" height="40" />
-			</a>
-			<a href="https://www.typescriptlang.org/" title="TypeScript">
-				<img alt="TypeScript" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" height="40" />
-			</a>
-		</p>
+<p>
+  <a href="https://nextjs.org" title="Next.js">
+    <img alt="Next.js" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" height="40" />
+  </a>
+  <a href="https://react.dev" title="React">
+    <img alt="React" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" height="40" />
+  </a>
+  <a href="https://tailwindcss.com" title="Tailwind CSS">
+    <img alt="Tailwind CSS" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" height="40" />
+  </a>
+  <a href="https://nestjs.com/" title="NestJS">
+  	<img alt="NestJS" src="https://cdn.simpleicons.org/nestjs/E0234E" height="40" />
+  </a>
+  <a href="https://nodejs.org" title="Node.js">
+    <img alt="Node.js" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" height="40" />
+  </a>
+  <a href="https://www.prisma.io/" title="Prisma">
+    <img alt="Prisma" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" height="40" />
+  </a>
+  <a href="https://www.postgresql.org/" title="PostgreSQL">
+    <img alt="PostgreSQL" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" height="40" />
+  </a>
+  <a href="https://redis.io" title="Redis">
+    <img alt="Redis" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg" height="40" />
+  </a>
+  <a href="https://www.docker.com/" title="Docker">
+    <img alt="Docker" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" height="40" />
+  </a>
+  <a href="https://www.typescriptlang.org/" title="TypeScript">
+    <img alt="TypeScript" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" height="40" />
+  </a>
+</p>
+
 </div>
 
 ---
