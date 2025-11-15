@@ -8,6 +8,7 @@ interface EmailVerificationModalProps {
   open: boolean;
   email: string;
   expiresAt?: string | null;
+  session: string;
   onClose?: () => void;
   onVerified?: (payload: { verifiedAt: string; user: AuthUser }) => void;
 }
@@ -16,6 +17,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   open,
   email,
   expiresAt,
+  session,
   onClose,
   onVerified,
 }) => {
@@ -27,6 +29,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   const [info, setInfo] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(expiresAt ?? null);
+  const [currentSession, setCurrentSession] = useState<string>(session);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -36,8 +39,28 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setError(null);
       setInfo(null);
       setResendCooldown(0);
+      try {
+        if (typeof window !== 'undefined') {
+          // prioridad: prop session; fallback: storage
+          const stored = window.localStorage.getItem('preRegSession');
+          const sess = session || stored || '';
+          setCurrentSession(sess);
+          if (session) window.localStorage.setItem('preRegSession', session);
+          if (expiresAt) window.localStorage.setItem('preRegExpiresAt', expiresAt);
+          if (email) window.localStorage.setItem('preRegEmail', email);
+        }
+      } catch {}
     }
-  }, [open, expiresAt]);
+  }, [open, expiresAt, session, email]);
+
+  useEffect(() => {
+    setCurrentSession(session);
+    try {
+      if (typeof window !== 'undefined' && session) {
+        window.localStorage.setItem('preRegSession', session);
+      }
+    } catch {}
+  }, [session]);
 
   useEffect(() => {
     if (!open) return;
@@ -86,13 +109,17 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     setError(null);
     setInfo(null);
     try {
-      const response = await api.verifyEmail(email, code);
+      const response = await api.verifyRegister(currentSession, code);
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('auth_user', JSON.stringify(response.user));
+        window.localStorage.setItem('auth_token', response.token);
+        window.localStorage.removeItem('preRegSession');
+        window.localStorage.removeItem('preRegExpiresAt');
+        window.localStorage.removeItem('preRegEmail');
       }
       await checkAuth();
       setCode('');
-      onVerified?.({ verifiedAt: response.verifiedAt, user: response.user });
+      onVerified?.({ verifiedAt: new Date().toISOString(), user: response.user });
     } catch (err: any) {
       setError(err?.message || 'No pudimos verificar el código. Inténtalo nuevamente.');
     } finally {
@@ -106,9 +133,16 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     setError(null);
     setInfo(null);
     try {
-      const result = await api.resendVerification(email);
+      const result = await api.resendRegister(currentSession);
       setInfo('Enviamos un nuevo código a tu correo.');
       setCurrentExpiresAt(result.expiresAt);
+      setCurrentSession(result.session);
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('preRegSession', result.session);
+          if (result.expiresAt) window.localStorage.setItem('preRegExpiresAt', result.expiresAt);
+        }
+      } catch {}
       setResendCooldown(45);
     } catch (err: any) {
       setError(err?.message || 'No pudimos reenviar el código en este momento.');

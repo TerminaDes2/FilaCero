@@ -40,6 +40,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const [showVerificationModal, setShowVerificationModal] = useState(false);
 	const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 	const [verificationExpiresAt, setVerificationExpiresAt] = useState<string | null>(null);
+	const [verificationSession, setVerificationSession] = useState<string | null>(null);
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordStrength = computeStrength(password);
@@ -103,13 +104,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				password,
 				roleName
 			);
-			if(typeof window !== 'undefined') {
-				window.localStorage.setItem('auth_token', res.token);
-				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
-			}
 			if (res.requiresVerification) {
 				setPendingEmail(normalizedEmail);
-				setVerificationExpiresAt(res.verification?.expiresAt ?? null);
+				setVerificationExpiresAt(res.expiresAt ?? null);
+				setVerificationSession(res.session);
+				try {
+					if (typeof window !== 'undefined') {
+						window.localStorage.setItem('preRegSession', res.session);
+						if (res.expiresAt) window.localStorage.setItem('preRegExpiresAt', res.expiresAt);
+						window.localStorage.setItem('preRegEmail', normalizedEmail);
+					}
+				} catch {}
 				setShowVerificationModal(true);
 			} else {
 				onSuccess?.();
@@ -126,6 +131,14 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		setShowVerificationModal(false);
 		setPendingEmail(null);
 		setVerificationExpiresAt(null);
+		setVerificationSession(null);
+		try {
+			if (typeof window !== 'undefined') {
+				window.localStorage.removeItem('preRegSession');
+				window.localStorage.removeItem('preRegExpiresAt');
+				window.localStorage.removeItem('preRegEmail');
+			}
+		} catch {}
 	}, []);
 
 	const handleVerificationSuccess = useCallback(() => {
@@ -281,11 +294,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
 
 		</form>
-		{pendingEmail && (
+		{pendingEmail && verificationSession && (
 			<EmailVerificationModal
 				open={showVerificationModal}
 				email={pendingEmail}
 				expiresAt={verificationExpiresAt}
+				session={verificationSession}
 				onClose={handleVerificationClosed}
 				onVerified={() => handleVerificationSuccess()}
 			/>

@@ -11,6 +11,8 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport'; // Necesario para proteger rutas con JWT
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { VerifyRegisterDto } from './dto/verify-register.dto';
+import { ResendRegisterDto } from './dto/resend-register.dto';
 
 // Definimos la ruta base para este controlador siguiendo el patrón /api/<recurso>
 @Controller('api/auth') 
@@ -31,6 +33,16 @@ export class AuthController {
     @Post('verify')
     async verify(@Body() verifyDto: VerifyEmailDto) {
         return this.authService.verifyAccount(verifyDto);
+    }
+
+    @Post('verify-register')
+    async verifyRegister(@Body() dto: VerifyRegisterDto) {
+        return await this.authService.verifyRegister(dto);
+    }
+
+    @Post('resend-register')
+    async resendRegister(@Body() dto: ResendRegisterDto) {
+        return await this.authService.resendRegister(dto);
     }
 
     // --- (R)ead - LOGIN API ---
