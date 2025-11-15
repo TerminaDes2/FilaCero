@@ -25,6 +25,13 @@ NEXT_PUBLIC_NEGOCIO_ID=<opcional para preseleccionar negocio>
 ```
 Todas las variables expuestas al cliente deben iniciar con `NEXT_PUBLIC_`. Durante desarrollo Docker, `NEXT_PUBLIC_API_BASE` apunta al backend interno.
 
+## Despliegue en Railway
+- Configura variables en el servicio de Frontend:
+  - `NEXT_PUBLIC_API_BASE`: URL pública del backend incluyendo `/api`. Ej.: `https://<tu-backend>.up.railway.app/api`.
+  - `NODE_OPTIONS`: `--dns-result-order=ipv4first` para evitar conexiones a `::1` que pueden ser rechazadas.
+- Asegura que el servicio de Backend esté público o accesible desde el Frontend.
+- El build usa `output: 'standalone'` para reducir IPC interno de Next en producción.
+
 ## Estructura actual
 ```
 Frontend/
