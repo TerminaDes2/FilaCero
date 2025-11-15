@@ -249,8 +249,11 @@ async function main() {
   for (const producto of productosConHistorial) {
     const precioActual = Number(producto.precio);
     
-    // Crear 3 registros históricos por producto
-    await prisma.producto_historial_precio.createMany({
+    // --- ¡CORRECCIÓN REVERTIDA! ---
+    // Volvemos a usar 'producto_historial_precio' (snake_case)
+    // como lo indica el mensaje de error de TypeScript.
+    await prisma.productoHistorialPrecio.createMany({
+    // --- FIN DE LA CORRECCIÓN ---
       data: [
         {
           id_producto: producto.id_producto,

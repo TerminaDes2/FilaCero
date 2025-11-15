@@ -1,6 +1,7 @@
 // Backend/src/sales/sales.service.ts
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+// --- 1. Importar Prisma para los tipos de Transacción ---
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
@@ -8,24 +9,26 @@ import { CloseSaleDto } from './dto/close-sale.dto';
 import { FindSalesQueryDto } from './dto/find-sales.query';
 import { SaleItemDto } from './dto/sale-item.dto';
 
-// --- MODIFICADO ---
-// La salida de prepareItems (itemsListos) tendrá un Decimal
 interface NormalizedItem {
   idProducto: bigint;
   cantidad: number;
-  precioUnitario: Prisma.Decimal; // <-- Tipo corregido
+  precioUnitario: Prisma.Decimal;
 }
-// --- FIN MODIFICACIÓN ---
 
 @Injectable()
 export class SalesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // --- MÉTODO 'CREATE' MODIFICADO ---
   async create(dto: CreateSaleDto, currentUser: { id_usuario: bigint }) {
     const negocioId = this.toBigInt(dto.id_negocio, 'id_negocio');
     const tipoPagoId = this.toBigInt(dto.id_tipo_pago);
     const usuarioId = currentUser?.id_usuario ?? undefined;
+
+    // --- VALIDACIÓN DE NEGOCIO ID ---
+    if (!negocioId) {
+      throw new BadRequestException('id_negocio es inválido o no fue proporcionado');
+    }
+    // --- FIN DE LA CORRECCIÓN ---
 
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestException('Debe proporcionar al menos un producto en la venta');
@@ -33,27 +36,26 @@ export class SalesService {
 
     const cerrar = dto.cerrar ?? true;
     
-    // 1. Normalizamos los items (agrupa IDs duplicados)
+    // 1. Normalizar items (agrupa IDs)
     const itemsNormalizados = this.normalizeItems(dto.items);
 
-    const ventaId = await this.prisma.$transaction(async (tx) => {
+    // --- TIPO 'tx' EXPLÍCITO ---
+    const ventaId = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       
-      // 2. Validamos items, stock y OBTENEMOS precios de la BD
-      const itemsListos = await this.prepareItems(tx, negocioId, itemsNormalizados);
+      // 2. Validar stock y OBTENER precios
+      const itemsListos = await this.prepareItems(tx, negocioId, itemsNormalizados); // (Ahora es seguro)
 
       if (cerrar && itemsListos.length === 0) {
         throw new BadRequestException('No es posible cerrar la venta sin productos');
       }
 
-      // --- 3. ¡CORRECCIÓN! Calcular el total de la venta ---
+      // 3. Calcular el total (Corregido)
       const totalVenta = itemsListos.reduce((total, item) => {
-        // Sumamos (precio del item * cantidad)
         return total.plus(item.precioUnitario.times(item.cantidad));
-      }, new Prisma.Decimal(0)); // Empezamos en 0
-      // --- FIN DE LA CORRECCIÓN ---
+      }, new Prisma.Decimal(0));
 
 
-      // 4. Crear la Venta (usando el 'totalVenta' calculado)
+      // 4. Crear la Venta (Corregido)
       const venta = await tx.venta.create({
         data: {
           id_negocio: negocioId,
@@ -61,7 +63,7 @@ export class SalesService {
           id_tipo_pago: tipoPagoId,
           estado: cerrar ? 'pagada' : 'abierta',
           fecha_venta: cerrar ? new Date() : null,
-          total: totalVenta, // <-- Usamos el total calculado
+          total: totalVenta, // <-- USA EL TOTAL CALCULADO
         },
       });
 
@@ -76,7 +78,7 @@ export class SalesService {
           },
         });
 
-        // Descontar el stock
+        // Descontar el stock (Corregido)
         await tx.inventario.updateMany({
           where: {
             id_negocio: negocioId,
@@ -89,7 +91,7 @@ export class SalesService {
           },
         });
 
-        // Registrar el movimiento
+        // Registrar el movimiento (Corregido)
         await tx.movimientos_inventario.create({
           data: {
             id_negocio: negocioId,
@@ -116,10 +118,8 @@ export class SalesService {
 
     return this.findOne(ventaId.toString());
   }
-  // --- FIN DE LA MODIFICACIÓN ---
 
   findAll(query: FindSalesQueryDto) {
-    // ... (sin cambios)
     const where: Prisma.ventaWhereInput = {};
     if (query.id_negocio) {
       where.id_negocio = this.toBigInt(query.id_negocio, 'id_negocio');
@@ -147,7 +147,6 @@ export class SalesService {
   }
 
   async findOne(id: string) {
-    // ... (sin cambios)
     const ventaId = this.toBigInt(id, 'id');
     const venta = await this.prisma.venta.findUnique({
       where: { id_venta: ventaId },
@@ -160,10 +159,11 @@ export class SalesService {
   }
 
   async close(id: string, dto: CloseSaleDto) {
-    // ... (sin cambios)
     const ventaId = this.toBigInt(id, 'id');
     const tipoPagoId = this.toBigInt(dto.id_tipo_pago);
-    await this.prisma.$transaction(async (tx) => {
+    
+    // --- TIPO 'tx' EXPLÍCITO ---
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const venta = await tx.venta.findUnique({
         where: { id_venta: ventaId },
         select: { estado: true },
@@ -194,9 +194,10 @@ export class SalesService {
   }
 
   async cancel(id: string) {
-    // ... (sin cambios)
     const ventaId = this.toBigInt(id, 'id');
-    await this.prisma.$transaction(async (tx) => {
+    
+    // --- TIPO 'tx' EXPLÍCITO ---
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const venta = await tx.venta.findUnique({
         where: { id_venta: ventaId },
         select: { estado: true },
@@ -216,14 +217,12 @@ export class SalesService {
     return this.findOne(id);
   }
 
-  // --- MODIFICADO ---
-  // prepareItems ahora DEVUELVE el tipo 'NormalizedItem' completo (con precio)
+  // --- TIPO 'tx' EXPLÍCITO ---
   private async prepareItems(
     tx: Prisma.TransactionClient, 
     negocioId: bigint, 
     items: Omit<NormalizedItem, 'precioUnitario'>[]
   ): Promise<NormalizedItem[]> {
-  // --- FIN MODIFICACIÓN ---
     if (items.length === 0) {
       return [];
     }
@@ -267,8 +266,6 @@ export class SalesService {
         throw new BadRequestException(`Stock insuficiente para ${producto.nombre}. Disponible: ${disponible}`);
       }
       
-      // --- MODIFICADO ---
-      // Usamos SIEMPRE el precio de la base de datos
       const precioBase = Number(producto.precio); 
       if (Number.isNaN(precioBase)) {
         throw new BadRequestException(`Precio inválido para el producto ${producto.nombre}`);
@@ -277,33 +274,37 @@ export class SalesService {
       return {
         idProducto: item.idProducto,
         cantidad: item.cantidad,
-        precioUnitario: new Prisma.Decimal(precioBase), // <-- Devolvemos el precio
+        precioUnitario: new Prisma.Decimal(precioBase),
       };
-      // --- FIN MODIFICACIÓN ---
     });
   }
   
-  // --- MODIFICADO ---
-  // normalizeItems ahora solo agrupa IDs y cantidades.
-  // El precio se determinará en 'prepareItems' desde la BD.
   private normalizeItems(items: SaleItemDto[]): Omit<NormalizedItem, 'precioUnitario'>[] {
     const map = new Map<string, Omit<NormalizedItem, 'precioUnitario'>>();
   
     for (const item of items) {
       const idProducto = this.toBigInt(item.id_producto, 'id_producto');
+
+      // --- VALIDACIÓN DE IDPRODUCTO ---
+      if (!idProducto) {
+        continue;
+      }
+      // --- FIN DE LA CORRECCIÓN ---
+
       const key = idProducto.toString();
-      const existente = map.get(key) ?? { idProducto, cantidad: 0 };
-      existente.cantidad += item.cantidad;
-      // Ya no guardamos el precioUnitario del DTO, usaremos el de la BD
-      map.set(key, existente);
+      const existente = map.get(key);
+      
+      if (existente) {
+        existente.cantidad += item.cantidad;
+      } else {
+        map.set(key, { idProducto: idProducto, cantidad: item.cantidad });
+      }
     }
   
     return Array.from(map.values());
   }
-  // --- FIN MODIFICACIÓN ---
 
   private toBigInt(value?: string | number | bigint | null, field?: string): bigint | undefined {
-    // ... (sin cambios)
     if (value === null || value === undefined || value === '') {
       return undefined;
     }
@@ -314,8 +315,9 @@ export class SalesService {
     }
   }
 
+  // --- ¡CORRECCIÓN FINAL! ---
+  // Incluye la 'categoria' del producto.
   private saleIncludes(): Prisma.ventaInclude {
-    // ... (sin cambios)
     return {
       detalle_venta: {
         include: {
@@ -324,6 +326,15 @@ export class SalesService {
               nombre: true,
               precio: true,
               codigo_barras: true,
+              
+              // --- ¡AÑADIDO! ---
+              // Esto arreglará el gráfico de "Otros"
+              categoria: {
+                select: {
+                  nombre: true,
+                },
+              },
+              // --- FIN AÑADIDO ---
             },
           },
         },
@@ -342,4 +353,5 @@ export class SalesService {
       },
     };
   }
+  // --- FIN DE LA CORRECCIÓN ---
 }

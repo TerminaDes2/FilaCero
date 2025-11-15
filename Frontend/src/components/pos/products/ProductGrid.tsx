@@ -1,123 +1,74 @@
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react'; // <-- Imports simplificados
 import { POSProduct } from '../../../pos/cartContext';
 import { ProductCard } from './ProductCard';
-import { api } from '../../../lib/api';
+// import { api } from '../../../lib/api'; // <-- Eliminado, la página principal lo maneja
 
-interface ApiProduct {
-  id_producto: string | number;
-  nombre: string;
-  descripcion: string | null;
-  precio: string | number;
-  imagen_url?: string | null;
-  estado: string | null;
-  stock?: number | string | null;
-  category?: string | null;
-  id_categoria?: string | number | null;
-  media?: Array<{ id_media?: string | number; url: string; principal: boolean; tipo?: string | null }>
-}
+// interface ApiProduct { ... } // <-- Eliminada, la página principal maneja el mapeo
 
+// --- PROPS ACTUALIZADAS ---
 interface ProductGridProps {
   category: string;
   search: string;
   view: 'grid' | 'list';
+  
+  // Props que vienen de la página principal (pos/page.tsx)
+  products: POSProduct[];
+  loading: boolean;
+  error: string | null;
 }
+// --- FIN DE LA ACTUALIZACIÓN ---
 
-export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view }) => {
-  const [allProducts, setAllProducts] = useState<POSProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showEmptyDelay, setShowEmptyDelay] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const ProductGrid: React.FC<ProductGridProps> = ({ 
+  category, 
+  search, 
+  view,
+  // Recibimos las nuevas props
+  products: allProducts, // Renombramos 'products' a 'allProducts' para que el filtro useMemo siga funcionando
+  loading,
+  error 
+}) => {
+  
+  // --- LÓGICA INTERNA DE FETCHING ELIMINADA ---
+  // const [allProducts, setAllProducts] = useState<POSProduct[]>([]);
+  // const [loading, setLoading] = useState(true);
+  // const [showEmptyDelay, setShowEmptyDelay] = useState(false);
+  // const [error, setError] = useState<string | null>(null);
+  // El useEffect(fetchAndAdaptProducts) también se eliminó.
+  // --- FIN DE LA ELIMINACIÓN ---
 
-  useEffect(() => {
-    const fetchAndAdaptProducts = async () => {
-      setLoading(true);
-      try {
-        const apiProducts: ApiProduct[] = await api.getProducts({ search });
-        // Backend origin derivado de la variable pública. Eliminamos sufijo /api si existe.
-        const apiBase = (process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '');
-        const backendOrigin = apiBase.replace(/\/api$/i, '');
-        const normalizeUrl = (u?: string | null) => {
-          if (!u) return undefined;
-          if (/^https?:\/\//i.test(u)) return u; // ya absoluta
-            // Si comienza por /uploads/ asumimos que es ruta del backend
-          if (u.startsWith('/uploads/')) {
-            return backendOrigin ? `${backendOrigin}${u}` : u; // si no tenemos origin, devolvemos tal cual
-          }
-          return u;
-        };
-        const adaptedProducts: POSProduct[] = apiProducts.map(p => {
-          const idStr = String(p.id_producto);
-          const priceNum = typeof p.precio === 'number' ? p.precio : parseFloat(String(p.precio ?? 0));
-          let stockValue: number | null = null;
-          if (p.stock !== undefined) {
-            if (p.stock === null) {
-              stockValue = null;
-            } else {
-              const parsed = typeof p.stock === 'number' ? p.stock : parseFloat(String(p.stock));
-              stockValue = Number.isNaN(parsed) ? null : parsed;
-            }
-          }
-          const categoryLabel = (p.category ?? '').trim();
-          // Soporte retrocompatibilidad: algunos builds antiguos devolvían 'imagen' en lugar de 'imagen_url'
-          const imagenUrl = (p as any).imagen_url ?? (p as any).imagen ?? undefined;
-          // Soporte retrocompatibilidad: 'media' o 'producto_media'
-          const rawMedia = Array.isArray((p as any).media)
-            ? (p as any).media
-            : (Array.isArray((p as any).producto_media) ? (p as any).producto_media : undefined);
-          // Normalizar URLs (soporta productos antiguos con rutas relativas)
-          const normalizedMedia = Array.isArray(rawMedia)
-            ? (rawMedia
-                .map((m: any) => {
-                  const u = normalizeUrl(m.url);
-                  if (!u) return null;
-                  return {
-                    id_media: m.id_media !== undefined ? String(m.id_media) : undefined,
-                    url: u,
-                    principal: !!m.principal,
-                  };
-                })
-                .filter(Boolean) as { id_media?: string; url: string; principal: boolean }[])
-            : undefined;
-          return {
-            id: idStr,
-            name: p.nombre,
-            price: isNaN(priceNum) ? 0 : priceNum,
-            description: p.descripcion || undefined,
-            // Mantener compatibilidad con tarjetas que usan imagen_url y media
-            imagen_url: normalizeUrl(imagenUrl),
-            media: normalizedMedia,
-            stock: stockValue ?? 0,
-            category: categoryLabel || 'Sin categoría',
-          };
-        });
-
-        setAllProducts(adaptedProducts);
-      } catch (err) {
-        setError('No se pudieron cargar los productos.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAndAdaptProducts();
-  }, [search]); // Se recarga si cambia el término de búsqueda
-
-  // No skeletons: show empty state immediately
-  useEffect(() => {
-    setShowEmptyDelay(false);
-  }, [loading]);
-
+  // El filtrado por categoría y búsqueda ahora usa las props
   const filtered = useMemo(() => {
-    if (!category || category === 'all') return allProducts;
-    const normalized = category.trim().toLowerCase();
-    if (!normalized) return allProducts;
-    if (normalized === 'uncategorized') {
-      return allProducts.filter(p => !p.category || p.category.toLowerCase() === 'sin categoría');
+    let categoryFiltered: POSProduct[];
+    
+    // 1. Filtrar por categoría
+    if (!category || category === 'all') {
+      categoryFiltered = allProducts;
+    } else {
+      const normalized = category.trim().toLowerCase();
+      if (normalized === 'uncategorized') {
+        categoryFiltered = allProducts.filter(p => !p.category || p.category.toLowerCase() === 'sin categoría');
+      } else {
+        // Tu 'POSProduct' usa 'category' como string
+        categoryFiltered = allProducts.filter(p => p.category && p.category.trim().toLowerCase() === normalized);
+      }
     }
-    return allProducts.filter(p => p.category && p.category.trim().toLowerCase() === normalized);
-  }, [allProducts, category]);
+    
+    // 2. Filtrar por búsqueda
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return categoryFiltered; // No hay búsqueda, devolver filtrado por categoría
+    }
+    
+    return categoryFiltered.filter(p => 
+      p.name.toLowerCase().includes(normalizedSearch)
+      // (Si quieres buscar por SKU, el 'POSProduct' necesita el campo 'codigo_barras')
+      // || (p.codigo_barras && p.codigo_barras.toLowerCase().includes(normalizedSearch))
+    );
 
+  }, [allProducts, category, search]); // Depende de las props
+
+  // Los estados de Carga, Error y Vacío ahora usan las props
   if (loading) {
     return <div className='text-center py-10 text-[var(--pos-text-muted)] text-sm'>Cargando productos…</div>;
   }
@@ -135,10 +86,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
     );
   }
 
+  // El renderizado de la cuadrícula (sin cambios)
   return (
     <div className={view === 'grid' ? 'grid gap-4 lg:gap-5 grid-cols-2 md:grid-cols-3 xl:grid-cols-4' : 'space-y-3'}>
       {filtered.map(p => (
-        <ProductCard key={p.id} product={p} view={view} />
+        // Asumimos que POSProduct tiene 'id' como string
+        <ProductCard key={p.id} product={p} view={view} /> 
       ))}
     </div>
   );
