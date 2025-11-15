@@ -13,7 +13,7 @@
     <img alt="Tailwind CSS" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" height="40" />
   </a>
   <a href="https://nestjs.com/" title="NestJS">
-    <img alt="NestJS" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-plain.svg" height="40" />
+  	<img alt="NestJS" src="https://cdn.simpleicons.org/nestjs/E0234E" height="40" />
   </a>
   <a href="https://nodejs.org" title="Node.js">
     <img alt="Node.js" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" height="40" />
