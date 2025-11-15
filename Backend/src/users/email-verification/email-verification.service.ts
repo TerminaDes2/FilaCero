@@ -248,6 +248,20 @@ export class EmailVerificationService {
         await this.emailService.sendEmail(dto);
     }
 
+    // Envía un correo con código de verificación sin interactuar con la base de datos (pre-registro)
+    async sendVerificationCodeEmail(params: { to: string; name?: string | null; code: string; expiresAt: Date }) {
+        await this.enqueueEmail({
+            to: this.normalizeEmail(params.to),
+            name: params.name,
+            code: params.code,
+            expiresAt: params.expiresAt,
+            sender: 'noreply',
+        });
+        this.logger.log(
+            `[VERIFICATION_CODE_SENT_PREREG] email=${this.normalizeEmail(params.to)} expiresAt=${params.expiresAt.toISOString()}`,
+        );
+    }
+
     private resolveMailAccount(account: MailAccountKey = 'noreply'): { smtpConfig: SmtpConfig; from: string } {
         const host = this.configService.get<string>('MAIL_HOST')
             ?? this.configService.get<string>('SMTP_HOST')
