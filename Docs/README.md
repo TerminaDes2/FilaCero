@@ -2,18 +2,91 @@
 
 Esta guía reúne todo lo necesario para levantar, entender y extender el proyecto end-to-end: entorno, contenedores, base de datos Prisma/PostgreSQL, módulos NestJS y las capacidades actuales del frontend POS en Next.js.
 
+## 📁 Estructura de Documentación
+
+La documentación está organizada en las siguientes carpetas temáticas:
+
+### [📡 APIs](./apis/)
+Documentación de endpoints REST por módulo:
+- [API Businesses](./apis/API_Businesses.md) - Gestión de negocios
+- [API Categorías](./apis/API_Categorias.md) - CRUD de categorías
+- [API Productos](./apis/API_Productos.md) - Catálogo de productos
+- [API SMS](./apis/API_SMS.md) - Servicio de mensajería
+- [API Usuarios](./apis/API_Usuarios.md) - Autenticación y gestión
+- [API Ventas](./apis/API_Ventas.md) - Sistema de ventas
+
+### [🏗️ Arquitectura](./arquitectura/)
+Documentos sobre diseño y estructura del sistema:
+- [Arquitectura](./arquitectura/Arquitectura.md) - Visión general del sistema
+- [Backend](./arquitectura/Backend.md) - Stack NestJS + Prisma
+- [Frontend](./arquitectura/Frontend.md) - Next.js 13 App Router
+- [Infraestructura](./arquitectura/Infraestructura.md) - Docker y servicios
+- [Frontend API Contract](./arquitectura/frontend-api-contract.md) - Contratos de integración
+
+### [⚙️ Sistemas](./sistemas/)
+Implementaciones completas de subsistemas:
+- [Sistema de Pagos](./sistemas/SISTEMA-PAGOS.md) - Integración Stripe MVP
+- [Sistema de Pagos - Implementación](./sistemas/SISTEMA_PAGOS_IMPLEMENTACION.md) - Fases 1-8 completas
+- [Sistema de Pagos - Hardening](./sistemas/SISTEMA_PAGOS_HARDENING_COMPLETO.md) - Seguridad y producción
+- [Sistema de Pedidos - Implementación](./sistemas/SISTEMA_PEDIDOS_IMPLEMENTACION.md) - Gestión de órdenes
+- [Sistema de Pedidos - Fase 2](./sistemas/SISTEMA_PEDIDOS_FASE2_BACKEND.md) - Estados y transiciones
+- [Plan Sistema Pedidos](./sistemas/PLAN_SISTEMA_PEDIDOS.md) - Roadmap completo
+
+### [🧩 Módulos](./modulos/)
+Documentación de módulos específicos:
+- [Módulo Empleados](./modulos/Modulo_Empleados.md) - Gestión de personal
+- [Business Ratings](./modulos/implementaciones-negocio-rating.md) - Sistema de calificaciones
+- [Feedback Módulo](./modulos/feedback-modulo.md) - Retroalimentación general
+
+### [🗄️ Database](./database/)
+Información sobre base de datos:
+- [Backend DB Overview](./database/backend-db-overview.md) - Esquema y relaciones
+- [Verificación Usuarios](./database/verificacion-usuarios.md) - Scripts de validación
+
+### [✨ Features](./features/)
+Características y funcionalidades del sistema:
+- [Producto Historial Precio](./features/PRODUCTO_HISTORIAL_PRECIO.md) - Tracking de precios
+- [Deploy Historial Precio](./features/DEPLOY_PRODUCTO_HISTORIAL_PRECIO.md) - Despliegue de feature
+- [Funcionalidades FilaCero](./features/funcionalidades-filacero.md) - Catálogo completo
+- [Roadmap Funcionalidades](./features/roadmap-funcionalidades.md) - Planificación features
+
+### [🚀 Deployment](./deployment/)
+Guías de despliegue y desarrollo:
+- [Contenedores](./deployment/Contenedores.md) - Docker Compose setup
+- [Tutorial Desplegar Contenedores](./deployment/tutorial_desplegar_contenedores.txt) - Paso a paso
+- [Desarrollo](./deployment/Desarrollo.md) - Ambiente de desarrollo
+
+### [🧪 Testing](./testing/)
+Documentación de pruebas:
+- [Test Business Ratings](./testing/TEST_BUSINESS_RATINGS.md) - Suite de pruebas ratings
+
+### [📊 Análisis](./analisis/)
+Análisis técnicos y planes de refactorización:
+- [Backend Comprehensive Analysis](./analisis/backend-comprehensive-analysis.md) - Análisis completo
+- [Backend Refactor Plan](./analisis/backend-refactor-plan.md) - Plan de refactorización
+- [Backend Linting](./analisis/backend-linting.md) - Configuración linting
+- [Backend Change Log Oct 2025](./analisis/backend-change-log-oct-2025.md) - Cambios recientes
+
+### [📋 Pull Requests](./pull-requests/)
+Documentación de PRs y resúmenes de implementaciones:
+- [PR Fase 2 Pedidos](./pull-requests/PR_FASE2_PEDIDOS.md) - Pull request fase 2
+- [Resumen Fase 2](./pull-requests/RESUMEN_FASE2.md) - Resumen de implementación
+
+---
+
 ## 0. Resumen ejecutivo
 - **Objetivo del sprint:** consolidar el stack POS sobre Prisma, habilitar CRUD administrativos (productos, inventario, categorías) y dejar lista la base documental para stakeholders técnicos y de negocio.
 - **Estado general:** backend estable sobre Prisma + NestJS, frontend POS operable con panel de administración, infraestructura reproducible vía Docker; pendientes principales centrados en pruebas automatizadas y auth avanzada.
 - **Impacto:** se habilita la gestión integral de catálogo e inventario desde la interfaz POS, asegurando consistencia de datos gracias a triggers SQL y validaciones Prisma.
 
-### Hitos recientes (Sept–Oct 2025)
+### Hitos recientes (Sept–Nov 2025)
 - Migración de productos e inventario a Prisma con manejo de `BigInt` coherente.
 - Adición del módulo de categorías (`/api/categories`) y semillas iniciales.
 - Implementación de paneles de edición/stock en el frontend con sincronización de inventario.
 - Corrección de flujo de registro (`RegisterLayout`) eliminando props obsoletas.
 - Regeneración y empaquetado del cliente Prisma (artefactos en `Backend/generated/prisma`).
 - Ajustes en `docker-compose.yml` para reconstrucciones rápidas del backend y parametrización del negocio (`NEXT_PUBLIC_NEGOCIO_ID`).
+- **Sistema de Pagos completo** con integración Stripe (tarjeta, SPEI), testing E2E/Unit, seguridad hardening, Swagger, métricas y documentación productiva.
 
 ---
 
