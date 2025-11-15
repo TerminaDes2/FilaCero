@@ -1,8 +1,7 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react'; // <-- Añadido useCallback
 import { PosSidebar } from '../../src/components/pos/sidebar';
 import { CartProvider } from '../../src/pos/cartContext';
-// Category tabs removed in favor of a compact filter button
 import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
 import { ProductGrid } from '../../src/components/pos/products/ProductGrid';
@@ -11,7 +10,6 @@ import CategoryFilterButton from '../../src/components/pos/controls/CategoryFilt
 import { usePOSView } from '../../src/state/posViewStore';
 import { KitchenBoard } from '../../src/components/pos/kitchen/KitchenBoard';
 import { useKitchenBoard } from '../../src/state/kitchenBoardStore';
-// Categories CRUD lives on its own page
 import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
 import type { POSProduct } from '../../src/pos/cartContext';
@@ -19,23 +17,81 @@ import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import { useUserStore } from '../../src/state/userStore';
 import { useBusinessStore } from '../../src/state/businessStore';
-import { api } from '../../src/lib/api';
+import { api, activeBusiness } from '../../src/lib/api'; // <-- Importar 'api' y 'activeBusiness'
 import { BusinessPickerDialog } from '../../src/components/business/BusinessPickerDialog';
-// Categories store not needed here
 
-// Mock product dataset (frontend only)
-const MOCK_PRODUCTS: POSProduct[] = [
-  { id: 'p1', name: 'Café Latte', category: 'bebidas', price: 48, stock: 50, description: 'Shot espresso y leche vaporizada' },
-  { id: 'p2', name: 'Café Americano', category: 'bebidas', price: 35, stock: 80, description: 'Espresso diluido' },
-  { id: 'p3', name: 'Sandwich Jamón', category: 'alimentos', price: 65, stock: 25, description: 'Jamón, queso y pan artesanal' },
-  { id: 'p4', name: 'Galleta Chocochips', category: 'postres', price: 28, stock: 60, description: 'Galleta casera con chispas' },
-  { id: 'p5', name: 'Brownie Nuez', category: 'postres', price: 40, stock: 30, description: 'Brownie intenso con nueces' },
-  { id: 'p6', name: 'Té Verde', category: 'bebidas', price: 32, stock: 40, description: 'Infusión suave antioxidante' },
-  { id: 'p7', name: 'Mollete', category: 'alimentos', price: 42, stock: 15, description: 'Pan, frijol, queso gratinado' },
-  { id: 'p8', name: 'Ensalada César', category: 'alimentos', price: 79, stock: 12, description: 'Clásica con aderezo casero' },
-  { id: 'p9', name: 'Pay de Limón', category: 'postres', price: 55, stock: 18, description: 'Cremoso y cítrico' },
-  { id: 'p10', name: 'Capuccino', category: 'bebidas', price: 46, stock: 40, description: 'Espuma sedosa y espresso' }
-];
+// --- MOCK_PRODUCTS ELIMINADOS ---
+// const MOCK_PRODUCTS: POSProduct[] = [ ... ];
+
+// --- NUEVO HOOK PARA OBTENER PRODUCTOS ---
+function useProducts() {
+  const [products, setProducts] = useState<POSProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Función para cargar/refrescar los productos
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const businessId = activeBusiness.get(); // Obtiene el negocio activo
+
+    if (!businessId) {
+      setError("No hay un negocio activo seleccionado.");
+      setLoading(false);
+      setProducts([]); // Asegura que no haya productos si no hay negocio
+      return;
+    }
+
+    try {
+      // Llamamos a la API real
+      const prods = await api.getProducts({ id_negocio: businessId });
+      
+      // Mapeamos la respuesta de la API al tipo POSProduct
+      const mappedProducts = prods.map((p: any): POSProduct => ({
+        id: p.id_producto, // <-- Tu cartContext usa 'id'
+        name: p.nombre,
+        category: p.category || 'Otros',
+        description: p.descripcion,
+        price: p.precio,
+        stock: p.stock ?? 0,
+        image: p.imagen_url || p.media?.[0]?.url, // <-- El campo 'image' que usa tu cartContext
+        imagen_url: p.imagen_url,
+        media: p.media,
+      }));
+      setProducts(mappedProducts);
+    } catch (err: any) {
+      setError(err.message || "Error al cargar productos.");
+      console.error("Error cargando productos:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Carga inicial
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  // --- ¡ESTA ES LA SOLUCIÓN DE STOCK EN TIEMPO REAL! ---
+  // Escucha el evento 'sale-completed'
+  useEffect(() => {
+    const handleSaleCompleted = () => {
+      console.log('Venta completada detectada. Refrescando stock...');
+      fetchProducts(); // Vuelve a cargar los productos
+    };
+
+    window.addEventListener('sale-completed', handleSaleCompleted);
+
+    return () => {
+      window.removeEventListener('sale-completed', handleSaleCompleted);
+    };
+  }, [fetchProducts]);
+  // --- FIN DE LA SOLUCIÓN ---
+
+  return { products, loading, error, refetch: fetchProducts };
+}
+// --- FIN DEL NUEVO HOOK ---
+
 
 export default function POSPage() {
   const settings = useSettingsStore();
@@ -47,18 +103,21 @@ export default function POSPage() {
   const { view: posView } = usePOSView();
   const { hydrateFromAPI } = useKitchenBoard();
   const { user } = useUserStore();
-  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const { activeBusiness: activeBusinessFromStore, setActiveBusiness } = useBusinessStore(); // Renombrado para evitar colisión
   const [needBusiness, setNeedBusiness] = useState(false);
   const [bizList, setBizList] = useState<any[]>([]);
+  
+  // --- OBTENER PRODUCTOS REALES ---
+  const { products, loading: productsLoading, error: productsError } = useProducts();
 
-  // Fetch categories (store handles normalization & business scoping)
+  // Fetch categories (tu lógica original, sin cambios)
   useEffect(() => {
     if (storeCategories.length === 0) {
       fetchCategories().catch(() => {});
     }
   }, [storeCategories.length]);
   
-  // Re-fetch when returning to POS sell view (in case login just happened or business changed)
+  // Re-fetch when returning to POS sell view
   useEffect(() => {
     if (posView === 'sell' && storeCategories.length === 0) {
       fetchCategories().catch(() => {});
@@ -70,14 +129,14 @@ export default function POSPage() {
     if (posView === 'kitchen') {
       void hydrateFromAPI();
     }
-  }, [posView, hydrateFromAPI, activeBusiness]);
+  }, [posView, hydrateFromAPI, activeBusinessFromStore]); // Usar el del store
 
-  // Guard: if admin and no active business, prompt to choose before using POS
+  // Guard: if admin and no active business...
   useEffect(() => {
     const roleName = (user as any)?.role_name || user?.role?.nombre_rol || '';
     const idRol = user?.id_rol;
     const isAdmin = roleName === 'admin' || roleName === 'superadmin' || idRol === 2;
-    if (isAdmin && !activeBusiness) {
+    if (isAdmin && !activeBusinessFromStore) { // Usar el del store
       api.listMyBusinesses()
         .then((list) => {
           setBizList(list || []);
@@ -85,11 +144,12 @@ export default function POSPage() {
         })
         .catch(() => setNeedBusiness(true));
     }
-  }, [user, activeBusiness]);
+  }, [user, activeBusinessFromStore]); // Usar el del store
   
-  // Keyboard: 'v' toggles view (grid/list) when not typing in input
+  // Keyboard: 'v' toggles view
   useEffect(() => {
     const isEditable = (t: EventTarget | null) => {
+      // ... (sin cambios)
       const el = t as HTMLElement | null;
       if (!el) return false;
       const tag = el.tagName?.toLowerCase();
@@ -107,16 +167,15 @@ export default function POSPage() {
 
   return (
     <CartProvider>
-  <div className='h-screen flex pos-pattern overflow-hidden'>
-        {/* Sidebar (collapsible) */}
+      <div className='h-screen flex pos-pattern overflow-hidden'>
+        {/* Sidebar */}
         <aside className='hidden md:flex flex-col h-screen sticky top-0'>
           <PosSidebar />
         </aside>
-    {/* Main content */}
-  <main
-    className='flex-1 flex flex-col px-5 md:px-6 pt-6 gap-4 overflow-hidden h-full min-h-0 box-border'
-      >
-          {/* Header row: Title (left) + TopRightInfo (right) */}
+        
+        {/* Main content */}
+        <main className='flex-1 flex flex-col px-5 md:px-6 pt-6 gap-4 overflow-hidden h-full min-h-0 box-border'>
+          {/* Header row */}
           <div className='px-5 relative z-20 mb-0.5 flex items-start justify-between gap-4'>
             <h1 className='font-extrabold tracking-tight text-3xl md:text-4xl leading-tight select-none'>
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
@@ -124,6 +183,7 @@ export default function POSPage() {
             </h1>
             <TopRightInfo showLogout />
           </div>
+          
           {/* Dynamic content wrapper */}
           {posView === 'kitchen' ? (
             <div className='flex-1 flex flex-col gap-5 overflow-hidden min-h-0 px-5'>
@@ -133,7 +193,6 @@ export default function POSPage() {
             <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
               {/* Products section */}
               <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
-                {/* Category filter moved into header controls */}
                 <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
                   <header className='space-y-3 mb-3 flex-none'>
                     <div className='flex flex-col md:flex-row md:items-center gap-3'>
@@ -149,10 +208,23 @@ export default function POSPage() {
                     </div>
                   </header>
                   <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
-                    <ProductGrid category={selected} search={search} view={view} />
+                    
+                    {/* --- PASAR PRODUCTOS REALES AL GRID --- */}
+                    <ProductGrid 
+                      products={products} // <-- Pasa los productos de la API
+                      loading={productsLoading}
+                      error={productsError}
+                      category={selected} 
+                      search={search} 
+                      view={view} 
+                    />
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+
                   </div>
                 </section>
               </div>
+              
+              {/* Cart section */}
               <section className='w-full lg:w-72 xl:w-80 lg:pl-4 pt-4 lg:pt-0 flex flex-col flex-shrink-0 min-h-0'>
                 <div className='flex-1 rounded-t-2xl px-4 pt-4 pb-2 flex flex-col overflow-hidden w-full max-w-sm mx-auto lg:max-w-none lg:mx-0' style={{background:'var(--pos-summary-bg)', boxShadow:'0 2px 4px rgba(0,0,0,0.06)'}}>
                   <CartPanel />
@@ -161,6 +233,7 @@ export default function POSPage() {
             </div>
           )}
         </main>
+        
         {needBusiness && (
           <BusinessPickerDialog
             open={needBusiness}
@@ -170,7 +243,6 @@ export default function POSPage() {
               setNeedBusiness(false);
             }}
             onClose={()=>{
-              // Si no selecciona, salimos del POS para evitar estado inconsistente
               setNeedBusiness(false);
               window.location.href = '/';
             }}
@@ -180,5 +252,3 @@ export default function POSPage() {
     </CartProvider>
   );
 }
-
-// Removed stray styled-jsx block; Tailwind classes applied directly on the link.
