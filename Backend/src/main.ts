@@ -5,6 +5,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
 import { json, urlencoded } from 'express';
 import { envs } from './config';
+import rateLimit from 'express-rate-limit';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 // --- 1. IMPORTAR NestExpressApplication ---
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -77,6 +79,74 @@ async function bootstrap() {
   );
   
   app.useGlobalInterceptors(new BigIntInterceptor());
+
+  // ===== RATE LIMITING =====
+  // Rate limiter general para /api/payments (excepto webhook)
+  const paymentsLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100, // 100 requests por ventana
+    message: {
+      statusCode: 429,
+      message: 'Demasiadas solicitudes a endpoints de pagos. Intenta nuevamente en 15 minutos.',
+      error: 'Too Many Requests',
+    },
+    standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+    legacyHeaders: false, // Disable `X-RateLimit-*` headers
+  });
+
+  // Rate limiter estricto para webhook (protección anti-spam)
+  const webhookLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 50, // 50 webhooks por ventana (Stripe puede enviar reintentos)
+    message: {
+      statusCode: 429,
+      message: 'Demasiados webhooks recibidos. Verifica configuración de Stripe.',
+      error: 'Too Many Requests',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Aplicar rate limiters específicos
+  app.use('/api/payments/create-intent', paymentsLimiter);
+  app.use('/api/payments/confirm', paymentsLimiter);
+  app.use('/api/payments/methods', paymentsLimiter);
+  app.use('/api/payments/webhook', webhookLimiter);
+
+  // Configuración de Swagger/OpenAPI
+  const config = new DocumentBuilder()
+    .setTitle('FilaCero API')
+    .setDescription(
+      'API REST para sistema de pagos y gestión de pedidos de FilaCero',
+    )
+    .setVersion('0.3.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Ingresar JWT token (obtenido de /api/auth/login)',
+        in: 'header',
+      },
+      'JWT-auth', // Este es el nombre de referencia para @ApiBearerAuth()
+    )
+    .addTag('payments', 'Endpoints de procesamiento de pagos con Stripe')
+    .addTag('auth', 'Autenticación y gestión de sesiones')
+    .addTag('pedidos', 'Gestión de pedidos')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'FilaCero API Docs',
+    customCss: '.swagger-ui .topbar { display: none }',
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'none',
+      filter: true,
+      tagsSorter: 'alpha',
+    },
+  });
 
   // Static serving for uploaded files and ensure uploads directory exists
   const uploadsDir = join(process.cwd(), 'uploads');
