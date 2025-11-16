@@ -22,7 +22,7 @@ services:
       - /app/node_modules        # volumen anónimo para node_modules dentro del contenedor
     # Evitar `ts-node-dev` dentro del contenedor (genera EPIPE en algunos entornos con volúmenes montados).
     # Usamos el watcher de Nest (`start:dev`) que es más estable en contenedores.
-    command: ["sh","-c","npm install && npm run start:dev"]
+    command: ["sh","-c","npm install && npx prisma generate && npm run dev"]
     depends_on:
       - postgres
       - redis

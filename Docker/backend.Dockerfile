@@ -24,4 +24,4 @@ EXPOSE 3000 9229
 # Ejecuta el script de desarrollo de Nest con watch (más estable en contenedores).
 # Evita usar `ts-node-dev` dentro de Docker para prevenir errores EPIPE y reinicios
 # por problemas con los pipes de proceso cuando el contenedor usa volúmenes montados.
-CMD ["npm","run","start:dev"]
+CMD ["npm","run","dev","start:dev"]

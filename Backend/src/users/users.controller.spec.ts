@@ -4,7 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import request from 'supertest';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from '../auth/dto/update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 type SerializedUser = {
   id: string;
