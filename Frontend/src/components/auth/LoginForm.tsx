@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
 import { useUserStore } from "../../state/userStore";
-import { useBusinessStore } from "../../state/businessStore";
-import { BusinessPickerDialog } from "../business/BusinessPickerDialog";
+// Imports depurados
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -19,10 +18,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
-  const { setName, setBackendRole, login } = useUserStore();
-  const { setActiveBusiness } = useBusinessStore();
-	const [businessesForPicker, setBusinessesForPicker] = useState<any[] | null>(null);
-	const [showBusinessPicker, setShowBusinessPicker] = useState(false);
+	const { setName, setBackendRole, login } = useUserStore();
+	// Navegación directa según rol
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordValid = password.length >= 6;
@@ -60,47 +57,56 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			
 			onSuccess?.();
 			
-			// 2. Obtener información COMPLETA del usuario incluyendo el rol
+			// 3. Obtener información COMPLETA del usuario incluyendo el rol
 			console.log('🔄 Obteniendo información completa del usuario...');
 			const userInfo = await api.me();
 			
-			// 3. Actualizar store con login
+			// 4. Actualizar store con login
 			login(res.token, userInfo);
 			
-			// 4. Obtener negocios del usuario (si es admin/owner)
+			// 5. Determinar rol y redirigir según reglas de negocio
 			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
-			const idRol = userInfo.id_rol;
-			
-			console.log('👤 Información del usuario:', { roleName, idRol, userInfo });
-			
-			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
-				try {
-					console.log('🏪 Obteniendo negocios del usuario...');
-					const businesses = await api.listMyBusinesses();
-					
-					console.log('📦 Negocios recibidos:', businesses);
-					// Abrir selector siempre para admins (incluso si hay 1)
-					setBusinessesForPicker(businesses || []);
-					setShowBusinessPicker(true);
-				} catch (busErr) {
-					console.error('❌ Error al cargar negocios:', busErr);
-					// No bloquear el login si falla la carga de negocios
-				}
-			} else {
-				console.log('ℹ️ Usuario no es admin, saltando carga de negocios');
-			}
-			
-			// 5. Redirigir según el rol
-			console.log('✅ Rol (name):', roleName, ' id_rol:', idRol);
+			// Asegurarse de que idRol sea un número antes de comparar
+            const idRol = Number(userInfo.id_rol);
 
-			// Admin/superadmin -> POS; otros -> Shop
-			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
-				// Para admins, la navegación sucede después de elegir el negocio
-				console.log('⏸️ Esperando selección de negocio...');
-			} else {
-				console.log('🎯 Redirigiendo a /shop');
-				router.push('/shop');
-			}
+            console.log('👤 Información del usuario:', { roleName, idRol, userInfo });
+
+            // Lógica de redirección según rol
+            if (idRol === 4) {
+                console.log('🎯 Cliente detectado, redirigiendo a /shop');
+                router.push('/shop');
+                return;
+            }
+
+            if (idRol === 3) {
+                console.log('🎯 Empleado detectado, redirigiendo a /pos');
+                router.push('/pos');
+                return;
+            }
+
+            if (idRol === 2 || idRol === 1) {
+                console.log('🎯 Admin/Superadmin detectado, verificando negocios...');
+
+                try {
+                    const businesses = await api.listMyBusinesses();
+                    console.log('📊 Negocios del admin:', businesses);
+
+                    if (businesses && businesses.length > 0) {
+                        console.log('🎯 Admin con negocio(s), redirigiendo a /pos');
+                        router.push('/pos');
+                    } else {
+                        console.log('🎯 Admin sin negocio, redirigiendo a crear negocio');
+                        router.push('/onboarding/negocio');
+                    }
+                } catch (businessErr) {
+                    console.error('❌ Error al obtener negocios:', businessErr);
+                    router.push('/onboarding/negocio');
+                }
+                return;
+            }
+
+            console.log('🎯 Rol no identificado, redirigiendo a /shop (fallback)');
+            router.push('/shop');
 			
 		} catch (err: any) {
 			console.error('❌ Error en login:', err);
@@ -200,27 +206,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					</p>
 				</div>
 			</div>		
-		{showBusinessPicker && (
-			<BusinessPickerDialog
-				open={showBusinessPicker}
-				businesses={businessesForPicker || []}
-				onChoose={(b)=>{
-					setActiveBusiness(b);
-					setShowBusinessPicker(false);
-					console.log('🎯 Redirigiendo ADMIN a /pos con negocio', b);
-					router.push('/pos');
-				}}
-				onCreateNew={()=>{
-					setShowBusinessPicker(false);
-					router.push('/onboarding/negocio');
-				}}
-				onClose={()=>{
-					// Si el usuario cierra sin elegir, mantenemos la sesión pero salimos a la landing
-					setShowBusinessPicker(false);
-					router.push('/');
-				}}
-			/>
-		)}
+		{/* Fin del formulario */}
 		</form>
 	);
 };

@@ -8,7 +8,6 @@ import { useUserStore } from "../state/userStore";
 import UserDropdown from "./UserDropdown";
 import { useBusinessStore } from "../state/businessStore";
 import { api } from "../lib/api";
-import { BusinessPickerDialog } from "./business/BusinessPickerDialog";
 
 interface NavItem {
   label: string;
@@ -31,8 +30,7 @@ export default function Navbar() {
   const router = useRouter();
   const { user, isAuthenticated, loading, logout } = useUserStore();
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
-  const [showBizPicker, setShowBizPicker] = useState(false);
-  const [bizList, setBizList] = useState<any[]>([]);
+  // Navegación directa según estado
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -49,13 +47,7 @@ export default function Navbar() {
 
   const handleAdminPanel = async () => {
     if (!activeBusiness) {
-      try {
-        const list = await api.listMyBusinesses();
-        setBizList(list || []);
-      } catch {
-        setBizList([]);
-      }
-      setShowBizPicker(true);
+      router.push("/onboarding/negocio");
       return;
     }
     router.push("/pos");
@@ -212,23 +204,7 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Business picker dialog */}
-      {showBizPicker && (
-        <BusinessPickerDialog
-          open={showBizPicker}
-          businesses={bizList}
-          onChoose={(b) => {
-            setActiveBusiness(b);
-            setShowBizPicker(false);
-            router.push("/pos");
-          }}
-          onCreateNew={() => {
-            setShowBizPicker(false);
-            router.push("/onboarding/negocio");
-          }}
-          onClose={() => setShowBizPicker(false)}
-        />
-      )}
+      {/* Fin del header */}
     </header>
   );
 }

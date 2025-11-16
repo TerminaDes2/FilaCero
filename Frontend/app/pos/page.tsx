@@ -7,6 +7,7 @@ import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
 import { ProductGrid } from '../../src/components/pos/products/ProductGrid';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import CategoryFilterButton from '../../src/components/pos/controls/CategoryFilterButton';
 import { usePOSView } from '../../src/state/posViewStore';
 import { KitchenBoard } from '../../src/components/pos/kitchen/KitchenBoard';
@@ -19,8 +20,7 @@ import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import { useUserStore } from '../../src/state/userStore';
 import { useBusinessStore } from '../../src/state/businessStore';
-import { api } from '../../src/lib/api';
-import { BusinessPickerDialog } from '../../src/components/business/BusinessPickerDialog';
+// Redirección directa cuando falte negocio activo
 // Categories store not needed here
 
 // Mock product dataset (frontend only)
@@ -47,9 +47,8 @@ export default function POSPage() {
   const { view: posView } = usePOSView();
   const { hydrateFromAPI } = useKitchenBoard();
   const { user } = useUserStore();
-  const { activeBusiness, setActiveBusiness } = useBusinessStore();
-  const [needBusiness, setNeedBusiness] = useState(false);
-  const [bizList, setBizList] = useState<any[]>([]);
+  const router = useRouter();
+  const { activeBusiness } = useBusinessStore();
 
   // Fetch categories (store handles normalization & business scoping)
   useEffect(() => {
@@ -72,20 +71,15 @@ export default function POSPage() {
     }
   }, [posView, hydrateFromAPI, activeBusiness]);
 
-  // Guard: if admin and no active business, prompt to choose before using POS
+  // Guard: si es admin y no hay negocio activo, redirige a onboarding
   useEffect(() => {
     const roleName = (user as any)?.role_name || user?.role?.nombre_rol || '';
     const idRol = user?.id_rol;
     const isAdmin = roleName === 'admin' || roleName === 'superadmin' || idRol === 2;
     if (isAdmin && !activeBusiness) {
-      api.listMyBusinesses()
-        .then((list) => {
-          setBizList(list || []);
-          setNeedBusiness(true);
-        })
-        .catch(() => setNeedBusiness(true));
+      router.push('/onboarding/negocio');
     }
-  }, [user, activeBusiness]);
+  }, [user, activeBusiness, router]);
   
   // Keyboard: 'v' toggles view (grid/list) when not typing in input
   useEffect(() => {
@@ -161,21 +155,7 @@ export default function POSPage() {
             </div>
           )}
         </main>
-        {needBusiness && (
-          <BusinessPickerDialog
-            open={needBusiness}
-            businesses={bizList}
-            onChoose={(b)=>{
-              setActiveBusiness(b);
-              setNeedBusiness(false);
-            }}
-            onClose={()=>{
-              // Si no selecciona, salimos del POS para evitar estado inconsistente
-              setNeedBusiness(false);
-              window.location.href = '/';
-            }}
-          />
-        )}
+        {/* Fin del layout POS */}
       </div>
     </CartProvider>
   );

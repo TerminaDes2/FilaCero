@@ -115,7 +115,7 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
         ? "Subimos tu credencial, falta una breve validación."
         : "Carga tu credencial para activar beneficios académicos.",
       icon: IdCard,
-      action: "/verification/credential",
+      action: "/verification/credencial",
     },
   ];
 
