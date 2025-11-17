@@ -1,47 +1,34 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.responses import JSONResponse
 from pathlib import Path
 import shutil
+import uvicorn
 import os
-import cloudinary
-import cloudinary.uploader
 
 from Credencial import validate_card
+from typing import Optional
+from pydantic import BaseModel
+import urllib.request
+import tempfile
+import os
 
-# Configuración de Cloudinary
-cloudinary.config(
-    cloud_name="dthglapda",
-    api_secret="EGock1Fm60yAFbQ_Rs6OVhshESs",
-    api_key="663445446218971"
-)
-
-app = Flask(__name__)
-
-# Habilitar CORS para la API
-CORS(app)
+app = FastAPI(title="OCR Credencial API")
 
 
-@app.route('/validate', methods=['POST'])
-def validate():
-    image = request.files.get('image')
-    expected_student_id = request.form.get('expected_student_id')
-    expected_name = request.form.get('expected_name')
-
-    if not image:
-        return jsonify({"error": "No file provided"}), 400
-
+@app.post('/validate')
+async def validate(image: UploadFile = File(...), expected_student_id: str = Form(None), expected_name: str = Form(None)):
     tmp_dir = Path('/tmp/uploads')
     tmp_dir.mkdir(parents=True, exist_ok=True)
     file_path = tmp_dir / image.filename
     with file_path.open('wb') as f:
-        shutil.copyfileobj(image.stream, f)
+        shutil.copyfileobj(image.file, f)
 
     try:
         res = validate_card(file_path, expected_student_id, expected_name)
     except FileNotFoundError:
-        return jsonify({"error": "file not found or unreadable"}), 400
+        return JSONResponse(status_code=400, content={"error": "file not found or unreadable"})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return JSONResponse(status_code=500, content={"error": str(e)})
     finally:
         try:
             file_path.unlink()
@@ -51,41 +38,50 @@ def validate():
     return res
 
 
-@app.route('/verificacion_credencial', methods=['POST'])
-def verificacion_credencial():
-    # Soportar dos formas de uso:
-    # 1) multipart/form-data con campo 'file' (archivo)
-    # 2) application/json con { "file": "https://..." } (URL remota)
-    file = request.files.get('file')
+class ValidatePayload(BaseModel):
+    file: str
+    expected_student_id: Optional[str] = None
+    expected_name: Optional[str] = None
 
-    # Si no viene como archivo, intentar leer JSON/form con URL
-    file_url = None
-    if not file:
-        # request.get_json(silent=True) devuelve None si no es JSON
-        data = request.get_json(silent=True)
-        if data and isinstance(data, dict):
-            file_url = data.get('file')
-        else:
-            # también admitir form-urlencoded con 'file'
-            file_url = request.form.get('file')
 
-    if not file and not file_url:
-        return jsonify({"error": "No file provided"}), 400
+@app.post('/validate_json')
+async def validate_json(payload: ValidatePayload):
+    """Acepta JSON con la URL de la imagen (p.ej. Cloudinary) y campos esperados.
+    Descarga la imagen desde la URL y llama a `validate_card` (implementado en `Credencial.py`).
+    """
+    url = payload.file
+    if not url:
+        return JSONResponse(status_code=400, content={"error": "file URL required"})
 
-    # Subir la imagen a Cloudinary
+    # Descargar la imagen a un fichero temporal
     try:
-        if file:
-            # subir desde el stream del archivo
-            upload_result = cloudinary.uploader.upload(file.stream)
-        else:
-            # subir desde URL remoto (string)
-            upload_result = cloudinary.uploader.upload(file_url)
-
-        return {"message": "Imagen subida exitosamente", "url": upload_result.get('url')}
+        with urllib.request.urlopen(url, timeout=15) as resp:
+            data = resp.read()
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return JSONResponse(status_code=400, content={"error": f"Error downloading image: {e}"})
+
+    fd, tmp_path = tempfile.mkstemp(suffix='.jpg')
+    os.close(fd)
+    try:
+        with open(tmp_path, 'wb') as f:
+            f.write(data)
+
+        # Llamar al validador Python que usa OpenCV/Tesseract
+        try:
+            res = validate_card(tmp_path, payload.expected_student_id, payload.expected_name)
+        except FileNotFoundError:
+            return JSONResponse(status_code=400, content={"error": "file not found or unreadable"})
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"error": str(e)})
+
+        return JSONResponse(status_code=200, content=res)
+    finally:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
 
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
-    app.run(host='0.0.0.0', port=port)
+    uvicorn.run('app:app', host='0.0.0.0', port=port)

@@ -81,7 +81,10 @@ export class VerificacionCredencialController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  async verificarCredencial(@Req() req: Request, @Body() body: { imageUrl?: string }) {
+  async verificarCredencial(
+    @Req() req: Request,
+    @Body() body: { imageUrl?: string; expected_student_id?: string; expected_name?: string },
+  ) {
     try {
       // Extraer el id del usuario autenticado (proporcionado por JwtStrategy)
       const authUser = (req as unknown as { user?: unknown }).user;
@@ -100,57 +103,47 @@ export class VerificacionCredencialController {
         throw new HttpException('ID de usuario inválido', HttpStatus.UNAUTHORIZED);
       }
 
-      // Si el frontend ya subió la imagen a Cloudinary y nos envía `imageUrl`,
-      // no es necesario depender del servicio externo; marcamos verificado.
-      if (body.imageUrl) {
-        // Validación mínima: URL válida y proviene de Cloudinary (opcional)
-        try {
-          new URL(body.imageUrl);
-        } catch {
-          throw new HttpException('imageUrl inválida', HttpStatus.BAD_REQUEST);
-        }
-
-        await this.prisma.usuarios.update({
-          where: { id_usuario: idUsuario },
-          data: {
-            credencial_verificada: true,
-            credencial_verificada_en: new Date(),
-            credential_url: body.imageUrl,
-          },
-        });
-
-        return { message: 'Verificación completada y actualizada en la base de datos.' };
-      }
-
-      // Si no hay imageUrl, intentamos delegar al servicio de OCR/validación externo
+      // Nuevo flujo: siempre delegar al servicio Python de verificación.
       const apiUrl = this.configService.get<string>('VERIFICACION_CREDENCIAL_API_URL');
       if (!apiUrl) {
         throw new HttpException('VERIFICACION_CREDENCIAL_API_URL no configurada', HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
-      const response = await axios.post(`${apiUrl}/verificacion_credencial`, {
-        file: body.imageUrl,
+      // Construir payload para el servicio Python. Se permiten campos opcionales
+      // esperados que pueden venir desde el frontend (expected_student_id, expected_name).
+      const payload: Record<string, unknown> = { file: body.imageUrl };
+      if (body.expected_student_id) payload.expected_student_id = body.expected_student_id;
+      if (body.expected_name) payload.expected_name = body.expected_name;
+
+      const response = await axios.post(`${apiUrl}/validate_json`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 20000,
       });
 
-      let respMsg: string | undefined = undefined;
+      // Esperamos que el servicio Python devuelva un JSON con 'ok': boolean
       if (response && response.data && typeof response.data === 'object') {
         const dataObj = response.data as Record<string, unknown>;
-        if (typeof dataObj['message'] === 'string') respMsg = dataObj['message'];
-      }
-      if (respMsg === 'Imagen subida exitosamente') {
-        // Actualizar la BD usando el usuario autenticado
-        await this.prisma.usuarios.update({
-          where: { id_usuario: idUsuario },
-          data: {
-            credencial_verificada: true,
-            credencial_verificada_en: new Date(),
-          },
-        });
+        const ok = !!dataObj['ok'];
+        if (ok) {
+          await this.prisma.usuarios.update({
+            where: { id_usuario: idUsuario },
+            data: {
+              credencial_verificada: true,
+              credencial_verificada_en: new Date(),
+              credential_url: body.imageUrl,
+            },
+          });
 
-        return { message: 'Verificación completada y actualizada en la base de datos.' };
+          return { message: 'Verificación completada y actualizada en la base de datos.' };
+        }
+        // Si ok === false, devolver información útil al cliente
+        return {
+          message: 'La verificación falló según el servicio de OCR.',
+          details: dataObj,
+        };
       }
 
-      throw new HttpException('Error en la verificación de la credencial.', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Respuesta inválida del servicio de verificación.', HttpStatus.BAD_REQUEST);
     } catch (error: unknown) {
       let errMsg = 'Error desconocido';
       if (typeof error === 'string') errMsg = error;
