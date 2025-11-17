@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Settings as GearIcon } from 'lucide-react';
 import { useKitchenBoard } from '../../state/kitchenBoardStore';
 import { usePOSView } from '../../state/posViewStore';
@@ -55,7 +55,7 @@ const items: NavItem[] = [
 	{
 		key: 'kitchen',
 		label: 'Cocina',
-		href: '/pos',
+		href: '/pos/kitchen',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
 				<path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12M8 7h8m-9 4h10m-9 4h8M6 21h12" />
@@ -117,6 +117,7 @@ const settingsItem: NavItem = {
 
 export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = true }) => {
   const pathname = usePathname();
+	const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 	const { tickets } = useKitchenBoard();
 	const pending = useMemo(() => tickets.filter(t => t.status !== 'served').length, [tickets]);
@@ -139,8 +140,9 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 						</span>
 			)}
 		</div>
-        {collapsible && (
+					{collapsible && (
 							<button
+								type="button"
 								onClick={()=> setCollapsed(c=> !c)}
 								aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
 								className="ml-auto group relative w-9 h-9 flex items-center justify-center rounded-lg bg-white/60 hover:bg-white/75 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -149,26 +151,30 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 								<span className="absolute inset-0 rounded-lg shadow-inner shadow-white/30 pointer-events-none" />
 								<svg viewBox="0 0 24 24" className={`w-5 h-5 transition-transform ${collapsed ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m10 6 6 6-6 6" /></svg>
 							</button>
-        )}
+					)}
       </div>
 			{/* Nav items */}
 			<div className="flex-1 overflow-y-auto py-3 px-2 space-y-1 relative z-10 custom-scrollbar">
 				{items.filter(i=> i.key !== 'logo').map(item => {
 					const isKitchen = item.key === 'kitchen';
-					const active = isKitchen ? posView === 'kitchen' : (pathname === item.href || (item.key === 'home' && pathname === '/pos'));
+					const baseActive = pathname === item.href || (item.key === 'home' && pathname === '/pos');
+					const active = isKitchen
+						? posView === 'kitchen'
+						: item.href === '/pos' ? (baseActive && posView !== 'kitchen') : baseActive;
 					if (isKitchen) {
 						return (
 							<button
 								key={item.key}
+								type="button"
 								onClick={() => {
 									setView('kitchen');
 									try {
 										void useKitchenBoard.getState().hydrateFromAPI();
 									} catch {}
+									router.push('/pos?view=kitchen');
 								}}
 								aria-current={active ? 'page' : undefined}
 								className={`w-full text-left group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-semibold tracking-tight transition-colors focus:outline-none focus-visible:ring-2 ring-white/60 ${active ? 'bg-[rgba(255,255,255,0.92)] text-[rgb(80,32,38)] shadow-sm' : 'text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.3)]'}`}
-								type="button"
 							>
 								<span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full" style={{ background: active ? 'var(--pos-accent-green)' : 'transparent' }} />
 								<span className={`relative flex items-center justify-center w-9 h-9 rounded-lg ${active ? 'bg-white' : 'bg-white/60 group-hover:bg-white/75'} shadow-inner shadow-white/30`} style={{ color: 'var(--pos-text-heading)' }}>

@@ -52,13 +52,13 @@ export class PedidosController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id') id: string) {
     return this.pedidosService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updatePedidoDto: UpdatePedidoDto,
   ) {
     return this.pedidosService.update(id, updatePedidoDto);
@@ -66,7 +66,7 @@ export class PedidosController {
 
   @Patch(':id/estado')
   updateEstado(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateEstadoDto: UpdateEstadoPedidoDto,
   ) {
     return this.pedidosService.updateEstado(id, updateEstadoDto);

@@ -1,14 +1,25 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useCart } from '../../../pos/cartContext';
-import { PaymentSuccessPanel } from '../payments/PaymentSuccessPanel';
+import { PaymentSuccessPanel, PaymentTicketData } from '../payments/PaymentSuccessPanel';
 import { PaymentPanel } from '../payments/PaymentPanel';
 import { AddToCartPanel } from '../products/AddToCartPanel';
 
 import { useConfirm } from '../../system/ConfirmProvider';
 import { api, activeBusiness } from '../../../lib/api';
+import { useBusinessStore } from '../../../state/businessStore';
+import { useUserStore } from '../../../state/userStore';
+
+type TicketLine = {
+  name: string;
+  qty: number;
+  unitPrice: number;
+  total: number;
+  note?: string;
+  sku?: string;
+};
 export const CartPanel: React.FC = () => {
-  const { items, subtotal, total, remove, inc, dec, clear } = useCart();
+  const { items, subtotal, total, discount, remove, inc, dec, clear } = useCart();
   const confirm = useConfirm();
   const hasItems = items.length > 0;
   const [showPayment, setShowPayment] = useState(false); // show PaymentPanel
@@ -17,6 +28,22 @@ export const CartPanel: React.FC = () => {
   const [paidTotal, setPaidTotal] = useState<number|null>(null);
   const [editLineId, setEditLineId] = useState<string|null>(null);
   const [loading] = useState(false);
+  const [saleTicket, setSaleTicket] = useState<PaymentTicketData | null>(null);
+  const { activeBusiness: business } = useBusinessStore();
+  const { user } = useUserStore();
+
+  const methodLabels = useMemo(() => ({
+    efectivo: 'Pago en efectivo',
+    credito: 'Tarjeta de crédito',
+    debito: 'Tarjeta de débito',
+  }), []);
+
+  const resetSuccessState = () => {
+    setShowSuccess(false);
+    setSuccessData(null);
+    setPaidTotal(null);
+    setSaleTicket(null);
+  };
 
   return (
     <div className='flex flex-col h-full overflow-hidden' style={{color:'var(--pos-text-heading)'}}>
@@ -196,11 +223,63 @@ export const CartPanel: React.FC = () => {
                 const businessId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '1';
                 // Nota: backend exige items con id_producto (string), cantidad (number), precio_unitario opcional
                 const saleItems = items.map(i => ({ id_producto: i.product.id, cantidad: i.qty }));
-                await api.createSale({ id_negocio: String(businessId), items: saleItems, cerrar: true });
+                const snapshotLines: TicketLine[] = items.map(line => ({
+                  name: line.product.name,
+                  qty: line.qty,
+                  unitPrice: line.product.price,
+                  total: line.product.price * line.qty,
+                  note: line.note,
+                  sku: line.product.id,
+                }));
 
-                // 2) UI success
-                const t = total;
-                setPaidTotal(t);
+                const saleResponse = await api.createSale({ id_negocio: String(businessId), items: saleItems, cerrar: true });
+
+                const detalle = Array.isArray(saleResponse?.detalle_venta) ? saleResponse.detalle_venta : [];
+                const lines: TicketLine[] = detalle.length
+                  ? detalle.map((detalleItem: any) => {
+                      const unitPrice = Number(detalleItem?.precio_unitario ?? detalleItem?.producto?.precio ?? 0);
+                      const quantity = Number(detalleItem?.cantidad ?? 0);
+                      return {
+                        name: detalleItem?.producto?.nombre ?? 'Producto',
+                        qty: quantity,
+                        unitPrice,
+                        total: unitPrice * quantity,
+                        note: detalleItem?.nota ?? undefined,
+                        sku: detalleItem?.producto?.codigo_barras ? String(detalleItem.producto.codigo_barras) : undefined,
+                      };
+                    })
+                  : snapshotLines;
+
+                const subtotalFromLines = lines.reduce<number>((sum, line) => sum + line.total, 0);
+                const discountValue = typeof discount === 'number' ? discount : 0;
+                const ticketTotal = saleResponse?.total != null ? Number(saleResponse.total) : Math.max(0, subtotalFromLines - discountValue);
+
+                const ticket: PaymentTicketData = {
+                  saleId: saleResponse?.id_venta ? String(saleResponse.id_venta) : undefined,
+                  folio: saleResponse?.folio_pos || saleResponse?.folio || undefined,
+                  orderId: saleResponse?.pedido?.id_pedido ? String(saleResponse.pedido.id_pedido) : undefined,
+                  businessId: business?.id_negocio ?? undefined,
+                  businessName: business?.nombre ?? undefined,
+                  businessAddress: business?.direccion ?? undefined,
+                  businessPhone: business?.telefono ?? undefined,
+                  issuedAt: saleResponse?.fecha_venta ?? new Date().toISOString(),
+                  cashierName: saleResponse?.usuarios?.nombre ?? user?.nombre ?? undefined,
+                  lines,
+                  subtotal: subtotalFromLines || subtotal,
+                  discount: discountValue,
+                  total: ticketTotal,
+                  methodLabel: saleResponse?.tipo_pago?.tipo ?? methodLabels[data.method] ?? 'Pago',
+                  methodCode: saleResponse?.tipo_pago?.id_tipo_pago ?? data.method,
+                  amountReceived: data.amountReceived ?? ticketTotal,
+                  change: data.change,
+                  reference: saleResponse?.referencia || saleResponse?.reference || undefined,
+                  orderStatus: saleResponse?.pedido?.estado ?? undefined,
+                };
+
+                setSaleTicket(ticket);
+
+                const finalTotal = ticket.total;
+                setPaidTotal(finalTotal);
                 setShowPayment(false);
                 setSuccessData({ method: data.method, amountReceived: data.amountReceived, change: data.change });
                 setShowSuccess(true);
@@ -215,12 +294,13 @@ export const CartPanel: React.FC = () => {
 
         {showSuccess && successData && (
           <PaymentSuccessPanel
-            total={paidTotal ?? total}
+            total={paidTotal ?? saleTicket?.total ?? total}
             method={successData.method}
             received={successData.amountReceived}
-            onClose={()=> { setShowSuccess(false); setSuccessData(null); setPaidTotal(null); }}
+            ticket={saleTicket}
+            onClose={resetSuccessState}
             onShare={()=>{/* TODO: share receipt */}}
-            onPrint={()=>{/* TODO: print receipt */}}
+            onPrint={()=>{/* reservado para métricas */}}
           />
         )}
         {editLineId && (()=>{

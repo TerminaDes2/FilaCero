@@ -107,10 +107,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 			if (res.requiresVerification) {
 				setPendingEmail(normalizedEmail);
 				setVerificationExpiresAt(res.expiresAt ?? null);
-				setVerificationSession(res.session);
+				setVerificationSession(res.session ?? null);
 				try {
 					if (typeof window !== 'undefined') {
-						window.localStorage.setItem('preRegSession', res.session);
+						if (res.session) window.localStorage.setItem('preRegSession', res.session);
 						if (res.expiresAt) window.localStorage.setItem('preRegExpiresAt', res.expiresAt);
 						window.localStorage.setItem('preRegEmail', normalizedEmail);
 					}

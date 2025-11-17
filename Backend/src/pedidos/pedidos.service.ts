@@ -16,6 +16,27 @@ import {
 export class PedidosService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizeId(id: string | number | bigint): bigint {
+    if (typeof id === 'bigint') {
+      return id;
+    }
+    if (typeof id === 'number') {
+      if (!Number.isFinite(id)) {
+        throw new BadRequestException('ID de pedido inválido');
+      }
+      return BigInt(Math.trunc(id));
+    }
+    const trimmed = id.trim();
+    if (!/^[0-9]+$/.test(trimmed)) {
+      throw new BadRequestException('ID de pedido inválido');
+    }
+    try {
+      return BigInt(trimmed);
+    } catch {
+      throw new BadRequestException('ID de pedido inválido');
+    }
+  }
+
   /**
    * Crear un nuevo pedido con sus items
    */
@@ -167,9 +188,10 @@ export class PedidosService {
   /**
    * Obtener un pedido por ID
    */
-  async findOne(id: number) {
+  async findOne(id: string | number | bigint) {
+    const pedidoId = this.normalizeId(id);
     const pedido = await this.prisma.pedido.findUnique({
-      where: { id_pedido: id },
+      where: { id_pedido: pedidoId },
       include: {
         detalle_pedido: {
           include: {
@@ -234,13 +256,14 @@ export class PedidosService {
   /**
    * Actualizar información del pedido (no el estado)
    */
-  async update(id: number, updatePedidoDto: UpdatePedidoDto) {
+  async update(id: string | number | bigint, updatePedidoDto: UpdatePedidoDto) {
+    const pedidoId = this.normalizeId(id);
     // Verificar que existe
-    await this.findOne(id);
+    await this.findOne(pedidoId);
 
     try {
       const pedidoActualizado = await this.prisma.pedido.update({
-        where: { id_pedido: id },
+        where: { id_pedido: pedidoId },
         data: updatePedidoDto,
         include: {
           detalle_pedido: {
@@ -249,7 +272,14 @@ export class PedidosService {
             },
           },
           negocio: true,
-          usuario: true,
+          usuario: {
+            select: {
+              id_usuario: true,
+              nombre: true,
+              correo_electronico: true,
+              numero_telefono: true,
+            },
+          },
         },
       });
 
@@ -268,9 +298,10 @@ export class PedidosService {
   /**
    * Actualizar el estado del pedido (con lógica de triggers)
    */
-  async updateEstado(id: number, updateEstadoDto: UpdateEstadoPedidoDto) {
+  async updateEstado(id: string | number | bigint, updateEstadoDto: UpdateEstadoPedidoDto) {
+    const pedidoId = this.normalizeId(id);
     // Verificar que existe
-    const pedidoActual = await this.findOne(id);
+    const pedidoActual = await this.findOne(pedidoId);
 
     const estadoAnterior = pedidoActual.data.estado;
     const nuevoEstado = updateEstadoDto.estado;
@@ -281,7 +312,7 @@ export class PedidosService {
     try {
       // Actualizar estado (los triggers de DB manejarán inventario automáticamente)
       const pedidoActualizado = await this.prisma.pedido.update({
-        where: { id_pedido: id },
+        where: { id_pedido: pedidoId },
         data: {
           estado: nuevoEstado,
         },
@@ -292,7 +323,14 @@ export class PedidosService {
             },
           },
           negocio: true,
-          usuario: true,
+          usuario: {
+            select: {
+              id_usuario: true,
+              nombre: true,
+              correo_electronico: true,
+              numero_telefono: true,
+            },
+          },
         },
       });
 

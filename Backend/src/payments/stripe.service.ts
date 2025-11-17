@@ -4,12 +4,13 @@ import Stripe from 'stripe';
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
-  private stripe: Stripe;
+  private stripe: Stripe | null = null;
 
   constructor() {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY no configurada en variables de entorno');
+      this.logger.warn('Stripe deshabilitado: STRIPE_SECRET_KEY no configurada. Los flujos de pago usarán modo mock.');
+      return;
     }
     this.stripe = new Stripe(secretKey, {
       apiVersion: '2025-10-29.clover',
@@ -46,6 +47,7 @@ export class StripeService {
     },
     idempotencyKey?: string,
   ): Promise<Stripe.PaymentIntent> {
+    this.ensureStripe();
     this.logger.debug(`createPaymentIntent: ${JSON.stringify(params)}`);
     
     const options: Stripe.RequestOptions = {};
@@ -72,6 +74,7 @@ export class StripeService {
   async confirmPaymentIntent(
     paymentIntentId: string,
   ): Promise<Stripe.PaymentIntent> {
+    this.ensureStripe();
     return await this.stripe.paymentIntents.confirm(paymentIntentId);
   }
 
@@ -81,6 +84,7 @@ export class StripeService {
   async retrievePaymentIntent(
     paymentIntentId: string,
   ): Promise<Stripe.PaymentIntent> {
+    this.ensureStripe();
     return await this.stripe.paymentIntents.retrieve(paymentIntentId);
   }
 
@@ -88,6 +92,7 @@ export class StripeService {
    * Crea un reembolso para un PaymentIntent.
    */
   async createRefund(paymentIntentId: string): Promise<Stripe.Refund> {
+    this.ensureStripe();
     return await this.stripe.refunds.create({
       payment_intent: paymentIntentId,
     });
@@ -101,6 +106,7 @@ export class StripeService {
     signature: string,
     secret: string,
   ): Stripe.Event {
+    this.ensureStripe();
     return this.stripe.webhooks.constructEvent(payload, signature, secret);
   }
 
@@ -111,6 +117,7 @@ export class StripeService {
     paymentMethodId: string,
     customerId: string,
   ): Promise<Stripe.PaymentMethod> {
+    this.ensureStripe();
     return await this.stripe.paymentMethods.attach(paymentMethodId, {
       customer: customerId,
     });
@@ -122,6 +129,7 @@ export class StripeService {
   async listPaymentMethods(
     customerId: string,
   ): Promise<Stripe.PaymentMethod[]> {
+    this.ensureStripe();
     const response = await this.stripe.paymentMethods.list({
       customer: customerId,
       type: 'card',
@@ -135,6 +143,13 @@ export class StripeService {
   async detachPaymentMethod(
     paymentMethodId: string,
   ): Promise<Stripe.PaymentMethod> {
+    this.ensureStripe();
     return await this.stripe.paymentMethods.detach(paymentMethodId);
+  }
+
+  private ensureStripe(): asserts this is { stripe: Stripe } {
+    if (!this.stripe) {
+      throw new Error('Stripe no está configurado. Define STRIPE_SECRET_KEY para habilitar pagos.');
+    }
   }
 }
