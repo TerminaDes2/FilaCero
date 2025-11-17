@@ -1,6 +1,5 @@
 "use client";
-import type { ComponentType, ReactNode, SVGProps } from "react";
-import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   CheckCircle2,
   Clock3,
@@ -8,6 +7,7 @@ import {
   Mail,
   Phone,
   ShieldAlert,
+  type LucideIcon,
 } from "lucide-react";
 import { UserInfo } from "../../lib/api";
 
@@ -22,8 +22,8 @@ interface VerificationItem {
   label: string;
   status: VerificationStatus;
   description: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
-  action?: string;
+  icon: LucideIcon;
+  timestamp?: string | null;
 }
 
 interface StatusStyle {
@@ -78,36 +78,58 @@ const STATUS_TEXT: Record<VerificationStatus, string> = {
 };
 
 export default function VerificationSection({ user }: VerificationSectionProps) {
+  const emailVerified = user.verifications?.email ?? (user as any).correo_verificado ?? false;
+  const smsVerified = user.verifications?.sms ?? (user as any).sms_verificado ?? false;
+  const credentialVerified = user.verifications?.credential ?? (user as any).credencial_verificada ?? false;
+  const timestamps = user.verificationTimestamps ?? {
+    email: (user as any).correo_verificado_en ?? null,
+    sms: (user as any).sms_verificado_en ?? null,
+    credential: (user as any).credencial_verificada_en ?? null,
+  };
+
+  const formatTimestamp = (value: string | Date | null | undefined) => {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
   const verificationItems: VerificationItem[] = [
     {
       id: "email",
       label: "Correo electrónico",
-      status: user.correo_electronico ? "verified" : "missing",
-      description: user.correo_electronico
-        ? "Tu correo respalda tus accesos y el historial de pedidos."
+      status: emailVerified ? "verified" : user.correo_electronico ? "pending" : "missing",
+      description: emailVerified
+        ? "Listo para recibir confirmaciones y accesos sin fricción."
+        : user.correo_electronico
+        ? "Confirma tu correo para cerrar ventas y pedidos sin bloqueos."
         : "Agrega un correo institucional para validar tu cuenta.",
       icon: Mail,
-      action: user.correo_electronico ? undefined : "/verification/email",
+      timestamp: formatTimestamp(timestamps.email),
     },
     {
       id: "phone",
       label: "Número de teléfono",
-      status: user.numero_telefono ? "pending" : "missing",
-      description: user.numero_telefono
-        ? "Confirma tu número para coordinar entregas rápidas."
+      status: smsVerified ? "verified" : user.numero_telefono ? "pending" : "missing",
+      description: smsVerified
+        ? "Usamos este número para alertas instantáneas y reabrir el POS con 2FA."
+        : user.numero_telefono
+        ? "Confirma tu número para coordinar entregas y notificaciones."
         : "Registra un número para recibir recordatorios y alertas.",
       icon: Phone,
-      action: "/verification/phone",
+      timestamp: formatTimestamp(timestamps.sms),
     },
     {
       id: "credential",
       label: "Credencial estudiantil",
-      status: user.credential_url ? "pending" : "missing",
-      description: user.credential_url
-        ? "Subimos tu credencial, falta una breve validación."
+      status: credentialVerified ? "verified" : user.credential_url ? "pending" : "missing",
+      description: credentialVerified
+        ? "Tu identidad está aprobada para beneficios y acceso express."
+        : user.credential_url
+        ? "Validaremos tu documento para finalizar el proceso."
         : "Carga tu credencial para activar beneficios académicos.",
       icon: IdCard,
-      action: "/verification/credential",
+      timestamp: formatTimestamp(timestamps.credential),
     },
   ];
 
@@ -159,14 +181,10 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
                     </div>
                   </div>
 
-                  {item.action && (
-                    <Link
-                      href={item.action}
-                      className="inline-flex items-center gap-2 self-start rounded-full border border-[var(--fc-brand-200)] px-4 py-2 text-xs font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-300)]"
-                    >
-                      Completar ahora
-                      <span aria-hidden>→</span>
-                    </Link>
+                  {item.timestamp && (
+                    <span className="inline-flex items-center gap-2 self-start rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-[var(--fc-teal-600)]">
+                      Verificado el {item.timestamp}
+                    </span>
                   )}
                 </div>
               </div>

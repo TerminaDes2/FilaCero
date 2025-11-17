@@ -266,10 +266,16 @@ export interface LoginResponse {
 }
 
 export interface RegisterResponse {
-  requiresVerification: true;
-  delivery: 'email';
-  expiresAt: string;
-  session: string;
+  requiresVerification?: boolean;
+  delivery?: 'email';
+  expiresAt?: string;
+  session?: string;
+  verification?: {
+    delivery: 'email';
+    expiresAt: string;
+  };
+  token?: string;
+  user?: AuthUser;
 }
 
 export interface UserInfo {
@@ -343,26 +349,18 @@ export const api = {
   },
 
   verifyRegister: (session: string, code: string) =>
-    apiFetch<LoginResponse>(
-      "auth/verify-register",
-      {
-        method: "POST",
-        body: JSON.stringify({ session, code }),
-        credentials: 'omit',
-        cache: 'no-store',
-      }
-    ),
+    apiFetch<LoginResponse>("auth/verify-register", {
+      method: "POST",
+      body: JSON.stringify({ session, code }),
+      cache: 'no-store',
+    }),
 
   resendRegister: (session: string) =>
-    apiFetch<{ delivery: 'email'; expiresAt: string; session: string }>(
-      "auth/resend-register",
-      {
-        method: "POST",
-        body: JSON.stringify({ session }),
-        credentials: 'omit',
-        cache: 'no-store',
-      }
-    ),
+    apiFetch<{ delivery: 'email'; expiresAt: string; session: string }>("auth/resend-register", {
+      method: "POST",
+      body: JSON.stringify({ session }),
+      cache: 'no-store',
+    }),
 
   verifyEmail: (correo_electronico: string, codigo: string) =>
     apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
@@ -537,6 +535,22 @@ export const api = {
     apiFetch<any>("businesses", { method: "POST", body: JSON.stringify(data) }),
     
   listMyBusinesses: () => apiFetch<any[]>("businesses/my"),
+
+  updateBusiness: (
+    id: string | number,
+    payload: {
+      nombre?: string | null;
+      direccion?: string | null;
+      telefono?: string | null;
+      correo?: string | null;
+      logo?: string | null;
+      hero_image_url?: string | null;
+    }
+  ) =>
+    apiFetch<any>(`businesses/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
   
   getPublicBusinesses: async () => {
     try {
@@ -702,6 +716,23 @@ export const api = {
         body: JSON.stringify({ telefono, codigo }),
       }
     ),
+
+  updateUserProfile: (
+    id: string | number,
+    payload: Partial<{
+      name: string | null;
+      phoneNumber: string | null;
+      newPassword: string | null;
+      avatarUrl: string | null;
+      credentialUrl: string | null;
+      accountNumber: string | null;
+      age: number | null;
+    }>
+  ) =>
+    apiFetch<any>(`users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
 };
 
 // Helpers para negocio activo en el cliente

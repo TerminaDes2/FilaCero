@@ -9,6 +9,15 @@ import { useConfirm } from '../../system/ConfirmProvider';
 import { api, activeBusiness } from '../../../lib/api';
 import { useBusinessStore } from '../../../state/businessStore';
 import { useUserStore } from '../../../state/userStore';
+
+type TicketLine = {
+  name: string;
+  qty: number;
+  unitPrice: number;
+  total: number;
+  note?: string;
+  sku?: string;
+};
 export const CartPanel: React.FC = () => {
   const { items, subtotal, total, discount, remove, inc, dec, clear } = useCart();
   const confirm = useConfirm();
@@ -214,7 +223,7 @@ export const CartPanel: React.FC = () => {
                 const businessId = activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || '1';
                 // Nota: backend exige items con id_producto (string), cantidad (number), precio_unitario opcional
                 const saleItems = items.map(i => ({ id_producto: i.product.id, cantidad: i.qty }));
-                const snapshotLines = items.map(line => ({
+                const snapshotLines: TicketLine[] = items.map(line => ({
                   name: line.product.name,
                   qty: line.qty,
                   unitPrice: line.product.price,
@@ -226,7 +235,7 @@ export const CartPanel: React.FC = () => {
                 const saleResponse = await api.createSale({ id_negocio: String(businessId), items: saleItems, cerrar: true });
 
                 const detalle = Array.isArray(saleResponse?.detalle_venta) ? saleResponse.detalle_venta : [];
-                const lines = detalle.length
+                const lines: TicketLine[] = detalle.length
                   ? detalle.map((detalleItem: any) => {
                       const unitPrice = Number(detalleItem?.precio_unitario ?? detalleItem?.producto?.precio ?? 0);
                       const quantity = Number(detalleItem?.cantidad ?? 0);
@@ -235,12 +244,13 @@ export const CartPanel: React.FC = () => {
                         qty: quantity,
                         unitPrice,
                         total: unitPrice * quantity,
+                        note: detalleItem?.nota ?? undefined,
                         sku: detalleItem?.producto?.codigo_barras ? String(detalleItem.producto.codigo_barras) : undefined,
                       };
                     })
                   : snapshotLines;
 
-                const subtotalFromLines = lines.reduce((sum, line) => sum + line.total, 0);
+                const subtotalFromLines = lines.reduce<number>((sum, line) => sum + line.total, 0);
                 const discountValue = typeof discount === 'number' ? discount : 0;
                 const ticketTotal = saleResponse?.total != null ? Number(saleResponse.total) : Math.max(0, subtotalFromLines - discountValue);
 

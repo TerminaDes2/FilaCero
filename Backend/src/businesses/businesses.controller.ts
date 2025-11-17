@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, BadRequestException, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { BusinessesService } from './businesses.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
+import { UpdateBusinessDto } from './dto/update-business.dto';
 
 @Controller('api/businesses')
 export class BusinessesController {
@@ -31,6 +32,14 @@ export class BusinessesController {
   create(@Req() req: any, @Body() dto: CreateBusinessDto) {
     const userId = this.extractUserId(req);
     return this.service.createBusinessAndAssignOwner(userId, dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
+  update(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateBusinessDto) {
+    const userId = this.extractUserId(req);
+    return this.service.updateBusiness(userId, id, dto);
   }
 
   @Get(':id')
