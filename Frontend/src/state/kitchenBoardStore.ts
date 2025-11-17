@@ -228,25 +228,22 @@ export const useKitchenBoard = create<KitchenBoardState>()(
         const sequence = computeForwardSequence(currentRaw, targetRaw);
         if (sequence.length === 0) return;
 
+        const finalRawTarget = sequence[sequence.length - 1];
+        const isNumericId = /^\d+$/.test(id);
+        const requestId = isNumericId ? id.trim() : null;
+
         set({
           tickets: state.tickets.map((t) => (t.id === id ? { ...t, status: to } : t)),
         });
 
-        try {
-          let latestRaw = currentRaw;
-          for (const rawStatus of sequence) {
-            await api.updateKitchenOrderStatus(id, rawStatus);
-            latestRaw = rawStatus;
-          }
-
-          const finalRaw = latestRaw;
+        const finalizeTicket = (raw: PedidoEstado) => {
           set({
             tickets: get().tickets.map((t) =>
               t.id === id
                 ? {
                     ...t,
-                    rawStatus: finalRaw,
-                    status: mapRawToFront(finalRaw),
+                    rawStatus: raw,
+                    status: mapRawToFront(raw),
                     updatedAt: new Date().toISOString(),
                   }
                 : t
@@ -254,6 +251,21 @@ export const useKitchenBoard = create<KitchenBoardState>()(
             lastSyncAt: new Date().toISOString(),
             error: null,
           });
+        };
+
+        if (!requestId) {
+          finalizeTicket(finalRawTarget);
+          return;
+        }
+
+        try {
+          let latestRaw = currentRaw;
+          for (const rawStatus of sequence) {
+            await api.updateKitchenOrderStatus(requestId, rawStatus);
+            latestRaw = rawStatus;
+          }
+
+          finalizeTicket(latestRaw);
           void get().hydrateFromAPI();
         } catch (error) {
           console.error('move ticket error', error);

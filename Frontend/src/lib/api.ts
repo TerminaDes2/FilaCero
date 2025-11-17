@@ -265,12 +265,11 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-export interface RegisterResponse extends LoginResponse {
-  requiresVerification?: boolean;
-  verification?: {
-    delivery: 'email';
-    expiresAt: string;
-  };
+export interface RegisterResponse {
+  requiresVerification: true;
+  delivery: 'email';
+  expiresAt: string;
+  session: string;
 }
 
 export interface UserInfo {
@@ -342,6 +341,28 @@ export const api = {
       cache: 'no-store',
     });
   },
+
+  verifyRegister: (session: string, code: string) =>
+    apiFetch<LoginResponse>(
+      "auth/verify-register",
+      {
+        method: "POST",
+        body: JSON.stringify({ session, code }),
+        credentials: 'omit',
+        cache: 'no-store',
+      }
+    ),
+
+  resendRegister: (session: string) =>
+    apiFetch<{ delivery: 'email'; expiresAt: string; session: string }>(
+      "auth/resend-register",
+      {
+        method: "POST",
+        body: JSON.stringify({ session }),
+        credentials: 'omit',
+        cache: 'no-store',
+      }
+    ),
 
   verifyEmail: (correo_electronico: string, codigo: string) =>
     apiFetch<{ message: string; verifiedAt: string; user: AuthUser }>(
