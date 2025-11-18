@@ -24,7 +24,8 @@ CREATE TABLE "usuarios" (
   "credencial_verificada_en" timestamptz,
   "verification_token" varchar(128),
   "verification_token_expires" timestamptz,
-  "estado" varchar(20)
+  "estado" varchar(20),
+  "stripe_customer_id" varchar(255) UNIQUE
 );
 
 CREATE TABLE "negocio" (
@@ -780,4 +781,60 @@ CREATE TRIGGER trg_detalle_pedido_total_del
 -- =============================================================
 -- Fin del sistema de pedidos y notificaciones
 -- =============================================================
+
+-- =============================================================
+-- Sistema de Pagos (Stripe + SPEI)
+-- =============================================================
+
+-- Tabla metodo_pago_guardado: tarjetas tokenizadas de usuarios
+CREATE TABLE IF NOT EXISTS metodo_pago_guardado (
+  id_metodo bigserial PRIMARY KEY,
+  id_usuario bigint NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+  stripe_payment_method_id varchar(255) UNIQUE NOT NULL,
+  stripe_customer_id varchar(255) NOT NULL,
+  tipo varchar(20) NOT NULL,  -- 'card', etc.
+  marca varchar(20),           -- 'visa', 'mastercard'
+  ultima_4_digitos varchar(4) NOT NULL,
+  mes_expiracion int,
+  anio_expiracion int,
+  nombre_tarjeta varchar(100),
+  is_default boolean DEFAULT false,
+  activo boolean DEFAULT true,
+  creado_en timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_metodo_pago_usuario_activo ON metodo_pago_guardado(id_usuario, activo);
+CREATE INDEX IF NOT EXISTS idx_metodo_pago_stripe_customer ON metodo_pago_guardado(stripe_customer_id);
+
+-- Tabla transaccion_pago: bitácora de pagos procesados
+CREATE TABLE IF NOT EXISTS transaccion_pago (
+  id_transaccion bigserial PRIMARY KEY,
+  id_pedido bigint NOT NULL REFERENCES pedido(id_pedido) ON DELETE CASCADE,
+  stripe_payment_id varchar(255) UNIQUE,
+  stripe_customer_id varchar(255),
+  monto numeric(12,2) NOT NULL,
+  moneda varchar(3) DEFAULT 'mxn',
+  estado varchar(30) DEFAULT 'pending',  -- 'pending', 'succeeded', 'failed', 'canceled', 'refunded', 'manual_confirmed'
+  metodo_pago varchar(50) NOT NULL,
+  ultima_4_digitos varchar(4),
+  marca_tarjeta varchar(20),
+  tipo_tarjeta varchar(20),
+  error_codigo varchar(50),
+  error_mensaje text,
+  metadata jsonb,
+  stripe_fee numeric(12,2),
+  net_amount numeric(12,2),
+  refund_id varchar(255),
+  refunded_at timestamptz,
+  creado_en timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_transaccion_pago_pedido ON transaccion_pago(id_pedido);
+CREATE INDEX IF NOT EXISTS idx_transaccion_pago_estado ON transaccion_pago(estado);
+CREATE INDEX IF NOT EXISTS idx_transaccion_pago_creado ON transaccion_pago(creado_en);
+
+-- =============================================================
+-- Fin del sistema de pagos
+-- =============================================================
+
 

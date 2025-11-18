@@ -61,6 +61,14 @@ const TARGET_RAW_BY_FRONT: Record<KitchenStatus, PedidoEstado> = {
   served: 'entregado',
 };
 
+function sortTickets(tickets: Ticket[]): Ticket[] {
+  return [...tickets].sort((a, b) => {
+    const statusDiff = FRONT_ORDER.indexOf(a.status) - FRONT_ORDER.indexOf(b.status);
+    if (statusDiff !== 0) return statusDiff;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
+}
+
 function safeDate(input: unknown): string {
   if (!input) return new Date().toISOString();
   const date = input instanceof Date
@@ -195,14 +203,8 @@ export const useKitchenBoard = create<KitchenBoardState>()(
             });
           }
 
-          nextTickets.sort((a, b) => {
-            const statusDiff = FRONT_ORDER.indexOf(a.status) - FRONT_ORDER.indexOf(b.status);
-            if (statusDiff !== 0) return statusDiff;
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          });
-
           set({
-            tickets: nextTickets,
+            tickets: sortTickets(nextTickets),
             loading: false,
             lastSyncAt: new Date().toISOString(),
             error: null,
@@ -226,25 +228,22 @@ export const useKitchenBoard = create<KitchenBoardState>()(
         const sequence = computeForwardSequence(currentRaw, targetRaw);
         if (sequence.length === 0) return;
 
+        const finalRawTarget = sequence[sequence.length - 1];
+        const isNumericId = /^\d+$/.test(id);
+        const requestId = isNumericId ? id.trim() : null;
+
         set({
           tickets: state.tickets.map((t) => (t.id === id ? { ...t, status: to } : t)),
         });
 
-        try {
-          let latestRaw = currentRaw;
-          for (const rawStatus of sequence) {
-            await api.updateKitchenOrderStatus(id, rawStatus);
-            latestRaw = rawStatus;
-          }
-
-          const finalRaw = latestRaw;
+        const finalizeTicket = (raw: PedidoEstado) => {
           set({
             tickets: get().tickets.map((t) =>
               t.id === id
                 ? {
                     ...t,
-                    rawStatus: finalRaw,
-                    status: mapRawToFront(finalRaw),
+                    rawStatus: raw,
+                    status: mapRawToFront(raw),
                     updatedAt: new Date().toISOString(),
                   }
                 : t
@@ -252,6 +251,21 @@ export const useKitchenBoard = create<KitchenBoardState>()(
             lastSyncAt: new Date().toISOString(),
             error: null,
           });
+        };
+
+        if (!requestId) {
+          finalizeTicket(finalRawTarget);
+          return;
+        }
+
+        try {
+          let latestRaw = currentRaw;
+          for (const rawStatus of sequence) {
+            await api.updateKitchenOrderStatus(requestId, rawStatus);
+            latestRaw = rawStatus;
+          }
+
+          finalizeTicket(latestRaw);
           void get().hydrateFromAPI();
         } catch (error) {
           console.error('move ticket error', error);
@@ -325,7 +339,26 @@ export const useKitchenBoard = create<KitchenBoardState>()(
 );
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('pos:new-sale', () => {
+  window.addEventListener('pos:new-sale', (event: Event) => {
+    const custom = event as CustomEvent<any>;
+    const payload = custom?.detail;
+    const pedido = payload?.pedido ?? null;
+
+    if (pedido) {
+      const ticket = mapPedidoToTicket(pedido);
+      if (ticket) {
+        useKitchenBoard.setState((state) => {
+          const filtered = state.tickets.filter((t) => t.id !== ticket.id);
+          return {
+            tickets: sortTickets([ticket, ...filtered]),
+            lastSyncAt: new Date().toISOString(),
+            error: null,
+          };
+        });
+        return;
+      }
+    }
+
     void useKitchenBoard.getState().hydrateFromAPI();
   });
 }

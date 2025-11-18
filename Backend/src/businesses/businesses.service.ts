@@ -2,6 +2,7 @@
 
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -9,6 +10,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
+import { UpdateBusinessDto } from './dto/update-business.dto';
 
 interface PublicBusinessFilters {
   search?: string;
@@ -115,6 +117,79 @@ export class BusinessesService {
     }
   }
 
+  async updateBusiness(userId: string, businessId: string, dto: UpdateBusinessDto) {
+    const uid = this.parseBigInt(userId, 'Usuario inválido');
+    const nid = this.parseBigInt(businessId, 'Negocio inválido');
+
+    const negocio = await (this.prisma as any).negocio.findUnique({ where: { id_negocio: nid } });
+    if (!negocio) {
+      throw new NotFoundException('Negocio no encontrado');
+    }
+
+    const isOwner = negocio.owner_id !== null && negocio.owner_id !== undefined && BigInt(negocio.owner_id) === uid;
+    if (!isOwner) {
+      const assignment = await (this.prisma as any).usuarios_negocio.findFirst({
+        where: { id_usuario: uid, id_negocio: nid },
+      });
+      if (!assignment) {
+        throw new ForbiddenException('No tienes permisos para actualizar este negocio');
+      }
+    }
+
+    const data: Record<string, unknown> = {};
+
+    if (dto.nombre !== undefined) {
+      const nombre = dto.nombre.trim();
+      if (nombre.length < 2) {
+        throw new BadRequestException('Nombre de negocio inválido');
+      }
+      data.nombre = nombre;
+    }
+
+    if (dto.direccion !== undefined) {
+      data.direccion = this.normalizeOptional(dto.direccion, 255);
+    }
+
+    if (dto.telefono !== undefined) {
+      data.telefono = this.normalizeOptional(dto.telefono, 30);
+    }
+
+    if (dto.correo !== undefined) {
+      data.correo = this.normalizeOptional(dto.correo, 254);
+    }
+
+    if (dto.logo !== undefined) {
+      data.logo = this.normalizeOptional(dto.logo, 2048);
+    }
+
+    if (dto.hero_image_url !== undefined) {
+      data.hero_image_url = this.normalizeOptional(dto.hero_image_url, 2048);
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.hydrateBusinessResponse(negocio);
+    }
+
+    try {
+      const updated = await (this.prisma as any).negocio.update({
+        where: { id_negocio: nid },
+        data,
+      });
+      return this.hydrateBusinessResponse(updated);
+    } catch (e: any) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          throw new BadRequestException('Ya existe un negocio con ese nombre.');
+        }
+        if (e.code === 'P2025') {
+          throw new NotFoundException('Negocio no encontrado');
+        }
+      }
+      console.error('Error actualizando negocio:', e);
+      throw new InternalServerErrorException('Error interno al actualizar el negocio');
+    }
+  }
+
   // Listar negocios asociados a un usuario: owner o empleado
   async listBusinessesForUser(userId: string) {
     let uid: bigint;
@@ -165,6 +240,37 @@ export class BusinessesService {
       console.error('❌ ERROR en getBusinessById:', err);
       if (err instanceof NotFoundException || err instanceof BadRequestException) throw err;
       throw new InternalServerErrorException('Error interno al obtener el negocio');
+    }
+  }
+
+  private hydrateBusinessResponse(raw: any) {
+    if (!raw) return raw;
+    return {
+      ...raw,
+      id_negocio: Number(raw.id_negocio),
+      owner_id: raw.owner_id !== null && raw.owner_id !== undefined ? Number(raw.owner_id) : null,
+    };
+  }
+
+  private normalizeOptional(value: string | undefined, maxLength: number): string | null {
+    if (value === undefined || value === null) {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    if (trimmed.length > maxLength) {
+      throw new BadRequestException(`El valor supera la longitud máxima de ${maxLength} caracteres.`);
+    }
+    return trimmed;
+  }
+
+  private parseBigInt(value: string, message: string): bigint {
+    try {
+      return BigInt(value);
+    } catch {
+      throw new BadRequestException(message);
     }
   }
 }

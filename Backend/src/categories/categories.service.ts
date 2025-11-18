@@ -38,15 +38,13 @@ export class CategoriesService {
     const prisma = this.prismaUnsafe;
     // Fallback: si el cliente Prisma aún no tiene el modelo (no migrado / no generado) devolver categorías globales.
     if (!prisma.negocio_categoria) {
-      const globalCats = await prisma.categoria.findMany({ orderBy: { id_categoria: 'asc' } });
-      return globalCats.map((c: any) => ({ id_categoria: c.id_categoria, nombre: c.nombre, negocio_id: null }));
+      return this.getGlobalCategories();
     }
 
     const negocioIds = await this.resolveUserBusinessIds(userId);
     if (!negocioIds.length) {
       // Sin negocios: devolver globales (sin asociación) para no romper UI.
-      const globalCats = await prisma.categoria.findMany({ orderBy: { id_categoria: 'asc' } });
-      return globalCats.map((c: any) => ({ id_categoria: c.id_categoria, nombre: c.nombre, negocio_id: null }));
+      return this.getGlobalCategories();
     }
 
     let targetIds = negocioIds;
@@ -59,16 +57,23 @@ export class CategoriesService {
       }
     }
 
-    const links = await prisma.negocio_categoria.findMany({
-      where: { id_negocio: { in: targetIds } },
-      include: { categoria: true },
-      orderBy: { id_categoria: 'asc' },
-    });
+    let links: any[] = [];
+    try {
+      links = await prisma.negocio_categoria.findMany({
+        where: { id_negocio: { in: targetIds } },
+        include: { categoria: true },
+        orderBy: { id_categoria: 'asc' },
+      });
+    } catch (error) {
+      if (this.isMissingLinkTableError(error)) {
+        return this.getGlobalCategories();
+      }
+      throw error;
+    }
 
     // Si no hay enlaces (p.ej. después de migrar pero sin asociación) devolver globales para evitar lista vacía confusa.
     if (!links.length) {
-      const globalCats = await prisma.categoria.findMany({ orderBy: { id_categoria: 'asc' } });
-      return globalCats.map((c: any) => ({ id_categoria: c.id_categoria, nombre: c.nombre, negocio_id: null }));
+      return this.getGlobalCategories();
     }
 
     return links.map((l: any) => ({
@@ -215,7 +220,13 @@ export class CategoriesService {
         const code = this.extractPrismaCode(e);
         if (code === 'P2002') {
           // ya existe vínculo, ignorar
-        } else throw e;
+          continue;
+        }
+        if (this.isMissingLinkTableError(e)) {
+          // La tabla aún no existe (entorno previo a migración). Cancelar silenciosamente para evitar 500.
+          return;
+        }
+        throw e;
       }
     }
   }
@@ -228,5 +239,26 @@ export class CategoriesService {
     } catch {
       throw new BadRequestException(message);
     }
+  }
+
+  private async getGlobalCategories() {
+    const prisma = this.prismaUnsafe;
+    const globalCats = await prisma.categoria.findMany({ orderBy: { id_categoria: 'asc' } });
+    return globalCats.map((c: any) => ({
+      id_categoria: c.id_categoria,
+      nombre: c.nombre,
+      negocio_id: null,
+    }));
+  }
+
+  private isMissingLinkTableError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const code = this.extractPrismaCode(error);
+    if (code === 'P2021') return true;
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.includes('negocio_categoria')) {
+      return true;
+    }
+    return false;
   }
 }

@@ -18,6 +18,7 @@ import { EmployeesModule } from './employees/employees.module';
 import { EmailModule } from './email/email.module';
 import { MetricsModule } from './metrics/metrics.module'; // <-- 1. Importa el módulo
 import { SmsModule } from './sms/sms.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { SmsModule } from './sms/sms.module';
     PedidosModule, // módulo de pedidos online
     MetricsModule, // <-- 2. Añádelo a la lista
     SmsModule, // módulo de SMS (Twilio Verify)
+    PaymentsModule, // módulo de pagos (Stripe)
   ],
   controllers: [HealthController],
   providers: [],

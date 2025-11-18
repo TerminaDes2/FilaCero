@@ -51,6 +51,29 @@ export default function UserProfilePage() {
     Boolean(hydratedUser?.credencial_verificada),
   ].filter(Boolean).length;
 
+  const verifications = {
+    email: hydratedUser.verifications?.email ?? (hydratedUser as any).correo_verificado ?? false,
+    sms: hydratedUser.verifications?.sms ?? (hydratedUser as any).sms_verificado ?? false,
+    credential: hydratedUser.verifications?.credential ?? (hydratedUser as any).credencial_verificada ?? false,
+  };
+  const verificationTimestamps = hydratedUser.verificationTimestamps ?? {
+    email: (hydratedUser as any).correo_verificado_en ?? null,
+    sms: (hydratedUser as any).sms_verificado_en ?? null,
+    credential: (hydratedUser as any).credencial_verificada_en ?? null,
+  };
+  const verifiedChannels = (['email', 'sms', 'credential'] as const).filter((key) => verifications[key]).length;
+
+  const formatVerificationDate = (value: string | Date | null | undefined) => {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const lastVerificationDate = formatVerificationDate(
+    verificationTimestamps.credential || verificationTimestamps.sms || verificationTimestamps.email,
+  );
+
   const handleScrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -117,7 +140,13 @@ export default function UserProfilePage() {
                   <div className="rounded-2xl border border-[var(--fc-teal-100)] bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs uppercase tracking-[0.28em] text-[var(--fc-teal-500)]">Verificaciones</p>
                     <p className="mt-1 text-2xl font-semibold text-slate-900">{verifiedChannels}/3</p>
-                    <p className="text-xs text-slate-500">Email, teléfono y credencial</p>
+                    <p className="text-xs text-slate-500">
+                      {verifiedChannels === 3
+                        ? lastVerificationDate
+                          ? `Completadas el ${lastVerificationDate}`
+                          : 'Todos los pasos validados'
+                        : 'Email, teléfono y credencial'}
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-[var(--fc-brand-100)] bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs uppercase tracking-[0.28em] text-[var(--fc-brand-500)]">Último pedido</p>

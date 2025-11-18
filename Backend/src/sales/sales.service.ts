@@ -36,7 +36,7 @@ export class SalesService {
     // 1. Normalizamos los items (agrupa IDs duplicados)
     const itemsNormalizados = this.normalizeItems(dto.items);
 
-    const ventaId = await this.prisma.$transaction(async (tx) => {
+    const transactionResult = await this.prisma.$transaction(async (tx) => {
       
       // 2. Validamos items, stock y OBTENEMOS precios de la BD
       const itemsListos = await this.prepareItems(tx, negocioId, itemsNormalizados);
@@ -111,10 +111,64 @@ export class SalesService {
         });
       }
 
-      return venta.id_venta;
+      let pedidoCreado: any = null;
+      if (cerrar) {
+        pedidoCreado = await tx.pedido.create({
+          data: {
+            id_negocio: negocioId,
+            id_usuario: usuarioId,
+            id_tipo_pago: tipoPagoId,
+            estado: 'pendiente',
+            total: totalVenta,
+            detalle_pedido: {
+              create: itemsListos.map((item) => ({
+                id_producto: item.idProducto,
+                cantidad: item.cantidad,
+                precio_unitario: item.precioUnitario,
+              })),
+            },
+          },
+          include: {
+            detalle_pedido: {
+              include: {
+                producto: {
+                  select: {
+                    id_producto: true,
+                    nombre: true,
+                    precio: true,
+                  },
+                },
+              },
+            },
+            negocio: {
+              select: {
+                id_negocio: true,
+                nombre: true,
+              },
+            },
+            usuario: {
+              select: {
+                id_usuario: true,
+                nombre: true,
+              },
+            },
+          },
+        });
+      }
+
+      return { ventaId: venta.id_venta, pedido: pedidoCreado };
     });
 
-    return this.findOne(ventaId.toString());
+    const venta = await this.findOne(transactionResult.ventaId.toString());
+
+    if (transactionResult.pedido) {
+      return {
+        ...venta,
+        pedido: transactionResult.pedido,
+      };
+    }
+
+    return venta;
   }
   // --- FIN DE LA MODIFICACIÓN ---
 

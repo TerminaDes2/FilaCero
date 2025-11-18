@@ -7,35 +7,20 @@ import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
 import { ProductGrid } from '../../src/components/pos/products/ProductGrid';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import CategoryFilterButton from '../../src/components/pos/controls/CategoryFilterButton';
-import { usePOSView } from '../../src/state/posViewStore';
 import { KitchenBoard } from '../../src/components/pos/kitchen/KitchenBoard';
 import { useKitchenBoard } from '../../src/state/kitchenBoardStore';
+import { usePOSView } from '../../src/state/posViewStore';
 // Categories CRUD lives on its own page
 import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
-import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import { useUserStore } from '../../src/state/userStore';
 import { useBusinessStore } from '../../src/state/businessStore';
-// Redirección directa cuando falte negocio activo
+import { api } from '../../src/lib/api';
+import { BusinessPickerDialog } from '../../src/components/business/BusinessPickerDialog';
 // Categories store not needed here
-
-// Mock product dataset (frontend only)
-const MOCK_PRODUCTS: POSProduct[] = [
-  { id: 'p1', name: 'Café Latte', category: 'bebidas', price: 48, stock: 50, description: 'Shot espresso y leche vaporizada' },
-  { id: 'p2', name: 'Café Americano', category: 'bebidas', price: 35, stock: 80, description: 'Espresso diluido' },
-  { id: 'p3', name: 'Sandwich Jamón', category: 'alimentos', price: 65, stock: 25, description: 'Jamón, queso y pan artesanal' },
-  { id: 'p4', name: 'Galleta Chocochips', category: 'postres', price: 28, stock: 60, description: 'Galleta casera con chispas' },
-  { id: 'p5', name: 'Brownie Nuez', category: 'postres', price: 40, stock: 30, description: 'Brownie intenso con nueces' },
-  { id: 'p6', name: 'Té Verde', category: 'bebidas', price: 32, stock: 40, description: 'Infusión suave antioxidante' },
-  { id: 'p7', name: 'Mollete', category: 'alimentos', price: 42, stock: 15, description: 'Pan, frijol, queso gratinado' },
-  { id: 'p8', name: 'Ensalada César', category: 'alimentos', price: 79, stock: 12, description: 'Clásica con aderezo casero' },
-  { id: 'p9', name: 'Pay de Limón', category: 'postres', price: 55, stock: 18, description: 'Cremoso y cítrico' },
-  { id: 'p10', name: 'Capuccino', category: 'bebidas', price: 46, stock: 40, description: 'Espuma sedosa y espresso' }
-];
 
 export default function POSPage() {
   const settings = useSettingsStore();
@@ -44,11 +29,13 @@ export default function POSPage() {
   const { categories: storeCategories, selected, setSelected } = useCategoriesStore();
   const fetchCategories = () => useCategoriesStore.getState().fetchCategories();
   const categories = useMemo(() => storeCategories.map(c => c.name), [storeCategories]);
-  const { view: posView } = usePOSView();
-  const { hydrateFromAPI } = useKitchenBoard();
+  const posView = usePOSView((state) => state.view);
+  const setPosView = usePOSView((state) => state.setView);
+  const hydrateFromAPI = useKitchenBoard((state) => state.hydrateFromAPI);
   const { user } = useUserStore();
-  const router = useRouter();
-  const { activeBusiness } = useBusinessStore();
+  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const [needBusiness, setNeedBusiness] = useState(false);
+  const [bizList, setBizList] = useState<any[]>([]);
 
   // Fetch categories (store handles normalization & business scoping)
   useEffect(() => {
@@ -56,15 +43,14 @@ export default function POSPage() {
       fetchCategories().catch(() => {});
     }
   }, [storeCategories.length]);
-  
-  // Re-fetch when returning to POS sell view (in case login just happened or business changed)
+
   useEffect(() => {
-    if (posView === 'sell' && storeCategories.length === 0) {
-      fetchCategories().catch(() => {});
+    if (viewParam === 'kitchen') {
+      setPosView('kitchen');
+      router.replace('/pos', { scroll: false });
     }
-  }, [posView, storeCategories.length]);
-  
-  // Hydrate when switching into kitchen view
+  }, [viewParam, setPosView, router]);
+
   useEffect(() => {
     if (posView === 'kitchen') {
       void hydrateFromAPI();
@@ -124,7 +110,7 @@ export default function POSPage() {
               <KitchenBoard />
             </div>
           ) : (
-            <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
+          <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
               {/* Products section */}
               <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
                 {/* Category filter moved into header controls */}
@@ -152,7 +138,7 @@ export default function POSPage() {
                   <CartPanel />
                 </div>
               </section>
-            </div>
+          </div>
           )}
         </main>
         {/* Fin del layout POS */}
@@ -160,5 +146,3 @@ export default function POSPage() {
     </CartProvider>
   );
 }
-
-// Removed stray styled-jsx block; Tailwind classes applied directly on the link.
