@@ -69,72 +69,85 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
 
   if (loading) return null;
 
-  return (
-    <header className={`fixed top-0 left-0 right-0 z-40 border-b border-slate-200/80 ${scrolled ? "bg-white/95 shadow" : "bg-white/80"} backdrop-blur bg-[radial-gradient(1200px_160px_at_10%_-60px,rgba(233,74,111,0.08),transparent_60%),radial-gradient(900px_140px_at_90%_-70px,rgba(76,193,173,0.08),transparent_60%)]`}> 
-      <nav className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 h-14 flex items-center gap-3">
-        {/* Left: Brand */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image
-            src="/LogoFilaCero.svg"
-            alt="FilaCero"
-            width={28}
-            height={28}
-            priority
-            className="w-7 h-7"
-          />
-          <span className="hidden sm:inline text-[1.25rem] leading-none font-extrabold select-none">
-            <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
-            <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
-          </span>
-        </Link>
+  const showControls = isAuthenticated;
 
-        {/* Middle: Search */}
-        <div className="flex-1 min-w-0">
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </span>
-            <input
-              value={query}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Buscar en la tienda"
-              className="w-full h-10 pl-8 pr-8 rounded-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-slate-300 outline-none text-sm text-slate-800 placeholder:text-slate-400 transition"
+  return (
+    <header className={`fixed top-0 left-0 right-0 z-40 border-b border-slate-200/80 ${scrolled ? "bg-white/95 shadow" : "bg-white/80"} backdrop-blur bg-[radial-gradient(1200px_160px_at_10%_-60px,rgba(233,74,111,0.08),transparent_60%),radial-gradient(900px_140px_at_90%_-70px,rgba(76,193,173,0.08),transparent_60%)]`}>
+      <nav className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 h-14 flex items-center gap-4">
+        {/* Left: Brand + Store tag */}
+        <div className="flex items-center gap-3 shrink-0">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/LogoFilaCero.svg"
+              alt="FilaCero"
+              width={28}
+              height={28}
+              priority
+              className="w-7 h-7"
             />
-            {query && (
-              <button
-                onClick={() => {
-                  if (debounceRef.current) {
-                    clearTimeout(debounceRef.current);
-                  }
-                  setQuery("");
-                  applySearch("");
-                }}
-                aria-label="Limpiar búsqueda"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            )}
-          </div>
+            <span className="hidden sm:inline text-[1.25rem] leading-none font-extrabold select-none">
+              <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
+              <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
+            </span>
+          </Link>
+          <Link
+            href="/shop"
+            className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 hover:text-[var(--fc-brand-600)] hover:border-[var(--fc-brand-200)] transition"
+          >
+            Tienda
+          </Link>
         </div>
 
-        {/* Right: actions */}
-        <div className="ml-1 flex items-center gap-2">
-          {/* Bell */}
-          <button aria-label="Notifications" className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 5 3 9H3c0-4 3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          </button>
-          {/* Cart */}
-          <button onClick={openCart} className="relative inline-flex items-center gap-2 pl-3 pr-3 h-10 rounded-full bg-[var(--fc-brand-600)] text-white hover:bg-[var(--fc-brand-500)]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            <span className="text-sm font-semibold">{items.length}</span>
-            {items.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white text-[11px] font-bold text-[var(--fc-brand-600)] grid place-items-center shadow-sm">
-                {items.length}
+        {/* Middle: Search (only for authenticated users) */}
+        {showControls && (
+          <div className="flex-1 min-w-0">
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </span>
-            )}
-          </button>
-          {/* Auth */}
+              <input
+                value={query}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Buscar en la tienda"
+                className="w-full h-10 pl-8 pr-8 rounded-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-slate-300 outline-none text-sm text-slate-800 placeholder:text-slate-400 transition"
+              />
+              {query && (
+                <button
+                  onClick={() => {
+                    if (debounceRef.current) {
+                      clearTimeout(debounceRef.current);
+                    }
+                    setQuery("");
+                    applySearch("");
+                  }}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Right: actions */}
+        <div className={`ml-1 flex items-center gap-2 ${showControls ? "" : "ml-auto"}`}>
+          {showControls && (
+            <>
+              <button aria-label="Notifications" className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 5 3 9H3c0-4 3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              </button>
+              <button onClick={openCart} className="relative inline-flex items-center gap-2 pl-3 pr-3 h-10 rounded-full bg-[var(--fc-brand-600)] text-white hover:bg-[var(--fc-brand-500)]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <span className="text-sm font-semibold">{items.length}</span>
+                {items.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white text-[11px] font-bold text-[var(--fc-brand-600)] grid place-items-center shadow-sm">
+                    {items.length}
+                  </span>
+                )}
+              </button>
+            </>
+          )}
           {isAuthenticated ? (
             <UserDropdown />
           ) : (

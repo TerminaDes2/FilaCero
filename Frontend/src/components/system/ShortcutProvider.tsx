@@ -109,7 +109,7 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           });
           if (ok) {
             try { reset(); } catch {}
-            router.push('/');
+            router.replace('/auth/login');
           }
         })();
         return;

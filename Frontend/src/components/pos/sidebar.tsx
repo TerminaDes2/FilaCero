@@ -53,6 +53,19 @@ const items: NavItem[] = [
 		)
 	},
 	{
+		key: 'cashout',
+		label: 'Corte de caja',
+		href: '/pos/cashout',
+		icon: (
+			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
+				<rect x="3" y="6" width="18" height="12" rx="2" />
+				<path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M10 14h4" />
+				<circle cx="6.5" cy="12" r="0.75" fill="currentColor" />
+				<circle cx="17.5" cy="12" r="0.75" fill="currentColor" />
+			</svg>
+		)
+	},
+	{
 		key: 'kitchen',
 		label: 'Cocina',
 		href: '/pos/kitchen',
