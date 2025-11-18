@@ -45,11 +45,7 @@ export default function UserProfilePage() {
 
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
-  const verifiedChannels = [
-    Boolean(hydratedUser?.correo_verificado),
-    Boolean(hydratedUser?.sms_verificado),
-    Boolean(hydratedUser?.credencial_verificada),
-  ].filter(Boolean).length;
+  
 
   const verifications = {
     email: hydratedUser.verifications?.email ?? (hydratedUser as any).correo_verificado ?? false,
