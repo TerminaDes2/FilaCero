@@ -32,7 +32,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ withWordmark = true, class
   if (asLink) {
     return (
       <Link 
-        href="/" 
+        href="/shop" 
         aria-label="Inicio - FilaCero" 
         className="inline-flex hover:opacity-80 transition-opacity"
       >

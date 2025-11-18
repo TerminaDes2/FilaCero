@@ -6,19 +6,13 @@ import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useUserStore } from '../../../src/state/userStore';
 import { useSettingsStore } from '../../../src/state/settingsStore';
 import { useConfirm } from '../../../src/components/system/ConfirmProvider';
-
+import { BrandLogo } from '../../../src/components/BrandLogo';
 type SectionKey =
   | 'business'
   | 'appearance'
-  | 'pos'
-  | 'receipts'
   | 'devices'
   | 'payments'
-  | 'taxes'
-  | 'staff'
   | 'notifications'
-  | 'shortcuts'
-  | 'data'
   | 'locale'
   | 'account'
   | 'about';
@@ -39,15 +33,8 @@ const icon = (d: string) => (
 const sections: SectionDef[] = [
   { key: 'business', label: 'Negocio', desc: 'Nombre, logo y datos fiscales', icon: icon('M4 7h16M4 12h16M4 17h10') },
   { key: 'appearance', label: 'Apariencia', desc: 'Tema, acentos y densidad', icon: icon('M4 6h16v12H4z') },
-  { key: 'pos', label: 'Preferencias POS', desc: 'Operación diaria y accesos rápidos', icon: icon('M6 3h12l3 6H3z M3 9h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z') },
-  { key: 'receipts', label: 'Tickets/Facturas', desc: 'Formato y contenido de tickets', icon: icon('M7 8h10M7 12h10M7 16h7') },
   { key: 'devices', label: 'Dispositivos', desc: 'Impresoras y terminales', icon: icon('M4 7h16v10H4z M8 17v2h8v-2') },
   { key: 'payments', label: 'Pagos', desc: 'Métodos y propinas', icon: icon('M3 7h18v10H3z M7 7v10') },
-  { key: 'taxes', label: 'Impuestos', desc: 'Tasas y desglose', icon: icon('M7 17h10M7 12h10M7 7h10') },
-  { key: 'staff', label: 'Staff y roles', desc: 'Permisos y acceso', icon: icon('M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-7 2-7 4v1h14v-1c0-2-3-4-7-4Z') },
-  { key: 'notifications', label: 'Notificaciones', desc: 'Alertas y resúmenes', icon: icon('M12 19a3 3 0 0 0 3-3H9a3 3 0 0 0 3 3Zm6-5V11a6 6 0 1 0-12 0v3l-2 2h16Z') },
-  { key: 'shortcuts', label: 'Atajos', desc: 'Productividad', icon: icon('M7 7h10v10H7z M9 9h6v6H9z') },
-  { key: 'data', label: 'Datos y copia', desc: 'Exportar/Importar', icon: icon('M4 17h16M12 3v10m0 0 3-3m-3 3-3-3') },
   { key: 'locale', label: 'Idioma y región', desc: 'Moneda y formatos', icon: icon('M12 3a9 9 0 1 0 9 9h-9V3z') },
   { key: 'account', label: 'Cuenta y seguridad', desc: 'Sesiones y contraseña', icon: icon('M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-7 2-7 4v1h14v-1c0-2-3-4-7-4Z') },
   { key: 'about', label: 'Acerca de', desc: 'Versión y legal', icon: icon('M12 7v6M12 17h.01') },
@@ -114,8 +101,7 @@ export default function POSSettingsPage() {
         {/* Header row */}
         <div className='px-5 relative z-20 mb-0.5 flex items-start justify-between gap-4'>
           <h1 className='font-extrabold tracking-tight text-3xl md:text-4xl leading-tight select-none'>
-            <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
-            <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
+            <span style={{ color: 'var(--fc-brand-600)' }}>Configuración</span>
           </h1>
           <TopRightInfo businessName='Configuración' />
         </div>
@@ -204,15 +190,9 @@ export default function POSSettingsPage() {
               <div className='flex-1 min-h-0 overflow-y-auto pr-1 custom-scroll-area'>
                 {active === 'business' && <BusinessSection />}
                 {active === 'appearance' && <AppearanceSection />}
-                {active === 'pos' && <PosPrefsSection />}
-                {active === 'receipts' && <ReceiptsSection />}
                 {active === 'devices' && <DevicesSection />}
                 {active === 'payments' && <PaymentsSection />}
-                {active === 'taxes' && <TaxesSection />}
-                {active === 'staff' && <StaffSection />}
                 {active === 'notifications' && <NotificationsSection />}
-                {active === 'shortcuts' && <ShortcutsSection />}
-                {active === 'data' && <DataSection />}
                 {active === 'locale' && <LocaleSection />}
                 {active === 'account' && <AccountSection onLogout={handleLogout} />}
                 {active === 'about' && <AboutSection />}
@@ -415,64 +395,6 @@ function AppearanceSection() {
   );
 }
 
-function PosPrefsSection() {
-  const { showStock, confirmRemove, defaultView, set } = useSettingsStore();
-  return (
-    <div className='space-y-4'>
-      <Card title='Operación'>
-        <Row label='Vista predeterminada'>
-          <div className='flex items-center gap-2'>
-            <button onClick={()=> set({defaultView:'grid'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='grid'?'bg-[var(--pos-accent-green)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Grid</button>
-            <button onClick={()=> set({defaultView:'list'})} className={`px-3 py-2 rounded-lg text-[13px] ${defaultView==='list'?'bg-[var(--pos-accent-green)] text-white':'bg-[rgba(0,0,0,0.06)]'}`}>Lista</button>
-          </div>
-        </Row>
-        <Row label='Mostrar inventario'>
-          <Toggle checked={showStock} onChange={(v)=> set({showStock: v})} />
-        </Row>
-        <Row label='Confirmar antes de eliminar'>
-          <Toggle checked={confirmRemove} onChange={(v)=> set({confirmRemove: v})} />
-        </Row>
-      </Card>
-      <Card title='Accesos rápidos'>
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-2'>
-          {['Nueva venta','Abrir cajón','Reimprimir ticket'].map(a=> (
-            <button key={a} className='px-3 py-2 rounded-lg text-[13px]' style={{background:'rgba(0,0,0,0.06)'}}>{a}</button>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function ReceiptsSection() {
-  const [logo, setLogo] = useState(true);
-  const [taxBreakdown, setTaxBreakdown] = useState(true);
-  return (
-    <div className='space-y-4'>
-      <Card title='Formato de ticket'>
-        <Row label='Ancho papel'>
-          <Select defaultValue='80mm'>
-            <option>58mm</option>
-            <option>80mm</option>
-          </Select>
-        </Row>
-        <Row label='Mostrar logo en ticket'>
-          <Toggle checked={logo} onChange={setLogo} />
-        </Row>
-        <Row label='Desglose de impuestos'>
-          <Toggle checked={taxBreakdown} onChange={setTaxBreakdown} />
-        </Row>
-        <Row label='Encabezado'>
-          <Input placeholder='Texto de encabezado' />
-        </Row>
-        <Row label='Pie de página'>
-          <Input placeholder='Gracias por su compra' />
-        </Row>
-      </Card>
-    </div>
-  );
-}
-
 function DevicesSection() {
   const confirm = useConfirm();
   const handleRegister = async () => {
@@ -518,52 +440,6 @@ function PaymentsSection() {
   );
 }
 
-function TaxesSection() {
-  const confirm = useConfirm();
-  const handleNewTax = async () => {
-    const ok = await confirm({ title: 'Nueva tasa de impuesto', description: 'Crear una nueva tasa de impuesto para el POS.', confirmText: 'Crear', cancelText: 'Cancelar' });
-    if (!ok) return;
-  };
-  return (
-    <div className='space-y-4'>
-      <Card title='Tasas de impuesto' right={<button onClick={handleNewTax} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Nueva tasa</button>}>
-        <div className='rounded-lg p-3' style={{background:'rgba(0,0,0,0.04)'}}>
-          <div className='text-[13px]' style={{color:'var(--pos-text-muted)'}}>Sin tasas definidas</div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function StaffSection() {
-  const confirm = useConfirm();
-  const handleInvite = async () => {
-    const ok = await confirm({ title: 'Invitar miembro', description: 'Enviar invitación a un nuevo miembro del equipo.', confirmText: 'Invitar', cancelText: 'Cancelar' });
-    if (!ok) return;
-  };
-  const handleManage = async () => {
-    const ok = await confirm({ title: 'Gestionar miembro', description: 'Abrir gestión del miembro seleccionado.', confirmText: 'Continuar', cancelText: 'Cancelar' });
-    if (!ok) return;
-  };
-  return (
-    <div className='space-y-4'>
-      <Card title='Miembros del equipo' right={<button onClick={handleInvite} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Invitar</button>}>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-          {[1,2,3].map(i=> (
-            <div key={i} className='rounded-lg p-3 flex items-center justify-between' style={{background:'rgba(0,0,0,0.04)'}}>
-              <div>
-                <div className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>Miembro {i}</div>
-                {/* Rol dinámico mostrado arriba via TopRightInfo */}
-              </div>
-              <button onClick={handleManage} className='px-3 py-1.5 text-[12px] rounded-md' style={{background:'rgba(0,0,0,0.06)'}}>Gestionar</button>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
 function NotificationsSection() {
   const [daily, setDaily] = useState(true);
   const [lowStock, setLowStock] = useState(true);
@@ -578,50 +454,7 @@ function NotificationsSection() {
   );
 }
 
-function ShortcutsSection() {
-  return (
-    <div className='space-y-4'>
-      <Card title='Atajos de teclado'>
-        <div className='rounded-lg p-3' style={{background:'rgba(0,0,0,0.04)'}}>
-          <ul className='text-[13px]' style={{color:'var(--pos-text-heading)'}}>
-            <li className='flex justify-between py-1'><span>Abrir búsqueda</span><span className='opacity-70'>⌘K</span></li>
-            <li className='flex justify-between py-1'><span>Nueva venta</span><span className='opacity-70'>N</span></li>
-            <li className='flex justify-between py-1'><span>Agregar al carrito</span><span className='opacity-70'>A</span></li>
-          </ul>
-        </div>
-      </Card>
-    </div>
-  );
-}
 
-function DataSection() {
-  const confirm = useConfirm();
-  const handleExport = async () => {
-    const ok = await confirm({ title: 'Exportar datos', description: 'Exportarás los datos visibles del POS en formato JSON.', confirmText: 'Exportar', cancelText: 'Cancelar' });
-    if (!ok) return;
-  };
-  const handleImport = async () => {
-    const ok = await confirm({ title: 'Importar datos', description: 'Importar sobrescribirá datos existentes. ¿Deseas continuar?', confirmText: 'Importar', cancelText: 'Cancelar', tone: 'danger' });
-    if (!ok) return;
-  };
-  const handleReset = async () => {
-    const ok = await confirm({ title: 'Resetear datos locales', description: 'Esta acción es irreversible y borrará datos locales.', confirmText: 'Resetear', cancelText: 'Cancelar', tone: 'danger' });
-    if (!ok) return;
-  };
-  return (
-    <div className='space-y-4'>
-      <Card title='Datos'>
-        <div className='flex items-center gap-2'>
-          <button onClick={handleExport} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Exportar (.json)</button>
-          <button onClick={handleImport} className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Importar</button>
-        </div>
-      </Card>
-      <Card title='Zona de peligro' desc='Acciones destructivas'>
-        <button onClick={handleReset} className='px-3 py-2 text-[13px] rounded-lg font-semibold' style={{background:'rgba(220,38,38,0.12)', color:'#7f1d1d'}}>Resetear datos locales</button>
-      </Card>
-    </div>
-  );
-}
 
 function LocaleSection() {
   const { locale, currency, dateFormat, set } = useSettingsStore();
@@ -697,7 +530,7 @@ function AccountSection({ onLogout }: { onLogout: ()=>void }) {
   );
 }
 
-function AboutSection() {
+function AboutSection( ) {
   return (
     <div className='space-y-4'>
       <Card title='Acerca de FilaCero'>

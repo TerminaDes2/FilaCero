@@ -12,6 +12,7 @@ import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
 import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
+import {BrandLogo} from '../../src/components/BrandLogo'
 // Categories store not needed here
 
 // Mock product dataset (frontend only)
@@ -87,10 +88,12 @@ export default function POSPage() {
       >
           {/* Header row: Title (left) + TopRightInfo (right) */}
           <div className='px-5 relative z-20 mb-0.5 flex items-start justify-between gap-4'>
-            <h1 className='font-extrabold tracking-tight text-3xl md:text-4xl leading-tight select-none'>
-              <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
-              <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
+            <BrandLogo asLink/>
+
+            <h1>
+              <span style={{ color: 'var(--fc-brand-600)' }}> </span>
             </h1>
+            
             <TopRightInfo businessName='Punto de Venta' showLogout />
           </div>
           {/* Columns wrapper: products (left) + cart (right) */}
