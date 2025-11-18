@@ -305,8 +305,11 @@ export class AuthService {
         });
 
         // Emitir una nueva sesión con el código actualizado
+        // Eliminar propiedades JWT estándar (exp, iat) que vienen en el payload
+        // para evitar el error: "Bad \"options.expiresIn\" option the payload already has an \"exp\" property.".
+        const { exp, iat, ...payloadRest } = payload as any;
         const newSessionPayload: PreRegSessionPayload = {
-            ...payload,
+            ...payloadRest,
             code,
             expAt: expiresAt.getTime(),
         };
