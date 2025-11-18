@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PosSidebar } from '../../src/components/pos/sidebar';
 import { CartProvider } from '../../src/pos/cartContext';
 // Category tabs removed in favor of a compact filter button
@@ -19,7 +20,6 @@ import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import { useUserStore } from '../../src/state/userStore';
 import { useBusinessStore } from '../../src/state/businessStore';
 import { api } from '../../src/lib/api';
-import { BusinessPickerDialog } from '../../src/components/business/BusinessPickerDialog';
 // Categories store not needed here
 
 export default function POSPage() {
@@ -34,6 +34,9 @@ export default function POSPage() {
   const hydrateFromAPI = useKitchenBoard((state) => state.hydrateFromAPI);
   const { user } = useUserStore();
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewParam = searchParams?.get('view');
   const [needBusiness, setNeedBusiness] = useState(false);
   const [bizList, setBizList] = useState<any[]>([]);
 
@@ -44,6 +47,7 @@ export default function POSPage() {
     }
   }, [storeCategories.length]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (viewParam === 'kitchen') {
       setPosView('kitchen');
@@ -58,6 +62,7 @@ export default function POSPage() {
   }, [posView, hydrateFromAPI, activeBusiness]);
 
   // Guard: si es admin y no hay negocio activo, redirige a onboarding
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const roleName = (user as any)?.role_name || user?.role?.nombre_rol || '';
     const idRol = user?.id_rol;
