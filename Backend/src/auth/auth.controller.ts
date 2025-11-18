@@ -138,7 +138,7 @@ export class VerificacionCredencialController {
         }
         // Si ok === false, devolver información útil al cliente
         return {
-          message: 'La verificación falló según el servicio de OCR.',
+          message: 'Favor intente nuevamente con una credencial válida.',
           details: dataObj,
         };
       }

@@ -84,6 +84,12 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
     ? "pending"
     : "missing";
 
+  const credentialStatus: VerificationStatus = user.credencial_verificada
+    ? "verified"
+    : user.credential_url
+    ? "pending"
+    : "missing";
+
   const verificationItems: VerificationItem[] = [
     {
       id: "email",
@@ -110,12 +116,14 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
     {
       id: "credential",
       label: "Credencial estudiantil",
-      status: user.credential_url ? "pending" : "missing",
-      description: user.credential_url
+      status: credentialStatus,
+      description: user.credencial_verificada
+        ? "Tu credencial estudiantil ha sido verificada correctamente."
+        : user.credential_url
         ? "Subimos tu credencial, falta una breve validación."
         : "Carga tu credencial para activar beneficios académicos.",
       icon: IdCard,
-      action: "/verification/credencial",
+      action: user.credencial_verificada ? undefined : "/verification/credencial",
     },
   ];
 
