@@ -1,7 +1,7 @@
 import { Controller, Put, Delete, Param, Body, UseGuards, Req, Get, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from '../auth/dto/update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 // Proteger todas las rutas del controlador de usuarios
 @UseGuards(AuthGuard('jwt')) 

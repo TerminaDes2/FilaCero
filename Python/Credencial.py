@@ -143,6 +143,11 @@ def validate_card(image_path, expected_student_id=None, expected_name=None):
         'Bachillerato': 'BACHILLERATO' in raw_text_joined.upper()
     }
 
+    # ok = True solo si todos los campos obligatorios están presentes.
+    # Campos obligatorios: Numero_de_cuenta, Nombre_del_estudiante, Universidad_de_Colima
+    required = ['Numero_de_cuenta', 'Nombre_del_estudiante', 'Universidad_de_Colima']
+    result['ok'] = all(result.get(k) for k in required)
+
     return result
 
 if __name__ == '__main__':

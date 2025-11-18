@@ -1,5 +1,6 @@
 "use client";
-import type { ReactNode } from "react";
+import type { ReactNode, ElementType } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   Clock3,

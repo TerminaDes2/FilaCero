@@ -45,6 +45,8 @@ export default function UserProfilePage() {
 
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
+  
+
   const verifications = {
     email: hydratedUser.verifications?.email ?? (hydratedUser as any).correo_verificado ?? false,
     sms: hydratedUser.verifications?.sms ?? (hydratedUser as any).sms_verificado ?? false,

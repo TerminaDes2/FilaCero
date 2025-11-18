@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UpdateUserDto } from '../auth/dto/update-user.dto'; 
+import { UpdateUserDto } from './dto/update-user.dto'; 
 import * as bcrypt from 'bcrypt'; // Necesario si permites cambiar la contraseña
 import { Prisma } from '@prisma/client';
 
