@@ -46,7 +46,6 @@ async function bootstrap() {
     'http://127.0.0.1:3000',
     'https://filacero.up.railway.app',
     'https://fila-cero.vercel.app',
-    'https://filacero.store',
   ];
   const envOrigins = (process.env.CORS_ORIGINS || '')
     .split(',')
