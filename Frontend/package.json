@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "NODE_OPTIONS=--dns-result-order=ipv4first next start",
+    "start": "node .next/standalone/server.js",
+    "start:next": "NODE_OPTIONS=--dns-result-order=ipv4first next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
   },
@@ -30,6 +31,7 @@
     "@types/react-dom": "^18.2.7",
     "eslint": "^8.57.0",
     "eslint-config-next": "^13.5.6",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "cross-env": "^7.0.3"
   }
 }
