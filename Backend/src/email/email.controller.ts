@@ -13,32 +13,7 @@ export class EmailController {
     constructor(
         private readonly emailService: EmailService,
         private readonly zohoOAuthService: ZohoOAuthService,
-    ) {}
-
-    @Get('auth')
-    async zohoAuthCallback(@Req() req: Request) {
-        const { code, error } = req.query;
-        
-        // Log detallado del callback de Zoho OAuth
-        this.logger.log(`[${new Date().toISOString()}] Callback recibido en /api/email/auth`);
-        this.logger.log(`URL completa: ${req.protocol}://${req.get('host')}${req.originalUrl}`);
-        this.logger.log(`Query params completos: ${JSON.stringify(req.query)}`);
-
-        if (code) {
-            this.logger.log(`✓ Authorization code recibido: ${code}`);
-        } else if (error) {
-            this.logger.error(`✗ Error recibido desde Zoho: ${error}`);
-        } else {
-            this.logger.warn('⚠ No se recibió authorization code ni error');
-        }
-
-        return { 
-            message: 'Callback procesado',
-            timestamp: new Date().toISOString(),
-            receivedCode: !!code,
-            receivedError: !!error
-        };
-    }
+    ) { }
 
     @Post('send')
     sendEmail(
@@ -97,7 +72,7 @@ export class EmailController {
         try {
             this.logger.log('[OAUTH_CALLBACK] Procesando código de autorización');
             const tokenData = await this.zohoOAuthService.exchangeCodeForTokens(code);
-            
+
             this.logger.log('[OAUTH_CALLBACK_SUCCESS] Autorización completada');
             res.status(HttpStatus.OK).json({
                 message: 'Autorización exitosa. La aplicación ahora puede enviar emails vía Zoho.',
@@ -124,7 +99,7 @@ export class EmailController {
         const hasToken = this.zohoOAuthService.hasToken();
         return {
             authorized: hasToken,
-            message: hasToken 
+            message: hasToken
                 ? 'La aplicación está autorizada para enviar emails vía Zoho'
                 : 'La aplicación no está autorizada. Visita /api/email/auth para autorizar',
         };
