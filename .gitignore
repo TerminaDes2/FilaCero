@@ -11,6 +11,10 @@ Docker/*.log
 Backend/generated/prisma
 Backend/.env
 
+# Tokens OAuth de Zoho
+zoho-token.json
+Backend/zoho-token.json
+
 # Next.js y frameworks modernos
 .next/
 out/
