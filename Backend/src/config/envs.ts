@@ -7,6 +7,10 @@ export const envSchema = z.object({
     REDIS_PORT: z.string().min(1, "REDIS_PORT is required") .transform(Number),
     REDIS_USER: z.string().optional(),
     REDIS_PASSWORD: z.string().optional(),
+    MAIL_USE_HTTP: z.string().optional().transform(val => val === 'true'),
+    ZOHO_CLIENT_ID: z.string().min(1).optional(),
+    ZOHO_CLIENT_SECRET: z.string().min(1).optional(),
+    ZOHO_REDIRECT_URI: z.string().min(1).optional(),
 }).passthrough();
 
 const envParsed = envSchema.safeParse(process.env);
@@ -22,4 +26,8 @@ export const envs = {
     redisPort: envParsed.data.REDIS_PORT,
     redisUser: envParsed.data.REDIS_USER,
     redisPassword: envParsed.data.REDIS_PASSWORD,
+    mailUseHttp: envParsed.data.MAIL_USE_HTTP || false,
+    zohoClientId: envParsed.data.ZOHO_CLIENT_ID,
+    zohoClientSecret: envParsed.data.ZOHO_CLIENT_SECRET,
+    zohoRedirectUri: envParsed.data.ZOHO_REDIRECT_URI,
 }

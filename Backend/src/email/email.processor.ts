@@ -5,10 +5,14 @@ import sanitizeHtml from 'sanitize-html';
 import { createTransporter } from "src/config/nodemailer"
 import { Logger } from "@nestjs/common";
 import { maskSendEmailDto } from "src/common/logging.utils";
+import { ZohoHttpService } from "./zoho-http.service";
+import { envs } from "src/config";
 
 @Processor('email-queue')
 export class EmailProcessor {
     private readonly logger = new Logger(EmailProcessor.name);
+
+    constructor(private readonly zohoHttpService: ZohoHttpService) {}
 
     @Process('send-email')
     async handleSendEmail(job: Job<SendEmailDto>) {
@@ -64,6 +68,48 @@ export class EmailProcessor {
             // Bloquear explícitamente scripts y contenido peligroso
             disallowedTagsMode: 'discard', // Descarta etiquetas no permitidas como <script>
         });
+
+        // Decidir entre HTTP (Zoho) o SMTP según configuración
+        if (envs.mailUseHttp) {
+            return await this.sendViaZohoHttp(job, sanitizedHtml, mailOptions);
+        } else {
+            return await this.sendViaSmtp(job, sanitizedHtml, smtpConfig, mailOptions);
+        }
+    }
+
+    /**
+     * Envío por API HTTP de Zoho
+     */
+    private async sendViaZohoHttp(job: Job, sanitizedHtml: string, mailOptions: any) {
+        try {
+            this.logger.debug(`[ZOHO_HTTP_SENDING] id=${job.id} to=${mailOptions.to} from=${mailOptions.from} subject=${mailOptions.subject}`);
+            await job.progress(25);
+
+            // Con MAIL_USE_HTTP=true, usamos mailOptions.from directamente
+            // No necesitamos smtpConfig porque Zoho OAuth usa la cuenta autorizada
+            const result = await this.zohoHttpService.sendEmail({
+                from: mailOptions.from,
+                to: mailOptions.to,
+                subject: mailOptions.subject,
+                html: sanitizedHtml,
+                text: mailOptions.text,
+            });
+
+            await job.progress(100);
+            this.logger.log(`[ZOHO_HTTP_SENT] id=${job.id} messageId=${result.data?.messageId} status=${result.status?.code}`);
+            return result;
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? `${error.name}: ${error.message}` : safeStringify(error);
+            const stack = error instanceof Error ? error.stack : undefined;
+            this.logger.error(`[ZOHO_HTTP_ERROR] id=${job.id} ${msg}`, stack);
+            throw new Error(`Error al enviar el correo vía Zoho HTTP: ${msg}`);
+        }
+    }
+
+    /**
+     * Envío por SMTP tradicional
+     */
+    private async sendViaSmtp(job: Job, sanitizedHtml: string, smtpConfig: any, mailOptions: any) {
         const transporter = createTransporter(smtpConfig);
         try {
             this.logger.debug(`[SMTP_VERIFY] id=${job.id} host=${smtpConfig.host} port=${smtpConfig.port} secure=${Boolean(smtpConfig.secure)}`);
@@ -87,8 +133,8 @@ export class EmailProcessor {
         } catch (error: unknown) {
             const msg = error instanceof Error ? `${error.name}: ${error.message}` : safeStringify(error);
             const stack = error instanceof Error ? error.stack : undefined;
-            this.logger.error(`[JOB_ERROR] id=${job.id} ${msg}`, stack);
-            throw new Error(`Error al enviar el correo desde el Processor: ${msg}`);
+            this.logger.error(`[SMTP_ERROR] id=${job.id} ${msg}`, stack);
+            throw new Error(`Error al enviar el correo vía SMTP: ${msg}`);
         }
     }
 
