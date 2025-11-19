@@ -64,10 +64,14 @@ export class ZohoHttpService {
             // Obtener accountId (necesario para enviar emails)
             const accountId = await this.getAccountId(accessToken, apiDomain);
 
+            // Extraer emails puros (pueden venir como "Name <email>" o "email")
+            const fromEmail = this.extractEmail(mailOptions.from);
+            const toEmail = this.extractEmail(mailOptions.to);
+
             // Preparar payload según la API de Zoho
             const payload: ZohoEmailPayload = {
-                fromAddress: mailOptions.from,
-                toAddress: mailOptions.to,
+                fromAddress: fromEmail,
+                toAddress: toEmail,
                 subject: mailOptions.subject,
                 content: mailOptions.html || mailOptions.text || '',
                 mailFormat: mailOptions.html ? 'html' : 'plaintext',
@@ -75,7 +79,7 @@ export class ZohoHttpService {
 
             // Enviar email
             const url = `${apiDomain}/api/accounts/${accountId}/messages`;
-            this.logger.debug(`[ZOHO_API_CALL] POST ${url}`);
+            this.logger.debug(`[ZOHO_API_CALL] POST ${url} from=${fromEmail} to=${toEmail}`);
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -187,12 +191,26 @@ export class ZohoHttpService {
 
         // Validación básica de formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(mailOptions.to)) {
+        
+        // Extraer email puro de "to" (puede venir como "Name <email>" o "email")
+        const toEmail = this.extractEmail(mailOptions.to);
+        if (!emailRegex.test(toEmail)) {
             throw new BadRequestException('El formato del email "to" es inválido');
         }
 
-        if (!emailRegex.test(mailOptions.from)) {
+        // Extraer email puro de "from" (puede venir como "Name <email>" o "email")
+        const fromEmail = this.extractEmail(mailOptions.from);
+        if (!emailRegex.test(fromEmail)) {
             throw new BadRequestException('El formato del email "from" es inválido');
         }
+    }
+
+    /**
+     * Extrae el email de un string que puede tener formato "Name <email@domain.com>" o "email@domain.com"
+     */
+    private extractEmail(emailString: string): string {
+        // Regex para extraer email de formato "Name <email@domain.com>"
+        const match = emailString.match(/<([^>]+)>/);
+        return match ? match[1] : emailString.trim();
     }
 }
