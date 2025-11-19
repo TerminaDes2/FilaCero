@@ -260,7 +260,7 @@ export default function POSSettingsPage() {
 		});
 		if (!ok) return;
 		logout();
-		router.push('/');
+		router.replace('/auth/login');
 	}, [confirm, logout, router]);
 
 	const handleDiscard = useCallback(async () => {

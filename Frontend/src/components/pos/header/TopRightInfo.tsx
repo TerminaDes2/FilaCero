@@ -80,7 +80,7 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
 
   const onLogout = () => {
     try { reset(); } catch {}
-    router.push('/');
+    router.replace('/auth/login');
   };
 
   const handleLogoutClick = async () => {
