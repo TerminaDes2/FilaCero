@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback } from 'react';
-import { UserProvider, useUserStore } from '../../../src/state/userStore';
+import { useUserStore } from '../../../src/state/userStore';
 import { RegisterLayout } from '../../../src/components/auth/registerLayout';
 import { useRegisterFlow } from '../../../src/components/auth/registerHooks';
 
@@ -41,9 +41,5 @@ function RegisterPageWithRole() {
 }
 
 export default function RegisterPage() {
-  return (
-    <UserProvider>
-      <RegisterPageWithRole />
-    </UserProvider>
-  );
+  return <RegisterPageWithRole />;
 }

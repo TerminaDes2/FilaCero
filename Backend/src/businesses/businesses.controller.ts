@@ -1,13 +1,24 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, BadRequestException, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { BusinessesService } from './businesses.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
+import { UpdateBusinessDto } from './dto/update-business.dto';
 
 @Controller('api/businesses')
 export class BusinessesController {
   constructor(private readonly service: BusinessesService) {}
+
+  // 👇 IMPORTANTE: Rutas específicas ANTES de rutas dinámicas
+  @Get('my')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
+  myBusinesses(@Req() req: any) {
+    const userId = this.extractUserId(req);
+    console.log('🔍 GET /api/businesses/my - userId:', userId);
+    return this.service.listBusinessesForUser(userId);
+  }
 
   @Get()
   async listPublic(@Query('search') search?: string, @Query('limit') limit?: string) {
@@ -15,7 +26,6 @@ export class BusinessesController {
     return this.service.listPublicBusinesses({ search, limit: parsedLimit });
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'superadmin', 'empleado', 'usuario')
@@ -24,16 +34,16 @@ export class BusinessesController {
     return this.service.createBusinessAndAssignOwner(userId, dto);
   }
 
-  @Get('my')
+  @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'superadmin', 'empleado', 'usuario')
-  myBusinesses(@Req() req: any) {
+  update(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateBusinessDto) {
     const userId = this.extractUserId(req);
-    return this.service.listBusinessesForUser(userId);
+    return this.service.updateBusiness(userId, id, dto);
   }
 
   @Get(':id')
-  getById(@Req() req: any, @Param('id') id: string) {
+  getById(@Param('id') id: string) {
     return this.service.getBusinessById(id);
   }
 

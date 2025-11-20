@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LegalModal } from '../../components/legal/LegalModal';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
 import { useUserStore } from '../../state/userStore';
+import { EmailVerificationModal } from './EmailVerificationModal';
 
 interface SignupFormProps {
 	onSuccess?: () => void;
@@ -36,6 +37,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const router = useRouter();
 	const { role } = useUserStore();
 	const isOwner = role === 'OWNER';
+	const [showVerificationModal, setShowVerificationModal] = useState(false);
+	const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+	const [verificationExpiresAt, setVerificationExpiresAt] = useState<string | null>(null);
+	const [verificationSession, setVerificationSession] = useState<string | null>(null);
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordStrength = computeStrength(password);
@@ -92,20 +97,29 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		setError(null);
 		try {
 			const roleName: 'usuario' | 'admin' = isOwner ? 'admin' : 'usuario';
+			const normalizedEmail = email.trim().toLowerCase();
 			const res = await api.register(
 				name.trim(),
-				email.trim().toLowerCase(),
+				normalizedEmail,
 				password,
-				roleName,
-				isOwner ? undefined : accountNumberClean || undefined,
-				isOwner ? undefined : ageValue
+				roleName
 			);
-			if(typeof window !== 'undefined') {
-				window.localStorage.setItem('auth_token', res.token);
-				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
+			if (res.requiresVerification) {
+				setPendingEmail(normalizedEmail);
+				setVerificationExpiresAt(res.expiresAt ?? null);
+				setVerificationSession(res.session ?? null);
+				try {
+					if (typeof window !== 'undefined') {
+						if (res.session) window.localStorage.setItem('preRegSession', res.session);
+						if (res.expiresAt) window.localStorage.setItem('preRegExpiresAt', res.expiresAt);
+						window.localStorage.setItem('preRegEmail', normalizedEmail);
+					}
+				} catch {}
+				setShowVerificationModal(true);
+			} else {
+				onSuccess?.();
+				router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
 			}
-			onSuccess?.();
-			router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
 		} catch (err: any) {
 			setError(err?.message || 'Error al crear la cuenta');
 		} finally {
@@ -113,7 +127,30 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		}
 	};
 
+	const handleVerificationClosed = useCallback(() => {
+		setShowVerificationModal(false);
+		setPendingEmail(null);
+		setVerificationExpiresAt(null);
+		setVerificationSession(null);
+		try {
+			if (typeof window !== 'undefined') {
+				window.localStorage.removeItem('preRegSession');
+				window.localStorage.removeItem('preRegExpiresAt');
+				window.localStorage.removeItem('preRegEmail');
+			}
+		} catch {}
+	}, []);
+
+	const handleVerificationSuccess = useCallback(() => {
+		setShowVerificationModal(false);
+		setPendingEmail(null);
+		setVerificationExpiresAt(null);
+		onSuccess?.();
+		router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
+	}, [isOwner, onSuccess, router]);
+
 	return (
+		<>
 		<form onSubmit={submit} className="space-y-6" noValidate>
 			{error && (
 				<div className="text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2">
@@ -257,6 +294,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
 
 		</form>
-
+		{pendingEmail && verificationSession && (
+			<EmailVerificationModal
+				open={showVerificationModal}
+				email={pendingEmail}
+				expiresAt={verificationExpiresAt}
+				session={verificationSession}
+				onClose={handleVerificationClosed}
+				onVerified={() => handleVerificationSuccess()}
+			/>
+		)}
+		</>
 	);
 };

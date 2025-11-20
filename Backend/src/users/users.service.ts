@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UpdateUserDto } from '../auth/dto/update-user.dto'; 
+import { UpdateUserDto } from './dto/update-user.dto'; 
 import * as bcrypt from 'bcrypt'; // Necesario si permites cambiar la contraseña
 import { Prisma } from '@prisma/client';
 
@@ -23,8 +23,12 @@ export class UsersService {
                 edad: true,
                 avatar_url: true,
                 credential_url: true,
-                verificado: true,
-                fecha_verificacion: true,
+                correo_verificado: true,
+                correo_verificado_en: true,
+                sms_verificado: true,
+                sms_verificado_en: true,
+                credencial_verificada: true,
+                credencial_verificada_en: true,
             },
         });
     if (!user) {
@@ -84,8 +88,12 @@ export class UsersService {
                     edad: true,
                     avatar_url: true,
                     credential_url: true,
-                    verificado: true,
-                    fecha_verificacion: true,
+                    correo_verificado: true,
+                    correo_verificado_en: true,
+                    sms_verificado: true,
+                    sms_verificado_en: true,
+                    credencial_verificada: true,
+                    credencial_verificada_en: true,
                 },
             });
             return this.serializeUser(updated);
@@ -117,19 +125,10 @@ export class UsersService {
         }
   }
 
-    private serializeUser(user: {
-        id_usuario: bigint;
-        nombre: string;
-        correo_electronico: string;
-        numero_telefono: string | null;
-        id_rol: bigint | null;
-        numero_cuenta: string | null;
-        edad: number | null;
-        avatar_url: string | null;
-        credential_url: string | null;
-        verificado: boolean;
-        fecha_verificacion: Date | null;
-    }) {
+    private serializeUser(user: any) {
+        const emailVerified = user?.correo_verificado ?? false;
+        const smsVerified = user?.sms_verificado ?? false;
+        const credentialVerified = user?.credencial_verificada ?? false;
         return {
             id: user.id_usuario.toString(),
             name: user.nombre,
@@ -140,8 +139,18 @@ export class UsersService {
             age: user.edad ?? null,
             avatarUrl: user.avatar_url ?? null,
             credentialUrl: user.credential_url ?? null,
-            verified: user.verificado,
-            verifiedAt: user.fecha_verificacion ? user.fecha_verificacion.toISOString() : null,
+            verified: emailVerified,
+            verifiedAt: user.correo_verificado_en ? user.correo_verificado_en.toISOString() : null,
+            verifications: {
+                email: emailVerified,
+                sms: smsVerified,
+                credential: credentialVerified,
+            },
+            verificationTimestamps: {
+                email: user.correo_verificado_en ? user.correo_verificado_en.toISOString() : null,
+                sms: user.sms_verificado_en ? user.sms_verificado_en.toISOString() : null,
+                credential: user.credencial_verificada_en ? user.credencial_verificada_en.toISOString() : null,
+            },
         };
     }
 }

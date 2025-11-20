@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Image from "next/image";
 
 export default function StoreProductList({ productos }: { productos: any[] }) {
   const handleAddToCart = (p: any) => alert(`🛒 "${p.nombre}" agregado al carrito`);
@@ -26,13 +27,18 @@ export default function StoreProductList({ productos }: { productos: any[] }) {
             key={p.id_producto}
             className="bg-white rounded-lg border p-4 hover:shadow-md transition-all duration-200 flex flex-col"
           >
-            <div className="w-full h-48 rounded-md overflow-hidden bg-gray-100 mb-4 flex items-center justify-center">
+            <div className="relative mb-4 flex h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100">
               {p.imagen ? (
-                <img
+                <Image
                   src={p.imagen}
                   alt={p.nombre}
-                  className="w-full h-full object-cover"
-                  onError={(e) => ((e.target as HTMLImageElement).src = "/api/placeholder/300/300")}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  unoptimized
+                  onError={(event) => {
+                    event.currentTarget.src = "/api/placeholder/300/300";
+                  }}
                 />
               ) : (
                 <span className="text-gray-400 text-sm">Sin imagen</span>

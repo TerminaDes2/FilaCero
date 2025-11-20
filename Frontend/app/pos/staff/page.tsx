@@ -34,7 +34,7 @@ export default function StaffPage() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  // Keyboard: 'n' opens New Product panel when not typing in input
+  // Keyboard: 'n' opens New Employee panel when not typing in input
   useEffect(() => {
     const isEditable = (t: EventTarget | null) => {
       const el = t as HTMLElement | null;
@@ -52,7 +52,7 @@ export default function StaffPage() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  const onProductCreated = () => {
+  const onEmployeeCreated = () => {
     setRefreshKey(k => k + 1);
     setIsPanelOpen(false);
   };

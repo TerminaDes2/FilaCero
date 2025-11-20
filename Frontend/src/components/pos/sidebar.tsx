@@ -2,8 +2,10 @@
 import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Settings as GearIcon } from 'lucide-react';
+import { useKitchenBoard } from '../../state/kitchenBoardStore';
+import { usePOSView } from '../../state/posViewStore';
 
 interface NavItem {
 	key: string;
@@ -51,6 +53,30 @@ const items: NavItem[] = [
 		)
 	},
 	{
+		key: 'cashout',
+		label: 'Corte de caja',
+		href: '/pos/cashout',
+		icon: (
+			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
+				<rect x="3" y="6" width="18" height="12" rx="2" />
+				<path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M10 14h4" />
+				<circle cx="6.5" cy="12" r="0.75" fill="currentColor" />
+				<circle cx="17.5" cy="12" r="0.75" fill="currentColor" />
+			</svg>
+		)
+	},
+	{
+		key: 'kitchen',
+		label: 'Cocina',
+		href: '/pos/kitchen',
+		icon: (
+			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12M8 7h8m-9 4h10m-9 4h8M6 21h12" />
+				<path strokeLinecap="round" strokeLinejoin="round" d="M8 21v-2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+			</svg>
+		)
+	},
+	{
 		key: 'categories',
 		label: 'Categorías',
 		href: '/pos/categories',
@@ -83,22 +109,11 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'staff',
-		label: 'Staff',
+		label: 'Empleados',
 		href: '/pos/staff',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
 				<path strokeLinecap="round" strokeLinejoin="round" d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5Zm0 2c-4 0-7 2-7 4v1h14v-1c0-2-3-4-7-4Z" />
-			</svg>
-		)
-	},
-	{
-		key: 'customers',
-		label: 'Clientes',
-		href: '/pos/customers',
-		icon: (
-			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
-				<path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
-				<path strokeLinecap="round" strokeLinejoin="round" d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
 			</svg>
 		)
 	}
@@ -115,7 +130,11 @@ const settingsItem: NavItem = {
 
 export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = true }) => {
   const pathname = usePathname();
+	const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+	const { tickets } = useKitchenBoard();
+	const pending = useMemo(() => tickets.filter(t => t.status !== 'served').length, [tickets]);
+	const { view: posView, setView } = usePOSView();
 
   // Derived classes
   const widthClass = collapsed ? 'w-16' : 'w-56';
@@ -134,8 +153,9 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 						</span>
 			)}
 		</div>
-        {collapsible && (
+					{collapsible && (
 							<button
+								type="button"
 								onClick={()=> setCollapsed(c=> !c)}
 								aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
 								className="ml-auto group relative w-9 h-9 flex items-center justify-center rounded-lg bg-white/60 hover:bg-white/75 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -144,24 +164,66 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 								<span className="absolute inset-0 rounded-lg shadow-inner shadow-white/30 pointer-events-none" />
 								<svg viewBox="0 0 24 24" className={`w-5 h-5 transition-transform ${collapsed ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m10 6 6 6-6 6" /></svg>
 							</button>
-        )}
+					)}
       </div>
 			{/* Nav items */}
 			<div className="flex-1 overflow-y-auto py-3 px-2 space-y-1 relative z-10 custom-scrollbar">
 				{items.filter(i=> i.key !== 'logo').map(item => {
-          const active = pathname === item.href || (item.key === 'home' && pathname === '/pos');
-          return (
-									<Link key={item.key} href={item.href} aria-current={active ? 'page' : undefined} className={`group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-semibold tracking-tight transition-colors focus:outline-none focus-visible:ring-2 ring-white/60 ${active ? 'bg-[rgba(255,255,255,0.92)] text-[rgb(80,32,38)] shadow-sm' : 'text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.3)]'}`}>
-							{/* Active left accent bar */}
+					const isKitchen = item.key === 'kitchen';
+					const baseActive = pathname === item.href || (item.key === 'home' && pathname === '/pos');
+					const active = isKitchen
+						? posView === 'kitchen'
+						: item.href === '/pos' ? (baseActive && posView !== 'kitchen') : baseActive;
+					if (isKitchen) {
+						return (
+							<button
+								key={item.key}
+								type="button"
+								onClick={() => {
+									setView('kitchen');
+									try {
+										void useKitchenBoard.getState().hydrateFromAPI();
+									} catch {}
+									router.push('/pos?view=kitchen');
+								}}
+								aria-current={active ? 'page' : undefined}
+								className={`w-full text-left group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-semibold tracking-tight transition-colors focus:outline-none focus-visible:ring-2 ring-white/60 ${active ? 'bg-[rgba(255,255,255,0.92)] text-[rgb(80,32,38)] shadow-sm' : 'text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.3)]'}`}
+							>
+								<span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full" style={{ background: active ? 'var(--pos-accent-green)' : 'transparent' }} />
+								<span className={`relative flex items-center justify-center w-9 h-9 rounded-lg ${active ? 'bg-white' : 'bg-white/60 group-hover:bg-white/75'} shadow-inner shadow-white/30`} style={{ color: 'var(--pos-text-heading)' }}>
+									{item.icon}
+								</span>
+								{!collapsed && (
+									<span className="truncate flex items-center gap-2">
+										{item.label}
+										{pending > 0 && (
+											<span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold text-white" style={{ background: 'var(--pos-accent-green)' }}>
+												{pending}
+											</span>
+										)}
+									</span>
+								)}
+							</button>
+						);
+					}
+					return (
+						<Link
+							key={item.key}
+							href={item.href}
+							onClick={() => setView('sell')}
+							aria-current={active ? 'page' : undefined}
+							className={`w-full text-left group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-semibold tracking-tight transition-colors focus:outline-none focus-visible:ring-2 ring-white/60 ${active ? 'bg-[rgba(255,255,255,0.92)] text-[rgb(80,32,38)] shadow-sm' : 'text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.3)]'}`}
+						>
 							<span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full" style={{ background: active ? 'var(--pos-accent-green)' : 'transparent' }} />
-							{/* Icon badge */}
-										<span className={`relative flex items-center justify-center w-9 h-9 rounded-lg ${active ? 'bg-white' : 'bg-white/60 group-hover:bg-white/75'} shadow-inner shadow-white/30`} style={{ color: 'var(--pos-text-heading)' }}>
+							<span className={`relative flex items-center justify-center w-9 h-9 rounded-lg ${active ? 'bg-white' : 'bg-white/60 group-hover:bg-white/75'} shadow-inner shadow-white/30`} style={{ color: 'var(--pos-text-heading)' }}>
 								{item.icon}
 							</span>
-							{!collapsed && <span className="truncate">{item.label}</span>}
+							{!collapsed && (
+								<span className="truncate flex items-center gap-2">{item.label}</span>
+							)}
 						</Link>
-          );
-        })}
+					);
+				})}
       </div>
 	  {/* Footer action */}
 	<div className="px-2 pb-3 pt-2 border-t border-white/30/80 relative z-10">

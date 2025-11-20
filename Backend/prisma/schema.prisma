@@ -25,14 +25,19 @@ model usuarios {
   numero_cuenta              String?                  @unique @map("numero_cuenta") @db.VarChar(30)
   fecha_nacimiento           DateTime?                @map("fecha_nacimiento") @db.Date
   fecha_registro             DateTime?                @default(now()) @map("fecha_registro") @db.Timestamptz(6)
-  fecha_verificacion         DateTime?                @map("fecha_verificacion") @db.Timestamptz(6)
-  verificado                 Boolean                  @default(false) @map("verificado")
+  correo_verificado          Boolean                  @default(false) @map("correo_verificado")
+  correo_verificado_en       DateTime?                @map("correo_verificado_en") @db.Timestamptz(6)
+  sms_verificado             Boolean                  @default(false) @map("sms_verificado")
+  sms_verificado_en          DateTime?                @map("sms_verificado_en") @db.Timestamptz(6)
+  credencial_verificada      Boolean                  @default(false) @map("credencial_verificada")
+  credencial_verificada_en   DateTime?                @map("credencial_verificada_en") @db.Timestamptz(6)
   verification_token         String?                  @unique @map("verification_token") @db.VarChar(128)
   verification_token_expires DateTime?                @map("verification_token_expires") @db.Timestamptz(6)
   avatar_url                 String?                  @map("avatar_url") @db.VarChar(512)
   credential_url             String?                  @map("credential_url") @db.VarChar(512)
   edad                       Int?                     @map("edad") @db.SmallInt
   estado                     String?                  @map("estado") @db.VarChar(20)
+  stripe_customer_id         String?                  @unique @map("stripe_customer_id") @db.VarChar(255)
   comentario                 comentario[]
   corte_caja                 corte_caja[]
   empleados                  empleados[]
@@ -42,6 +47,11 @@ model usuarios {
   negocio_rating             negocio_rating[]
   role                       roles?                   @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
   venta                      venta[]
+  pedidos                    pedido[]
+  notificaciones             notificacion[]
+  producto_historial_precios producto_historial_precio[]
+  usuarios_negocio           usuarios_negocio[]
+  metodos_pago               metodo_pago_guardado[]
 
   @@map("usuarios")
 }
@@ -50,6 +60,7 @@ model categoria {
   id_categoria BigInt     @id @default(autoincrement())
   nombre       String     @unique @db.VarChar(120)
   producto     producto[]
+  negocios     negocio_categoria[]
 
   @@index([nombre], map: "idx_categoria_nombre")
 }
@@ -153,7 +164,7 @@ model negocio {
   logo_url                    String?
   hero_image_url              String?
   fecha_registro              DateTime?                     @default(now()) @db.Timestamptz(6)
-  owner_id                    BigInt?
+  owner_id                    BigInt?                       @map("owner_id") // Dueño del negocio (FK a usuarios)
   corte_caja                  corte_caja[]
   empleados                   empleados[]
   inventario                  inventario[]
@@ -164,6 +175,10 @@ model negocio {
   producto_metricas_semanales producto_metricas_semanales[]
   reporte_ventas              reporte_ventas[]
   venta                       venta[]
+  pedidos                     pedido[]
+  notificaciones              notificacion[]
+  usuarios_negocio            usuarios_negocio[]
+  categorias_link             negocio_categoria[]
 }
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
@@ -183,6 +198,27 @@ model producto {
   categoria                   categoria?                    @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
   producto_media              producto_media[]
   producto_metricas_semanales producto_metricas_semanales[]
+  historial_precios           producto_historial_precio[]
+  detalle_pedido              detalle_pedido[]
+}
+
+model producto_historial_precio {
+  id_historial   BigInt    @id @default(autoincrement())
+  id_producto    BigInt
+  precio         Decimal   @db.Decimal(12, 2)
+  fecha_inicio   DateTime  @default(now()) @db.Timestamptz(6)
+  fecha_fin      DateTime? @db.Timestamptz(6)
+  vigente        Boolean   @default(true)
+  motivo         String?   @db.VarChar(200)
+  id_usuario     BigInt?
+  creado_en      DateTime  @default(now()) @db.Timestamptz(6)
+
+  producto       producto  @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade)
+  usuario        usuarios? @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
+
+  @@index([id_producto, vigente])
+  @@index([id_producto, fecha_inicio])
+  @@map("producto_historial_precio")
 }
 
 model reporte_ventas {
@@ -198,10 +234,11 @@ model reporte_ventas {
 }
 
 model tipo_pago {
-  id_tipo_pago BigInt  @id @default(autoincrement())
-  tipo         String  @unique @db.VarChar(50)
+  id_tipo_pago BigInt   @id @default(autoincrement())
+  tipo         String   @unique @db.VarChar(50)
   descripcion  String?
   venta        venta[]
+  pedidos      pedido[]
 }
 
 model venta {
@@ -269,4 +306,148 @@ model producto_metricas_semanales {
   producto     producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([id_producto, id_negocio, anio, semana])
+}
+
+model pedido {
+  id_pedido            BigInt            @id @default(autoincrement())
+  id_negocio           BigInt
+  id_usuario           BigInt?
+  id_tipo_pago         BigInt?
+  estado               String            @default("pendiente") @db.VarChar(30)
+  fecha_creacion       DateTime          @default(now()) @db.Timestamptz(6)
+  fecha_confirmacion   DateTime?         @db.Timestamptz(6)
+  fecha_preparacion    DateTime?         @db.Timestamptz(6)
+  fecha_listo          DateTime?         @db.Timestamptz(6)
+  fecha_entrega        DateTime?         @db.Timestamptz(6)
+  total                Decimal           @db.Decimal(14, 2)
+  notas_cliente        String?           @db.Text
+  tiempo_entrega       String?           @db.VarChar(50)
+  nombre_cliente       String?           @db.VarChar(100)
+  email_cliente        String?           @db.VarChar(100)
+  telefono_cliente     String?           @db.VarChar(20)
+  creado_en            DateTime          @default(now()) @db.Timestamptz(6)
+  actualizado_en       DateTime          @updatedAt @db.Timestamptz(6)
+  detalle_pedido       detalle_pedido[]
+  notificaciones       notificacion[]
+  transacciones        transaccion_pago[]
+  negocio              negocio           @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+  usuario              usuarios?         @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
+  tipo_pago            tipo_pago?        @relation(fields: [id_tipo_pago], references: [id_tipo_pago])
+
+  @@index([id_negocio, estado])
+  @@index([id_usuario])
+  @@index([fecha_creacion])
+  @@map("pedido")
+}
+
+model metodo_pago_guardado {
+  id_metodo              BigInt    @id @default(autoincrement())
+  id_usuario             BigInt
+  stripe_payment_method  String    @unique @map("stripe_payment_method_id") @db.VarChar(255)
+  stripe_customer_id     String    @map("stripe_customer_id") @db.VarChar(255)
+  tipo                   String    @db.VarChar(20)
+  marca                  String?   @db.VarChar(20)
+  ultima_4_digitos       String    @db.VarChar(4)
+  mes_expiracion         Int?
+  anio_expiracion        Int?
+  nombre_tarjeta         String?   @db.VarChar(100)
+  is_default             Boolean   @default(false)
+  activo                 Boolean   @default(true)
+  creado_en              DateTime  @default(now()) @db.Timestamptz(6)
+  actualizado_en         DateTime  @updatedAt @db.Timestamptz(6)
+  usuario                usuarios  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@index([id_usuario, activo])
+  @@index([stripe_customer_id])
+  @@map("metodo_pago_guardado")
+}
+
+model transaccion_pago {
+  id_transaccion      BigInt    @id @default(autoincrement())
+  id_pedido           BigInt
+  stripe_payment_id   String?   @unique @db.VarChar(255)
+  stripe_customer_id  String?   @db.VarChar(255)
+  monto               Decimal   @db.Decimal(12, 2)
+  moneda              String    @default("mxn") @db.VarChar(3)
+  estado              String    @default("pending") @db.VarChar(30)
+  metodo_pago         String    @db.VarChar(50)
+  ultima_4_digitos    String?   @db.VarChar(4)
+  marca_tarjeta       String?   @db.VarChar(20)
+  tipo_tarjeta        String?   @db.VarChar(20)
+  error_codigo        String?   @db.VarChar(50)
+  error_mensaje       String?   @db.Text
+  metadata            Json?
+  stripe_fee          Decimal?  @db.Decimal(12, 2)
+  net_amount          Decimal?  @db.Decimal(12, 2)
+  refund_id           String?   @db.VarChar(255)
+  refunded_at         DateTime? @db.Timestamptz(6)
+  creado_en           DateTime  @default(now()) @db.Timestamptz(6)
+  actualizado_en      DateTime  @updatedAt @db.Timestamptz(6)
+  pedido              pedido    @relation(fields: [id_pedido], references: [id_pedido], onDelete: Cascade)
+
+  @@index([id_pedido])
+  @@index([estado])
+  @@index([creado_en])
+  @@map("transaccion_pago")
+}
+
+model detalle_pedido {
+  id_detalle      BigInt   @id @default(autoincrement())
+  id_pedido       BigInt
+  id_producto     BigInt
+  cantidad        Int
+  precio_unitario Decimal  @db.Decimal(10, 2)
+  notas           String?  @db.Text
+  pedido          pedido   @relation(fields: [id_pedido], references: [id_pedido], onDelete: Cascade)
+  producto        producto @relation(fields: [id_producto], references: [id_producto])
+
+  @@index([id_pedido])
+  @@map("detalle_pedido")
+}
+
+model notificacion {
+  id_notificacion BigInt    @id @default(autoincrement())
+  id_usuario      BigInt?
+  id_negocio      BigInt?
+  id_pedido       BigInt?
+  tipo            String    @db.VarChar(30)
+  titulo          String    @db.VarChar(200)
+  mensaje         String    @db.Text
+  leida           Boolean   @default(false)
+  canal           String?   @db.VarChar(20)
+  enviada_en      DateTime? @db.Timestamptz(6)
+  leida_en        DateTime? @db.Timestamptz(6)
+  creado_en       DateTime  @default(now()) @db.Timestamptz(6)
+  usuario         usuarios? @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+  negocio         negocio?  @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+  pedido          pedido?   @relation(fields: [id_pedido], references: [id_pedido], onDelete: Cascade)
+
+  @@index([id_usuario, leida])
+  @@index([id_negocio, tipo])
+  @@index([creado_en])
+  @@map("notificacion")
+}
+
+model usuarios_negocio {
+  id_asignacion    BigInt    @id @default(autoincrement())
+  id_usuario       BigInt
+  id_negocio       BigInt
+  rol              String    @db.VarChar(30)
+  fecha_asignacion DateTime? @db.Timestamptz(6)
+  usuario          usuarios  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+  negocio          negocio   @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+
+  @@unique([id_usuario, id_negocio])
+  @@map("usuarios_negocio")
+}
+
+model negocio_categoria {
+  id_asignacion BigInt    @id @default(autoincrement())
+  id_negocio    BigInt
+  id_categoria  BigInt
+  negocio       negocio   @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+  categoria     categoria @relation(fields: [id_categoria], references: [id_categoria], onDelete: Cascade)
+
+  @@unique([id_negocio, id_categoria])
+  @@map("negocio_categoria")
 }

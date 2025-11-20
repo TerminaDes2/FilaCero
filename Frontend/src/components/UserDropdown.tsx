@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useBusinessStore } from "../state/businessStore";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../state/userStore";
 import { 
@@ -47,6 +48,8 @@ const getRoleInfo = (id_rol: any) => {
 export default function UserDropdown() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
+  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  // Navegación directa según estado
   const router = useRouter();
 
   // Cerrar menú al hacer click fuera
@@ -147,15 +150,20 @@ export default function UserDropdown() {
           {/* Opciones del menú */}
           <div className="py-2">
             {shouldShowAdminPanel && (
-              <Link 
-                href="/pos" 
-                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
-                onClick={() => setUserMenuOpen(false)}
+              <button
+                type="button"
+                className="flex w-full text-left items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
+                onClick={async () => {
+                  if (!activeBusiness) { setUserMenuOpen(false); router.push('/onboarding/negocio'); return; }
+                  setUserMenuOpen(false);
+                  router.push('/pos');
+                }}
               >
                 <LayoutDashboard className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 <span>Panel Administrador</span>
-              </Link>
+              </button>
             )}
+      {/* Menú de usuario */}
             
             <Link 
               href="/user" 

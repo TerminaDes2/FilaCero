@@ -1,0 +1,22 @@
+{
+  "id_negocio": 1,
+  "email_cliente": "test@example.com",
+  "nombre_cliente": "Cliente Test API",
+  "telefono_cliente": "555-1234",
+  "tiempo_entrega": "30 minutos",
+  "notas_cliente": "Pedido de prueba del API",
+  "items": [
+    {
+      "id_producto": 2,
+      "cantidad": 2,
+      "precio_unitario": 35.00,
+      "notas": "Extra caliente"
+    },
+    {
+      "id_producto": 4,
+      "cantidad": 1,
+      "precio_unitario": 85.00,
+      "notas": "Sin cebolla"
+    }
+  ]
+}

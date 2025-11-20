@@ -8,17 +8,24 @@ services:
       - "3000:3000"
       - "9229:9229"
     environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - DATABASE_URL=postgres://user:password@postgres:5432/filacero
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgres://user:password@postgres:5432/filacero
+      # Redis config used by src/config/envs.ts
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # REDIS_PASSWORD: your_redis_password # opcional si la instancia tiene password
+      CHOKIDAR_USEPOLLING: 'true'
+      WATCHPACK_POLLING: 'true'
     volumes:
       - ./Backend:/app            # bind mount para ver cambios en tiempo real (incluye nuevos/removed files)
       - /app/node_modules        # volumen anónimo para node_modules dentro del contenedor
-    command: ["npm","run","dev"] # script dev que genera prisma y arranca ts-node-dev
+    # Evitar `ts-node-dev` dentro del contenedor (genera EPIPE en algunos entornos con volúmenes montados).
+    # Usamos el watcher de Nest (`start:dev`) que es más estable en contenedores.
+    command: ["sh","-c","npm install && npx prisma generate && npm run dev"]
     depends_on:
       - postgres
+      - redis
     extra_hosts:
       - "host.docker.internal:host-gateway" # para que host.docker.internal funcione en linux
     restart: unless-stopped
@@ -31,10 +38,10 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE=http://localhost:3000/api
+      - NEXT_PUBLIC_API_BASE=http://backend:3000/api
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING='true'
+      - WATCHPACK_POLLING='true'
     volumes:
       - ./Frontend:/app
       - /app/node_modules
@@ -77,5 +84,17 @@ services:
       - POSTGRES_PASSWORD=password
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: filacero-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    # Si necesitas password añade un comando custom y variables
+    # command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data 
+
 volumes:
   postgres_data:
+  redis_data:

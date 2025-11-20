@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { api } from "../../../lib/api";
 import { Trash2, Star } from "lucide-react";
 

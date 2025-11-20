@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useSettingsStore } from '../../../src/state/settingsStore';
@@ -183,6 +183,10 @@ export default function AnalyticsPage() {
     if (stored) setNegocioId(stored);
     else if (process.env.NEXT_PUBLIC_NEGOCIO_ID) setNegocioId(String(process.env.NEXT_PUBLIC_NEGOCIO_ID));
   }, []);
+  const handleBusinessChange = useCallback((id: string) => {
+    setNegocioId(id || null);
+    if (id) activeBusiness.set(id);
+  }, []);
   const { loading, error, data } = useAnalytics(range, negocioId || undefined);
 
   return (
@@ -192,18 +196,18 @@ export default function AnalyticsPage() {
       </aside>
       <main className='flex-1 flex flex-col px-5 md:px-6 pt-6 gap-4 overflow-hidden h-full min-h-0 box-border'>
         {/* Header */}
-        <div className='px-5 relative z-20 mb-0.5 flex items-start justify-between gap-4'>
+        <div className='px-5 relative z-20 flex items-start justify-between gap-4'>
           <h1 className='font-extrabold tracking-tight text-3xl md:text-4xl leading-tight select-none'>
-            <span style={{ color: 'var(--fc-brand-600)' }}>Métricas</span>
-          </h1>
+              <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
+              <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>           </h1>
           <div className='flex items-center gap-3'>
             <RangeSelector value={range} onChange={setRange} />
-            <BusinessSelector value={negocioId || ''} onChange={(id)=> { setNegocioId(id || null); if (id) activeBusiness.set(id); }} />
-            <TopRightInfo businessName='Analítica' />
+            <BusinessSelector value={negocioId || ''} onChange={handleBusinessChange} />
+            <TopRightInfo showLogout />
           </div>
         </div>
 
-        <section className='flex-1 flex flex-col overflow-hidden min-h-0'>
+        <section className='flex-1 flex flex-col overflow-hidden min-h-0 px-5 pt-8 pb-3 -mt-4'>
           <div className='flex-1 min-h-0 overflow-y-auto rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
             {loading && (
               <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
@@ -423,7 +427,13 @@ const RangeSelector: React.FC<{ value: RangeKey; onChange: (r: RangeKey)=>void }
 const BusinessSelector: React.FC<{ value: string; onChange: (id: string)=>void }>=({ value, onChange })=> {
   const [list, setList] = useState<Array<{ id_negocio: string; nombre: string }>>([]);
   const [loading, setLoading] = useState(false);
+  const fetchedRef = useRef(false);
   useEffect(() => {
+    if (fetchedRef.current) {
+      if (!value && list[0]) onChange(list[0].id_negocio);
+      return;
+    }
+    fetchedRef.current = true;
     let cancelled = false;
     setLoading(true);
     api.listMyBusinesses()
@@ -436,7 +446,7 @@ const BusinessSelector: React.FC<{ value: string; onChange: (id: string)=>void }
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [onChange, value, list]);
   return (
     <select value={value} onChange={(e)=> onChange(e.target.value)} className='text-[12px] rounded-md px-2' style={{ height: 'var(--pos-control-h)' }} aria-label='Negocio'>
       {list.map(b => <option key={b.id_negocio} value={b.id_negocio}>{b.nombre}</option>)}

@@ -31,6 +31,9 @@ export class CategoriesController {
   @Roles('admin','superadmin','empleado','usuario')
   create(@Req() req: any, @Body() dto: CreateCategoryDto) {
     const userId = this.extractUserId(req);
+    try {
+      console.log('🔔 POST /api/categories body:', dto, 'userId:', userId);
+    } catch {}
     return this.service.create(userId, dto);
   }
 

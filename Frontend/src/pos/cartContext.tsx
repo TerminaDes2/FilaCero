@@ -1,19 +1,31 @@
 "use client";
 import React, { createContext, useContext, useMemo, useReducer } from 'react';
 
+// --- ¡CORRECCIÓN AQUÍ! ---
+// Añadimos los campos de imagen que vienen de la API
 export interface POSProduct {
-  id: string;
+  id: string; // Tu API lo devuelve como 'id_producto', pero el service lo mapea a 'id'
   name: string;
   category: string;
   description?: string;
   price: number;
   stock: number;
-  image?: string; // url or static path
+  image?: string; // Este campo parece ser el antiguo (puedes dejarlo)
+  
+  // --- CAMPOS AÑADIDOS ---
+  // Estos campos SÍ vienen de tu API (gracias al 'mapProduct' del backend)
+  imagen_url?: string | null;
+  media?: Array<{
+    id_media?: string;
+    url: string;
+    principal: boolean;
+  }> | null;
 }
+// --- FIN DE LA CORRECCIÓN ---
 
 export interface CartItem {
   lineId: string;
-  product: POSProduct;
+  product: POSProduct; // Ahora 'product' incluye los campos de imagen
   qty: number;
   note?: string;
 }

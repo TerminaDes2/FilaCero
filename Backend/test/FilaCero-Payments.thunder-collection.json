@@ -1,0 +1,269 @@
+{
+  "client": "Thunder Client",
+  "collectionName": "FilaCero - Sistema de Pagos",
+  "dateExported": "2025-11-15",
+  "version": "1.0",
+  "folders": [
+    {
+      "name": "1. Autenticación",
+      "requests": [
+        {
+          "name": "Login Usuario",
+          "method": "POST",
+          "url": "http://localhost:3000/api/auth/login",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"correo_electronico\": \"test@example.com\",\n  \"contrasena\": \"password123\"\n}"
+          },
+          "tests": [
+            {
+              "type": "set-env-var",
+              "custom": "pm.environment.set(\"jwt_token\", pm.response.json().access_token);"
+            }
+          ],
+          "notes": "Obtener JWT token. Guardar access_token en variable de entorno 'jwt_token'."
+        }
+      ]
+    },
+    {
+      "name": "2. Pedidos",
+      "requests": [
+        {
+          "name": "Crear Pedido",
+          "method": "POST",
+          "url": "http://localhost:3000/api/pedidos",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"id_negocio\": \"1\",\n  \"tipo_servicio\": \"local\",\n  \"items\": [\n    {\n      \"id_producto\": \"1\",\n      \"cantidad\": 2,\n      \"precio_unitario\": 150.00\n    }\n  ],\n  \"notas\": \"Sin cebolla\"\n}"
+          },
+          "tests": [
+            {
+              "type": "set-env-var",
+              "custom": "pm.environment.set(\"pedido_id\", pm.response.json().id_pedido);"
+            }
+          ],
+          "notes": "Crear pedido de prueba. Guardar id_pedido en variable de entorno 'pedido_id'."
+        },
+        {
+          "name": "Obtener Pedido",
+          "method": "GET",
+          "url": "http://localhost:3000/api/pedidos/{{pedido_id}}",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "notes": "Verificar que el pedido se creó correctamente con estado 'pendiente'."
+        }
+      ]
+    },
+    {
+      "name": "3. Pagos - Crear PaymentIntent",
+      "requests": [
+        {
+          "name": "Crear PaymentIntent",
+          "method": "POST",
+          "url": "http://localhost:3000/api/payments/create-intent",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"pedidoId\": \"{{pedido_id}}\",\n  \"metadata\": {\n    \"origen\": \"postman_test\",\n    \"test\": true\n  }\n}"
+          },
+          "tests": [
+            {
+              "type": "set-env-var",
+              "custom": "pm.environment.set(\"payment_intent_id\", pm.response.json().paymentIntentId);\npm.environment.set(\"client_secret\", pm.response.json().clientSecret);"
+            }
+          ],
+          "notes": "Crear PaymentIntent. Guardar paymentIntentId y clientSecret."
+        },
+        {
+          "name": "Crear PaymentIntent - Pedido Inexistente (404)",
+          "method": "POST",
+          "url": "http://localhost:3000/api/payments/create-intent",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"pedidoId\": \"999999\"\n}"
+          },
+          "notes": "Debe retornar 404 Not Found."
+        },
+        {
+          "name": "Crear PaymentIntent - Pedido de Otro Usuario (403)",
+          "method": "POST",
+          "url": "http://localhost:3000/api/payments/create-intent",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"pedidoId\": \"2\"\n}"
+          },
+          "notes": "Debe retornar 403 Forbidden si el pedido no pertenece al usuario autenticado."
+        }
+      ]
+    },
+    {
+      "name": "4. Pagos - Webhook Simulación",
+      "requests": [
+        {
+          "name": "Webhook - payment_intent.succeeded",
+          "method": "POST",
+          "url": "http://localhost:3000/api/payments/webhook",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "stripe-signature",
+              "value": "t=1234567890,v1=fake_signature_for_testing"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"id\": \"evt_test_webhook\",\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"{{payment_intent_id}}\",\n      \"amount\": 30000,\n      \"currency\": \"mxn\",\n      \"status\": \"succeeded\"\n    }\n  }\n}"
+          },
+          "notes": "IMPORTANTE: Para webhook real, usar Stripe CLI: stripe listen --forward-to localhost:3000/api/payments/webhook"
+        }
+      ]
+    },
+    {
+      "name": "5. Pagos - Confirmar Manualmente",
+      "requests": [
+        {
+          "name": "Confirmar Pago",
+          "method": "POST",
+          "url": "http://localhost:3000/api/payments/confirm",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"paymentIntentId\": \"{{payment_intent_id}}\",\n  \"last4\": \"4242\",\n  \"brand\": \"visa\"\n}"
+          },
+          "notes": "Confirmar pago manualmente (alternativa a webhook)."
+        }
+      ]
+    },
+    {
+      "name": "6. Métodos de Pago Guardados",
+      "requests": [
+        {
+          "name": "Listar Métodos de Pago",
+          "method": "GET",
+          "url": "http://localhost:3000/api/payments/methods",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "notes": "Obtener métodos de pago guardados del usuario."
+        },
+        {
+          "name": "Guardar Método de Pago",
+          "method": "POST",
+          "url": "http://localhost:3000/api/payments/methods",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{jwt_token}}"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{\n  \"paymentMethodId\": \"pm_1234567890abcdef\",\n  \"tipo\": \"tarjeta\",\n  \"marca\": \"visa\",\n  \"last4\": \"4242\",\n  \"expMonth\": 12,\n  \"expYear\": 2025,\n  \"cardholderName\": \"Juan Pérez\",\n  \"isDefault\": true\n}"
+          },
+          "notes": "Guardar método de pago. El paymentMethodId debe generarse con Stripe Elements en frontend."
+        }
+      ]
+    },
+    {
+      "name": "7. Métricas",
+      "requests": [
+        {
+          "name": "Obtener Métricas de Pagos",
+          "method": "GET",
+          "url": "http://localhost:3000/api/payments/metrics",
+          "notes": "Ver contadores de pagos procesados."
+        }
+      ]
+    }
+  ],
+  "environmentVariables": [
+    {
+      "key": "jwt_token",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "pedido_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "payment_intent_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "client_secret",
+      "value": "",
+      "enabled": true
+    }
+  ]
+}

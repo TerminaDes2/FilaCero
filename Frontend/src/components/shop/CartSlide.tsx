@@ -1,74 +1,88 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
 import React from "react";
 import { useCart } from "./CartContext";
-import Link from "next/link";
+
+const currencyFormatter = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+});
 
 export default function CartSlide() {
   const { open, toggleOpen, items, total, updateQty, removeFromCart, clearCart } = useCart();
+  const count = items.reduce((s, i) => s + i.cantidad, 0);
 
   return (
     <>
-      <div
-        className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white dark:bg-[#0f172a] border-l transform transition-transform duration-300 z-40 ${
+      {/* Drawer */}
+      <aside
+        className={`fixed inset-y-0 right-0 w-full sm:w-[420px] max-w-[92vw] bg-white/90 backdrop-blur-xl border-l border-[var(--fc-border-soft)] shadow-xl rounded-none sm:rounded-tl-3xl sm:rounded-bl-3xl transform transition-transform duration-300 z-40 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
+        role="dialog"
+        aria-label="Carrito"
+        aria-modal="true"
       >
-        <div className="p-4 flex flex-col border-b" style={{ borderColor: "var(--fc-border-soft)" }}>
+        {/* Header */}
+        <div className="px-4 sm:px-5 pt-4 pb-3 border-b border-[var(--fc-border-soft)]">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Tu carrito</h3>
-            <button onClick={() => toggleOpen(false)} aria-label="Cerrar carrito" className="p-2 rounded hover:bg-gray-100">
-              ✕
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[var(--fc-brand-600)] text-white shadow-sm">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+              </span>
+              <div>
+                <h3 className="text-base font-semibold leading-tight">Tu pedido</h3>
+                <p className="text-xs text-gray-500">{count} {count === 1 ? 'artículo' : 'artículos'}</p>
+              </div>
+            </div>
+            <button onClick={() => toggleOpen(false)} aria-label="Cerrar carrito" className="p-2 rounded-full hover:bg-black/5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-1">Arma tu carrito de productos.</p>
         </div>
 
-        <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+        {/* Items */}
+        <div className="px-4 sm:px-5 py-4 overflow-y-auto max-h-[58vh] space-y-3">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-gray-500 mt-8">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 64 64"
-                className="w-24 h-24 mb-4 opacity-70"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="32" cy="32" r="30" stroke="#ccc" />
-                <path d="M16 40c4-6 28-6 32 0M24 26h16" stroke="#aaa" strokeLinecap="round" />
-              </svg>
-              <p className="text-sm font-medium">No tienes productos en tu carrito</p>
+            <div className="mt-8 text-center text-gray-500">
+              <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--fc-teal-50)] to-[var(--fc-brand-50)] flex items-center justify-center border border-[var(--fc-border-soft)]">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-400"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+              </div>
+              <p className="mt-3 text-sm font-medium">Tu carrito está vacío</p>
+              <p className="text-xs text-gray-500">Empieza agregando productos deliciosos.</p>
             </div>
           ) : (
-            items.map((it) => (
-              <div key={it.id} className="flex items-center gap-3 p-2 border rounded-lg hover:shadow-sm transition">
-                <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                  {it.imagen ? (
-                    <img src={it.imagen} alt={it.nombre} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">Img</div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">{it.nombre}</div>
-                    <div className="text-sm font-semibold">
-                      {(it.precio * it.cantidad).toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "MXN",
-                      })}
-                    </div>
+            items.map((item) => (
+              <div key={item.id} className="group rounded-xl border border-[var(--fc-border-soft)] bg-white/90 hover:bg-white/100 transition shadow-sm px-3 py-2.5">
+                <div className="flex gap-3">
+                  <div className="relative w-16 h-16 rounded-md overflow-hidden bg-slate-100 shrink-0">
+                    {item.imagen ? (
+                      <Image src={item.imagen} alt={item.nombre} fill className="object-cover" sizes="64px" unoptimized />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400">Sin imagen</div>
+                    )}
                   </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <button className="px-2 py-1 border rounded" onClick={() => updateQty(it.id, it.cantidad - 1)}>
-                      -
-                    </button>
-                    <span className="px-2">{it.cantidad}</span>
-                    <button className="px-2 py-1 border rounded" onClick={() => updateQty(it.id, it.cantidad + 1)}>
-                      +
-                    </button>
-                    <button className="ml-2 text-sm text-red-600" onClick={() => removeFromCart(it.id)}>
-                      Eliminar
-                    </button>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold leading-snug truncate" title={item.nombre}>{item.nombre}</p>
+                      <span className="text-sm font-semibold whitespace-nowrap">{currencyFormatter.format(item.precio * item.cantidad)}</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="inline-flex items-center rounded-full border border-[var(--fc-border-soft)]">
+                        <button className="w-7 h-7 text-slate-700 hover:bg-slate-50 rounded-l-full" onClick={() => updateQty(item.id, item.cantidad - 1)} aria-label="Restar">
+                          −
+                        </button>
+                        <span className="w-8 text-center text-sm font-medium select-none">{item.cantidad}</span>
+                        <button className="w-7 h-7 text-white bg-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)] rounded-r-full" onClick={() => updateQty(item.id, item.cantidad + 1)} aria-label="Sumar">
+                          +
+                        </button>
+                      </div>
+                      <button className="ml-1 text-[12px] text-gray-500 hover:text-red-600" onClick={() => removeFromCart(item.id)}>
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -76,47 +90,42 @@ export default function CartSlide() {
           )}
         </div>
 
-        {items.length > 0 && (
-          <div className="p-4 border-t" style={{ borderColor: "var(--fc-border-soft)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm text-gray-600">Total</div>
-              <div className="text-lg font-bold">
-                {total.toLocaleString(undefined, { style: "currency", currency: "USD" })}
+        {/* Footer */}
+        <div className="px-4 sm:px-5 pb-5 pt-3 border-t border-[var(--fc-border-soft)] bg-white/90 backdrop-blur-xl sticky bottom-0">
+          {items.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Total</span>
+                <span className="text-lg font-bold">{currencyFormatter.format(total)}</span>
               </div>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 h-10 rounded-lg border border-[var(--fc-border-soft)] text-sm font-medium hover:bg-slate-50"
+                  onClick={() => { clearCart(); toggleOpen(false); }}
+                >
+                  Vaciar
+                </button>
+                <Link
+                  href="/checkout"
+                  onClick={() => toggleOpen(false)}
+                  className="flex-1 h-10 inline-flex items-center justify-center rounded-lg text-sm font-semibold text-white bg-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)] shadow-sm"
+                >
+                  Pagar ahora
+                </Link>
+              </div>
+              <p className="text-[11px] text-gray-500">Impuestos incluidos donde aplique.</p>
             </div>
-            <div className="flex gap-2">
-              <button
-                className="fc-btn-secondary flex-1 border border-gray-300 rounded-md py-2"
-                onClick={() => {
-                  clearCart();
-                  toggleOpen(false);
-                }}
-              >
-                Vaciar carrito
-              </button>
-<button
-  className="flex-1 bg-green-600 text-white rounded-md py-2 hover:bg-green-500 transition"
-  onClick={() => toggleOpen(false)}
->
-  <Link
-    href="/checkout"
-    className="block w-full h-full text-center"
-  >
-    Continuar
-  </Link>
-</button>
-            </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="text-center text-xs text-gray-500">Añade productos para poder pagar.</div>
+          )}
+        </div>
+      </aside>
 
-      {/* sombreado */}
+      {/* Backdrop */}
       <div
         onClick={() => toggleOpen(false)}
-        className={`fixed inset-0 bg-black/30 z-30 transition-opacity ${
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-      ></div>
+        className={`fixed inset-0 bg-black/30 z-30 transition-opacity ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+      />
     </>
   );
 }

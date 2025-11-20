@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, activeBusiness } from '../../../lib/api';
 
 interface EditStockPanelProps {
@@ -18,27 +18,6 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
   const [error, setError] = useState<string | null>(null);
   const qtyRef = useRef<HTMLInputElement | null>(null);
   const [negocioManual, setNegocioManual] = useState<string>('');
-
-  useEffect(() => {
-    const t = setTimeout(() => qtyRef.current?.focus(), 60);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      } else if (
-        e.key === 'Enter' &&
-        !e.shiftKey &&
-        !e.altKey &&
-        !e.metaKey &&
-        !e.ctrlKey
-      ) {
-        e.preventDefault();
-        if (!saving) handleSave();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
-  }, [onClose, saving]);
 
   useEffect(() => {
     // Si no pasaron inventory y no hay negocioId, intentamos traer inventario por producto (puede existir único registro)
@@ -65,7 +44,7 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
   const canCreate = !!targetNegocioId && !((loadedInventory ?? inventory)?.id);
   const canUpdate = !!((loadedInventory ?? inventory)?.id);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setError(null);
     setSaving(true);
     try {
@@ -98,7 +77,28 @@ export const EditStockPanel: React.FC<EditStockPanelProps> = ({ product, invento
     } finally {
       setSaving(false);
     }
-  };
+  }, [canUpdate, canCreate, loadedInventory, inventory, cantidad, minimo, targetNegocioId, product.id, onSaved]);
+
+  useEffect(() => {
+    const t = setTimeout(() => qtyRef.current?.focus(), 60);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
+  }, [onClose, saving, handleSave]);
 
   return (
     <>

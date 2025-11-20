@@ -13,9 +13,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import NavbarStore from "../../src/components/shop/navbarStore";
+import { api } from "../../src/lib/api";
 
 export default function VerificationPage() {
-  const { user, isAuthenticated, loading } = useUserStore();
+  const { user, isAuthenticated, loading, checkAuth: userStoreCheckAuth } = useUserStore();
   const router = useRouter();
 
   const [phone, setPhone] = useState("");
@@ -25,6 +26,12 @@ export default function VerificationPage() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  // --- Estados para verificación SMS ---
+  const [phoneCode, setPhoneCode] = useState("");
+  const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState<boolean>(Boolean(user?.sms_verificado));
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneInfo, setPhoneInfo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) router.push("/auth/login");
@@ -75,6 +82,57 @@ export default function VerificationPage() {
       setIsSubmitting(false);
     }
   };
+
+  // --- Enviar código SMS real ---
+  const handleSendSms = async () => {
+    setPhoneError(null);
+    setPhoneInfo(null);
+    if (!phone || phone.trim().length < 6) {
+      setPhoneError("Ingresa un número válido (mínimo 6 caracteres)");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await api.startSmsVerification(phone.trim(), "sms");
+      setIsPhoneCodeSent(true);
+      setPhoneInfo(
+        res.expiresAt
+          ? `Código enviado. Expira en ${new Date(res.expiresAt).toLocaleTimeString()}`
+          : "Código enviado. Revisa tu teléfono."
+      );
+    } catch (err: any) {
+      setPhoneError(err?.message || "Error enviando SMS");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- Verificar código SMS ---
+  const handleVerifySms = async () => {
+    setPhoneError(null);
+    if (!phoneCode || phoneCode.trim().length < 4) {
+      setPhoneError("Ingresa el código recibido (mínimo 4 dígitos)");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await api.checkSmsVerification(phone.trim(), phoneCode.trim());
+      if (res.verified) {
+        setIsPhoneVerified(true);
+        setPhoneInfo("Número verificado correctamente.");
+        // Refrescar datos del usuario
+        await userStoreCheckAuth();
+      } else {
+        setPhoneError("Código incorrecto. Intenta nuevamente.");
+      }
+    } catch (err: any) {
+      setPhoneError(err?.message || "Error verificando código");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // (Ya obtenido de useUserStore en el destructuring inicial)
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -154,7 +212,7 @@ export default function VerificationPage() {
           )}
         </section>
 
-        {/* 📞 TELÉFONO */}
+        {/* 📞 TELÉFONO (Verificación SMS) */}
         <section className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
@@ -168,6 +226,7 @@ export default function VerificationPage() {
           <input
             type="tel"
             value={phone}
+            disabled={isPhoneVerified || isSubmitting}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Ingresa tu número de teléfono"
             className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white mb-3"
@@ -176,6 +235,62 @@ export default function VerificationPage() {
             Usa un número válido para recibir notificaciones y confirmar tu
             identidad.
           </p>
+
+          {!isPhoneVerified && (
+            <div className="mt-4 space-y-3">
+              {!isPhoneCodeSent ? (
+                <button
+                  onClick={handleSendSms}
+                  disabled={isSubmitting || !phone}
+                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                  {isSubmitting ? "Enviando..." : "Enviar SMS"}
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400">
+                    Código recibido:
+                  </label>
+                  <input
+                    type="text"
+                    value={phoneCode}
+                    onChange={(e) => setPhoneCode(e.target.value)}
+                    placeholder="Ej. 1234"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleVerifySms}
+                      disabled={isSubmitting || !phoneCode}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Verificando..." : "Verificar código"}
+                    </button>
+                    <button
+                      onClick={handleSendSms}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg"
+                    >
+                      Reenviar
+                    </button>
+                  </div>
+                </div>
+              )}
+              {phoneError && (
+                <p className="text-sm text-red-600 dark:text-red-400">{phoneError}</p>
+              )}
+              {phoneInfo && !phoneError && (
+                <p className="text-sm text-green-600 dark:text-green-400">{phoneInfo}</p>
+              )}
+            </div>
+          )}
+          {isPhoneVerified && (
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mt-3">
+              <ShieldCheck className="w-5 h-5" />
+              <span>Teléfono verificado</span>
+            </div>
+          )}
         </section>
 
         {/* 🪪 CREDENCIAL */}
@@ -209,6 +324,8 @@ export default function VerificationPage() {
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.pdf"
+              aria-label="Subir credencial estudiantil"
+              title="Subir credencial estudiantil"
               className="mt-4 text-sm text-gray-700 dark:text-gray-300"
               onChange={handleFileChange}
             />
@@ -231,11 +348,15 @@ export default function VerificationPage() {
         <div className="flex justify-end pt-4">
           <button
             disabled={
-              isSubmitting || !phone || !credentialFile || !isEmailVerified
+              isSubmitting ||
+              !phone ||
+              !credentialFile ||
+              !isEmailVerified ||
+              !isPhoneVerified
             }
             onClick={handleSubmit}
             className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
-              phone && credentialFile && isEmailVerified
+              phone && credentialFile && isEmailVerified && isPhoneVerified
                 ? "bg-brand-500 hover:bg-brand-600 text-white shadow-glow"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}

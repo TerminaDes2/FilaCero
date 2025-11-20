@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
-import { api, type ApiError, type UserInfo, type LoginResponse } from '../../lib/api';
-import { useUserStore } from "../../state/userStore"; // Ajusta la ruta
+import { api } from '../../lib/api';
+import { useUserStore } from "../../state/userStore";
+// Imports depurados
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -17,30 +18,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
-	const { setName, setBackendRole, login: persistLogin } = useUserStore();
-
-	const isPendingVerificationError = (err: unknown): err is ApiError => {
-		const maybeError = err as ApiError | undefined;
-		return Boolean(
-			maybeError &&
-			maybeError.status === 401 &&
-			typeof maybeError.message === 'string' &&
-			maybeError.message.toLowerCase().includes('verificación')
-		);
-	};
-
-	const buildFallbackUser = (loginUser: LoginResponse['user']): UserInfo => {
-		const parsedId = Number.parseInt(loginUser.id, 10);
-		const safeId = Number.isNaN(parsedId) || !Number.isSafeInteger(parsedId) ? 0 : parsedId;
-		const inferredName = loginUser.email?.split('@')[0] ?? 'Usuario';
-		return {
-			id_usuario: safeId,
-			nombre: inferredName,
-			correo_electronico: loginUser.email,
-			id_rol: 3,
-			role_name: 'usuario',
-		};
-	};
+	const { setName, setBackendRole, login } = useUserStore();
+	// Navegación directa según rol
 
 	const emailValid = /.+@.+\..+/.test(email);
 	const passwordValid = password.length >= 6;
@@ -55,55 +34,79 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 		setError(null);
 		
 		try {
-			// 1. Hacer login para obtener el token
+			// 1. Limpiar completamente el storage antes del login para evitar headers grandes
+			if (typeof window !== 'undefined') {
+				try { 
+					window.localStorage.removeItem('auth_token');
+					window.localStorage.removeItem('auth_user');
+					// Limpiar todas las cookies para evitar 431
+					document.cookie.split(";").forEach((c) => {
+						document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+					});
+				} catch {}
+			}
+			
+			// 2. Hacer login para obtener el token
 			const res = await api.login(email.trim().toLowerCase(), password);
-
+			
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem('auth_token', res.token);
+				// Guardar datos básicos del login temporalmente
+				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 			}
-
-			let userInfo: UserInfo;
-			let fetchedFromMe = true;
-
-			try {
-				console.log('🔄 Obteniendo información completa del usuario...');
-				userInfo = await api.me();
-			} catch (fetchError) {
-				if (isPendingVerificationError(fetchError)) {
-					console.warn('⚠️ No se pudo obtener /auth/me por verificación pendiente. Continuamos con información básica.');
-					userInfo = buildFallbackUser(res.user);
-					fetchedFromMe = false;
-				} else {
-					throw fetchError;
-				}
-			}
-
-			persistLogin(res.token, userInfo);
-
-			if (typeof window !== 'undefined') {
-				if (!fetchedFromMe) {
-					window.localStorage.setItem('auth_user_fallback_reason', 'pending-verification');
-				} else {
-					window.localStorage.removeItem('auth_user_fallback_reason');
-				}
-			}
-
+			
 			onSuccess?.();
-
+			
+			// 3. Obtener información COMPLETA del usuario incluyendo el rol
+			console.log('🔄 Obteniendo información completa del usuario...');
+			const userInfo = await api.me();
+			
+			// 4. Actualizar store con login
+			login(res.token, userInfo);
+			
+			// 5. Determinar rol y redirigir según reglas de negocio
 			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
-			const idRol = userInfo.id_rol;
-			console.log('✅ Rol (name):', roleName, ' id_rol:', idRol);
+			// Asegurarse de que idRol sea un número antes de comparar
+            const idRol = Number(userInfo.id_rol);
 
-			setName(userInfo.nombre ?? userInfo.correo_electronico);
-			setBackendRole(roleName);
+            console.log('👤 Información del usuario:', { roleName, idRol, userInfo });
 
-			if (roleName === 'admin' || roleName === 'superadmin' || idRol === 2) {
-				console.log('🎯 Redirigiendo ADMIN a /pos');
-				router.push('/pos');
-			} else {
-				console.log('🎯 Redirigiendo a /shop');
-				router.push('/shop');
-			}
+            // Lógica de redirección según rol
+            if (idRol === 4) {
+                console.log('🎯 Cliente detectado, redirigiendo a /shop');
+                router.push('/shop');
+                return;
+            }
+
+            if (idRol === 3) {
+                console.log('🎯 Empleado detectado, redirigiendo a /pos');
+                router.push('/pos');
+                return;
+            }
+
+            if (idRol === 2 || idRol === 1) {
+                console.log('🎯 Admin/Superadmin detectado, verificando negocios...');
+
+                try {
+                    const businesses = await api.listMyBusinesses();
+                    console.log('📊 Negocios del admin:', businesses);
+
+                    if (businesses && businesses.length > 0) {
+                        console.log('🎯 Admin con negocio(s), redirigiendo a /pos');
+                        router.push('/pos');
+                    } else {
+                        console.log('🎯 Admin sin negocio, redirigiendo a crear negocio');
+                        router.push('/onboarding/negocio');
+                    }
+                } catch (businessErr) {
+                    console.error('❌ Error al obtener negocios:', businessErr);
+                    router.push('/onboarding/negocio');
+                }
+                return;
+            }
+
+            console.log('🎯 Rol no identificado, redirigiendo a /shop (fallback)');
+            router.push('/shop');
 			
 		} catch (err: any) {
 			console.error('❌ Error en login:', err);
@@ -112,14 +115,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			if (typeof window !== 'undefined') {
 				window.localStorage.removeItem('auth_token');
 				window.localStorage.removeItem('auth_user');
-				window.localStorage.removeItem('auth_user_fallback_reason');
 			}
 			
-			if (isPendingVerificationError(err)) {
-				setError('No pudimos iniciar sesión porque el servidor aún marca la cuenta como pendiente de verificación. Revisa tu bandeja o contacta soporte.');
-			} else {
-				setError(err?.message || 'Error al iniciar sesión');
-			}
+			setError(err?.message || 'Error al iniciar sesión');
 		} finally {
 			setSubmitting(false);
 		}
@@ -200,7 +198,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					<p className="text-xs text-gray-600">
 						¿Eres nuevo en FilaCero?{' '}
 						<a 
-							href="/auth/register"
+							href="/register"
 							className="text-brand-600 font-medium hover:underline"
 						> 
 							Crea una cuenta
@@ -208,6 +206,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					</p>
 				</div>
 			</div>		
+		{/* Fin del formulario */}
 		</form>
 	);
 };

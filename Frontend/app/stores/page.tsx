@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -66,31 +67,44 @@ export default function StorePage() {
     fetchStore();
   }, [storeId]);
 
-  if (loading) return <StoreLoading />;
+  if (loading)
+    return (
+      <>
+        <NavbarStore />
+        <StoreLoading />
+      </>
+    );
+
   if (error || !store)
     return (
-      <div className="min-h-screen bg-gray-50 pt-16 flex flex-col items-center justify-center text-center px-6">
-        <div className="text-6xl mb-4">😞</div>
-        <h1 className="text-2xl font-bold mb-4">{error || "Tienda no encontrada"}</h1>
-        <p className="text-gray-600 mb-6">
-          La tienda que buscas no existe o no está disponible.
-        </p>
-        <Link
-          href="/shop"
-          className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
-        >
-          Volver a tiendas
-        </Link>
-      </div>
+      <>
+        <NavbarStore />
+        <div className="min-h-screen bg-gray-50 pt-16">
+          <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 text-center">
+            <div className="mb-4 text-6xl">😞</div>
+            <h1 className="mb-4 text-2xl font-bold">{error || "Tienda no encontrada"}</h1>
+            <p className="mb-6 text-gray-600">La tienda que buscas no existe o no está disponible.</p>
+            <Link
+              href="/shop"
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition hover:bg-green-600"
+            >
+              Volver a tiendas
+            </Link>
+          </div>
+        </div>
+      </>
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      <StoreHeader store={store} />
-      <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <StoreSidebar store={store} />
-        <StoreProductList productos={store.productos || []} />
+    <>
+      <NavbarStore />
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <StoreHeader store={store} />
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-4">
+          <StoreSidebar store={store} />
+          <StoreProductList productos={store.productos || []} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
