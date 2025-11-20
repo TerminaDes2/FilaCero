@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import { Body, Controller, Post, Logger, Get, Query, Res, HttpStatus } from '@nestjs/common';
 import { EmailService } from './email.service';
 import { SendEmailDto } from 'src/common/dto';
@@ -12,7 +13,7 @@ export class EmailController {
     constructor(
         private readonly emailService: EmailService,
         private readonly zohoOAuthService: ZohoOAuthService,
-    ) {}
+    ) { }
 
     @Post('send')
     sendEmail(
@@ -71,7 +72,7 @@ export class EmailController {
         try {
             this.logger.log('[OAUTH_CALLBACK] Procesando código de autorización');
             const tokenData = await this.zohoOAuthService.exchangeCodeForTokens(code);
-            
+
             this.logger.log('[OAUTH_CALLBACK_SUCCESS] Autorización completada');
             res.status(HttpStatus.OK).json({
                 message: 'Autorización exitosa. La aplicación ahora puede enviar emails vía Zoho.',
@@ -98,7 +99,7 @@ export class EmailController {
         const hasToken = this.zohoOAuthService.hasToken();
         return {
             authorized: hasToken,
-            message: hasToken 
+            message: hasToken
                 ? 'La aplicación está autorizada para enviar emails vía Zoho'
                 : 'La aplicación no está autorizada. Visita /api/email/auth para autorizar',
         };
