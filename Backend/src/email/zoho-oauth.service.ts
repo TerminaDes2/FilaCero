@@ -1,7 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { envs } from 'src/config';
-import * as fs from 'fs';
-import * as path from 'path';
 
 interface ZohoTokenData {
     access_token: string;
@@ -24,7 +22,6 @@ interface ZohoTokenResponse {
 export class ZohoOAuthService implements OnModuleInit {
     private readonly logger = new Logger(ZohoOAuthService.name);
     private tokenData: ZohoTokenData | null = null;
-    private readonly tokenFilePath = path.join(process.cwd(), 'zoho-token.json');
 
     async onModuleInit() {
         if (!envs.mailUseHttp) {
@@ -33,12 +30,32 @@ export class ZohoOAuthService implements OnModuleInit {
         }
 
         this.validateConfig();
-        await this.loadTokenFromFile();
 
-        if (!this.tokenData) {
-            this.logger.warn('[INIT] No hay token disponible. Debes autorizar la aplicación primero visitando /api/email/auth');
+        // Si existe ZOHO_REFRESH_TOKEN en las variables de entorno, lo usamos
+        if (envs.zohoRefreshToken) {
+            this.logger.log('[INIT] ZOHO_REFRESH_TOKEN encontrado, inicializando con refresh token desde variables de entorno');
+            this.tokenData = {
+                access_token: '',
+                refresh_token: envs.zohoRefreshToken,
+                expires_in: 0,
+                token_type: 'Bearer',
+                api_domain: envs.zohoApiDomain || 'https://mail.zoho.com',
+                expires_at: 0, // Forzará un refresh inmediato
+            };
+            
+            try {
+                // Obtener el primer access_token usando el refresh_token
+                await this.refreshAccessToken();
+                this.logger.log('[INIT] ✅ Access token obtenido exitosamente usando ZOHO_REFRESH_TOKEN');
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : String(error);
+                this.logger.error(`[INIT] ❌ Error al obtener access token con refresh token: ${msg}`);
+                this.logger.warn('[INIT] Es posible que necesites reautorizar la aplicación visitando /api/email/auth');
+            }
         } else {
-            this.logger.log('[INIT] Token OAuth cargado correctamente');
+            this.logger.warn('[INIT] ⚠️  No hay ZOHO_REFRESH_TOKEN disponible.');
+            this.logger.warn('[INIT] Debes autorizar la aplicación visitando /api/email/auth para obtener el refresh token.');
+            this.logger.warn('[INIT] Una vez obtenido, cópialo de los logs y agrégalo a ZOHO_REFRESH_TOKEN en tus variables de entorno.');
         }
     }
 
@@ -49,7 +66,7 @@ export class ZohoOAuthService implements OnModuleInit {
     }
 
     /**
-     * Obtiene la URL de autorización para el flujo OAuth
+     * Obtiene la URL de autorización para el flujo OAuth inicial
      */
     getAuthorizationUrl(): string {
         if (!envs.zohoClientId || !envs.zohoRedirectUri) {
@@ -70,9 +87,10 @@ export class ZohoOAuthService implements OnModuleInit {
 
     /**
      * Intercambia el código de autorización por tokens de acceso y refresco
+     * IMPORTANTE: Imprime el refresh_token en consola para que lo copies a Railway
      */
     async exchangeCodeForTokens(code: string): Promise<ZohoTokenData> {
-        this.logger.log('[EXCHANGE_CODE] Intercambiando código por tokens');
+        this.logger.log('[EXCHANGE_CODE] 🔄 Intercambiando código por tokens...');
 
         if (!envs.zohoClientId || !envs.zohoClientSecret || !envs.zohoRedirectUri) {
             throw new Error('Faltan credenciales de Zoho OAuth');
@@ -116,8 +134,21 @@ export class ZohoOAuthService implements OnModuleInit {
                 expires_at: Date.now() + data.expires_in * 1000,
             };
 
-            await this.saveTokenToFile();
-            this.logger.log('[EXCHANGE_CODE_SUCCESS] Tokens obtenidos y guardados');
+            // ⭐ IMPORTANTE: Imprimir el refresh_token en consola para copiarlo desde Railway
+            this.logger.log('╔════════════════════════════════════════════════════════════════════════════╗');
+            this.logger.log('║  🎉 REFRESH TOKEN OBTENIDO - COPIA ESTO A TU VARIABLE DE ENTORNO         ║');
+            this.logger.log('╠════════════════════════════════════════════════════════════════════════════╣');
+            console.log(`\n🔑 ZOHO_REFRESH_TOKEN=${data.refresh_token}\n`);
+            this.logger.log('╠════════════════════════════════════════════════════════════════════════════╣');
+            this.logger.log('║  📝 Instrucciones:                                                         ║');
+            this.logger.log('║  1. Copia el token anterior                                                ║');
+            this.logger.log('║  2. Agrégalo a tus variables de entorno en Railway como:                   ║');
+            this.logger.log('║     ZOHO_REFRESH_TOKEN=<el_token_copiado>                                  ║');
+            this.logger.log('║  3. Reinicia la aplicación                                                 ║');
+            this.logger.log('║  4. A partir de ahora, el access_token se regenerará automáticamente       ║');
+            this.logger.log('╚════════════════════════════════════════════════════════════════════════════╝');
+
+            this.logger.log('[EXCHANGE_CODE_SUCCESS] ✅ Tokens obtenidos correctamente');
 
             return this.tokenData;
         } catch (error) {
@@ -129,13 +160,17 @@ export class ZohoOAuthService implements OnModuleInit {
 
     /**
      * Refresca el access token usando el refresh token
+     * Usa ZOHO_REFRESH_TOKEN de las variables de entorno si está disponible
      */
     async refreshAccessToken(): Promise<string> {
-        if (!this.tokenData?.refresh_token) {
-            throw new Error('No hay refresh_token disponible. Debes autorizar la aplicación primero.');
+        // Priorizar el refresh_token de las variables de entorno
+        const refreshToken = envs.zohoRefreshToken || this.tokenData?.refresh_token;
+
+        if (!refreshToken) {
+            throw new Error('No hay refresh_token disponible. Debes autorizar la aplicación primero visitando /api/email/auth');
         }
 
-        this.logger.log('[REFRESH_TOKEN] Refrescando access token');
+        this.logger.log('[REFRESH_TOKEN] 🔄 Refrescando access token...');
 
         if (!envs.zohoClientId || !envs.zohoClientSecret) {
             throw new Error('Faltan credenciales de Zoho OAuth');
@@ -145,7 +180,7 @@ export class ZohoOAuthService implements OnModuleInit {
             grant_type: 'refresh_token',
             client_id: envs.zohoClientId as string,
             client_secret: envs.zohoClientSecret as string,
-            refresh_token: this.tokenData.refresh_token,
+            refresh_token: refreshToken,
         });
 
         try {
@@ -169,15 +204,27 @@ export class ZohoOAuthService implements OnModuleInit {
                 throw new Error('Respuesta inválida de Zoho: falta access_token');
             }
 
-            this.tokenData = {
-                ...this.tokenData,
-                access_token: data.access_token,
-                expires_in: data.expires_in,
-                expires_at: Date.now() + data.expires_in * 1000,
-            };
+            // Actualizar o crear tokenData
+            if (!this.tokenData) {
+                this.tokenData = {
+                    access_token: data.access_token,
+                    refresh_token: refreshToken,
+                    expires_in: data.expires_in,
+                    token_type: data.token_type,
+                    api_domain: data.api_domain || envs.zohoApiDomain || 'https://mail.zoho.com',
+                    expires_at: Date.now() + data.expires_in * 1000,
+                };
+            } else {
+                this.tokenData = {
+                    ...this.tokenData,
+                    access_token: data.access_token,
+                    expires_in: data.expires_in,
+                    expires_at: Date.now() + data.expires_in * 1000,
+                };
+            }
 
-            await this.saveTokenToFile();
-            this.logger.log('[REFRESH_TOKEN_SUCCESS] Access token refrescado');
+            this.logger.log('[REFRESH_TOKEN_SUCCESS] ✅ Access token refrescado correctamente');
+            this.logger.debug(`[REFRESH_TOKEN] Nuevo token expira en ${data.expires_in} segundos`);
 
             return this.tokenData.access_token;
         } catch (error) {
@@ -189,19 +236,34 @@ export class ZohoOAuthService implements OnModuleInit {
 
     /**
      * Obtiene un access token válido (refresca automáticamente si ha expirado)
+     * Esta es la función principal que debes usar para obtener tokens
      */
-    async getValidAccessToken(): Promise<string> {
+    async getAccessToken(): Promise<string> {
+        // Si existe ZOHO_REFRESH_TOKEN pero no se ha inicializado tokenData
+        if (envs.zohoRefreshToken && !this.tokenData) {
+            this.logger.log('[GET_ACCESS_TOKEN] Inicializando con ZOHO_REFRESH_TOKEN de variables de entorno');
+            this.tokenData = {
+                access_token: '',
+                refresh_token: envs.zohoRefreshToken,
+                expires_in: 0,
+                token_type: 'Bearer',
+                api_domain: envs.zohoApiDomain || 'https://mail.zoho.com',
+                expires_at: 0,
+            };
+        }
+
         if (!this.tokenData) {
             throw new Error('No hay token disponible. Debes autorizar la aplicación primero visitando /api/email/auth');
         }
 
-        // Si el token expira en menos de 5 minutos, refrescarlo
+        // Si el token expira en menos de 5 minutos o ya expiró, refrescarlo
         const bufferTime = 5 * 60 * 1000; // 5 minutos
         if (Date.now() + bufferTime >= this.tokenData.expires_at) {
-            this.logger.debug('[GET_TOKEN] Token próximo a expirar, refrescando');
+            this.logger.debug('[GET_ACCESS_TOKEN] Token próximo a expirar o ya expirado, refrescando...');
             return await this.refreshAccessToken();
         }
 
+        this.logger.debug('[GET_ACCESS_TOKEN] Token válido, retornando token existente');
         return this.tokenData.access_token;
     }
 
@@ -216,42 +278,16 @@ export class ZohoOAuthService implements OnModuleInit {
     }
 
     /**
-     * Guarda los tokens en un archivo local
-     */
-    private async saveTokenToFile(): Promise<void> {
-        try {
-            await fs.promises.writeFile(
-                this.tokenFilePath,
-                JSON.stringify(this.tokenData, null, 2),
-                'utf-8'
-            );
-            this.logger.debug(`[SAVE_TOKEN] Tokens guardados en ${this.tokenFilePath}`);
-        } catch (error) {
-            const msg = error instanceof Error ? error.message : String(error);
-            this.logger.error(`[SAVE_TOKEN_ERROR] ${msg}`);
-        }
-    }
-
-    /**
-     * Carga los tokens desde un archivo local
-     */
-    private async loadTokenFromFile(): Promise<void> {
-        try {
-            if (fs.existsSync(this.tokenFilePath)) {
-                const data = await fs.promises.readFile(this.tokenFilePath, 'utf-8');
-                this.tokenData = JSON.parse(data) as ZohoTokenData;
-                this.logger.debug(`[LOAD_TOKEN] Tokens cargados desde ${this.tokenFilePath}`);
-            }
-        } catch (error) {
-            const msg = error instanceof Error ? error.message : String(error);
-            this.logger.warn(`[LOAD_TOKEN_ERROR] ${msg}`);
-        }
-    }
-
-    /**
-     * Verifica si hay un token disponible
+     * Verifica si hay un token disponible (ya sea en memoria o en variables de entorno)
      */
     hasToken(): boolean {
-        return this.tokenData !== null;
+        return this.tokenData !== null || !!envs.zohoRefreshToken;
+    }
+
+    /**
+     * Obtiene el refresh token actual (útil para debugging)
+     */
+    getRefreshToken(): string | null {
+        return envs.zohoRefreshToken || this.tokenData?.refresh_token || null;
     }
 }
