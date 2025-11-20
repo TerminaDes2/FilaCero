@@ -7,6 +7,7 @@ import { useUserStore } from '../../../src/state/userStore';
 import { useSettingsStore } from '../../../src/state/settingsStore';
 import { useConfirm } from '../../../src/components/system/ConfirmProvider';
 import { BrandLogo } from '../../../src/components/BrandLogo';
+import { useBusinessStore } from '../../../src/state/businessStore';
 type SectionKey =
   | 'business'
   | 'appearance'
@@ -272,48 +273,138 @@ const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean)=>void }> = ({ 
 );
 
 function BusinessSection() {
+  const { business, setBusiness } = useBusinessStore();
+
   return (
     <div className='space-y-4'>
-      <Card title='Identidad del negocio' desc='Información pública y de contacto' right={<button className='text-[12px] px-3 py-1.5 rounded-md' style={{background:'rgba(0,0,0,0.06)'}}>Editar</button>}>
+      <Card
+        title='Identidad del negocio'
+        desc='Información pública y de contacto'
+        right={<button className='text-[12px] px-3 py-1.5 rounded-md' style={{background:'rgba(0,0,0,0.06)'}}>Editar</button>}
+      >
+
+        {/* Nombre del negocio */}
         <Row label='Nombre del negocio'>
-          <Input placeholder='Ej. Cafetería La Esquina' />
+          <Input
+            value={business.name}
+            onChange={(e) => setBusiness({ name: e.target.value })}
+            placeholder='Ej. Cafetería La Esquina'
+          />
         </Row>
+
+        {/* Slogan */}
         <Row label='Slogan'>
-          <Input placeholder='Un lugar para disfrutar' />
+          <Input
+            value={business.slogan}
+            onChange={(e) => setBusiness({ slogan: e.target.value })}
+            placeholder='Un lugar para disfrutar'
+          />
         </Row>
+
+        {/* Logo */}
         <Row label='Logo'>
           <div className='flex items-center gap-3'>
-            <div className='w-14 h-14 rounded-lg bg-white/80 flex items-center justify-center' style={{boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}}>
-              <span className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Previsualización</span>
+            <div className='w-14 h-14 rounded-lg bg-white/80 flex items-center justify-center'
+                 style={{boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}}>
+              {business.logo ? (
+                <img src={business.logo} className='w-full h-full object-cover rounded-lg' />
+              ) : (
+                <span className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Previsualización</span>
+              )}
             </div>
-            <button className='px-3 py-2 text-[13px] rounded-lg font-medium' style={{background:'rgba(0,0,0,0.06)'}}>Subir logo</button>
+
+            <input
+              type="file"
+              className="hidden"
+              id="logoInput"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const url = URL.createObjectURL(file);
+                  setBusiness({ logo: url });
+                }
+              }}
+            />
+
+            <button
+              onClick={() => document.getElementById('logoInput')?.click()}
+              className='px-3 py-2 text-[13px] rounded-lg font-medium'
+              style={{background:'rgba(0,0,0,0.06)'}}
+            >
+              Subir logo
+            </button>
           </div>
         </Row>
+
+        {/* Datos fiscales */}
         <Row label='Datos fiscales' hint='RFC/NIF, razón social y domicilio'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-            <Input placeholder='RFC / NIF' />
-            <Input placeholder='Razón social' />
-            <Input placeholder='Dirección fiscal' className='md:col-span-2' />
+            <Input
+              value={business.rfc}
+              onChange={(e) => setBusiness({ rfc: e.target.value })}
+              placeholder='RFC / NIF'
+            />
+            <Input
+              value={business.razonSocial}
+              onChange={(e) => setBusiness({ razonSocial: e.target.value })}
+              placeholder='Razón social'
+            />
+            <Input
+              value={business.direccionFiscal}
+              onChange={(e) => setBusiness({ direccionFiscal: e.target.value })}
+              placeholder='Dirección fiscal'
+              className='md:col-span-2'
+            />
           </div>
         </Row>
+
+        {/* Contacto */}
         <Row label='Contacto'>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-            <Input placeholder='Teléfono' />
-            <Input placeholder='Email' />
-            <Input placeholder='Sitio web' />
+            <Input
+              value={business.telefono}
+              onChange={(e) => setBusiness({ telefono: e.target.value })}
+              placeholder='Teléfono'
+            />
+            <Input
+              value={business.email}
+              onChange={(e) => setBusiness({ email: e.target.value })}
+              placeholder='Email'
+            />
+            <Input
+              value={business.website}
+              onChange={(e) => setBusiness({ website: e.target.value })}
+              placeholder='Sitio web'
+            />
           </div>
         </Row>
+
+        {/* Horario */}
         <Row label='Horario'>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-            <Input placeholder='Lun-Vie: 8:00-20:00' />
-            <Input placeholder='Sáb: 9:00-14:00' />
-            <Input placeholder='Dom: cerrado' />
+            <Input
+              value={business.horario1}
+              onChange={(e) => setBusiness({ horario1: e.target.value })}
+              placeholder='Lun-Vie: 8:00-20:00'
+            />
+            <Input
+              value={business.horario2}
+              onChange={(e) => setBusiness({ horario2: e.target.value })}
+              placeholder='Sáb: 9:00-14:00'
+            />
+            <Input
+              value={business.horario3}
+              onChange={(e) => setBusiness({ horario3: e.target.value })}
+              placeholder='Dom: cerrado'
+            />
           </div>
         </Row>
+
       </Card>
     </div>
   );
 }
+
 
 function AppearanceSection() {
   const { density, accentTeal, set } = useSettingsStore();

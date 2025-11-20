@@ -13,6 +13,9 @@ import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import {BrandLogo} from '../../src/components/BrandLogo'
+import { useUserStore } from "../../src/state/userStore";
+import { useRouter } from "next/navigation";
+
 // Categories store not needed here
 
 // Mock product dataset (frontend only)
