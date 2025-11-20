@@ -15,10 +15,6 @@ Este módulo implementa un sistema completo de envío de emails que soporta dos 
 # Activar envío por HTTP (Zoho API)
 MAIL_USE_HTTP=true
 
-# Credenciales OAuth de Zoho
-ZOHO_CLIENT_ID=
-ZOHO_CLIENT_SECRET=
-ZOHO_REDIRECT_URI=
 ```
 
 ### Obtener Credenciales de Zoho

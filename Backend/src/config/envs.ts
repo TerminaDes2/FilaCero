@@ -11,6 +11,7 @@ export const envSchema = z.object({
     ZOHO_CLIENT_ID: z.string().min(1).optional(),
     ZOHO_CLIENT_SECRET: z.string().min(1).optional(),
     ZOHO_REDIRECT_URI: z.string().min(1).optional(),
+    ZOHO_API_DOMAIN: z.string().min(1).optional(),
 }).passthrough();
 
 const envParsed = envSchema.safeParse(process.env);
@@ -30,4 +31,5 @@ export const envs = {
     zohoClientId: envParsed.data.ZOHO_CLIENT_ID,
     zohoClientSecret: envParsed.data.ZOHO_CLIENT_SECRET,
     zohoRedirectUri: envParsed.data.ZOHO_REDIRECT_URI,
+    zohoApiDomain: envParsed.data.ZOHO_API_DOMAIN,
 }

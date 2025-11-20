@@ -209,6 +209,9 @@ export class ZohoOAuthService implements OnModuleInit {
      * Obtiene el dominio API de Zoho
      */
     getApiDomain(): string {
+        if (envs.zohoApiDomain) {
+            return envs.zohoApiDomain;
+        }
         return this.tokenData?.api_domain || 'https://mail.zoho.com';
     }
 
