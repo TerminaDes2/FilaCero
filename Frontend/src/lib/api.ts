@@ -653,6 +653,67 @@ export const api = {
     return apiFetch<any[]>(`sales${query ? `?${query}` : ""}`);
   },
   
+  getCashoutSummary: (params: {
+    id_negocio: string;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    incluir_recientes?: boolean;
+    limite_recientes?: number;
+    todo_el_dia?: boolean;
+  }) => {
+    const search = new URLSearchParams();
+    search.append('id_negocio', params.id_negocio);
+    if (params.fecha_inicio) search.append('fecha_inicio', params.fecha_inicio);
+    if (params.fecha_fin) search.append('fecha_fin', params.fecha_fin);
+    if (params.incluir_recientes !== undefined) {
+      search.append('incluir_recientes', String(params.incluir_recientes));
+    }
+    if (params.limite_recientes) {
+      search.append('limite_recientes', String(params.limite_recientes));
+    }
+    if (params.todo_el_dia !== undefined) {
+      search.append('todo_el_dia', String(params.todo_el_dia));
+    }
+    const qp = search.toString();
+    return apiFetch<any>(`sales/cashout/summary${qp ? `?${qp}` : ''}`);
+  },
+
+  createCashout: (data: {
+    id_negocio: string;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    monto_inicial?: number;
+    monto_final?: number;
+    todo_el_dia?: boolean;
+  }) =>
+    apiFetch<any>('sales/cashout', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getCashoutHistory: (params: {
+    id_negocio: string;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    limite?: number;
+    incluir_recientes?: boolean;
+    limite_recientes?: number;
+  }) => {
+    const search = new URLSearchParams();
+    search.append('id_negocio', params.id_negocio);
+    if (params.fecha_inicio) search.append('fecha_inicio', params.fecha_inicio);
+    if (params.fecha_fin) search.append('fecha_fin', params.fecha_fin);
+    if (params.limite) search.append('limite', String(params.limite));
+    if (params.incluir_recientes !== undefined) {
+      search.append('incluir_recientes', String(params.incluir_recientes));
+    }
+    if (params.limite_recientes) {
+      search.append('limite_recientes', String(params.limite_recientes));
+    }
+    const qp = search.toString();
+    return apiFetch<any>(`sales/cashout/history${qp ? `?${qp}` : ''}`);
+  },
+  
   getSale: (id: string) => apiFetch<any>(`sales/${id}`), 
 
   // --- Cocina / Pedidos ---
