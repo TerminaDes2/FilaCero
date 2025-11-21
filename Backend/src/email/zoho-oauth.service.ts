@@ -1,6 +1,12 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { envs } from 'src/config';
 
+interface ZohoCredentials {
+    clientId: string;
+    clientSecret: string;
+    refreshToken: string;
+}
+
 interface ZohoTokenData {
     access_token: string;
     refresh_token: string;
@@ -21,8 +27,9 @@ interface ZohoTokenResponse {
 @Injectable()
 export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(ZohoOAuthService.name);
-    private tokenData: ZohoTokenData | null = null;
-    private refreshIntervalId: NodeJS.Timeout | null = null;
+    // Map para almacenar tokens por email (clave: email, valor: token data)
+    private tokenDataMap: Map<string, ZohoTokenData> = new Map();
+    private refreshIntervalIds: Map<string, NodeJS.Timeout> = new Map();
 
     async onModuleInit() {
         if (!envs.mailUseHttp) {
@@ -30,43 +37,114 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
             return;
         }
 
-        this.validateConfig();
+        // Inicializar token para no-reply si existe
+        if (envs.zohoRefreshTokenNoreply && envs.mailNoreplyFrom) {
+            await this.initializeAccount(
+                envs.mailNoreplyFrom,
+                {
+                    clientId: envs.zohoClientIdNoreply || envs.zohoClientId || '',
+                    clientSecret: envs.zohoClientSecretNoreply || envs.zohoClientSecret || '',
+                    refreshToken: envs.zohoRefreshTokenNoreply,
+                }
+            );
+        }
 
-        // Si existe ZOHO_REFRESH_TOKEN en las variables de entorno, lo usamos
-        if (envs.zohoRefreshToken) {
-            this.logger.log('[INIT] ZOHO_REFRESH_TOKEN encontrado, inicializando con refresh token desde variables de entorno');
-            this.tokenData = {
-                access_token: '',
-                refresh_token: envs.zohoRefreshToken,
-                expires_in: 0,
-                token_type: 'Bearer',
-                api_domain: envs.zohoApiDomain || 'https://mail.zoho.com',
-                expires_at: 0, // Forzará un refresh inmediato
-            };
-            
-            try {
-                // Obtener el primer access_token usando el refresh_token
-                await this.refreshAccessToken();
-                this.logger.log('[INIT] ✅ Access token obtenido exitosamente usando ZOHO_REFRESH_TOKEN');
-                
-                // 🆕 Programar renovación automática del token
-                this.scheduleTokenRefresh();
-            } catch (error) {
-                const msg = error instanceof Error ? error.message : String(error);
-                this.logger.error(`[INIT] ❌ Error al obtener access token con refresh token: ${msg}`);
-                this.logger.warn('[INIT] Es posible que necesites reautorizar la aplicación visitando /api/email/auth');
-            }
-        } else {
-            this.logger.warn('[INIT] ⚠️  No hay ZOHO_REFRESH_TOKEN disponible.');
+        // Inicializar token para privacity si existe
+        if (envs.zohoRefreshTokenPrivacity && envs.mailPrivacyFrom) {
+            await this.initializeAccount(
+                envs.mailPrivacyFrom,
+                {
+                    clientId: envs.zohoClientIdPrivacity || envs.zohoClientId || '',
+                    clientSecret: envs.zohoClientSecretPrivacity || envs.zohoClientSecret || '',
+                    refreshToken: envs.zohoRefreshTokenPrivacity,
+                }
+            );
+        }
+
+        // Inicializar token por defecto si existe (legacy)
+        if (envs.zohoRefreshToken && envs.mailFrom) {
+            await this.initializeAccount(
+                envs.mailFrom,
+                {
+                    clientId: envs.zohoClientId || '',
+                    clientSecret: envs.zohoClientSecret || '',
+                    refreshToken: envs.zohoRefreshToken,
+                }
+            );
+        }
+
+        if (this.tokenDataMap.size === 0) {
+            this.logger.warn('[INIT] ⚠️  No hay ZOHO_REFRESH_TOKEN disponible para ninguna cuenta.');
             this.logger.warn('[INIT] Debes autorizar la aplicación visitando /api/email/auth para obtener el refresh token.');
-            this.logger.warn('[INIT] Una vez obtenido, cópialo de los logs y agrégalo a ZOHO_REFRESH_TOKEN en tus variables de entorno.');
         }
     }
 
-    private validateConfig() {
-        if (!envs.zohoClientId || !envs.zohoClientSecret || !envs.zohoRedirectUri) {
-            throw new Error('Faltan variables de entorno: ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REDIRECT_URI');
+    /**
+     * Inicializa una cuenta con su refresh token
+     */
+    private async initializeAccount(email: string, credentials: ZohoCredentials) {
+        this.logger.log(`[INIT] Inicializando cuenta para ${email}`);
+        
+        this.tokenDataMap.set(email, {
+            access_token: '',
+            refresh_token: credentials.refreshToken,
+            expires_in: 0,
+            token_type: 'Bearer',
+            api_domain: envs.zohoApiDomain || 'https://mail.zoho.com',
+            expires_at: 0, // Forzará un refresh inmediato
+        });
+
+        try {
+            // Obtener el primer access_token usando el refresh_token
+            await this.refreshAccessTokenForEmail(email, credentials);
+            this.logger.log(`[INIT] ✅ Access token obtenido exitosamente para ${email}`);
+            
+            // Programar renovación automática del token
+            this.scheduleTokenRefresh(email, credentials);
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            this.logger.error(`[INIT] ❌ Error al obtener access token para ${email}: ${msg}`);
+            this.logger.warn(`[INIT] Es posible que necesites reautorizar la aplicación para ${email}`);
         }
+    }
+
+    /**
+     * Obtiene las credenciales correctas para un email
+     */
+    private getCredentialsForEmail(email: string): ZohoCredentials | null {
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Detectar qué cuenta usar basándose en el email
+        if (normalizedEmail.includes('no-reply') || normalizedEmail.includes('noreply')) {
+            if (envs.zohoRefreshTokenNoreply) {
+                return {
+                    clientId: envs.zohoClientIdNoreply || envs.zohoClientId || '',
+                    clientSecret: envs.zohoClientSecretNoreply || envs.zohoClientSecret || '',
+                    refreshToken: envs.zohoRefreshTokenNoreply,
+                };
+            }
+        }
+
+        if (normalizedEmail.includes('privacity') || normalizedEmail.includes('privacy')) {
+            if (envs.zohoRefreshTokenPrivacity) {
+                return {
+                    clientId: envs.zohoClientIdPrivacity || envs.zohoClientId || '',
+                    clientSecret: envs.zohoClientSecretPrivacity || envs.zohoClientSecret || '',
+                    refreshToken: envs.zohoRefreshTokenPrivacity,
+                };
+            }
+        }
+
+        // Fallback a credenciales por defecto
+        if (envs.zohoRefreshToken) {
+            return {
+                clientId: envs.zohoClientId || '',
+                clientSecret: envs.zohoClientSecret || '',
+                refreshToken: envs.zohoRefreshToken,
+            };
+        }
+
+        return null;
     }
 
     /**
@@ -93,7 +171,7 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
      * Intercambia el código de autorización por tokens de acceso y refresco
      * IMPORTANTE: Imprime el refresh_token en consola para que lo copies a Railway
      */
-    async exchangeCodeForTokens(code: string): Promise<ZohoTokenData> {
+    async exchangeCodeForTokens(code: string, email?: string): Promise<ZohoTokenData> {
         this.logger.log('[EXCHANGE_CODE] 🔄 Intercambiando código por tokens...');
 
         if (!envs.zohoClientId || !envs.zohoClientSecret || !envs.zohoRedirectUri) {
@@ -129,7 +207,7 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
                 throw new Error('Respuesta inválida de Zoho: faltan tokens');
             }
 
-            this.tokenData = {
+            const tokenData: ZohoTokenData = {
                 access_token: data.access_token,
                 refresh_token: data.refresh_token,
                 expires_in: data.expires_in,
@@ -138,26 +216,26 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
                 expires_at: Date.now() + data.expires_in * 1000,
             };
 
+            // Guardar en el map si se proporciona un email
+            if (email) {
+                this.tokenDataMap.set(email, tokenData);
+            }
+
             // ⭐ IMPORTANTE: Imprimir el refresh_token en consola para copiarlo desde Railway
             this.logger.log('╔════════════════════════════════════════════════════════════════════════════╗');
             this.logger.log('║  🎉 REFRESH TOKEN OBTENIDO - COPIA ESTO A TU VARIABLE DE ENTORNO         ║');
             this.logger.log('╠════════════════════════════════════════════════════════════════════════════╣');
-            console.log(`\n🔑 ZOHO_REFRESH_TOKEN=${data.refresh_token}\n`);
+            console.log(`\n🔑 ZOHO_REFRESH_TOKEN${email ? `_${this.getAccountSuffix(email).toUpperCase()}` : ''}=${data.refresh_token}\n`);
             this.logger.log('╠════════════════════════════════════════════════════════════════════════════╣');
             this.logger.log('║  📝 Instrucciones:                                                         ║');
             this.logger.log('║  1. Copia el token anterior                                                ║');
-            this.logger.log('║  2. Agrégalo a tus variables de entorno en Railway como:                   ║');
-            this.logger.log('║     ZOHO_REFRESH_TOKEN=<el_token_copiado>                                  ║');
+            this.logger.log('║  2. Agrégalo a tus variables de entorno en Railway                        ║');
             this.logger.log('║  3. Reinicia la aplicación                                                 ║');
-            this.logger.log('║  4. A partir de ahora, el access_token se regenerará automáticamente       ║');
             this.logger.log('╚════════════════════════════════════════════════════════════════════════════╝');
 
             this.logger.log('[EXCHANGE_CODE_SUCCESS] ✅ Tokens obtenidos correctamente');
 
-            // 🆕 Programar renovación automática del token
-            this.scheduleTokenRefresh();
-
-            return this.tokenData;
+            return tokenData;
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             this.logger.error(`[EXCHANGE_CODE_EXCEPTION] ${msg}`);
@@ -166,28 +244,34 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
     }
 
     /**
-     * Refresca el access token usando el refresh token
-     * Usa ZOHO_REFRESH_TOKEN de las variables de entorno si está disponible
+     * Determina el sufijo de la cuenta basado en el email
      */
-    async refreshAccessToken(): Promise<string> {
-        // Priorizar el refresh_token de las variables de entorno
-        const refreshToken = envs.zohoRefreshToken || this.tokenData?.refresh_token;
-
-        if (!refreshToken) {
-            throw new Error('No hay refresh_token disponible. Debes autorizar la aplicación primero visitando /api/email/auth');
+    private getAccountSuffix(email: string): string {
+        const normalizedEmail = email.toLowerCase();
+        if (normalizedEmail.includes('no-reply') || normalizedEmail.includes('noreply')) {
+            return 'noreply';
         }
+        if (normalizedEmail.includes('privacity') || normalizedEmail.includes('privacy')) {
+            return 'privacity';
+        }
+        return '';
+    }
 
-        this.logger.log('[REFRESH_TOKEN] 🔄 Refrescando access token...');
+    /**
+     * Refresca el access token para un email específico
+     */
+    private async refreshAccessTokenForEmail(email: string, credentials: ZohoCredentials): Promise<string> {
+        this.logger.log(`[REFRESH_TOKEN] 🔄 Refrescando access token para ${email}...`);
 
-        if (!envs.zohoClientId || !envs.zohoClientSecret) {
-            throw new Error('Faltan credenciales de Zoho OAuth');
+        if (!credentials.clientId || !credentials.clientSecret || !credentials.refreshToken) {
+            throw new Error(`Faltan credenciales de Zoho OAuth para ${email}`);
         }
 
         const params = new URLSearchParams({
             grant_type: 'refresh_token',
-            client_id: envs.zohoClientId as string,
-            client_secret: envs.zohoClientSecret as string,
-            refresh_token: refreshToken,
+            client_id: credentials.clientId,
+            client_secret: credentials.clientSecret,
+            refresh_token: credentials.refreshToken,
         });
 
         try {
@@ -202,7 +286,7 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
             if (!response.ok) {
                 const errorText = await response.text();
                 this.logger.error(`[REFRESH_TOKEN_ERROR] ${response.status}: ${errorText}`);
-                throw new Error(`Error al refrescar token: ${response.status} ${errorText}`);
+                throw new Error(`Error al refrescar token para ${email}: ${response.status} ${errorText}`);
             }
 
             const data = await response.json() as ZohoTokenResponse;
@@ -211,29 +295,23 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
                 throw new Error('Respuesta inválida de Zoho: falta access_token');
             }
 
-            // Actualizar o crear tokenData
-            if (!this.tokenData) {
-                this.tokenData = {
-                    access_token: data.access_token,
-                    refresh_token: refreshToken,
-                    expires_in: data.expires_in,
-                    token_type: data.token_type,
-                    api_domain: data.api_domain || envs.zohoApiDomain || 'https://mail.zoho.com',
-                    expires_at: Date.now() + data.expires_in * 1000,
-                };
-            } else {
-                this.tokenData = {
-                    ...this.tokenData,
-                    access_token: data.access_token,
-                    expires_in: data.expires_in,
-                    expires_at: Date.now() + data.expires_in * 1000,
-                };
-            }
+            // Actualizar o crear tokenData para este email
+            const existingToken = this.tokenDataMap.get(email);
+            const tokenData: ZohoTokenData = {
+                access_token: data.access_token,
+                refresh_token: credentials.refreshToken,
+                expires_in: data.expires_in,
+                token_type: data.token_type,
+                api_domain: data.api_domain || existingToken?.api_domain || envs.zohoApiDomain || 'https://mail.zoho.com',
+                expires_at: Date.now() + data.expires_in * 1000,
+            };
 
-            this.logger.log('[REFRESH_TOKEN_SUCCESS] ✅ Access token refrescado correctamente');
+            this.tokenDataMap.set(email, tokenData);
+
+            this.logger.log(`[REFRESH_TOKEN_SUCCESS] ✅ Access token refrescado correctamente para ${email}`);
             this.logger.debug(`[REFRESH_TOKEN] Nuevo token expira en ${data.expires_in} segundos`);
 
-            return this.tokenData.access_token;
+            return tokenData.access_token;
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             this.logger.error(`[REFRESH_TOKEN_EXCEPTION] ${msg}`);
@@ -242,36 +320,44 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
     }
 
     /**
-     * Obtiene un access token válido (refresca automáticamente si ha expirado)
+     * Obtiene un access token válido para un email específico
      * Esta es la función principal que debes usar para obtener tokens
      */
-    async getAccessToken(): Promise<string> {
-        // Si existe ZOHO_REFRESH_TOKEN pero no se ha inicializado tokenData
-        if (envs.zohoRefreshToken && !this.tokenData) {
-            this.logger.log('[GET_ACCESS_TOKEN] Inicializando con ZOHO_REFRESH_TOKEN de variables de entorno');
-            this.tokenData = {
+    async getAccessTokenForEmail(fromEmail: string): Promise<string> {
+        const normalizedEmail = fromEmail.toLowerCase().trim();
+        
+        // Obtener credenciales para este email
+        const credentials = this.getCredentialsForEmail(normalizedEmail);
+        if (!credentials) {
+            throw new Error(`No hay credenciales configuradas para ${fromEmail}. Debes configurar las variables de entorno correspondientes.`);
+        }
+
+        // Buscar si ya tenemos un token para este email
+        let tokenData = this.tokenDataMap.get(normalizedEmail);
+
+        // Si no existe, inicializar
+        if (!tokenData) {
+            this.logger.log(`[GET_ACCESS_TOKEN] Inicializando token para ${normalizedEmail}`);
+            tokenData = {
                 access_token: '',
-                refresh_token: envs.zohoRefreshToken,
+                refresh_token: credentials.refreshToken,
                 expires_in: 0,
                 token_type: 'Bearer',
                 api_domain: envs.zohoApiDomain || 'https://mail.zoho.com',
                 expires_at: 0,
             };
-        }
-
-        if (!this.tokenData) {
-            throw new Error('No hay token disponible. Debes autorizar la aplicación primero visitando /api/email/auth');
+            this.tokenDataMap.set(normalizedEmail, tokenData);
         }
 
         // Si el token expira en menos de 5 minutos o ya expiró, refrescarlo
         const bufferTime = 5 * 60 * 1000; // 5 minutos
-        if (Date.now() + bufferTime >= this.tokenData.expires_at) {
-            this.logger.debug('[GET_ACCESS_TOKEN] Token próximo a expirar o ya expirado, refrescando...');
-            return await this.refreshAccessToken();
+        if (Date.now() + bufferTime >= tokenData.expires_at) {
+            this.logger.debug(`[GET_ACCESS_TOKEN] Token próximo a expirar para ${normalizedEmail}, refrescando...`);
+            return await this.refreshAccessTokenForEmail(normalizedEmail, credentials);
         }
 
-        this.logger.debug('[GET_ACCESS_TOKEN] Token válido, retornando token existente');
-        return this.tokenData.access_token;
+        this.logger.debug(`[GET_ACCESS_TOKEN] Token válido para ${normalizedEmail}`);
+        return tokenData.access_token;
     }
 
     /**
@@ -281,89 +367,91 @@ export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
         if (envs.zohoApiDomain) {
             return envs.zohoApiDomain;
         }
-        return this.tokenData?.api_domain || 'https://mail.zoho.com';
+        // Retornar el dominio del primer token disponible, o el por defecto
+        const firstToken = this.tokenDataMap.values().next().value as ZohoTokenData | undefined;
+        return firstToken?.api_domain || 'https://mail.zoho.com';
     }
 
     /**
-     * Verifica si hay un token disponible (ya sea en memoria o en variables de entorno)
+     * Verifica si hay un token disponible
      */
     hasToken(): boolean {
-        return this.tokenData !== null || !!envs.zohoRefreshToken;
+        return this.tokenDataMap.size > 0 || 
+               !!envs.zohoRefreshToken || 
+               !!envs.zohoRefreshTokenNoreply || 
+               !!envs.zohoRefreshTokenPrivacity;
     }
 
     /**
-     * Obtiene el refresh token actual (útil para debugging)
+     * Programa la renovación automática del access token para un email
      */
-    getRefreshToken(): string | null {
-        return envs.zohoRefreshToken || this.tokenData?.refresh_token || null;
-    }
-
-    /**
-     * 🆕 Programa la renovación automática del access token
-     * Se ejecuta 10 minutos antes de que expire el token actual
-     */
-    private scheduleTokenRefresh() {
+    private scheduleTokenRefresh(email: string, credentials: ZohoCredentials) {
         // Limpiar el intervalo anterior si existe
-        if (this.refreshIntervalId) {
-            clearTimeout(this.refreshIntervalId);
-            this.refreshIntervalId = null;
+        const existingInterval = this.refreshIntervalIds.get(email);
+        if (existingInterval) {
+            clearTimeout(existingInterval);
+            this.refreshIntervalIds.delete(email);
         }
 
-        if (!this.tokenData) {
-            this.logger.warn('[SCHEDULE_REFRESH] No hay tokenData disponible para programar renovación');
+        const tokenData = this.tokenDataMap.get(email);
+        if (!tokenData) {
+            this.logger.warn(`[SCHEDULE_REFRESH] No hay tokenData disponible para ${email}`);
             return;
         }
 
         // Calcular cuándo debe renovarse el token (10 minutos antes de expirar)
         const bufferTime = 10 * 60 * 1000; // 10 minutos
-        const timeUntilRefresh = this.tokenData.expires_at - Date.now() - bufferTime;
+        const timeUntilRefresh = tokenData.expires_at - Date.now() - bufferTime;
 
         // Si el tiempo es negativo o muy pequeño, renovar inmediatamente
         if (timeUntilRefresh <= 0) {
-            this.logger.log('[SCHEDULE_REFRESH] ⚡ Token próximo a expirar, renovando inmediatamente...');
-            this.refreshAccessToken()
+            this.logger.log(`[SCHEDULE_REFRESH] ⚡ Token próximo a expirar para ${email}, renovando inmediatamente...`);
+            this.refreshAccessTokenForEmail(email, credentials)
                 .then(() => {
-                    this.logger.log('[SCHEDULE_REFRESH] ✅ Token renovado inmediatamente');
-                    this.scheduleTokenRefresh(); // Volver a programar
+                    this.logger.log(`[SCHEDULE_REFRESH] ✅ Token renovado inmediatamente para ${email}`);
+                    this.scheduleTokenRefresh(email, credentials); // Volver a programar
                 })
                 .catch((error) => {
                     const msg = error instanceof Error ? error.message : String(error);
-                    this.logger.error(`[SCHEDULE_REFRESH_ERROR] ❌ Error al renovar token: ${msg}`);
+                    this.logger.error(`[SCHEDULE_REFRESH_ERROR] ❌ Error al renovar token para ${email}: ${msg}`);
                     // Reintentar en 1 minuto
-                    this.refreshIntervalId = setTimeout(() => this.scheduleTokenRefresh(), 60 * 1000);
+                    const retryTimeout = setTimeout(() => this.scheduleTokenRefresh(email, credentials), 60 * 1000);
+                    this.refreshIntervalIds.set(email, retryTimeout);
                 });
             return;
         }
 
         const minutesUntilRefresh = Math.floor(timeUntilRefresh / 1000 / 60);
-        this.logger.log(`[SCHEDULE_REFRESH] ⏰ Próxima renovación automática en ${minutesUntilRefresh} minutos`);
+        this.logger.log(`[SCHEDULE_REFRESH] ⏰ Próxima renovación para ${email} en ${minutesUntilRefresh} minutos`);
 
         // Programar la renovación
-        this.refreshIntervalId = setTimeout(async () => {
-            this.logger.log('[AUTO_REFRESH] 🔄 Iniciando renovación automática del token...');
+        const intervalId = setTimeout(async () => {
+            this.logger.log(`[AUTO_REFRESH] 🔄 Iniciando renovación automática del token para ${email}...`);
             try {
-                await this.refreshAccessToken();
-                this.logger.log('[AUTO_REFRESH] ✅ Token renovado automáticamente');
+                await this.refreshAccessTokenForEmail(email, credentials);
+                this.logger.log(`[AUTO_REFRESH] ✅ Token renovado automáticamente para ${email}`);
                 // Volver a programar la siguiente renovación
-                this.scheduleTokenRefresh();
+                this.scheduleTokenRefresh(email, credentials);
             } catch (error) {
                 const msg = error instanceof Error ? error.message : String(error);
-                this.logger.error(`[AUTO_REFRESH_ERROR] ❌ Error al renovar token automáticamente: ${msg}`);
+                this.logger.error(`[AUTO_REFRESH_ERROR] ❌ Error al renovar token para ${email}: ${msg}`);
                 // Reintentar en 1 minuto
-                this.refreshIntervalId = setTimeout(() => this.scheduleTokenRefresh(), 60 * 1000);
+                const retryTimeout = setTimeout(() => this.scheduleTokenRefresh(email, credentials), 60 * 1000);
+                this.refreshIntervalIds.set(email, retryTimeout);
             }
         }, timeUntilRefresh);
+
+        this.refreshIntervalIds.set(email, intervalId);
     }
 
     /**
-     * 🆕 Limpia el temporizador de renovación automática
-     * Útil para testing o cuando el servicio se destruye
+     * Limpia los temporizadores de renovación automática
      */
     onModuleDestroy() {
-        if (this.refreshIntervalId) {
-            clearTimeout(this.refreshIntervalId);
-            this.refreshIntervalId = null;
-            this.logger.log('[CLEANUP] Temporizador de renovación automática limpiado');
-        }
+        this.refreshIntervalIds.forEach((intervalId, email) => {
+            clearTimeout(intervalId);
+            this.logger.log(`[CLEANUP] Temporizador de renovación limpiado para ${email}`);
+        });
+        this.refreshIntervalIds.clear();
     }
 }
