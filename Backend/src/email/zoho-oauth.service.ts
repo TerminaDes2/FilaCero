@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { envs } from 'src/config';
 
 interface ZohoTokenData {
@@ -19,9 +19,10 @@ interface ZohoTokenResponse {
 }
 
 @Injectable()
-export class ZohoOAuthService implements OnModuleInit {
+export class ZohoOAuthService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(ZohoOAuthService.name);
     private tokenData: ZohoTokenData | null = null;
+    private refreshIntervalId: NodeJS.Timeout | null = null;
 
     async onModuleInit() {
         if (!envs.mailUseHttp) {
@@ -47,6 +48,9 @@ export class ZohoOAuthService implements OnModuleInit {
                 // Obtener el primer access_token usando el refresh_token
                 await this.refreshAccessToken();
                 this.logger.log('[INIT] ✅ Access token obtenido exitosamente usando ZOHO_REFRESH_TOKEN');
+                
+                // 🆕 Programar renovación automática del token
+                this.scheduleTokenRefresh();
             } catch (error) {
                 const msg = error instanceof Error ? error.message : String(error);
                 this.logger.error(`[INIT] ❌ Error al obtener access token con refresh token: ${msg}`);
@@ -149,6 +153,9 @@ export class ZohoOAuthService implements OnModuleInit {
             this.logger.log('╚════════════════════════════════════════════════════════════════════════════╝');
 
             this.logger.log('[EXCHANGE_CODE_SUCCESS] ✅ Tokens obtenidos correctamente');
+
+            // 🆕 Programar renovación automática del token
+            this.scheduleTokenRefresh();
 
             return this.tokenData;
         } catch (error) {
@@ -289,5 +296,74 @@ export class ZohoOAuthService implements OnModuleInit {
      */
     getRefreshToken(): string | null {
         return envs.zohoRefreshToken || this.tokenData?.refresh_token || null;
+    }
+
+    /**
+     * 🆕 Programa la renovación automática del access token
+     * Se ejecuta 10 minutos antes de que expire el token actual
+     */
+    private scheduleTokenRefresh() {
+        // Limpiar el intervalo anterior si existe
+        if (this.refreshIntervalId) {
+            clearTimeout(this.refreshIntervalId);
+            this.refreshIntervalId = null;
+        }
+
+        if (!this.tokenData) {
+            this.logger.warn('[SCHEDULE_REFRESH] No hay tokenData disponible para programar renovación');
+            return;
+        }
+
+        // Calcular cuándo debe renovarse el token (10 minutos antes de expirar)
+        const bufferTime = 10 * 60 * 1000; // 10 minutos
+        const timeUntilRefresh = this.tokenData.expires_at - Date.now() - bufferTime;
+
+        // Si el tiempo es negativo o muy pequeño, renovar inmediatamente
+        if (timeUntilRefresh <= 0) {
+            this.logger.log('[SCHEDULE_REFRESH] ⚡ Token próximo a expirar, renovando inmediatamente...');
+            this.refreshAccessToken()
+                .then(() => {
+                    this.logger.log('[SCHEDULE_REFRESH] ✅ Token renovado inmediatamente');
+                    this.scheduleTokenRefresh(); // Volver a programar
+                })
+                .catch((error) => {
+                    const msg = error instanceof Error ? error.message : String(error);
+                    this.logger.error(`[SCHEDULE_REFRESH_ERROR] ❌ Error al renovar token: ${msg}`);
+                    // Reintentar en 1 minuto
+                    this.refreshIntervalId = setTimeout(() => this.scheduleTokenRefresh(), 60 * 1000);
+                });
+            return;
+        }
+
+        const minutesUntilRefresh = Math.floor(timeUntilRefresh / 1000 / 60);
+        this.logger.log(`[SCHEDULE_REFRESH] ⏰ Próxima renovación automática en ${minutesUntilRefresh} minutos`);
+
+        // Programar la renovación
+        this.refreshIntervalId = setTimeout(async () => {
+            this.logger.log('[AUTO_REFRESH] 🔄 Iniciando renovación automática del token...');
+            try {
+                await this.refreshAccessToken();
+                this.logger.log('[AUTO_REFRESH] ✅ Token renovado automáticamente');
+                // Volver a programar la siguiente renovación
+                this.scheduleTokenRefresh();
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : String(error);
+                this.logger.error(`[AUTO_REFRESH_ERROR] ❌ Error al renovar token automáticamente: ${msg}`);
+                // Reintentar en 1 minuto
+                this.refreshIntervalId = setTimeout(() => this.scheduleTokenRefresh(), 60 * 1000);
+            }
+        }, timeUntilRefresh);
+    }
+
+    /**
+     * 🆕 Limpia el temporizador de renovación automática
+     * Útil para testing o cuando el servicio se destruye
+     */
+    onModuleDestroy() {
+        if (this.refreshIntervalId) {
+            clearTimeout(this.refreshIntervalId);
+            this.refreshIntervalId = null;
+            this.logger.log('[CLEANUP] Temporizador de renovación automática limpiado');
+        }
     }
 }
