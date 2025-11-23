@@ -48,9 +48,12 @@ export function Process() {
           badgeTone="sun"
           title={<span>Cómo funciona nuestra <span className="text-gradient">FilaCero</span></span> as any}
           subtitle="Un flujo sencillo para que empieces a operar en minutos." />
-        <ol className="grid gap-8 md:grid-cols-4">
+        <ol className="flex gap-5 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-8 md:overflow-visible snap-x snap-mandatory" aria-label="Pasos del flujo">
           {steps.map(s => (
-            <li key={s.number} className="relative group">
+            <li
+              key={s.number}
+              className="relative group min-w-[240px] snap-center md:min-w-0"
+            >
               <div
                 className="relative flex flex-col h-full p-6 rounded-xl transition will-change-transform hover:-translate-y-0.5 shadow-sm hover:shadow-md"
                 style={{

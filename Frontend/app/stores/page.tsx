@@ -9,6 +9,7 @@ import StoreSidebar from "../../src/components/shop/stores/StoreSidebar";
 import StoreProductList from "../../src/components/shop/stores/StoreProductList";
 import StoreLoading from "../../src/components/shop/stores/StoreLoading";
 import NavbarStore from "../../src/components/shop/navbarStore";
+import type { StoreMetrics } from "../../src/components/shop/stores/StoreHeader";
 type Product = {
   id_producto: number;
   nombre: string;
@@ -95,14 +96,53 @@ export default function StorePage() {
       </>
     );
 
+  const productos = store.productos ?? [];
+  const categories = Array.from(
+    new Set(
+      productos
+        .map((product) => product.categoria || "Especialidades")
+        .concat(store.categorias ?? [])
+    )
+  ).filter(Boolean);
+
+  const averagePrice = productos.length
+    ? productos.reduce((acc, product) => acc + Number(product.precio ?? 0), 0) / productos.length
+    : null;
+
+  const topCategory = (() => {
+    if (!productos.length) return categories[0] ?? null;
+    const counter = new Map<string, number>();
+    productos.forEach((product) => {
+      const category = product.categoria || "Especialidades";
+      counter.set(category, (counter.get(category) ?? 0) + 1);
+    });
+    let winner: string | null = null;
+    let max = 0;
+    counter.forEach((count, key) => {
+      if (count > max) {
+        max = count;
+        winner = key;
+      }
+    });
+    return winner ?? categories[0] ?? null;
+  })();
+
+  const metrics: StoreMetrics = {
+    rating: store.estrellas != null ? Number(store.estrellas) : null,
+    productCount: productos.length,
+    categories,
+    averagePrice,
+    topCategory,
+  };
+
   return (
     <>
       <NavbarStore />
       <div className="min-h-screen bg-gray-50 pt-16">
-        <StoreHeader store={store} />
+        <StoreHeader store={store} metrics={metrics} />
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-4">
           <StoreSidebar store={store} />
-          <StoreProductList productos={store.productos || []} />
+          <StoreProductList productos={productos} />
         </div>
       </div>
     </>

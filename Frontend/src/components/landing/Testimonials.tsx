@@ -30,11 +30,11 @@ export function Testimonials() {
           badgeTone="sun"
           title="Lo que dicen otros"
           subtitle="Equipos que ya redujeron esperas y organizaron su operación." />
-        <div className="grid gap-8 md:grid-cols-3 mt-12">
+        <div className="mt-12 flex gap-5 overflow-x-auto pb-3 md:grid md:grid-cols-3 md:gap-8 md:overflow-visible snap-x snap-mandatory" role="list">
           {testimonials.map((t, i) => (
             <figure
               key={t.quote}
-              className="group relative rounded-2xl border border-gray-200/70 bg-white/80 backdrop-blur-sm p-6 flex flex-col shadow-sm hover:shadow-lg transition-shadow"
+              className="group relative min-w-[260px] snap-start rounded-2xl border border-gray-200/70 bg-white/80 backdrop-blur-sm p-6 flex flex-col shadow-sm hover:shadow-lg transition-shadow md:min-w-0"
             >
               {/* subtle gradient bar */}
               <span aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[var(--fc-brand-400)] via-[var(--fc-teal-400)] to-[var(--fc-sun-400)] opacity-80" />

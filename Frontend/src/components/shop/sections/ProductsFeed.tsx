@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { api } from "../../../lib/api";
+import { resolveProductImage } from "../../../lib/media";
 import { useCart } from "../CartContext";
 
 type Media = { url?: string; principal?: boolean; tipo?: string | null };
@@ -27,10 +28,7 @@ type CatalogCategorySnapshot = {
 };
 
 function principalImage(p: Product): string | undefined {
-  const m = (p.media ?? []).find((it) => it.principal && it.url);
-  if (m?.url) return m.url;
-  if (p.imagen_url) return p.imagen_url;
-  return undefined;
+  return resolveProductImage(p);
 }
 
 function priceLabel(v: number) {

@@ -11,6 +11,7 @@ import { FAQ } from "../../src/components/landing/FAQ";
 import ShopHero from "../../src/components/shop/sections/ShopHero";
 import StoryRail from "../../src/components/shop/sections/StoryRail";
 import Curations from "../../src/components/shop/sections/Curations";
+import BusinessShowcase from "../../src/components/shop/sections/BusinessShowcase";
 import SortBar from "../../src/components/shop/sections/SortBar";
 import ProductsFeed from "../../src/components/shop/sections/ProductsFeed";
 import { api, activeBusiness } from "../../src/lib/api";
@@ -77,11 +78,10 @@ const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({
               <button
                 onClick={onGuest}
                 disabled={loading}
-                className={`inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(222,53,95,0.25)] transition ${
-                  loading
+                className={`inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(222,53,95,0.25)] transition ${loading
                     ? "bg-[var(--fc-brand-400)] opacity-70 cursor-wait"
                     : "bg-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)]"
-                }`}
+                  }`}
               >
                 {loading ? "Abriendo tienda…" : "Probar la tienda ahora"}
               </button>
@@ -178,7 +178,7 @@ const HomePage: React.FC = () => {
           try {
             const businesses = await api.getPublicBusinesses();
             const first = Array.isArray(businesses) ? businesses[0] : undefined;
-            const candidate = first?.id_negocio ?? first?.id ?? first?.idNegocio;
+            const candidate = first?.id_negocio ?? (first && (first as any).id) ?? (first && (first as any).idNegocio);
             if (candidate != null) {
               negocioId = String(candidate);
             }
@@ -214,6 +214,7 @@ const HomePage: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <ShopHero />
                   <StoryRail />
+                  <BusinessShowcase />
                   <Curations />
                 </div>
               </div>

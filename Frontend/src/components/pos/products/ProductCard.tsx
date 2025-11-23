@@ -7,6 +7,7 @@ import { POSProduct } from '../../../pos/cartContext';
 import { useCart } from '../../../pos/cartContext';
 import { AddToCartPanel } from './AddToCartPanel';
 import { useSettingsStore } from '../../../state/settingsStore';
+import { resolveMediaUrl } from '../../../lib/media';
 
 interface ProductCardProps {
   product: POSProduct;
@@ -53,7 +54,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
   // (Este error desaparecerá después del Paso 2)
   // Determinar la imagen preferida: primero media principal, luego imagen_url, luego fallback
   const principalMedia = product.media?.find(m => m.principal) || product.media?.[0];
-  const imageUrl = principalMedia?.url || product.imagen_url || '/images/POS-OrdenarMenu.png';
+  const rawImage = principalMedia?.url || product.imagen_url || (product as any).imagen;
+  const imageUrl = resolveMediaUrl(rawImage) ?? '/images/POS-OrdenarMenu.png';
 
   return (
     <div className={`${base} ${view === 'list' ? 'flex gap-4 p-3 items-center' : ''}`}
