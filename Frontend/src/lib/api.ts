@@ -759,6 +759,21 @@ export const api = {
     // Hacemos la llamada al nuevo endpoint
     return apiFetch<any>(`metrics?${qp.toString()}`); 
   },
+  // --- Payments ---
+  // Lista métodos guardados para el usuario autenticado
+  getPaymentMethods: () => apiFetch<any[]>("payments/methods"),
+  // Crear PaymentIntent en backend (wrapper)
+  createPaymentIntent: (payload: { amount: number; currency?: string; metadata?: Record<string, any> }) =>
+    apiFetch<any>("payments/create-intent", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  // Guarda un método de pago tokenizado (paymentMethodId obtenido desde Stripe.js)
+  savePaymentMethod: (payload: { paymentMethodId: string; makeDefault?: boolean }) =>
+    apiFetch<any>("payments/methods", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   // --- FIN DE LO NUEVO ---
   // --- Verificación SMS ---
   startSmsVerification: (telefono: string, canal: string = "sms") =>

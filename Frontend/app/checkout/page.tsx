@@ -40,7 +40,7 @@ const steps = [
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, updateQty, removeFromCart, clearCart } = useCart();
-  const { isAuthenticated } = useUserStore();
+  const { isAuthenticated, user, loading: userLoading } = useUserStore();
 
   const [activeStep, setActiveStep] = useState(1);
   const [deliveryTime, setDeliveryTime] = useState<string>("asap");
@@ -48,11 +48,18 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [hasCard, setHasCard] = useState(false);
+  const [verificationsOk, setVerificationsOk] = useState(false);
   const [business, setBusiness] = useState<BusinessSummary | null>(null);
   const [bizLoading, setBizLoading] = useState(true);
   const cardOnlyMethods = useMemo(() => ["tarjeta"] as Array<"efectivo" | "tarjeta">, []);
 
   useEffect(() => {
+    // Redirect to login if not authenticated (and not still loading auth)
+    if (!userLoading && !isAuthenticated) {
+      router.push('/auth/login?redirect=/checkout');
+    }
+
     let active = true;
     const fetchBusiness = async () => {
       try {
@@ -83,6 +90,39 @@ export default function CheckoutPage() {
     };
   }, []);
 
+  // Recompute verifications and load payment methods when user or auth state changes
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setVerificationsOk(false);
+      setHasCard(false);
+      return;
+    }
+
+    if (user) {
+      const emailVerified = user.verifications?.email ?? Boolean((user as any).correo_verificado);
+      const credentialVerified = user.verifications?.credential ?? Boolean((user as any).credencial_verificada);
+      setVerificationsOk(Boolean(emailVerified && credentialVerified));
+    }
+
+    let activeLocal = true;
+    const loadMethods = async () => {
+      try {
+        const methods = await api.getPaymentMethods();
+        if (!activeLocal) return;
+        setHasCard(Array.isArray(methods) && methods.length > 0);
+      } catch (err) {
+        console.warn("[checkout] No se pudieron cargar métodos de pago", err);
+        if (activeLocal) setHasCard(false);
+      }
+    };
+
+    void loadMethods();
+
+    return () => {
+      activeLocal = false;
+    };
+  }, [isAuthenticated, user]);
+
   const grandTotal = useMemo(() => {
     return Number(total.toFixed(2));
   }, [total]);
@@ -101,7 +141,8 @@ export default function CheckoutPage() {
     return true;
   };
 
-  const confirmDisabled = !items.length || !paymentMethod || !deliveryTime || isSubmitting;
+  const confirmDisabled =
+    !items.length || !paymentMethod || !deliveryTime || isSubmitting || !verificationsOk || !hasCard;
   const primaryDisabled =
     activeStep === steps.length ? confirmDisabled : isSubmitting || !canAdvanceFromStep(activeStep);
   const primaryLabel =
@@ -209,6 +250,16 @@ export default function CheckoutPage() {
 
     return (
       <div className="space-y-5">
+        {!verificationsOk && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-700">
+            Necesitas verificar tu <strong>correo</strong> y tu <strong>credencial</strong> para completar pagos digitales. Por favor completa las verificaciones en tu perfil.
+          </div>
+        )}
+        {!hasCard && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700">
+            No se encontró una tarjeta guardada. Agrega una tarjeta en <a className="underline" href="/payment">Métodos de pago</a> para poder pagar con tarjeta.
+          </div>
+        )}
         {submitError && (
           <div className="rounded-2xl border border-red-200 bg-red-50/70 px-4 py-3 text-sm text-red-700">{submitError}</div>
         )}

@@ -10,6 +10,7 @@ import {
   RawBodyRequest,
   Headers,
   BadRequestException,
+  UnauthorizedException,
   Logger,
 } from '@nestjs/common';
 import {
@@ -98,7 +99,20 @@ export class PaymentsController {
   @ApiResponse({ status: 429, description: 'Demasiadas solicitudes (rate limit)' })
   @ApiResponse({ status: 503, description: 'Funcionalidad temporalmente deshabilitada' })
   async createIntent(@Req() req: any, @Body() dto: CreatePaymentIntentDto) {
-    const userId = BigInt(req.user.userId);
+    // Validación extra: asegúrate de que el usuario esté presente en la request
+    const userIdRaw = req?.user?.userId;
+    if (!userIdRaw) {
+      throw new UnauthorizedException('Usuario no autenticado');
+    }
+
+    let userId: bigint;
+    try {
+      userId = BigInt(userIdRaw);
+    } catch (err) {
+      this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
+      throw new BadRequestException('Identificador de usuario inválido');
+    }
+
     return await this.paymentsService.createPaymentIntent(userId, dto);
   }
 
@@ -221,7 +235,17 @@ export class PaymentsController {
   @ApiResponse({ status: 429, description: 'Demasiadas solicitudes (rate limit)' })
   @ApiResponse({ status: 503, description: 'Funcionalidad temporalmente deshabilitada' })
   async getPaymentMethods(@Req() req: any) {
-    const userId = BigInt(req.user.userId);
+    const userIdRaw = req?.user?.userId;
+    if (!userIdRaw) {
+      throw new UnauthorizedException('Usuario no autenticado');
+    }
+    let userId: bigint;
+    try {
+      userId = BigInt(userIdRaw);
+    } catch (err) {
+      this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
+      throw new BadRequestException('Identificador de usuario inválido');
+    }
     return await this.paymentsService.getPaymentMethods(userId);
   }
 
@@ -252,7 +276,17 @@ export class PaymentsController {
     @Req() req: any,
     @Body() dto: SavePaymentMethodDto,
   ) {
-    const userId = BigInt(req.user.userId);
+    const userIdRaw = req?.user?.userId;
+    if (!userIdRaw) {
+      throw new UnauthorizedException('Usuario no autenticado');
+    }
+    let userId: bigint;
+    try {
+      userId = BigInt(userIdRaw);
+    } catch (err) {
+      this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
+      throw new BadRequestException('Identificador de usuario inválido');
+    }
     return await this.paymentsService.savePaymentMethod(userId, dto);
   }
 }
