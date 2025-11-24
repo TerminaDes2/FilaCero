@@ -37,6 +37,7 @@ export default function Navbar() {
   const [bizList, setBizList] = useState<Business[]>([]);
   const [canRenderPortal, setCanRenderPortal] = useState(false);
   const [showUserSheet, setShowUserSheet] = useState(false);
+  const navMaskGradient = "linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%)";
 
   useEffect(() => {
     setCanRenderPortal(true);
@@ -375,44 +376,63 @@ export default function Navbar() {
           </Link>
 
           {/* Middle nav (desktop) */}
-          <div className="hidden md:flex items-center gap-4">
-            {navItems.map((item, index) => {
-              const navClasses =
-                "group inline-flex items-center gap-2 rounded-full border border-brand-100/80 bg-white/80 px-3.5 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:border-brand-200 hover:bg-brand-50/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300";
-              const badge = (
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-2xl border border-brand-100 bg-white text-[0.75rem] font-semibold text-brand-600 shadow-sm">
-                  {(index + 1).toString().padStart(2, "0")}
-                </span>
-              );
-              const label = <span className="text-sm font-semibold text-brand-700">{item.label}</span>;
+          <div className="hidden md:flex flex-1 justify-center px-4">
+            <div
+              className="flex w-full max-w-4xl flex-nowrap items-center gap-1.5 overflow-x-auto rounded-full border border-white/60 bg-white/30 px-2 py-1 text-sm shadow-sm backdrop-blur-sm transition [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden dark:border-white/10 dark:bg-slate-950/25"
+              style={{ maskImage: navMaskGradient, WebkitMaskImage: navMaskGradient }}
+            >
+              {navItems.map((item) => {
+                const navClasses =
+                  "group relative inline-flex flex-shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium text-brand-600 transition-colors duration-200 hover:bg-white/90 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:hover:bg-slate-900/70";
 
-              if (item.href.startsWith("#")) {
-                return (
-                  <a key={item.href} href={item.href} className={navClasses}>
-                    {badge}
-                    {label}
-                  </a>
+                const content = (
+                  <>
+                    <span
+                      className="inline-flex h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-200 transition-colors duration-300 group-hover:bg-[var(--fc-teal-500)]"
+                      aria-hidden
+                    />
+                    <span className="relative font-semibold">
+                      {item.label}
+                      <span
+                        className="absolute -bottom-1 left-0 right-0 h-[2px] origin-left scale-x-0 rounded-full bg-gradient-to-r from-[var(--fc-brand-500)] to-[var(--fc-teal-500)] transition-transform duration-300 group-hover:scale-x-100"
+                        aria-hidden
+                      />
+                    </span>
+                  </>
                 );
-              }
 
-              return (
-                <Link key={item.href} href={item.href} className={navClasses}>
-                  {badge}
-                  {label}
-                </Link>
-              );
-            })}
+                if (item.href.startsWith("#")) {
+                  return (
+                    <a key={item.href} href={item.href} className={navClasses}>
+                      {content}
+                    </a>
+                  );
+                }
 
-            {isAuthenticated && isAdmin && (
-              <button
-                type="button"
-                onClick={handleAdminPanel}
-                className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-3.5 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:border-brand-200 hover:bg-brand-50/70 hover:text-brand-800"
-              >
-                <LayoutDashboard className="w-4 h-4 text-brand-500" />
-                <span>Panel POS</span>
-              </button>
-            )}
+                return (
+                  <Link key={item.href} href={item.href} className={navClasses}>
+                    {content}
+                  </Link>
+                );
+              })}
+
+              {isAuthenticated && isAdmin && (
+                <button
+                  type="button"
+                  onClick={handleAdminPanel}
+                  className="group relative inline-flex flex-shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium text-brand-600 transition-colors duration-200 hover:bg-white/90 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:hover:bg-slate-900/70"
+                >
+                  <LayoutDashboard className="h-4 w-4 text-brand-500" />
+                  <span className="relative font-semibold">
+                    Panel POS
+                    <span
+                      className="absolute -bottom-1 left-0 right-0 h-[2px] origin-left scale-x-0 rounded-full bg-gradient-to-r from-[var(--fc-brand-500)] to-[var(--fc-teal-500)] transition-transform duration-300 group-hover:scale-x-100"
+                      aria-hidden
+                    />
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Right auth area */}
