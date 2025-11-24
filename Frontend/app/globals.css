@@ -213,3 +213,8 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Custom utility for animated gradient backgrounds */
+.bg-size-200 { background-size: 200% 100%; }
+.bg-pos-0 { background-position: 0% 0%; }
+.bg-pos-100 { background-position: 100% 0%; }
+
