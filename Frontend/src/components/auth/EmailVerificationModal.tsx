@@ -12,7 +12,7 @@ interface EmailVerificationModalProps {
   expiresAt?: string | null;
   session: string;
   onClose?: () => void;
-  onVerified?: (payload: { verifiedAt: string; user: AuthUser }) => void;
+  onVerified?: (payload: { token: string; user: AuthUser }) => void;
 }
 
 export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
@@ -146,10 +146,20 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
     try {
       const payload = await api.preRegisterVerifyEmail({
-        email,
         code,
         session: currentSession,
       });
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('auth_token', payload.token);
+          window.localStorage.setItem('auth_user', JSON.stringify(payload.user));
+          window.localStorage.removeItem('preRegSession');
+          window.localStorage.removeItem('preRegExpiresAt');
+          window.localStorage.removeItem('preRegEmail');
+        }
+      } catch {
+        /* noop */
+      }
       setInfo('Correo verificado correctamente. Redirigiendo...');
       await checkAuth();
       onVerified?.(payload);
@@ -169,7 +179,6 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
     try {
       const data = await api.preRegisterResendCode({
-        email,
         session: currentSession,
       });
       setCurrentExpiresAt(data.expiresAt);

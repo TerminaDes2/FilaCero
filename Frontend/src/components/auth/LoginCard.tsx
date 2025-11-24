@@ -9,11 +9,13 @@ interface LoginCardProps {
   brandMark?: React.ReactNode; // optional small logo/icon
   compact?: boolean;
   brandFull?: boolean; // if true, render brandMark as-is (wordmark + icon)
+  size?: 'default' | 'wide';
 }
 
-export function LoginCard({ title, subtitle, children, footer, brandMark, compact, brandFull }: LoginCardProps) {
+export function LoginCard({ title, subtitle, children, footer, brandMark, compact, brandFull, size = 'default' }: LoginCardProps) {
+  const maxWidthClass = size === 'wide' ? 'max-w-6xl' : 'max-w-md';
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className={`relative w-full ${maxWidthClass} mx-auto`}>
       {/* Outer ambient glow */}
       <div className="pointer-events-none absolute -inset-0.5 rounded-3xl opacity-50 blur-2xl" style={{background:"radial-gradient(circle at 30% 30%, rgba(233,74,111,0.28), transparent 60%), radial-gradient(circle at 70% 70%, rgba(76,193,173,0.30), transparent 65%)"}} />
       {/* Decorative blobs */}
@@ -21,7 +23,7 @@ export function LoginCard({ title, subtitle, children, footer, brandMark, compac
       <div className="pointer-events-none absolute -bottom-10 -left-12 w-56 h-56 rounded-full blur-2xl opacity-40" style={{ background: 'radial-gradient(closest-side, rgba(76,193,173,0.22), transparent)' }} />
 
   <div className="relative group rounded-3xl bg-white/80 backdrop-blur-xl shadow-sm ring-1 ring-black/5 overflow-hidden transition">
-        <div className={`relative ${compact ? 'p-6' : 'p-8'} z-10`}> 
+        <div className={`relative ${compact ? 'p-6' : 'p-8'} z-10`}>
           {(brandMark || title || subtitle) && (
             <div className="mb-6">
               {brandMark && (
@@ -49,7 +51,7 @@ export function LoginCard({ title, subtitle, children, footer, brandMark, compac
               )}
             </div>
           )}
-          <div className="space-y-5">
+          <div className={compact ? 'space-y-4' : 'space-y-5'}>
             {children}
           </div>
         </div>

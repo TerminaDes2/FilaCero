@@ -8,7 +8,7 @@ import { LayoutDashboard, User, LogOut, Settings } from "lucide-react";
 import { useUserStore } from "../state/userStore";
 import UserDropdown from "./UserDropdown";
 import { useBusinessStore } from "../state/businessStore";
-import { api } from "../lib/api";
+import { api, activeBusiness as activeBusinessStorage } from "../lib/api";
 import { BusinessPickerDialog, type Business } from "./business/BusinessPickerDialog";
 
 interface NavItem {
@@ -32,7 +32,7 @@ export default function Navbar() {
   const [scrollDirection, setScrollDirection] = useState<"up" | "down">("up");
   const router = useRouter();
   const { user, isAuthenticated, logout } = useUserStore();
-  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const { setActiveBusiness, clearBusiness } = useBusinessStore();
   const [showBizPicker, setShowBizPicker] = useState(false);
   const [bizList, setBizList] = useState<Business[]>([]);
   const [canRenderPortal, setCanRenderPortal] = useState(false);
@@ -120,18 +120,41 @@ export default function Navbar() {
   const roleLabel = isAdmin ? "Admin" : "Usuario";
 
   const handleAdminPanel = async () => {
-    if (!activeBusiness) {
+
+      const redirectToOnboarding = () => router.push("/onboarding/negocio");
+
       try {
+        // Always refresh the list to ensure we have businesses for this user
         const list = await api.listMyBusinesses();
-        setBizList((list || []) as Business[]);
+        const businesses: Business[] = Array.isArray(list)
+          ? (list as any[])
+              .map((biz) => ({
+                id_negocio: String(biz.id_negocio ?? biz.id ?? biz.idNegocio ?? ''),
+                nombre: biz.nombre ?? 'Negocio',
+                direccion: biz.direccion ?? null,
+                telefono: biz.telefono ?? null,
+                correo: biz.correo ?? null,
+                logo_url: biz.logo_url ?? null,
+                hero_image_url: biz.hero_image_url ?? null,
+              }))
+              .filter((biz) => Boolean(biz.id_negocio))
+          : [];
+
+        if (businesses.length === 0) {
+          redirectToOnboarding();
+          return;
+        }
+
+        try { activeBusinessStorage.clear(); } catch {}
+        clearBusiness();
+        setBizList(businesses);
+        setShowBizPicker(true);
+        closeMenu();
+        closeUserSheet();
       } catch {
-        setBizList([]);
+        redirectToOnboarding();
       }
-      setShowBizPicker(true);
-      return;
-    }
-    router.push("/pos");
-  };
+    };
 
   const elevated = scrollY > 24;
   const hideOnScroll =
@@ -524,6 +547,7 @@ export default function Navbar() {
           open={showBizPicker}
           businesses={bizList}
           onChoose={(b) => {
+            activeBusinessStorage.set(String(b.id_negocio));
             setActiveBusiness(b);
             setShowBizPicker(false);
             router.push("/pos");

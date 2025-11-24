@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "../../lib/api";
 
@@ -33,6 +33,16 @@ export function BusinessPickerDialog({ open, businesses, onChoose, onCreateNew, 
 		() => businesses.find((b) => String(b.id_negocio) === String(selectedId)) || null,
 		[selectedId, businesses]
 	);
+	const hadBusinesses = useRef(hasAny);
+
+	useEffect(() => {
+		if (!hasAny) {
+			setShowCreate(true);
+		} else if (!hadBusinesses.current && showCreate) {
+			setShowCreate(false);
+		}
+		hadBusinesses.current = hasAny;
+	}, [hasAny, showCreate]);
 
 	if (!open) return null;
 

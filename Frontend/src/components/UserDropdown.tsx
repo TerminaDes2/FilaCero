@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { api } from "../lib/api";
+import { api, activeBusiness as activeBusinessStorage } from "../lib/api";
 import { useBusinessStore } from "../state/businessStore";
 import { BusinessPickerDialog } from "./business/BusinessPickerDialog";
 import type { Business } from "./business/BusinessPickerDialog";
@@ -51,9 +51,9 @@ const getRoleInfo = (id_rol: any) => {
 export default function UserDropdown() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
-  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const { setActiveBusiness, clearBusiness } = useBusinessStore();
   const [showBizPicker, setShowBizPicker] = useState(false);
-  const [bizList, setBizList] = useState<any[]>([]);
+  const [bizList, setBizList] = useState<Business[]>([]);
   const router = useRouter();
 
   // Cerrar menú al hacer click fuera
@@ -158,19 +158,37 @@ export default function UserDropdown() {
                     type="button"
                     className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
                     onClick={async () => {
-                      if (!activeBusiness) {
-                        try {
-                          const list = await api.listMyBusinesses();
-                          setBizList(list || []);
-                        } catch {
-                          setBizList([]);
+                      try {
+                        const list = await api.listMyBusinesses();
+                        const businesses: Business[] = Array.isArray(list)
+                          ? (list as any[])
+                              .map((biz) => ({
+                                id_negocio: String(biz.id_negocio ?? biz.id ?? biz.idNegocio ?? ''),
+                                nombre: biz.nombre ?? 'Negocio',
+                                direccion: biz.direccion ?? null,
+                                telefono: biz.telefono ?? null,
+                                correo: biz.correo ?? null,
+                                logo_url: biz.logo_url ?? null,
+                                hero_image_url: biz.hero_image_url ?? null,
+                              }))
+                              .filter((biz) => Boolean(biz.id_negocio))
+                          : [];
+
+                        if (businesses.length === 0) {
+                          setUserMenuOpen(false);
+                          router.push('/onboarding/negocio');
+                          return;
                         }
+
+                        try { activeBusinessStorage.clear(); } catch {}
+                        clearBusiness();
+                        setBizList(businesses);
                         setShowBizPicker(true);
                         setUserMenuOpen(false);
-                        return;
+                      } catch {
+                        setUserMenuOpen(false);
+                        router.push('/onboarding/negocio');
                       }
-                      setUserMenuOpen(false);
-                      router.push('/pos');
                     }}
                   >
                     <LayoutDashboard className="h-4 w-4 text-brand-500" />
@@ -216,6 +234,7 @@ export default function UserDropdown() {
           open={showBizPicker}
           businesses={bizList}
           onChoose={(b: Business) => {
+            activeBusinessStorage.set(String(b.id_negocio));
             setActiveBusiness(b);
             setShowBizPicker(false);
             router.push("/pos");
