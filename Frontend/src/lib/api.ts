@@ -763,7 +763,8 @@ export const api = {
   // Lista métodos guardados para el usuario autenticado
   getPaymentMethods: () => apiFetch<any[]>("payments/methods"),
   // Crear PaymentIntent en backend (wrapper)
-  createPaymentIntent: (payload: { amount: number; currency?: string; metadata?: Record<string, any> }) =>
+  // payload: { pedidoId: string; metadata?: Record<string, any> }
+  createPaymentIntent: (payload: { pedidoId: string; metadata?: Record<string, any> }) =>
     apiFetch<any>("payments/create-intent", {
       method: "POST",
       body: JSON.stringify(payload),

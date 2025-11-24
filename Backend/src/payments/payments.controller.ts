@@ -99,15 +99,15 @@ export class PaymentsController {
   @ApiResponse({ status: 429, description: 'Demasiadas solicitudes (rate limit)' })
   @ApiResponse({ status: 503, description: 'Funcionalidad temporalmente deshabilitada' })
   async createIntent(@Req() req: any, @Body() dto: CreatePaymentIntentDto) {
-    // Validación extra: asegúrate de que el usuario esté presente en la request
-    const userIdRaw = req?.user?.userId;
-    if (!userIdRaw) {
+    // Validación extra: intenta extraer id desde distintos nombres según la estrategia JWT
+    const userIdRaw = req?.user?.id_usuario ?? req?.user?.id ?? req?.user?.userId;
+    if (userIdRaw === undefined || userIdRaw === null) {
       throw new UnauthorizedException('Usuario no autenticado');
     }
 
     let userId: bigint;
     try {
-      userId = BigInt(userIdRaw);
+      userId = typeof userIdRaw === 'bigint' ? userIdRaw : BigInt(String(userIdRaw));
     } catch (err) {
       this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
       throw new BadRequestException('Identificador de usuario inválido');
@@ -235,13 +235,13 @@ export class PaymentsController {
   @ApiResponse({ status: 429, description: 'Demasiadas solicitudes (rate limit)' })
   @ApiResponse({ status: 503, description: 'Funcionalidad temporalmente deshabilitada' })
   async getPaymentMethods(@Req() req: any) {
-    const userIdRaw = req?.user?.userId;
-    if (!userIdRaw) {
+    const userIdRaw = req?.user?.id_usuario ?? req?.user?.id ?? req?.user?.userId;
+    if (userIdRaw === undefined || userIdRaw === null) {
       throw new UnauthorizedException('Usuario no autenticado');
     }
     let userId: bigint;
     try {
-      userId = BigInt(userIdRaw);
+      userId = typeof userIdRaw === 'bigint' ? userIdRaw : BigInt(String(userIdRaw));
     } catch (err) {
       this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
       throw new BadRequestException('Identificador de usuario inválido');
@@ -276,13 +276,13 @@ export class PaymentsController {
     @Req() req: any,
     @Body() dto: SavePaymentMethodDto,
   ) {
-    const userIdRaw = req?.user?.userId;
-    if (!userIdRaw) {
+    const userIdRaw = req?.user?.id_usuario ?? req?.user?.id ?? req?.user?.userId;
+    if (userIdRaw === undefined || userIdRaw === null) {
       throw new UnauthorizedException('Usuario no autenticado');
     }
     let userId: bigint;
     try {
-      userId = BigInt(userIdRaw);
+      userId = typeof userIdRaw === 'bigint' ? userIdRaw : BigInt(String(userIdRaw));
     } catch (err) {
       this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
       throw new BadRequestException('Identificador de usuario inválido');

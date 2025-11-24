@@ -26,11 +26,29 @@ export class StripeService {
     email: string,
     name?: string,
   ): Promise<string> {
-    // En producción, buscar/crear customer en Stripe y actualizar usuarios.stripe_customer_id
-    // Por ahora retornamos mock para pruebas
     this.logger.debug(`getOrCreateCustomer: userId=${userId}, email=${email}`);
-    // TODO: implementar lógica real con this.stripe.customers.create/retrieve
-    return `cus_mock_${userId}`;
+    // Si Stripe no está inicializado, devolvemos mock para pruebas locales
+    if (!this.stripe) {
+      this.logger.warn('Stripe no inicializado — devolviendo customer mock');
+      return `cus_mock_${userId}`;
+    }
+
+    // Intentar crear o recuperar un customer real en Stripe.
+    // Nota: idealmente guardaríamos el customer.id en la tabla de usuarios para reusar,
+    // pero para simplificar aquí creamos (o siempre retornamos) un customer nuevo con metadata.
+    try {
+      const customer = await this.stripe.customers.create({
+        email,
+        name,
+        metadata: { userId: String(userId) },
+      });
+      this.logger.debug(`Stripe customer creado: ${customer.id} for userId=${userId}`);
+      return customer.id;
+    } catch (err) {
+      this.logger.error(`Error creando customer en Stripe: ${String(err)}`);
+      // Fallback al mock para no romper flujos locales si Stripe falla
+      return `cus_mock_${userId}`;
+    }
   }
 
   /**
@@ -56,16 +74,22 @@ export class StripeService {
       this.logger.debug(`Using idempotency key: ${idempotencyKey}`);
     }
 
-    return await this.stripe.paymentIntents.create(
-      {
-        amount: params.amount,
-        currency: params.currency,
-        customer: params.customerId,
-        metadata: params.metadata,
-        automatic_payment_methods: { enabled: true },
-      },
-      options,
-    );
+    // If the caller provided a mock customer id (used in local dev), avoid sending it to Stripe
+    // because Stripe will error with "No such customer". In that case create the PaymentIntent
+    // without the customer field and log a warning so the developer can fix the customer flow.
+    const paymentIntentPayload: any = {
+      amount: params.amount,
+      currency: params.currency,
+      metadata: params.metadata,
+      automatic_payment_methods: { enabled: true },
+    };
+    if (params.customerId && !String(params.customerId).startsWith('cus_mock_')) {
+      paymentIntentPayload.customer = params.customerId;
+    } else if (params.customerId && String(params.customerId).startsWith('cus_mock_')) {
+      this.logger.warn(`Omitting mock customer when creating PaymentIntent: ${params.customerId}`);
+    }
+
+    return await this.stripe.paymentIntents.create(paymentIntentPayload, options);
   }
 
   /**
