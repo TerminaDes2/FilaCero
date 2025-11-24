@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
 import { useUserStore } from "../../state/userStore";
+import { useBusinessStore } from '../../state/businessStore';
 // Imports depurados
 
 interface LoginFormProps {
@@ -19,6 +20,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
 	const { setName, setBackendRole, login } = useUserStore();
+	const { setActiveBusiness } = useBusinessStore();
 	// Navegación directa según rol
 
 	const emailValid = /.+@.+\..+/.test(email);
@@ -48,16 +50,47 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			
 			// 2. Hacer login para obtener el token
 			const res = await api.login(email.trim().toLowerCase(), password);
+			console.log('[LoginForm] Login response received:', { tokenLength: res.token?.length, userEmail: res.user?.correo_electronico });
 			
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem('auth_token', res.token);
+				console.log('[LoginForm] Token saved to localStorage');
 				// Guardar datos básicos del login temporalmente
 				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 			}
 			
 			onSuccess?.();
-			
-			// 3. Obtener información COMPLETA del usuario incluyendo el rol
+			// 3. Redirección temprana para empleados: si el login ya incluye id_rol === 3
+			// redirigimos inmediatamente al POS para mejorar la UX.
+			const basicUser = res.user as any;
+			console.log('[LoginForm] basicUser from login:', basicUser);
+			const basicRoleId = Number(basicUser?.id_rol ?? basicUser?.idRol ?? basicUser?.role?.id_rol ?? basicUser?.role?.id ?? NaN);
+			const basicRoleName = (basicUser?.role_name ?? basicUser?.role?.nombre_rol ?? '').toString().toLowerCase();
+						if (!Number.isNaN(basicRoleId) && basicRoleId === 3) {
+								// Actualizar store y redirigir sin esperar la llamada a /auth/me
+								login(res.token, basicUser);
+								try {
+									const businesses = await api.listMyBusinesses();
+									if (Array.isArray(businesses) && businesses.length > 0) {
+										const b = businesses[0];
+										setActiveBusiness({ id_negocio: String(b.id_negocio ?? b.id ?? b.uuid ?? ''), nombre: b.nombre || '' });
+									}
+								} catch (e) {
+									// ignore
+								}
+								console.log('🎯 Empleado detectado en login, redirigiendo a /pos');
+								router.push('/pos');
+								return;
+						}
+			// Fallback: si el nombre del rol indica empleado (p.ej. 'empleado', 'employee')
+			if (basicRoleName && (basicRoleName.includes('emple') || basicRoleName.includes('employee'))) {
+				login(res.token, basicUser);
+				console.log('🎯 Empleado detectado por role_name, redirigiendo a /pos');
+				router.push('/pos');
+				return;
+			}
+		
+			// 4. Obtener información COMPLETA del usuario incluyendo el rol
 			console.log('🔄 Obteniendo información completa del usuario...');
 			const userInfo = await api.me();
 			
@@ -78,11 +111,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                 return;
             }
 
-            if (idRol === 3) {
-                console.log('🎯 Empleado detectado, redirigiendo a /pos');
-                router.push('/pos');
-                return;
-            }
+						if (idRol === 3) {
+								try {
+									const businesses = await api.listMyBusinesses();
+									if (Array.isArray(businesses) && businesses.length > 0) {
+										const b = businesses[0];
+										setActiveBusiness({ id_negocio: String(b.id_negocio ?? b.id ?? b.uuid ?? ''), nombre: b.nombre || '' });
+									}
+								} catch (e) {
+									// ignore
+								}
+								console.log('🎯 Empleado detectado, redirigiendo a /pos');
+								router.push('/pos');
+								return;
+						}
 
             if (idRol === 2 || idRol === 1) {
                 console.log('🎯 Admin/Superadmin detectado, verificando negocios...');

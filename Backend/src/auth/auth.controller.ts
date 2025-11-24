@@ -6,7 +6,8 @@ import {
     UseGuards, 
     Req,
     HttpException,
-    HttpStatus
+    HttpStatus,
+    Logger
 } from '@nestjs/common';
 import { AuthService } from './auth.service'; // Inyectamos el servicio con la lógica
 import { RegisterDto } from './dto/register.dto';
@@ -23,6 +24,8 @@ import { ConfigService } from '@nestjs/config';
 // Definimos la ruta base para este controlador siguiendo el patrón /api/<recurso>
 @Controller('api/auth') 
 export class AuthController {
+    private readonly logger = new Logger(AuthController.name);
+    
     // Inyección del AuthService en el constructor
     constructor(private readonly authService: AuthService) {}
 
@@ -55,9 +58,15 @@ export class AuthController {
     // @route   POST /auth/login
     @Post('login')
     async login(@Body() loginDto: LoginDto) {
-        // La lógica (buscar usuario, comparar hash, generar JWT)
-        // se delega al servicio.
-        return this.authService.login(loginDto);
+        this.logger.log(`[CONTROLLER] Recibida petición de login para: ${loginDto.correo_electronico}`);
+        try {
+            const result = await this.authService.login(loginDto);
+            this.logger.log(`[CONTROLLER] Login exitoso para: ${loginDto.correo_electronico}`);
+            return result;
+        } catch (error) {
+            this.logger.error(`[CONTROLLER] Error en login: ${error.message}`, error.stack);
+            throw error;
+        }
     }
 
     // --- (R)ead - GET USER INFO API (Requiere Token) ---
@@ -67,7 +76,10 @@ export class AuthController {
     @Get('me')
     // El objeto 'req' es inyectado por NestJS
     getMe(@Req() req: Request) {
+      console.log('[Auth Controller] getMe() called');
+      console.log('[Auth Controller] Headers:', req.headers);
       const user = (req as unknown as { user?: unknown }).user;
+      console.log('[Auth Controller] User from request:', user);
       return user;
     }
 }

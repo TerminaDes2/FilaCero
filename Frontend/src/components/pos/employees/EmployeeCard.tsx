@@ -13,6 +13,14 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Protect against missing `usuario` payload coming from the API
+  const user = employee.usuario ?? {
+    nombre: 'Empleado',
+    correo_electronico: '',
+    avatar_url: '',
+    numero_telefono: ''
+  };
+
   const handleToggleStatus = async () => {
     if (isUpdating) return;
     setIsUpdating(true);
@@ -31,7 +39,7 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
 
   const handleRemove = async () => {
     if (isUpdating) return;
-    if (!confirm(`¿Desactivar a ${employee.usuario.nombre}?`)) return;
+    if (!confirm(`¿Desactivar a ${user.nombre}?`)) return;
     setIsUpdating(true);
     try {
       await removeEmployee(employee.id_empleado);
@@ -45,12 +53,12 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
     }
   };
 
-  const initials = employee.usuario.nombre
+  const initials = (user.nombre || user.correo_electronico || 'EM')
     .split(' ')
-    .map(n => n[0])
+    .map(n => n && n[0] ? n[0] : '')
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || 'EM';
 
   const isActive = employee.estado === 'activo';
 
@@ -78,8 +86,8 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
           className='w-12 h-12 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0'
           style={{ background: isActive ? 'var(--fc-brand-600)' : '#999' }}
         >
-          {employee.usuario.avatar_url ? (
-            <img src={employee.usuario.avatar_url} alt={employee.usuario.nombre} className='w-full h-full rounded-full object-cover' />
+          {user.avatar_url ? (
+            <img src={user.avatar_url} alt={user.nombre} className='w-full h-full rounded-full object-cover' />
           ) : (
             initials
           )}
@@ -88,7 +96,7 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
         {/* Info */}
         <div className='flex-1 min-w-0'>
           <div className='flex items-center gap-2'>
-            <h3 className='font-bold text-base truncate'>{employee.usuario.nombre}</h3>
+            <h3 className='font-bold text-base truncate'>{user.nombre}</h3>
             <span 
               className='px-2 py-0.5 rounded text-xs font-semibold'
               style={{ 
@@ -99,7 +107,7 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
               {employee.estado}
             </span>
           </div>
-          <div className='text-sm opacity-70 truncate'>{employee.usuario.correo_electronico}</div>
+          <div className='text-sm opacity-70 truncate'>{user.correo_electronico}</div>
           <div className='text-xs opacity-50 mt-0.5'>Desde {formatDate(employee.fecha_alta)}</div>
         </div>
 
@@ -161,7 +169,7 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
           style={{ background: isActive ? 'var(--fc-brand-600)' : '#999' }}
         >
           {employee.usuario.avatar_url ? (
-            <img src={employee.usuario.avatar_url} alt={employee.usuario.nombre} className='w-full h-full rounded-full object-cover' />
+            <img src={user.avatar_url} alt={user.nombre} className='w-full h-full rounded-full object-cover' />
           ) : (
             initials
           )}
@@ -208,11 +216,11 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
 
       <div className='space-y-1.5'>
         <div className='flex items-center gap-2'>
-          <h3 className='font-bold text-base truncate'>{employee.usuario.nombre}</h3>
+          <h3 className='font-bold text-base truncate'>{user.nombre}</h3>
         </div>
-        <div className='text-sm opacity-70 truncate'>{employee.usuario.correo_electronico}</div>
-        {employee.usuario.numero_telefono && (
-          <div className='text-xs opacity-50'>{employee.usuario.numero_telefono}</div>
+        <div className='text-sm opacity-70 truncate'>{user.correo_electronico}</div>
+        {user.numero_telefono && (
+          <div className='text-xs opacity-50'>{user.numero_telefono}</div>
         )}
       </div>
 
