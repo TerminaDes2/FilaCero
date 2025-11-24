@@ -36,27 +36,27 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
 
   return (
     <div className="h-full flex flex-col justify-center items-center px-4 sm:px-6 py-4 lg:py-8 overflow-y-auto">
-      <div className="w-full max-w-sm sm:max-w-md mx-auto">
+      <div className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] lg:max-w-none mx-auto lg:mx-0">
         {/* Header más compacto */}
         <div className="mb-4 lg:mb-6">
-          <h1 className="text-lg lg:text-xl font-semibold text-gray-900 tracking-tight mb-1 text-center">
+          <h1 className="text-lg lg:text-[1.45rem] font-semibold text-gray-900 tracking-tight mb-1 text-center lg:text-left">
             Crea tu cuenta de <span className="text-brand-600 font-bold"> 
               {role === 'OWNER' ? 'Negocio' : 'Cliente'}
             </span>
           </h1>
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-gray-500 text-center lg:text-left">
             {subtitle}
           </p>
         </div>
         
         <div className="space-y-3 lg:space-y-4">
           {/* Formulario más compacto */}
-          <div className="scale-95 transform origin-top">
+          <div className="scale-95 transform origin-top lg:scale-100">
             <SignupForm />
           </div>
           
           {/* Sección "¿Ya tienes una cuenta?" más compacta */}
-          <div className="text-center pt-1">
+          <div className="text-center pt-1 lg:text-left">
             <div className="border-t border-gray-200 pt-3">
               <p className="text-xs text-gray-600">
                 ¿Ya tienes una cuenta?{' '}
