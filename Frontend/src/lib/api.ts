@@ -396,15 +396,15 @@ export const api = {
       cache: 'no-store',
     }),
 
-  preRegisterVerifyEmail: (payload: { email: string; code: string; session: string }) =>
-    apiFetch<{ verifiedAt: string; user: AuthUser }>("auth/pre-register/verify-email", {
+  preRegisterVerifyEmail: (payload: { code: string; session: string }) =>
+    apiFetch<{ token: string; user: AuthUser }>("auth/verify-register", {
       method: "POST",
       body: JSON.stringify(payload),
       cache: 'no-store',
     }),
 
-  preRegisterResendCode: (payload: { email: string; session: string }) =>
-    apiFetch<{ expiresAt: string; session: string }>("auth/pre-register/resend-code", {
+  preRegisterResendCode: (payload: { session: string }) =>
+    apiFetch<{ expiresAt: string; session: string }>("auth/resend-register", {
       method: "POST",
       body: JSON.stringify(payload),
       cache: 'no-store',
