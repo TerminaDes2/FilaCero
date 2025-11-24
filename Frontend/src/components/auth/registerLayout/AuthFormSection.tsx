@@ -8,21 +8,30 @@ interface AuthFormSectionProps {
 
 export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
   const { role } = useUserStore();
+  
   // Si no hay rol seleccionado, mostrar mensaje de error
   if (!role) {
     return (
-      <div className="h-full flex flex-col justify-center items-center px-4 sm:px-6 py-4 lg:py-8">
-        <div className="text-center">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+      <div className="h-full flex flex-col justify-center items-center px-6 sm:px-8 py-8 lg:py-12 bg-gradient-to-br from-gray-50 to-white">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
             Error: Tipo de cuenta no seleccionado
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Por favor, vuelve a seleccionar tu tipo de cuenta
+          <p className="text-sm text-gray-600 mb-6">
+            Por favor, vuelve a seleccionar tu tipo de cuenta para continuar con el registro
           </p>
           <button
             onClick={onBackToSelection}
-            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
           >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
             Volver a seleccionar
           </button>
         </div>
@@ -30,53 +39,101 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
     );
   }
 
+  const roleColor = role === 'OWNER' ? '#4CC1AD' : '#D55D7B';
+  const gradientFrom = role === 'OWNER' ? 'from-emerald-50' : 'from-rose-50';
+  const gradientTo = role === 'OWNER' ? 'to-teal-50' : 'to-pink-50';
+  
   const subtitle = role === 'OWNER' 
     ? 'Comienza a gestionar tu negocio de manera eficiente' 
     : 'Disfruta de una experiencia sin filas en tus cafeterías favoritas';
 
   return (
-    <div className="h-full flex flex-col justify-center items-center px-4 sm:px-6 py-4 lg:py-8 overflow-y-auto">
-      <div className="w-full max-w-sm sm:max-w-md mx-auto">
-        {/* Header más compacto */}
-        <div className="mb-4 lg:mb-6">
-          <h1 className="text-lg lg:text-xl font-semibold text-gray-900 tracking-tight mb-1 text-center">
-            Crea tu cuenta de <span className="text-brand-600 font-bold"> 
+    <div className={`h-full flex flex-col justify-center items-center px-4 sm:px-8 lg:px-12 xl:px-16 py-6 lg:py-8 overflow-y-auto bg-gradient-to-br ${gradientFrom} ${gradientTo}`}>
+      <div className="w-full max-w-2xl mx-auto">
+        {/* Header con diseño mejorado */}
+        <div className="mb-6 lg:mb-8 text-center relative">
+          {/* Decorative element */}
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-1 rounded-full opacity-60"
+               style={{ background: `linear-gradient(90deg, transparent, ${roleColor}, transparent)` }} />
+          
+          <div className="inline-flex items-center gap-2 mb-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                 style={{ background: `linear-gradient(135deg, ${roleColor}cc, ${roleColor})` }}>
+              {role === 'OWNER' ? (
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              )}
+            </div>
+          </div>
+          
+          <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 tracking-tight mb-2">
+            Crea tu cuenta de{' '}
+            <span className="bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent"> 
               {role === 'OWNER' ? 'Negocio' : 'Cliente'}
             </span>
           </h1>
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-sm lg:text-base text-gray-600 max-w-md mx-auto">
             {subtitle}
           </p>
         </div>
         
-        <div className="space-y-3 lg:space-y-4">
-          {/* Formulario más compacto */}
-          <div className="scale-95 transform origin-top">
+        {/* Progress indicator */}
+        <div className="mb-6 lg:mb-8">
+          <div className="flex items-center justify-center gap-2 text-xs font-medium text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-sm">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-emerald-700">Tipo seleccionado</span>
+            </div>
+            <div className="w-12 h-0.5 bg-gradient-to-r from-emerald-300 to-brand-300 rounded-full" />
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-400 to-brand-500 flex items-center justify-center shadow-sm animate-pulse">
+                <span className="text-white text-xs font-bold">2</span>
+              </div>
+              <span className="text-brand-700 font-semibold">Completa tus datos</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4 lg:space-y-5">
+          {/* Formulario con glassmorphism */}
+          <div className="bg-white/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-6 sm:p-8 lg:p-10">
             <SignupForm />
           </div>
           
-          {/* Sección "¿Ya tienes una cuenta?" más compacta */}
-          <div className="text-center pt-1">
-            <div className="border-t border-gray-200 pt-3">
-              <p className="text-xs text-gray-600">
-                ¿Ya tienes una cuenta?{' '}
-                <a 
-                  href="/login"
-                  className="text-brand-600 font-medium hover:underline"
-                > 
-                  Iniciar sesión
-                </a>
+          {/* Sección "¿Ya tienes una cuenta?" con diseño mejorado */}
+          <div className="text-center">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
+              <p className="text-sm text-gray-700">
+                ¿Ya tienes una cuenta?
               </p>
+              <a 
+                href="/login"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors group"
+              > 
+                Iniciar sesión
+                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
             </div>
           </div>
           
-          {/* Botón Volver más compacto */}
-          <div className="block lg:hidden pt-2 border-t border-gray-200">
+          {/* Botón Volver mejorado para mobile */}
+          <div className="block lg:hidden pt-2">
             <button
               onClick={onBackToSelection}
-              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white/60 hover:bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 transition-all duration-200 hover:shadow-md"
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Cambiar tipo de cuenta
