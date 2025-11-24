@@ -310,6 +310,40 @@ export interface UserInfo {
   };
 }
 
+export interface BusinessProductSummary {
+  id_producto: number;
+  nombre: string;
+  descripcion?: string | null;
+  precio: number;
+  imagen_url?: string | null;
+  categoria?: string | null;
+  stock: number;
+  stock_minimo: number;
+}
+
+export interface BusinessSummary {
+  id_negocio: number;
+  nombre: string;
+  descripcion?: string | null;
+  direccion?: string | null;
+  telefono?: string | null;
+  correo?: string | null;
+  logo_url?: string | null;
+  hero_image_url?: string | null;
+  fecha_registro?: string | null;
+  categorias: string[];
+  resumen: {
+    totalProductos: number;
+    totalCategorias: number;
+    totalPedidos: number;
+    totalResenas: number;
+    promedioEstrellas: number | null;
+    totalVentasRegistradas: number;
+    ingresosAcumulados: number;
+  };
+  productosDestacados: BusinessProductSummary[];
+}
+
 // --- 👇 Objeto principal con métodos actualizados ---
 export const api = {
   // --- Auth ---
@@ -382,6 +416,20 @@ export const api = {
     apiFetch<{ delivery: 'email'; expiresAt: string; session: string }>("auth/resend-register", {
       method: "POST",
       body: JSON.stringify({ session }),
+      cache: 'no-store',
+    }),
+
+  preRegisterVerifyEmail: (payload: { code: string; session: string }) =>
+    apiFetch<{ token: string; user: AuthUser }>("auth/verify-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    }),
+
+  preRegisterResendCode: (payload: { session: string }) =>
+    apiFetch<{ expiresAt: string; session: string }>("auth/resend-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
       cache: 'no-store',
     }),
 
@@ -575,10 +623,9 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   
-  getPublicBusinesses: async () => {
+  getPublicBusinesses: async (): Promise<BusinessSummary[]> => {
     try {
-      const businesses = await apiFetch<any[]>("businesses");
-      console.log("✅ Negocios cargados desde API:", businesses);
+      const businesses = await apiFetch<BusinessSummary[]>("businesses");
       return businesses;
     } catch (error) {
       console.error("❌ Error cargando negocios públicos:", error);

@@ -20,11 +20,12 @@ import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import { useUserStore } from '../../src/state/userStore';
 import { useBusinessStore } from '../../src/state/businessStore';
 import { api } from '../../src/lib/api';
+import { BusinessPickerDialog, type Business } from '../../src/components/business/BusinessPickerDialog';
 // Categories store not needed here
 
 export default function POSPage() {
   const settings = useSettingsStore();
-  const [view, setView] = useState<'grid'|'list'>(settings.defaultView);
+  const [view, setView] = useState<'grid' | 'list'>(settings.defaultView);
   const [search, setSearch] = useState('');
   const { categories: storeCategories, selected, setSelected } = useCategoriesStore();
   const fetchCategories = () => useCategoriesStore.getState().fetchCategories();
@@ -38,12 +39,12 @@ export default function POSPage() {
   const searchParams = useSearchParams();
   const viewParam = searchParams?.get('view');
   const [needBusiness, setNeedBusiness] = useState(false);
-  const [bizList, setBizList] = useState<any[]>([]);
+  const [bizList, setBizList] = useState<Business[]>([]);
 
   // Fetch categories (store handles normalization & business scoping)
   useEffect(() => {
     if (storeCategories.length === 0) {
-      fetchCategories().catch(() => {});
+      fetchCategories().catch(() => { });
     }
   }, [storeCategories.length]);
 
@@ -61,17 +62,25 @@ export default function POSPage() {
     }
   }, [posView, hydrateFromAPI, activeBusiness]);
 
-  // Guard: si es admin y no hay negocio activo, redirige a onboarding
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Guard: si es admin y no hay negocio activo, solicitar selección antes de continuar
   useEffect(() => {
     const roleName = (user as any)?.role_name || user?.role?.nombre_rol || '';
     const idRol = user?.id_rol;
     const isAdmin = roleName === 'admin' || roleName === 'superadmin' || idRol === 2;
+
     if (isAdmin && !activeBusiness) {
-      router.push('/onboarding/negocio');
+      api
+        .listMyBusinesses()
+        .then((list) => {
+          setBizList((list || []) as Business[]);
+          setNeedBusiness(true);
+        })
+        .catch(() => setNeedBusiness(true));
+    } else {
+      setNeedBusiness(false);
     }
-  }, [user, activeBusiness, router]);
-  
+  }, [user, activeBusiness]);
+
   // Keyboard: 'v' toggles view (grid/list) when not typing in input
   useEffect(() => {
     const isEditable = (t: EventTarget | null) => {
@@ -92,15 +101,15 @@ export default function POSPage() {
 
   return (
     <CartProvider>
-  <div className='h-screen flex pos-pattern overflow-hidden'>
+      <div className='h-screen flex pos-pattern overflow-hidden'>
         {/* Sidebar (collapsible) */}
         <aside className='hidden md:flex flex-col h-screen sticky top-0'>
           <PosSidebar />
         </aside>
-    {/* Main content */}
-  <main
-    className='flex-1 flex flex-col px-5 md:px-6 pt-6 gap-4 overflow-hidden h-full min-h-0 box-border'
-      >
+        {/* Main content */}
+        <main
+          className='flex-1 flex flex-col px-5 md:px-6 pt-6 gap-4 overflow-hidden h-full min-h-0 box-border'
+        >
           {/* Header row: Title (left) + TopRightInfo (right) */}
           <div className='px-5 relative z-20 mb-0.5 flex items-start justify-between gap-4'>
             <h1 className='font-extrabold tracking-tight text-3xl md:text-4xl leading-tight select-none'>
@@ -115,11 +124,11 @@ export default function POSPage() {
               <KitchenBoard />
             </div>
           ) : (
-          <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
+            <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
               {/* Products section */}
               <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
                 {/* Category filter moved into header controls */}
-                <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
+                <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{ background: 'var(--pos-bg-sand)', boxShadow: '0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)' }}>
                   <header className='space-y-3 mb-3 flex-none'>
                     <div className='flex flex-col md:flex-row md:items-center gap-3'>
                       <SearchBox value={search} onChange={setSearch} />
@@ -139,14 +148,33 @@ export default function POSPage() {
                 </section>
               </div>
               <section className='w-full lg:w-72 xl:w-80 lg:pl-4 pt-4 lg:pt-0 flex flex-col flex-shrink-0 min-h-0'>
-                <div className='flex-1 rounded-t-2xl px-4 pt-4 pb-2 flex flex-col overflow-hidden w-full max-w-sm mx-auto lg:max-w-none lg:mx-0' style={{background:'var(--pos-summary-bg)', boxShadow:'0 2px 4px rgba(0,0,0,0.06)'}}>
+                <div className='flex-1 rounded-t-2xl px-4 pt-4 pb-2 flex flex-col overflow-hidden w-full max-w-sm mx-auto lg:max-w-none lg:mx-0' style={{ background: 'var(--pos-summary-bg)', boxShadow: '0 2px 4px rgba(0,0,0,0.06)' }}>
                   <CartPanel />
                 </div>
               </section>
-          </div>
+            </div>
           )}
         </main>
-        {/* Fin del layout POS */}
+        {needBusiness && (
+          <BusinessPickerDialog
+            open={needBusiness}
+            businesses={bizList}
+            onChoose={(b: Business) => {
+              setActiveBusiness(b);
+              setNeedBusiness(false);
+            }}
+            onCreateNew={() => {
+              setNeedBusiness(false);
+              router.push('/onboarding/negocio');
+            }}
+            onClose={() => {
+              setNeedBusiness(false);
+              if (!activeBusiness) {
+                router.push('/');
+              }
+            }}
+          />
+        )}
       </div>
     </CartProvider>
   );

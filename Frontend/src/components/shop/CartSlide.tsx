@@ -18,9 +18,8 @@ export default function CartSlide() {
     <>
       {/* Drawer */}
       <aside
-        className={`fixed inset-y-0 right-0 w-full sm:w-[420px] max-w-[92vw] bg-white/90 backdrop-blur-xl border-l border-[var(--fc-border-soft)] shadow-xl rounded-none sm:rounded-tl-3xl sm:rounded-bl-3xl transform transition-transform duration-300 z-40 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed inset-y-0 right-0 w-full sm:w-[420px] max-w-[92vw] bg-white/90 backdrop-blur-xl border-l border-[var(--fc-border-soft)] shadow-xl rounded-none sm:rounded-tl-3xl sm:rounded-bl-3xl transform transition-transform duration-300 z-40 ${open ? "translate-x-0" : "translate-x-full"
+          }`}
         role="dialog"
         aria-label="Carrito"
         aria-modal="true"
@@ -30,7 +29,7 @@ export default function CartSlide() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[var(--fc-brand-600)] text-white shadow-sm">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
               </span>
               <div>
                 <h3 className="text-base font-semibold leading-tight">Tu pedido</h3>
@@ -38,7 +37,7 @@ export default function CartSlide() {
               </div>
             </div>
             <button onClick={() => toggleOpen(false)} aria-label="Cerrar carrito" className="p-2 rounded-full hover:bg-black/5">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
             </button>
           </div>
         </div>
@@ -48,7 +47,7 @@ export default function CartSlide() {
           {items.length === 0 ? (
             <div className="mt-8 text-center text-gray-500">
               <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--fc-teal-50)] to-[var(--fc-brand-50)] flex items-center justify-center border border-[var(--fc-border-soft)]">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-400"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-400"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
               </div>
               <p className="mt-3 text-sm font-medium">Tu carrito está vacío</p>
               <p className="text-xs text-gray-500">Empieza agregando productos deliciosos.</p>

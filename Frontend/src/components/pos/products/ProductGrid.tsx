@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { POSProduct } from '../../../pos/cartContext';
 import { ProductCard } from './ProductCard';
 import { api } from '../../../lib/api';
+import { resolveMediaUrl } from '../../../lib/media';
 
 interface ApiProduct {
   id_producto: string | number;
@@ -34,18 +35,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
       setLoading(true);
       try {
         const apiProducts: ApiProduct[] = await api.getProducts({ search });
-        // Backend origin derivado de la variable pública. Eliminamos sufijo /api si existe.
-        const apiBase = (process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '');
-        const backendOrigin = apiBase.replace(/\/api$/i, '');
-        const normalizeUrl = (u?: string | null) => {
-          if (!u) return undefined;
-          if (/^https?:\/\//i.test(u)) return u; // ya absoluta
-            // Si comienza por /uploads/ asumimos que es ruta del backend
-          if (u.startsWith('/uploads/')) {
-            return backendOrigin ? `${backendOrigin}${u}` : u; // si no tenemos origin, devolvemos tal cual
-          }
-          return u;
-        };
         const adaptedProducts: POSProduct[] = apiProducts.map(p => {
           const idStr = String(p.id_producto);
           const priceNum = typeof p.precio === 'number' ? p.precio : parseFloat(String(p.precio ?? 0));
@@ -69,7 +58,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
           const normalizedMedia = Array.isArray(rawMedia)
             ? (rawMedia
                 .map((m: any) => {
-                  const u = normalizeUrl(m.url);
+                  const u = resolveMediaUrl(m.url);
                   if (!u) return null;
                   return {
                     id_media: m.id_media !== undefined ? String(m.id_media) : undefined,
@@ -85,7 +74,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
             price: isNaN(priceNum) ? 0 : priceNum,
             description: p.descripcion || undefined,
             // Mantener compatibilidad con tarjetas que usan imagen_url y media
-            imagen_url: normalizeUrl(imagenUrl),
+            imagen_url: resolveMediaUrl(imagenUrl),
             media: normalizedMedia,
             stock: stockValue ?? 0,
             category: categoryLabel || 'Sin categoría',

@@ -28,9 +28,12 @@ export const FancyInput: React.FC<FancyInputProps> = ({
 }) => {
   const id = useId();
   const [focused, setFocused] = useState(false);
-  // Track value for uncontrolled usage so label can float when user types
   const [internalValue, setInternalValue] = useState<string>(
-    (rest.value !== undefined ? String(rest.value) : (rest.defaultValue !== undefined ? String(rest.defaultValue) : ''))
+    rest.value !== undefined
+      ? String(rest.value)
+      : rest.defaultValue !== undefined
+        ? String(rest.defaultValue)
+        : ''
   );
 
   const hasError = !!error;
@@ -44,10 +47,10 @@ export const FancyInput: React.FC<FancyInputProps> = ({
 
   return (
     <div className="relative group">
-      <div className={`relative rounded-xl border bg-white/80 backdrop-blur transition
-        ${hasError ? '' : 'border-gray-300/60'}
-        focus-within:ring-2 focus-within:ring-brand-400/30
-        shadow-sm focus-within:shadow-sm`}
+      <div
+        className={`relative rounded-xl border bg-white/85 backdrop-blur transition
+        ${hasError ? 'border-rose-300 bg-rose-50/90 shadow-sm' : 'border-gray-200/80 hover:border-gray-300'}
+        focus-within:ring-2 focus-within:ring-brand-400/30 shadow-sm focus-within:shadow-md`}
       >
         {/* Floating label */}
         <label
@@ -70,9 +73,15 @@ export const FancyInput: React.FC<FancyInputProps> = ({
           aria-invalid={hasError || undefined}
           aria-describedby={describedBy}
           className={`w-full rounded-xl bg-transparent outline-none appearance-none text-sm text-gray-800 placeholder-transparent
-            ${leftIcon ? 'pl-10' : 'pl-2'} ${isPassword || rightIcon ? 'pr-11' : 'pr-2'} py-4`}
-          onFocus={(e) => { setFocused(true); rest.onFocus?.(e); }}
-          onBlur={(e) => { setFocused(false); rest.onBlur?.(e); }}
+            ${leftIcon ? 'pl-10' : 'pl-2'} ${isPassword || rightIcon ? 'pr-11' : 'pr-2'} py-3`}
+          onFocus={(e) => {
+            setFocused(true);
+            rest.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            rest.onBlur?.(e);
+          }}
           onChange={(e) => {
             if (rest.onChange) rest.onChange(e);
             if (rest.value === undefined) setInternalValue(e.target.value);
@@ -80,7 +89,7 @@ export const FancyInput: React.FC<FancyInputProps> = ({
         />
         {(isPassword || rightIcon) && (
           <button
-            type={isPassword ? 'button' : 'button'}
+            type="button"
             tabIndex={isPassword ? 0 : -1}
             onClick={isPassword ? onTogglePassword : undefined}
             className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700 transition select-none focus:outline-none focus:ring-0"
@@ -88,31 +97,40 @@ export const FancyInput: React.FC<FancyInputProps> = ({
           >
             {isPassword ? (
               type === 'password' ? (
-                // Eye (open)
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" /><circle cx="12" cy="12" r="3" /></svg>
               ) : (
-                // Eye off
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94m4.24-2.16A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19M1 1l22 22" /><path d="M9.9 9.9a3 3 0 0 0 4.24 4.24" /></svg>
               )
             ) : rightIcon}
           </button>
         )}
       </div>
-      {/* Strength bar if provided */}
       {typeof strength === 'number' && (
         <div className="mt-1 flex gap-1" aria-hidden>
-          {[0,1,2,3].map(i => {
+          {[0, 1, 2, 3].map((i) => {
             const active = strength > i;
-            const color = !active ? 'bg-gray-300' : strength <=1 ? 'bg-rose-400' : strength ===2 ? 'bg-amber-400' : strength ===3 ? 'bg-brand-500' : 'bg-green-500';
+            const color = !active
+              ? 'bg-gray-300'
+              : strength <= 1
+                ? 'bg-rose-400'
+                : strength === 2
+                  ? 'bg-amber-400'
+                  : strength === 3
+                    ? 'bg-brand-500'
+                    : 'bg-emerald-500';
             return <span key={i} className={`h-1.5 flex-1 rounded-full transition-all ${color}`} />;
           })}
         </div>
       )}
       {hint && !error && (
-        <p id={`${id}-hint`} className="mt-1 text-xs text-gray-500">{hint}</p>
+        <p id={`${id}-hint`} className="mt-1 text-xs text-gray-500">
+          {hint}
+        </p>
       )}
       {hasError && (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-xs font-medium text-rose-600">{error}</p>
+        <p id={`${id}-error`} role="alert" className="mt-1 text-xs font-medium text-rose-600">
+          {error}
+        </p>
       )}
     </div>
   );

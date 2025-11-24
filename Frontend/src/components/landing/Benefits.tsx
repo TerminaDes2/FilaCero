@@ -39,7 +39,7 @@ export function Benefits() {
           badgeTone="teal"
           title="Impacto que puedes esperar"
           subtitle="Beneficios prácticos al digitalizar pedidos y la operación de tu cafetería." />
-        <ul className="grid gap-6 md:grid-cols-3" aria-label="Lista de resultados">
+        <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-label="Lista de resultados">
           {benefits.map((b, idx) => (
             <li
               key={b.title}

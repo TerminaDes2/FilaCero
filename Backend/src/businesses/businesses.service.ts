@@ -26,29 +26,216 @@ export class BusinessesService {
 
   // Listado público optimizado con SQL raw (muestra resumen y categorías)
   async listPublicBusinesses(filters: PublicBusinessFilters = {}) {
-    const prisma = this.prisma as any;
     const search = filters.search?.trim();
     const limit = Number.isFinite(filters.limit)
       ? Math.min(Math.max(Math.floor(filters.limit!), 1), MAX_PUBLIC_LIMIT)
       : DEFAULT_PUBLIC_LIMIT;
-    const sqlBase = `
-      SELECT ... (Todo tu SQL) ...
-    `;
-    if (search) {
-      return prisma.$queryRaw`
-        ${sqlBase}
-        WHERE n.nombre ILIKE ${`%${search}%`}
-        GROUP BY n.id_negocio
-        ORDER BY n.nombre ASC
-        LIMIT ${limit}
-      `;
+
+    const businesses = await this.prisma.negocio.findMany({
+      where: search
+        ? {
+            nombre: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          }
+        : undefined,
+      take: limit,
+      orderBy: { nombre: 'asc' },
+      select: {
+        id_negocio: true,
+        nombre: true,
+        direccion: true,
+        telefono: true,
+        correo: true,
+        logo_url: true,
+        hero_image_url: true,
+        fecha_registro: true,
+        _count: {
+          select: {
+            inventario: true,
+            negocio_rating: true,
+            pedidos: true,
+          },
+        },
+      },
+    });
+
+    if (!businesses.length) {
+      return [];
     }
-    return prisma.$queryRaw`
-      ${sqlBase}
-      GROUP BY n.id_negocio
-      ORDER BY n.nombre ASC
-      LIMIT ${limit}
-    `;
+
+    const ids = businesses.map((biz) => biz.id_negocio);
+
+    const categoryMap = new Map<string, string[]>();
+    const ratingMap = new Map<string, number>();
+    const salesMap = new Map<
+      string,
+      {
+        total: number;
+        count: number;
+      }
+    >();
+    const highlightedMap = new Map<string, Array<{
+      cantidad_actual: number | null;
+      stock_minimo: number | null;
+      producto: {
+        id_producto: bigint;
+        nombre: string;
+        descripcion: string | null;
+        precio: Prisma.Decimal;
+        imagen_url: string | null;
+        categoria: { nombre: string | null } | null;
+      } | null;
+    }>>();
+
+    if (ids.length) {
+      try {
+        const [categoryRows, ratingRows, salesRows, highlightedProducts] = await Promise.all([
+          this.prisma.negocio_categoria.findMany({
+            where: { id_negocio: { in: ids } },
+            select: {
+              id_negocio: true,
+              categoria: {
+                select: { nombre: true },
+              },
+            },
+          }),
+          this.prisma.negocio_rating.groupBy({
+            by: ['id_negocio'],
+            where: { id_negocio: { in: ids } },
+            _avg: { estrellas: true },
+          }),
+          this.prisma.venta.groupBy({
+            by: ['id_negocio'],
+            where: {
+              id_negocio: { in: ids },
+              total: { not: null },
+            },
+            _sum: { total: true },
+            _count: { _all: true },
+          }),
+          Promise.all(
+            ids.map((id) =>
+              this.prisma.inventario.findMany({
+                where: { id_negocio: id },
+                orderBy: [{ cantidad_actual: 'desc' }],
+                take: 4,
+                select: {
+                  cantidad_actual: true,
+                  stock_minimo: true,
+                  producto: {
+                    select: {
+                      id_producto: true,
+                      nombre: true,
+                      descripcion: true,
+                      precio: true,
+                      imagen_url: true,
+                      categoria: {
+                        select: { nombre: true },
+                      },
+                    },
+                  },
+                },
+              })
+            )
+          ),
+        ]);
+
+        for (const row of categoryRows) {
+          const key = row.id_negocio.toString();
+          if (!categoryMap.has(key)) {
+            categoryMap.set(key, []);
+          }
+          const storeCategories = categoryMap.get(key)!;
+          const name = row.categoria?.nombre?.trim();
+          if (name && !storeCategories.includes(name)) {
+            storeCategories.push(name);
+          }
+        }
+
+        for (const row of ratingRows) {
+          const key = row.id_negocio.toString();
+          const avg = row._avg?.estrellas;
+          if (avg !== null && avg !== undefined) {
+            const numeric = this.decimalToNumber(avg);
+            ratingMap.set(key, Number.isFinite(numeric) ? numeric : 0);
+          }
+        }
+
+        for (const row of salesRows) {
+          const key = row.id_negocio.toString();
+          const total = row._sum?.total;
+          const numeric = total !== null && total !== undefined ? this.decimalToNumber(total) : 0;
+          salesMap.set(key, {
+            total: numeric,
+            count: row._count?._all ?? 0,
+          });
+        }
+
+        highlightedProducts.forEach((items, index) => {
+          const id = ids[index];
+          highlightedMap.set(id.toString(), items);
+        });
+      } catch (error) {
+        console.error('[BusinessesService] Error enriqueciendo resumen público de negocios', error);
+      }
+    }
+
+    return businesses.map((biz) => {
+      const key = biz.id_negocio.toString();
+      const categorias = categoryMap.get(key) ?? [];
+      categorias.sort((a, b) => a.localeCompare(b, 'es'));
+      const avgRating = ratingMap.has(key) ? ratingMap.get(key)! : null;
+      const salesMetrics = salesMap.get(key);
+      const highlights = highlightedMap.get(key) ?? [];
+
+      const productosDestacados = highlights
+        .filter((item) => Boolean(item.producto))
+        .map((item) => {
+          const prod = item.producto as any;
+          const price = prod?.precio !== undefined && prod?.precio !== null ? this.decimalToNumber(prod.precio) : 0;
+          return {
+            id_producto: Number(prod?.id_producto ?? 0),
+            nombre: prod?.nombre ?? 'Producto',
+            descripcion: prod?.descripcion ?? null,
+            precio: price,
+            imagen_url: prod?.imagen_url ?? null,
+            categoria: prod?.categoria?.nombre ?? null,
+            stock: item.cantidad_actual ?? 0,
+            stock_minimo: item.stock_minimo ?? 0,
+          };
+        });
+
+      const logoCandidate = biz.logo_url ?? (biz as any).logo ?? null;
+      const heroCandidate = biz.hero_image_url ?? (biz as any).heroImageUrl ?? null;
+
+      return {
+        id_negocio: Number(biz.id_negocio),
+        nombre: biz.nombre,
+        descripcion: (biz as any).descripcion ?? null,
+        direccion: biz.direccion ?? null,
+        telefono: biz.telefono ?? null,
+        correo: biz.correo ?? null,
+        logo_url: logoCandidate,
+        hero_image_url: heroCandidate,
+        fecha_registro: biz.fecha_registro ? biz.fecha_registro.toISOString() : null,
+        categorias,
+        resumen: {
+          totalProductos: biz._count?.inventario ?? 0,
+          totalCategorias: categorias.length,
+          totalPedidos: biz._count?.pedidos ?? 0,
+          totalResenas: biz._count?.negocio_rating ?? 0,
+          promedioEstrellas:
+            avgRating !== null && avgRating !== undefined
+              ? Number(avgRating.toFixed ? avgRating.toFixed(2) : avgRating)
+              : null,
+          totalVentasRegistradas: salesMetrics?.count ?? 0,
+          ingresosAcumulados: salesMetrics?.total ?? 0,
+        },
+        productosDestacados,
+      };
+    });
   }
 
   // Crear negocio y asignar owner_id (si se proporciona userId válido)
@@ -78,7 +265,7 @@ export class BusinessesService {
           fecha_registro: new Date(),
           owner_id: uid,
         };
-        if (typeof dto.logo === 'string') data.logo = dto.logo;
+        if (typeof dto.logo === 'string') data.logo_url = dto.logo;
         if (typeof dto.hero_image_url === 'string') data.hero_image_url = dto.hero_image_url;
 
         const negocio = await tx.negocio.create({ data });
@@ -272,5 +459,22 @@ export class BusinessesService {
     } catch {
       throw new BadRequestException(message);
     }
+  }
+
+  private decimalToNumber(value: Prisma.Decimal | number | string | null | undefined): number {
+    if (value === null || value === undefined) {
+      return 0;
+    }
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    if (typeof (value as any).toNumber === 'function') {
+      return (value as Prisma.Decimal).toNumber();
+    }
+    return Number(value);
   }
 }
