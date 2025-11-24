@@ -1,106 +1,148 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { api } from "../../../lib/api";
 
 type Review = {
   id: number;
-  titulo: string | null;
   contenido: string;
   calificacion: number;
   creado_en: string;
   usuario: {
     nombre: string;
     avatar_url?: string | null;
-    pedidos: number;
   };
 };
+
+const skeletonArray = Array.from({ length: 3 });
 
 export default function StoreReviews({ storeId }: { storeId: string }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     const loadReviews = async () => {
       try {
+        setLoading(true);
         const res: any = await api.getBusinessComments(storeId);
-        const items = Array.isArray(res) ? res : res.items || [];
-
-        // Adaptamos los nombres de campos
-        const mapped = items.map((r: any) => ({
-        id: r.id,
-        titulo: null, // tu backend no lo usa
-        contenido: r.comentario,
-        calificacion: r.estrellas,
-        creado_en: r.createdAt,
-        usuario: {
-            nombre: r.user?.nombre || "Anónimo",
-            avatar_url: r.user?.avatarUrl || null,
-            pedidos: 0, // o puedes quitarlo si no lo usas
-        },
+        const items = Array.isArray(res) ? res : res?.items ?? [];
+        const mapped: Review[] = items.map((review: any) => ({
+          id: review.id ?? review.id_rating ?? Math.random(),
+          contenido: review.comentario ?? review.contenido ?? "",
+          calificacion: Number(review.estrellas ?? review.calificacion ?? 0),
+          creado_en: review.createdAt ?? review.creado_en ?? new Date().toISOString(),
+          usuario: {
+            nombre: review.user?.nombre ?? review.usuario?.nombre ?? "Anónimo",
+            avatar_url: review.user?.avatarUrl ?? review.usuario?.avatar_url ?? null,
+          },
         }));
-
-        setReviews(mapped);
-
-      } catch (err) {
-        console.error("Error al cargar reseñas:", err);
+        if (active) {
+          setReviews(mapped);
+        }
+      } catch (error) {
+        console.error("Error al cargar reseñas:", error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
+
     loadReviews();
+    return () => {
+      active = false;
+    };
   }, [storeId]);
 
-  if (loading)
-    return (
-      <div className="bg-white rounded-lg shadow p-6 text-center">
-        <p className="text-gray-500 animate-pulse">Cargando reseñas...</p>
-      </div>
-    );
+  const averageRating = useMemo(() => {
+    if (!reviews.length) return null;
+    const sum = reviews.reduce((acc, review) => acc + review.calificacion, 0);
+    return Number((sum / reviews.length).toFixed(1));
+  }, [reviews]);
 
-  if (!reviews.length)
+  if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-center">
-        <p className="text-gray-500">Aún no hay reseñas de clientes</p>
-      </div>
+      <section className="rounded-3xl border border-white/70 bg-white/90 p-6">
+        <header className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Experiencia de clientes</h2>
+            <p className="text-sm text-gray-500">Estamos trayendo los comentarios más recientes…</p>
+          </div>
+        </header>
+        <div className="space-y-4">
+          {skeletonArray.map((_, index) => (
+            <div key={index} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </div>
+      </section>
     );
+  }
+
+  if (!reviews.length) {
+    return (
+      <section className="rounded-3xl border border-white/70 bg-white/90 p-6 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-2xl">💬</div>
+        <h2 className="mt-4 text-xl font-semibold text-gray-900">Sé la primera reseña</h2>
+        <p className="mt-2 text-sm text-gray-500">
+          Este negocio recién está empezando su historial de reseñas.
+        </p>
+      </section>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 space-y-4">
-      <h2 className="text-2xl font-semibold mb-4">Reseñas de Clientes</h2>
-      {reviews.map((r) => (
-        <div
-          key={r.id}
-          className="flex h-[170px] w-[500px] gap-4 rounded-lg border p-4 transition-all hover:shadow-md"
-        >
-          <div className="relative h-16 w-16 overflow-hidden rounded-full">
-            <Image
-              src={r.usuario.avatar_url || "/images/profile_picture.png"}
-              alt={r.usuario.nombre}
-              fill
-              className="object-cover"
-              sizes="64px"
-              unoptimized
-            />
+    <section className="rounded-3xl border border-white/70 bg-white/95 p-6">
+      <header className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Experiencia de clientes</h2>
+          <p className="text-sm text-gray-500">
+            {reviews.length} {reviews.length === 1 ? "reseña publicada" : "reseñas publicadas"}
+          </p>
+        </div>
+        {averageRating != null && (
+          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
+            ⭐ {averageRating}
+            <span className="text-xs font-medium text-emerald-500">Promedio</span>
           </div>
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-semibold truncate">{r.usuario.nombre}</h3>
-              <span className="text-yellow-500 text-sm">
-                {"★".repeat(r.calificacion)}{"☆".repeat(5 - r.calificacion)}
+        )}
+      </header>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {reviews.map((review) => (
+          <article
+            key={review.id}
+            className="flex flex-col gap-4 rounded-3xl border border-gray-100 bg-white/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-brand-50">
+                <Image
+                  src={review.usuario.avatar_url || "/images/profile_picture.png"}
+                  alt={review.usuario.nombre}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                  unoptimized
+                />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{review.usuario.nombre}</p>
+                <p className="text-xs text-gray-500">{formatDate(review.creado_en)}</p>
+              </div>
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-600">
+                {review.calificacion.toFixed(1)} ★
               </span>
             </div>
-            <p className="text-xs text-gray-500 mb-1">
-              {r.usuario.pedidos} pedidos —{" "}
-              {new Date(r.creado_en).toLocaleDateString()}
-            </p>
-            <h4 className="font-medium text-gray-800 text-sm truncate">
-              {r.titulo}
-            </h4>
-            <p className="text-gray-600 text-sm line-clamp-3">{r.contenido}</p>
-          </div>
-        </div>
-      ))}
-    </div>
+
+            <p className="text-sm leading-relaxed text-gray-700">{review.contenido}</p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }

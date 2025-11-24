@@ -101,16 +101,16 @@ export function Features() {
           badgeTone="brand"
           title="Capacidades que aceleran tu operación"
           subtitle="Bloques funcionales listos para escalar cuando tu cafetería crece." />
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f,i) => {
             const accent = f.accent || 'var(--brand-accent, #e94a6f)';
             return (
               <Reveal delay={70*i} key={f.title} className="relative group">
                 <div
-                  className="relative h-full p-6 rounded-2xl bg-white/85 backdrop-blur-xl overflow-hidden shadow-sm ring-1 ring-gray-200/60 hover:shadow-md transition">
+                  className="relative h-full p-5 sm:p-6 rounded-2xl bg-white/85 backdrop-blur-xl overflow-hidden shadow-sm ring-1 ring-gray-200/60 hover:shadow-md transition">
                   <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
-                  <div className="mb-5">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ring-1 ring-white/60 bg-gradient-to-br from-brand-500 to-brand-600 relative overflow-hidden" aria-hidden="true">
+                  <div className="mb-4 sm:mb-5">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm ring-1 ring-white/60 bg-gradient-to-br from-brand-500 to-brand-600 relative overflow-hidden" aria-hidden="true">
                       <div className="absolute inset-0 opacity-30 mix-blend-overlay" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.9), transparent 70%)' }} />
                       {f.icon}
                     </div>
