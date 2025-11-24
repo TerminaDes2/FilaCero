@@ -321,6 +321,29 @@ export const api = {
       cache: 'no-store',
     }),
 
+  // Password recovery endpoints
+  requestPasswordRecover: (identifier: string) =>
+    apiFetch<{ delivery: string; expiresAt: string; session?: string }>("auth/recover", {
+      method: "POST",
+      body: JSON.stringify({ identifier }),
+      credentials: 'omit',
+      cache: 'no-store',
+    }),
+
+  verifyPasswordRecover: (session: string, code: string) =>
+    apiFetch<{ verified: boolean; resetSession?: string }>("auth/recover/verify", {
+      method: "POST",
+      body: JSON.stringify({ session, code }),
+      cache: 'no-store',
+    }),
+
+  resetPasswordRecover: (session: string, password: string, passwordConfirm: string) =>
+    apiFetch<{ message?: string }>("auth/recover/reset", {
+      method: "POST",
+      body: JSON.stringify({ session, password, passwordConfirm }),
+      cache: 'no-store',
+    }),
+
   // Información del usuario autenticado
   me: () => apiFetch<UserInfo>("auth/me"),
 

@@ -173,7 +173,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					<input type='checkbox' className='appearance-none h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:bg-brand-600 checked:border-brand-600' />
 					<span>Recordarme</span>
 				</label>
-				<button type='button' className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>¿Olvidaste tu contraseña?</button>
+				<button
+					type='button'
+					onClick={() => router.push('/auth/recover')}
+					className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'
+				>
+					¿Olvidaste tu contraseña?
+				</button>
 			</div>
 			
 			<button
