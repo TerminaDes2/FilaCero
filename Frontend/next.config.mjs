@@ -9,6 +9,8 @@
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? '').replace(/\/+$/, '');
 
 const nextConfig = {
+  // Genera build standalone para evitar dependencias de IPC internas en runtime
+  output: 'standalone',
   images: {
     remotePatterns: [
       { protocol: 'http', hostname: 'localhost', port: '3000' },

@@ -62,6 +62,24 @@ services:
       - POSTGRES_PASSWORD=password
     restart: unless-stopped
 
+  ocr:
+    build:
+      context: ./Python
+      dockerfile: Dockerfile
+    container_name: filacero-ocr-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - BACKEND_URL=http://backend:3000
+    volumes:
+      - ./Python:/app
+    depends_on:
+      - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: filacero-redis

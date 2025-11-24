@@ -4,7 +4,9 @@ import {
     Body, 
     Get, 
     UseGuards, 
-    Req 
+    Req,
+    HttpException,
+    HttpStatus
 } from '@nestjs/common';
 import { AuthService } from './auth.service'; // Inyectamos el servicio con la lógica
 import { RegisterDto } from './dto/register.dto';
@@ -13,6 +15,10 @@ import { AuthGuard } from '@nestjs/passport'; // Necesario para proteger rutas c
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyRegisterDto } from './dto/verify-register.dto';
 import { ResendRegisterDto } from './dto/resend-register.dto';
+import axios from 'axios';
+import { PrismaService } from '../prisma/prisma.service';
+import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 // Definimos la ruta base para este controlador siguiendo el patrón /api/<recurso>
 @Controller('api/auth') 
@@ -60,24 +66,100 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt'))
     @Get('me')
     // El objeto 'req' es inyectado por NestJS
-    getMe(@Req() req) {
-        // Cuando el AuthGuard es exitoso, inyecta la información decodificada 
-        // del token (el payload: {id, email}) en req.user.
-        
-        // En tu lógica anterior de Express, esto era: 
-        // const user = await User.findById(req.user.id).select('-password');
-        
-        // En NestJS, simplemente devolvemos la información inyectada por el guard,
-        // o si es necesario, la usamos para buscar datos más detallados:
-
-        // return req.user; 
-        
-        // Si necesitas la información completa del usuario (sin password), 
-        // puedes crear un método en el AuthService y llamarlo aquí:
-        // return this.authService.getProfile(req.user.id);
-
-        // Por simplicidad, asumiremos que el payload del token es suficiente
-        // para la información básica de "quién soy".
-        return req.user; 
+    getMe(@Req() req: Request) {
+      const user = (req as unknown as { user?: unknown }).user;
+      return user;
     }
+}
+
+@Controller('api/verificacion_credencial')
+export class VerificacionCredencialController {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post()
+  async verificarCredencial(
+    @Req() req: Request,
+    @Body() body: { imageUrl?: string; expected_student_id?: string; expected_name?: string },
+  ) {
+    try {
+      // Extraer el id del usuario autenticado (proporcionado por JwtStrategy)
+      const authUser = (req as unknown as { user?: unknown }).user;
+      if (!authUser || typeof authUser !== 'object' || !('id_usuario' in authUser)) {
+        throw new HttpException('Usuario no autenticado', HttpStatus.UNAUTHORIZED);
+      }
+      const rawId = (authUser as Record<string, unknown>)['id_usuario'];
+      let idUsuario: bigint;
+      if (typeof rawId === 'bigint') {
+        idUsuario = rawId;
+      } else if (typeof rawId === 'number') {
+        idUsuario = BigInt(rawId);
+      } else if (typeof rawId === 'string') {
+        idUsuario = BigInt(rawId);
+      } else {
+        throw new HttpException('ID de usuario inválido', HttpStatus.UNAUTHORIZED);
+      }
+
+      // Nuevo flujo: siempre delegar al servicio Python de verificación.
+      const apiUrl = this.configService.get<string>('VERIFICACION_CREDENCIAL_API_URL');
+      if (!apiUrl) {
+        throw new HttpException('VERIFICACION_CREDENCIAL_API_URL no configurada', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      // Construir payload para el servicio Python. Se permiten campos opcionales
+      // esperados que pueden venir desde el frontend (expected_student_id, expected_name).
+      const payload: Record<string, unknown> = { file: body.imageUrl };
+      if (body.expected_student_id) payload.expected_student_id = body.expected_student_id;
+      if (body.expected_name) payload.expected_name = body.expected_name;
+
+      const response = await axios.post(`${apiUrl}/validate_json`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 20000,
+      });
+
+      // Esperamos que el servicio Python devuelva un JSON con 'ok': boolean
+      if (response && response.data && typeof response.data === 'object') {
+        const dataObj = response.data as Record<string, unknown>;
+        const ok = !!dataObj['ok'];
+        if (ok) {
+          await this.prisma.usuarios.update({
+            where: { id_usuario: idUsuario },
+            data: {
+              credencial_verificada: true,
+              credencial_verificada_en: new Date(),
+              credential_url: body.imageUrl,
+            },
+          });
+
+          return { message: 'Verificación completada y actualizada en la base de datos.' };
+        }
+        // Si ok === false, devolver información útil al cliente
+        return {
+          message: 'Favor intente nuevamente con una credencial válida.',
+          details: dataObj,
+        };
+      }
+
+      throw new HttpException('Respuesta inválida del servicio de verificación.', HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      let errMsg = 'Error desconocido';
+      if (typeof error === 'string') errMsg = error;
+      else if (error instanceof Error) errMsg = error.message;
+      else {
+        try {
+          errMsg = JSON.stringify(error);
+        } catch {
+          errMsg = 'Error desconocido';
+        }
+      }
+
+      throw new HttpException(
+        `Error en verificación de credencial: ${errMsg || 'Error desconocido'}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

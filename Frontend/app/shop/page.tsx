@@ -146,7 +146,7 @@ const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({
                   <div className="mt-3 space-y-1 text-[12px] text-gray-600">
                     <p>• 2 artículos confirmados desde la tienda.</p>
                     <p>• Notas internas registradas junto al pedido.</p>
-                    <p>• El equipo marca "Listo" y el cliente pasa a recoger.</p>
+                    <p>• El equipo marca &quot;Listo&quot; y el cliente pasa a recoger.</p>
                   </div>
                 </div>
               </div>

@@ -45,6 +45,8 @@ export default function UserProfilePage() {
 
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
+
+
   const verifications = {
     email: hydratedUser.verifications?.email ?? (hydratedUser as any).correo_verificado ?? false,
     sms: hydratedUser.verifications?.sms ?? (hydratedUser as any).sms_verificado ?? false,
@@ -111,11 +113,19 @@ export default function UserProfilePage() {
                         <Mail className="h-4 w-4" />
                         {hydratedUser.correo_electronico}
                       </span>
-                      {hydratedUser.numero_telefono && (
+                      {hydratedUser.numero_telefono ? (
                         <span className="inline-flex items-center gap-1.5">
                           <Phone className="h-4 w-4" />
                           {hydratedUser.numero_telefono}
                         </span>
+                      ) : (
+                        <button
+                          onClick={() => router.push("/verification/phone")}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--fc-brand-100)] px-3 py-1 text-[var(--fc-brand-600)] transition hover:bg-[var(--fc-brand-200)]"
+                        >
+                          <Phone className="h-4 w-4" />
+                          Registrar número
+                        </button>
                       )}
                       <span className="inline-flex items-center gap-1.5">
                         <MapPin className="h-4 w-4" />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api } from "../lib/api";
 import { useBusinessStore } from "../state/businessStore";
 import { BusinessPickerDialog } from "./business/BusinessPickerDialog";
+import type { Business } from "./business/BusinessPickerDialog";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../state/userStore";
 import { 
@@ -214,14 +215,14 @@ export default function UserDropdown() {
         <BusinessPickerDialog
           open={showBizPicker}
           businesses={bizList}
-          onChoose={(b) => {
+          onChoose={(b: Business) => {
             setActiveBusiness(b);
             setShowBizPicker(false);
-            router.push('/pos');
+            router.push("/pos");
           }}
           onCreateNew={() => {
             setShowBizPicker(false);
-            router.push('/onboarding/negocio');
+            router.push("/onboarding/negocio");
           }}
           onClose={() => {
             setShowBizPicker(false);

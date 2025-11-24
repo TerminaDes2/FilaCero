@@ -9,7 +9,7 @@ import { useUserStore } from "../state/userStore";
 import UserDropdown from "./UserDropdown";
 import { useBusinessStore } from "../state/businessStore";
 import { api } from "../lib/api";
-import { BusinessPickerDialog } from "./business/BusinessPickerDialog";
+import { BusinessPickerDialog, type Business } from "./business/BusinessPickerDialog";
 
 interface NavItem {
   label: string;
@@ -34,7 +34,7 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useUserStore();
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
   const [showBizPicker, setShowBizPicker] = useState(false);
-  const [bizList, setBizList] = useState<any[]>([]);
+  const [bizList, setBizList] = useState<Business[]>([]);
   const [canRenderPortal, setCanRenderPortal] = useState(false);
   const [showUserSheet, setShowUserSheet] = useState(false);
 
@@ -122,7 +122,7 @@ export default function Navbar() {
     if (!activeBusiness) {
       try {
         const list = await api.listMyBusinesses();
-        setBizList(list || []);
+        setBizList((list || []) as Business[]);
       } catch {
         setBizList([]);
       }

@@ -1,5 +1,6 @@
 "use client";
-import type { ReactNode } from "react";
+import type { ReactNode, ElementType } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   Clock3,
@@ -53,12 +54,12 @@ const STATUS_STYLES: Record<VerificationStatus, StatusStyle> = {
     helperColor: "text-[var(--fc-brand-500)]",
   },
   missing: {
-    badge: "bg-slate-200 text-slate-600",
-    accent: "from-slate-200/30",
-    icon: <ShieldAlert className="h-4 w-4 text-slate-500" />,
+    badge: "bg-[var(--fc-brand-100)] text-[var(--fc-brand-600)]",
+    accent: "from-[var(--fc-brand-200)]/30",
+    icon: <ShieldAlert className="h-4 w-4 text-[var(--fc-brand-500)]" />,
     helper: "Completa la información para continuar",
-    container: "border-slate-200 bg-slate-50 text-slate-600",
-    helperColor: "text-slate-400",
+    container: "border-[var(--fc-brand-200)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)]",
+    helperColor: "text-[var(--fc-brand-400)]",
   },
   unverified: {
     badge: "bg-rose-100 text-rose-600",
@@ -102,8 +103,8 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
       description: emailVerified
         ? "Listo para recibir confirmaciones y accesos sin fricción."
         : user.correo_electronico
-        ? "Confirma tu correo para cerrar ventas y pedidos sin bloqueos."
-        : "Agrega un correo institucional para validar tu cuenta.",
+          ? "Confirma tu correo para cerrar ventas y pedidos sin bloqueos."
+          : "Agrega un correo institucional para validar tu cuenta.",
       icon: Mail,
       timestamp: formatTimestamp(timestamps.email),
     },
@@ -114,8 +115,8 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
       description: smsVerified
         ? "Usamos este número para alertas instantáneas y reabrir el POS con 2FA."
         : user.numero_telefono
-        ? "Confirma tu número para coordinar entregas y notificaciones."
-        : "Registra un número para recibir recordatorios y alertas.",
+          ? "Confirma tu número para coordinar entregas y notificaciones."
+          : "Registra un número para recibir recordatorios y alertas.",
       icon: Phone,
       timestamp: formatTimestamp(timestamps.sms),
     },
@@ -126,8 +127,8 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
       description: credentialVerified
         ? "Tu identidad está aprobada para beneficios y acceso express."
         : user.credential_url
-        ? "Validaremos tu documento para finalizar el proceso."
-        : "Carga tu credencial para activar beneficios académicos.",
+          ? "Validaremos tu documento para finalizar el proceso."
+          : "Carga tu credencial para activar beneficios académicos.",
       icon: IdCard,
       timestamp: formatTimestamp(timestamps.credential),
     },
@@ -185,6 +186,14 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
                     <span className="inline-flex items-center gap-2 self-start rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-[var(--fc-teal-600)]">
                       Verificado el {item.timestamp}
                     </span>
+                  )}
+                  {item.status === "missing" && (item.id === "phone" || item.id === "credential") && (
+                    <Link
+                      href={item.id === "phone" ? "/verification/phone" : "/verification/credencial"}
+                      className="inline-flex items-center gap-2 self-start rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--fc-brand-700)]"
+                    >
+                      {item.id === "phone" ? "Registrar número" : "Registrar credencial"}
+                    </Link>
                   )}
                 </div>
               </div>

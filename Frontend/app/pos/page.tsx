@@ -1,11 +1,13 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PosSidebar } from '../../src/components/pos/sidebar';
 import { CartProvider } from '../../src/pos/cartContext';
 // Category tabs removed in favor of a compact filter button
 import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
 import { ProductGrid } from '../../src/components/pos/products/ProductGrid';
+import Link from 'next/link';
 import CategoryFilterButton from '../../src/components/pos/controls/CategoryFilterButton';
 import { KitchenBoard } from '../../src/components/pos/kitchen/KitchenBoard';
 import { useKitchenBoard } from '../../src/state/kitchenBoardStore';
@@ -18,8 +20,7 @@ import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import { useUserStore } from '../../src/state/userStore';
 import { useBusinessStore } from '../../src/state/businessStore';
 import { api } from '../../src/lib/api';
-import { BusinessPickerDialog } from '../../src/components/business/BusinessPickerDialog';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { BusinessPickerDialog, type Business } from '../../src/components/business/BusinessPickerDialog';
 // Categories store not needed here
 
 export default function POSPage() {
@@ -34,11 +35,11 @@ export default function POSPage() {
   const hydrateFromAPI = useKitchenBoard((state) => state.hydrateFromAPI);
   const { user } = useUserStore();
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
-  const [needBusiness, setNeedBusiness] = useState(false);
-  const [bizList, setBizList] = useState<any[]>([]);
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const viewParam = searchParams.get('view');
+  const searchParams = useSearchParams();
+  const viewParam = searchParams?.get('view');
+  const [needBusiness, setNeedBusiness] = useState(false);
+  const [bizList, setBizList] = useState<Business[]>([]);
 
   // Fetch categories (store handles normalization & business scoping)
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function POSPage() {
     }
   }, [storeCategories.length]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (viewParam === 'kitchen') {
       setPosView('kitchen');
@@ -60,18 +62,22 @@ export default function POSPage() {
     }
   }, [posView, hydrateFromAPI, activeBusiness]);
 
-  // Guard: if admin and no active business, prompt to choose before using POS
+  // Guard: si es admin y no hay negocio activo, solicitar selección antes de continuar
   useEffect(() => {
     const roleName = (user as any)?.role_name || user?.role?.nombre_rol || '';
     const idRol = user?.id_rol;
     const isAdmin = roleName === 'admin' || roleName === 'superadmin' || idRol === 2;
+
     if (isAdmin && !activeBusiness) {
-      api.listMyBusinesses()
+      api
+        .listMyBusinesses()
         .then((list) => {
-          setBizList(list || []);
+          setBizList((list || []) as Business[]);
           setNeedBusiness(true);
         })
         .catch(() => setNeedBusiness(true));
+    } else {
+      setNeedBusiness(false);
     }
   }, [user, activeBusiness]);
 
@@ -153,14 +159,19 @@ export default function POSPage() {
           <BusinessPickerDialog
             open={needBusiness}
             businesses={bizList}
-            onChoose={(b) => {
+            onChoose={(b: Business) => {
               setActiveBusiness(b);
               setNeedBusiness(false);
             }}
-            onClose={() => {
-              // Si no selecciona, salimos del POS para evitar estado inconsistente
+            onCreateNew={() => {
               setNeedBusiness(false);
-              window.location.href = '/';
+              router.push('/onboarding/negocio');
+            }}
+            onClose={() => {
+              setNeedBusiness(false);
+              if (!activeBusiness) {
+                router.push('/');
+              }
             }}
           />
         )}
