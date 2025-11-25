@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '../../../state/userStore';
-import { useBusinessStore } from '../../../state/businessStore';
+import { useBusinessStore, setActiveBusiness } from '../../../../src/state/businessStore';
 import { useSettingsStore } from '../../../state/settingsStore';
 import { useShortcuts } from '../../system/ShortcutProvider';
 import { useConfirm } from '../../system/ConfirmProvider';
@@ -27,7 +27,7 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
 }) => {
   const router = useRouter();
   const { reset, user } = useUserStore();
-  const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const activeBusiness = useBusinessStore((state: any) => state.activeBusiness);
   const { locale, dateFormat } = useSettingsStore();
   const { openHelp } = useShortcuts({ optional: true });
   const confirm = useConfirm();

@@ -78,7 +78,8 @@ export class BusinessesService {
           fecha_registro: new Date(),
           owner_id: uid,
         };
-        if (typeof dto.logo === 'string') data.logo = dto.logo;
+        if (typeof dto.logo === 'string') data.logo_url = dto.logo;
+        if (typeof dto.logo_url === 'string') data.logo_url = dto.logo_url;
         if (typeof dto.hero_image_url === 'string') data.hero_image_url = dto.hero_image_url;
 
         const negocio = await tx.negocio.create({ data });
@@ -159,7 +160,11 @@ export class BusinessesService {
     }
 
     if (dto.logo !== undefined) {
-      data.logo = this.normalizeOptional(dto.logo, 2048);
+      data.logo_url = this.normalizeOptional(dto.logo, 2048);
+    }
+
+    if (dto.logo_url !== undefined) {
+      data.logo_url = this.normalizeOptional(dto.logo_url, 2048);
     }
 
     if (dto.hero_image_url !== undefined) {

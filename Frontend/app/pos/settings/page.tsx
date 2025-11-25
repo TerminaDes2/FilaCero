@@ -1,20 +1,16 @@
 "use client";
-
-import React, {
-	ChangeEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useUserStore } from '../../../src/state/userStore';
+import { useSettingsStore } from '../../../src/state/settingsStore';
 import { useConfirm } from '../../../src/components/system/ConfirmProvider';
 import { BrandLogo } from '../../../src/components/BrandLogo';
 import { useBusinessStore } from '../../../src/state/businessStore';
+import { api } from '../../../src/lib/api';
+
 type SectionKey =
   | 'business'
   | 'appearance'
@@ -26,16 +22,16 @@ type SectionKey =
   | 'about';
 
 interface SectionDef {
-	key: SectionKey;
-	label: string;
-	desc?: string;
-	icon: React.ReactNode;
+  key: SectionKey;
+  label: string;
+  desc?: string;
+  icon: React.ReactNode;
 }
 
 const icon = (d: string) => (
-	<svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}>
-		<path strokeLinecap="round" strokeLinejoin="round" d={d} />
-	</svg>
+  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d={d} />
+  </svg>
 );
 
 const sections: SectionDef[] = [
@@ -49,108 +45,72 @@ const sections: SectionDef[] = [
 ];
 
 export default function POSSettingsPage() {
-	const router = useRouter();
-	const { logout, user } = useUserStore();
-	const confirm = useConfirm();
-	const [active, setActive] = useState<SectionKey>('business');
-	const [filter, setFilter] = useState('');
+  const router = useRouter();
+  const { reset } = useUserStore();
+  const settings = useSettingsStore();
+  const confirm = useConfirm();
+  const { business, saveBusiness, loadBusinessForCurrentUser } = useBusinessStore(); // <-- added
+  const [active, setActive] = useState<SectionKey>('business');
+  const [filter, setFilter] = useState('');
 
-	const snapshotRef = useRef<SettingsSnapshot>(useSettingsStore.getState().snapshot());
-	const saveHandlers = useRef(new Map<SectionKey, () => Promise<void> | void>());
-	const discardHandlers = useRef(new Map<SectionKey, () => Promise<void> | void>());
+  const visibleSections = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return sections;
+    return sections.filter(s =>
+      s.label.toLowerCase().includes(q) || (s.desc?.toLowerCase().includes(q))
+    );
+  }, [filter]);
 
-	const registerSection = useCallback(
-		(key: SectionKey, handlers: SectionHandlers) => {
-			if (handlers.save) saveHandlers.current.set(key, handlers.save);
-			else saveHandlers.current.delete(key);
-			if (handlers.discard) discardHandlers.current.set(key, handlers.discard);
-			else discardHandlers.current.delete(key);
-			return () => {
-				saveHandlers.current.delete(key);
-				discardHandlers.current.delete(key);
-			};
-		},
-		[],
-	);
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: 'Cerrar sesión',
+      description: '¿Seguro que quieres cerrar sesión en este dispositivo?',
+      confirmText: 'Cerrar sesión',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
+    if (!ok) return;
+    try { reset(); } catch {}
+    router.push('/');
+  };
 
-	const sectionRegisters = useMemo(() => {
-		const result = {} as Record<SectionKey, RegisterSection>;
-		for (const { key } of sections) {
-			result[key] = (handlers) => registerSection(key, handlers);
-		}
-		return result;
-	}, [registerSection]);
+  const handleDiscard = async () => {
+    const ok = await confirm({
+      title: 'Descartar cambios',
+      description: 'Se perderán los cambios no guardados. ¿Quieres continuar?',
+      confirmText: 'Descartar',
+      cancelText: 'Cancelar',
+      tone: 'danger'
+    });
+    if (!ok) return;
+    // TODO: cuando haya estado local editable, revertirlo aquí
+  };
 
-	const getSnapshot = useCallback(() => snapshotRef.current, []);
+  const handleSave = async () => {
+    const ok = await confirm({
+      title: 'Guardar cambios',
+      description: 'Aplicar los cambios de configuración en este dispositivo.',
+      confirmText: 'Guardar',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
 
-	useEffect(() => {
-		snapshotRef.current = useSettingsStore.getState().snapshot();
-	}, []);
-
-	const visibleSections = useMemo(() => {
-		const q = filter.trim().toLowerCase();
-		if (!q) return sections;
-		return sections.filter((section) =>
-			section.label.toLowerCase().includes(q) || (section.desc?.toLowerCase().includes(q) ?? false),
-		);
-	}, [filter]);
-
-	const activeSection = useMemo(
-		() => sections.find((section) => section.key === active),
-		[active],
-	);
-
-	const handleLogout = useCallback(async () => {
-		const ok = await confirm({
-			title: 'Cerrar sesión',
-			description: '¿Seguro que quieres cerrar sesión en este dispositivo?',
-			confirmText: 'Cerrar sesión',
-			cancelText: 'Cancelar',
-			tone: 'danger',
-		});
-		if (!ok) return;
-		logout();
-		router.replace('/auth/login');
-	}, [confirm, logout, router]);
-
-	const handleDiscard = useCallback(async () => {
-		const ok = await confirm({
-			title: 'Descartar cambios',
-			description: 'Se revertirán los ajustes a la última versión guardada. ¿Deseas continuar?',
-			confirmText: 'Descartar',
-			cancelText: 'Cancelar',
-			tone: 'danger',
-		});
-		if (!ok) return;
-		try {
-			useSettingsStore.getState().replace(snapshotRef.current);
-			const discard = discardHandlers.current.get(active);
-			if (discard) await discard();
-		} catch (error) {
-			console.error('Error al descartar cambios', error);
-			if (typeof window !== 'undefined') window.alert('No fue posible descartar los cambios.');
-		}
-	}, [active, confirm]);
-
-	const handleSave = useCallback(async () => {
-		const ok = await confirm({
-			title: 'Guardar cambios',
-			description: 'Se aplicarán los cambios para esta sección.',
-			confirmText: 'Guardar',
-			cancelText: 'Cancelar',
-		});
-		if (!ok) return;
-		try {
-			const handler = saveHandlers.current.get(active);
-			if (handler) await handler();
-			snapshotRef.current = useSettingsStore.getState().snapshot();
-			if (typeof window !== 'undefined') window.alert('Cambios guardados correctamente.');
-		} catch (error) {
-			console.error('Error al guardar cambios', error);
-			if (typeof window !== 'undefined') window.alert('No fue posible guardar.');
-		}
-	}, [active, confirm]);
-
+    try {
+      // Persiste el negocio si la sección activa es 'business'
+      if (active === 'business') {
+        await saveBusiness();
+        // recargar desde backend para asegurar consistencia
+        await loadBusinessForCurrentUser();
+      }
+      // TODO: persistir otros ajustes si aplica
+      // feedback mínimo
+      alert('Cambios guardados');
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar los cambios. Revisa la consola.');
+    }
+  };
+  
   return (
     <div className='h-screen flex pos-pattern overflow-hidden'>
       <aside className='hidden md:flex flex-col h-screen sticky top-0'>
@@ -268,234 +228,192 @@ export default function POSSettingsPage() {
   );
 }
 
-const Card: React.FC<{ title: string; desc?: string; right?: React.ReactNode; children: React.ReactNode }> = ({ title, desc, right, children }) => (
-	<div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.9)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)' }}>
-		<div className="flex items-start justify-between gap-3 mb-3">
-			<div>
-				<h3 className="text-[14px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>
-					{title}
-				</h3>
-				{desc && (
-					<p className="text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-						{desc}
-					</p>
-				)}
-			</div>
-			{right}
-		</div>
-		{children}
-	</div>
+// ——— Sections ——— //
+const Card: React.FC<{ title: string; desc?: string; children: React.ReactNode; right?: React.ReactNode }>=({ title, desc, children, right })=> (
+  <div className='rounded-xl p-4' style={{background:'rgba(255,255,255,0.9)', boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.05)'}}>
+    <div className='flex items-start justify-between gap-3 mb-3'>
+      <div>
+        <h3 className='text-[14px] font-semibold' style={{color:'var(--pos-text-heading)'}}>{title}</h3>
+        {desc && <p className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>{desc}</p>}
+      </div>
+      {right}
+    </div>
+    {children}
+  </div>
 );
 
-const Row: React.FC<{ label: string; hint?: string; children: React.ReactNode }> = ({ label, hint, children }) => (
-	<div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start py-2">
-		<div className="md:col-span-1">
-			<div className="text-[13px] font-medium" style={{ color: 'var(--pos-text-heading)' }}>
-				{label}
-			</div>
-			{hint && (
-				<div className="text-[12px] opacity-80" style={{ color: 'var(--pos-text-muted)' }}>
-					{hint}
-				</div>
-			)}
-		</div>
-		<div className="md:col-span-2">
-			{children}
-		</div>
-	</div>
+const Row: React.FC<{ label: string; hint?: string; children: React.ReactNode }>=({ label, hint, children })=> (
+  <div className='grid grid-cols-1 md:grid-cols-3 gap-3 items-center py-2'>
+    <div className='md:col-span-1'>
+      <div className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>{label}</div>
+      {hint && <div className='text-[12px] opacity-80' style={{color:'var(--pos-text-muted)'}}>{hint}</div>}
+    </div>
+    <div className='md:col-span-2'>{children}</div>
+  </div>
 );
 
 const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-	<input
-		{...props}
-		className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
-		style={{
-			height: 'var(--pos-control-h)',
-			borderRadius: 'var(--pos-control-radius)',
-			background: 'rgba(255,255,255,0.9)',
-			color: '#4b1c23',
-			boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
-		}}
-	/>
+  <input
+    {...props}
+    className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
+    style={{
+      height: 'var(--pos-control-h)',
+      borderRadius: 'var(--pos-control-radius)',
+      background: 'rgba(255,255,255,0.9)',
+      color: '#4b1c23',
+      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)'
+    }}
+  />
 );
 
 const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => (
-	<select
-		{...props}
-		className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
-		style={{
-			height: 'var(--pos-control-h)',
-			borderRadius: 'var(--pos-control-radius)',
-			background: 'rgba(255,255,255,0.9)',
-			color: '#4b1c23',
-			boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
-		}}
-	/>
+  <select
+    {...props}
+    className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
+    style={{
+      height: 'var(--pos-control-h)',
+      borderRadius: 'var(--pos-control-radius)',
+      background: 'rgba(255,255,255,0.9)',
+      color: '#4b1c23',
+      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)'
+    }}
+  />
 );
 
-const TextArea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-	<textarea
-		{...props}
-		className={`w-full rounded-lg px-3 py-2 text-[13px] outline-none ${props.className ?? ''}`}
-		style={{
-			borderRadius: 'var(--pos-control-radius)',
-			background: 'rgba(255,255,255,0.9)',
-			color: '#4b1c23',
-			boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
-			minHeight: props.rows ? undefined : 88,
-		}}
-	/>
-);
-
-const Toggle: React.FC<{ checked: boolean; onChange: (value: boolean) => void }> = ({ checked, onChange }) => (
-	<button
-		type="button"
-		onClick={() => onChange(!checked)}
-		className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${
-			checked ? 'bg-[var(--pos-accent-green)]' : 'bg-[rgba(0,0,0,0.15)]'
-		}`}
-	>
-		<span
-			className={`inline-block w-5 h-5 transform bg-white rounded-full transition ${
-				checked ? 'translate-x-5' : 'translate-x-1'
-			}`}
-		/>
-	</button>
+const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean)=>void }> = ({ checked, onChange }) => (
+  <button
+    type='button'
+    onClick={()=> onChange(!checked)}
+    className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${checked ? 'bg-[var(--pos-accent-green)]' : 'bg-[rgba(0,0,0,0.15)]'}`}
+  >
+    <span className={`inline-block w-5 h-5 transform bg-white rounded-full transition ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
+  </button>
 );
 
 function BusinessSection() {
-  const { business, setBusiness } = useBusinessStore();
+  const { business, setBusiness, loadBusinessForCurrentUser, saveBusiness } = useBusinessStore();
+  const { loading, user } = useUserStore();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [local, setLocal] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const fileInputId = 'logo-upload-input';
+
+  useEffect(() => {
+    if (!loading && user) loadBusinessForCurrentUser();
+  }, [loading, user, loadBusinessForCurrentUser]);
+
+  useEffect(() => setLocal(business ? { ...business } : null), [business]);
+
+  if (!business) return (
+    <Card title="Negocio" desc="Cargando datos del negocio...">
+      <div className="text-sm text-gray-500">Cargando...</div>
+    </Card>
+  );
+
+  const handleStartEdit = () => setIsEditing(true);
+  const handleCancel = () => { setLocal(business ? { ...business } : null); setIsEditing(false); };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    setUploading(true);
+    try {
+      const result = await api.uploadFile(file);
+      if (!result) throw new Error('No se recibió URL desde el upload');
+      // result puede ser { url: string } o directamente string
+      const url = typeof result === 'string' ? result : result;
+      if (!url || typeof url !== 'string') {
+        throw new Error('URL de respuesta inválida');
+      }
+      return url;
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      throw err;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona un archivo de imagen');
+      return;
+    }
+    
+    try {
+      const url = await uploadFile(file);
+      setLocal((prev: any) => ({ ...prev, logo_url: url }));
+    } catch (err: any) {
+      console.error('Error subiendo logo:', err);
+      alert('Error subiendo la imagen: ' + (err?.message ?? String(err)));
+    }
+  };
+
+  const handleSaveLocal = async () => {
+    if (!local) return;
+    setSaving(true);
+    try {
+      setBusiness(local);
+      await saveBusiness();
+      await loadBusinessForCurrentUser();
+      setIsEditing(false);
+      alert('Datos guardados');
+    } catch (err) {
+      console.error('Error guardando negocio:', err);
+      alert('Error al guardar. Revisa la consola.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <div className='space-y-4'>
-      <Card
-        title='Identidad del negocio'
-        desc='Información pública y de contacto'
-        right={<button className='text-[12px] px-3 py-1.5 rounded-md' style={{background:'rgba(0,0,0,0.06)'}}>Editar</button>}
+    <div className="space-y-4">
+      <Card title="Identidad del negocio" desc="Editar los datos que verán los clientes"
+        right={isEditing ? (
+          <div className="flex gap-2">
+            <button onClick={handleCancel} className="text-[12px] px-3 py-1.5 rounded-md" style={{background:"rgba(0,0,0,0.06)"}} disabled={saving || uploading}>Cancelar</button>
+            <button onClick={handleSaveLocal} className="text-[12px] px-3 py-1.5 rounded-md font-semibold" style={{background:"var(--pos-accent-green)", color:"#fff"}} disabled={saving || uploading}>{saving ? 'Guardando...' : 'Guardar'}</button>
+          </div>
+        ) : (
+          <button className="text-[12px] px-3 py-1.5 rounded-md" style={{background:"rgba(0,0,0,0.06)"}} onClick={handleStartEdit}>Editar</button>
+        )}
       >
-
-        {/* Nombre del negocio */}
-        <Row label='Nombre del negocio'>
-          <Input
-            value={business.name}
-            onChange={(e) => setBusiness({ name: e.target.value })}
-            placeholder='Ej. Cafetería La Esquina'
-          />
-        </Row>
-
-        {/* Slogan */}
-        <Row label='Slogan'>
-          <Input
-            value={business.slogan}
-            onChange={(e) => setBusiness({ slogan: e.target.value })}
-            placeholder='Un lugar para disfrutar'
-          />
+        {/* Nombre */}
+        <Row label="Nombre">
+          {isEditing ? <Input value={local?.nombre ?? ""} onChange={e => setLocal({...local, nombre: e.target.value})} placeholder="Ej. Cafetería FilaCero" />
+                     : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.nombre || <span className="opacity-60">— vacío —</span>}</div>}
         </Row>
 
         {/* Logo */}
-        <Row label='Logo'>
-          <div className='flex items-center gap-3'>
-            <div className='w-14 h-14 rounded-lg bg-white/80 flex items-center justify-center'
-                 style={{boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}}>
-              {business.logo ? (
-                <img src={business.logo} className='w-full h-full object-cover rounded-lg' />
-              ) : (
-                <span className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Previsualización</span>
+        <Row label="Logo">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="w-20 h-20 rounded-lg bg-white/60 overflow-hidden flex items-center justify-center" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
+                {(isEditing ? local?.logo_url : business.logo_url) ? <img src={isEditing ? local?.logo_url : business.logo_url} alt="logo" className="w-full h-full object-cover" /> : <div className="text-[12px] opacity-70">Sin logo</div>}
+              </div>
+              {isEditing && (
+                <div className="flex flex-col gap-2">
+                  <input id={fileInputId} type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+                  <label htmlFor={fileInputId} className="px-3 py-2 rounded-md text-[13px]" style={{ background: 'rgba(0,0,0,0.06)', cursor: 'pointer' }}>{uploading ? 'Subiendo...' : 'Subir imagen'}</label>
+                  <button onClick={() => setLocal((prev:any) => ({ ...prev, logo_url: null }))} className="px-3 py-2 rounded-md text-[13px]" style={{ background: 'rgba(0,0,0,0.06)' }}>Eliminar</button>
+                </div>
               )}
             </div>
-
-            <input
-              type="file"
-              className="hidden"
-              id="logoInput"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const url = URL.createObjectURL(file);
-                  setBusiness({ logo: url });
-                }
-              }}
-            />
-
-            <button
-              onClick={() => document.getElementById('logoInput')?.click()}
-              className='px-3 py-2 text-[13px] rounded-lg font-medium'
-              style={{background:'rgba(0,0,0,0.06)'}}
-            >
-              Subir logo
-            </button>
           </div>
         </Row>
 
-        {/* Datos fiscales */}
-        <Row label='Datos fiscales' hint='RFC/NIF, razón social y domicilio'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-            <Input
-              value={business.rfc}
-              onChange={(e) => setBusiness({ rfc: e.target.value })}
-              placeholder='RFC / NIF'
-            />
-            <Input
-              value={business.razonSocial}
-              onChange={(e) => setBusiness({ razonSocial: e.target.value })}
-              placeholder='Razón social'
-            />
-            <Input
-              value={business.direccionFiscal}
-              onChange={(e) => setBusiness({ direccionFiscal: e.target.value })}
-              placeholder='Dirección fiscal'
-              className='md:col-span-2'
-            />
-          </div>
-        </Row>
-
-        {/* Contacto */}
-        <Row label='Contacto'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-            <Input
-              value={business.telefono}
-              onChange={(e) => setBusiness({ telefono: e.target.value })}
-              placeholder='Teléfono'
-            />
-            <Input
-              value={business.email}
-              onChange={(e) => setBusiness({ email: e.target.value })}
-              placeholder='Email'
-            />
-            <Input
-              value={business.website}
-              onChange={(e) => setBusiness({ website: e.target.value })}
-              placeholder='Sitio web'
-            />
-          </div>
-        </Row>
-
-        {/* Horario */}
-        <Row label='Horario'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-            <Input
-              value={business.horario1}
-              onChange={(e) => setBusiness({ horario1: e.target.value })}
-              placeholder='Lun-Vie: 8:00-20:00'
-            />
-            <Input
-              value={business.horario2}
-              onChange={(e) => setBusiness({ horario2: e.target.value })}
-              placeholder='Sáb: 9:00-14:00'
-            />
-            <Input
-              value={business.horario3}
-              onChange={(e) => setBusiness({ horario3: e.target.value })}
-              placeholder='Dom: cerrado'
-            />
-          </div>
-        </Row>
-
+        {/* Dirección, Teléfono, Correo (idéntico comportamiento) */}
+        <Row label="Dirección">{isEditing ? <Input value={local?.direccion ?? ""} onChange={e=> setLocal({...local, direccion: e.target.value})} placeholder="Calle, número, colonia" /> : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.direccion || <span className="opacity-60">— vacío —</span>}</div>}</Row>
+        <Row label="Teléfono">{isEditing ? <Input value={local?.telefono ?? ""} onChange={e=> setLocal({...local, telefono: e.target.value})} placeholder="Ej. +52 1111 2222" /> : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.telefono || <span className="opacity-60">— vacío —</span>}</div>}</Row>
+        <Row label="Correo">{isEditing ? <Input value={local?.correo ?? ""} onChange={e=> setLocal({...local, correo: e.target.value})} placeholder="contacto@tudominio.com" /> : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.correo || <span className="opacity-60">— vacío —</span>}</div>}</Row>
       </Card>
     </div>
   );
 }
-
 
 function AppearanceSection() {
   const { density, accentTeal, set } = useSettingsStore();
@@ -550,7 +468,7 @@ function AppearanceSection() {
                 <div className='text-[13px] font-semibold' style={{color:'var(--pos-text-heading)'}}>Elemento</div>
                 <div className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>Descripción</div>
               </div>
-              <span className='px-2 rounded-full text-[12px]' style={{height:'calc(var(--pos-control-h) - 12px)', display:'inline-flex', alignItems:'center', background:'var(--pos-badge-price-bg)', color:'var(--pos-chip-text)'}}>MXN 120</span>
+              <span className='px-2 rounded-full text-[12px]' style={{height:'calc(var(--pos-control-h) - 12px)', display:'inline-flex', alignItems:'center', background:'var(--pos-badge-price-bg)', color:'var(--chip-text)'}}>MXN 120</span>
             </div>
             <div className='rounded-lg p-3 flex items-center justify-between' style={{background:'var(--pos-card-bg)', border:'1px solid var(--pos-card-border)'}}>
               <div>
@@ -576,421 +494,230 @@ function AppearanceSection() {
     </div>
   );
 }
-
-function PaymentsSection({ register }: SectionProps) {
-	useEffect(() => {
-		const unregister = register({});
-		return unregister;
-	}, [register]);
-
-	const { payCash, payCard, tipsEnabled, tipPercents, set } = useSettingsStore((state) => ({
-		payCash: state.payCash,
-		payCard: state.payCard,
-		tipsEnabled: state.tipsEnabled,
-		tipPercents: state.tipPercents,
-		set: state.set,
-	}));
-
-	const update = useCallback((patch: Partial<{ payCash: boolean; payCard: boolean; tipsEnabled: boolean; tipPercents: string }>) => {
-		set(patch as any);
-	}, [set]);
-
-	return (
-		<div className="space-y-4">
-			<Card title="Métodos de pago" desc="Activa únicamente las opciones disponibles en tu punto de venta.">
-				<div className="space-y-3">
-					<div className="flex items-center justify-between gap-3">
-						<div>
-							<div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>
-								Efectivo
-							</div>
-							<div className="text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-								Permite cerrar ventas registrando pagos en efectivo.
-							</div>
-						</div>
-						<Toggle checked={payCash} onChange={(value) => update({ payCash: value })} />
-					</div>
-
-					<div className="flex items-center justify-between gap-3">
-						<div>
-							<div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>
-								Tarjeta / TPV
-							</div>
-							<div className="text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-								Habilita cobros con terminal física o integraciones.
-							</div>
-						</div>
-						<Toggle checked={payCard} onChange={(value) => update({ payCard: value })} />
-					</div>
-				</div>
-			</Card>
-
-			<Card title="Propinas" desc="Configura sugerencias para la pantalla de pago.">
-				<div className="space-y-3">
-					<div className="flex items-center justify-between gap-3">
-						<div>
-							<div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>
-								Propinas sugeridas
-							</div>
-							<div className="text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-								Muestra montos rápidamente al cobrar.
-							</div>
-						</div>
-						<Toggle checked={tipsEnabled} onChange={(value) => update({ tipsEnabled: value })} />
-					</div>
-					{tipsEnabled && (
-						<Row label="Porcentajes" hint="Separados por comas, sin %.">
-							<Input value={tipPercents} onChange={(event) => update({ tipPercents: event.target.value })} placeholder="5,10,15" />
-						</Row>
-					)}
-				</div>
-			</Card>
-		</div>
-	);
+function DevicesSection() {
+  const confirm = useConfirm();
+  const handleRegister = async () => {
+    const ok = await confirm({ 
+      title: 'Registrar impresora', 
+      description: '¿Deseas registrar una nueva impresora?', 
+      confirmText: 'Registrar', 
+      cancelText: 'Cancelar' 
+    });
+    if (!ok) return;
+  };
+  
+  const handleSearch = async () => {
+    const ok = await confirm({ 
+      title: 'Buscar dispositivos', 
+      description: 'Iniciar búsqueda de dispositivos cercanos.', 
+      confirmText: 'Buscar', 
+      cancelText: 'Cancelar' 
+    });
+    if (!ok) return;
+  };
+  
+  return (
+    <div className='space-y-4'>
+      <Card 
+        title='Impresoras' 
+        right={
+          <button 
+            onClick={handleRegister} 
+            className='px-3 py-2 text-[13px] rounded-lg font-medium' 
+            style={{background:'var(--pos-accent-green)', color:'#fff'}}
+          >
+            Registrar
+          </button>
+        }
+      >
+        <div 
+          className='rounded-lg p-3 flex items-center justify-between' 
+          style={{background:'rgba(0,0,0,0.04)'}}
+        >
+          <div>
+            <div className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>
+              Ninguna impresora configurada
+            </div>
+            <div className='text-[12px]' style={{color:'var(--pos-text-muted)'}}>
+              Agrega una para imprimir tickets
+            </div>
+          </div>
+          <button 
+            onClick={handleSearch} 
+            className='px-3 py-2 text-[13px] rounded-lg' 
+            style={{background:'rgba(0,0,0,0.06)'}}
+          >
+            Buscar dispositivos
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
 }
 
-function TaxesSection({ register }: SectionProps) {
-	useEffect(() => {
-		const unregister = register({});
-		return unregister;
-	}, [register]);
-
-	const { taxes, addTax, updateTax, removeTax } = useSettingsStore((state) => ({
-		taxes: state.taxes,
-		addTax: state.addTax,
-		updateTax: state.updateTax,
-		removeTax: state.removeTax,
-	}));
-	const [newTax, setNewTax] = useState<{ label: string; rate: number; appliesToAll: boolean }>({
-		label: '',
-		rate: 16,
-		appliesToAll: true,
-	});
-
-	const handleAddTax = useCallback(() => {
-		if (!newTax.label.trim()) {
-			if (typeof window !== 'undefined') window.alert('Indica un nombre para la tasa.');
-			return;
-		}
-		const id = `tax-${newTax.label.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-		addTax({ id, label: newTax.label.trim(), rate: Number(newTax.rate) || 0, appliesToAll: newTax.appliesToAll });
-		setNewTax({ label: '', rate: 16, appliesToAll: true });
-	}, [addTax, newTax]);
-
-	const handleRemoveTax = useCallback(
-		(id: string) => {
-			const ok = typeof window === 'undefined' ? true : window.confirm('¿Eliminar esta tasa de impuesto?');
-			if (!ok) return;
-			removeTax(id);
-		},
-		[removeTax],
-	);
-
-	return (
-		<div className="space-y-4">
-			<Card title="Tasas activas" desc="Configura las tasas que tu equipo podrá aplicar al cobrar.">
-				<div className="space-y-3">
-					{taxes.length === 0 && (
-						<div className="text-[13px]" style={{ color: 'var(--pos-text-muted)' }}>
-							No hay tasas configuradas. Añade una nueva para comenzar.
-						</div>
-					)}
-					{taxes.map((tax) => (
-						<div
-							key={tax.id}
-							className="rounded-lg border px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-							style={{ borderColor: 'var(--pos-border-soft)', background: 'rgba(255,255,255,0.9)' }}
-						>
-							<div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-								<Input value={tax.label} onChange={(event) => updateTax(tax.id, { label: event.target.value })} placeholder="Nombre" />
-								<Input
-									type="number"
-									min="0"
-									step="0.01"
-									value={tax.rate}
-									onChange={(event) => updateTax(tax.id, { rate: Number(event.target.value) })}
-									placeholder="16"
-								/>
-							</div>
-							<div className="flex items-center gap-3">
-								<div className="flex items-center gap-2 text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-									<span>Aplicar a todo</span>
-									<Toggle checked={tax.appliesToAll} onChange={(value) => updateTax(tax.id, { appliesToAll: value })} />
-								</div>
-								<button
-									type="button"
-									onClick={() => handleRemoveTax(tax.id)}
-									className="px-3 py-2 text-[12px] rounded-lg font-semibold"
-									style={{ background: 'rgba(0,0,0,0.07)', color: 'var(--pos-text-heading)' }}
-								>
-									Quitar
-								</button>
-							</div>
-						</div>
-					))}
-				</div>
-			</Card>
-
-			<Card title="Nueva tasa" desc="Define un porcentaje y aclara si se aplica por defecto.">
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-					<Input value={newTax.label} onChange={(event) => setNewTax((prev) => ({ ...prev, label: event.target.value }))} placeholder="Ej. IVA" />
-					<Input
-						type="number"
-						min="0"
-						step="0.01"
-						value={newTax.rate}
-						onChange={(event) => setNewTax((prev) => ({ ...prev, rate: Number(event.target.value) }))}
-						placeholder="16"
-					/>
-					<div className="flex items-center gap-2 text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-						<span>Aplicar a todo</span>
-						<Toggle checked={newTax.appliesToAll} onChange={(value) => setNewTax((prev) => ({ ...prev, appliesToAll: value }))} />
-					</div>
-				</div>
-				<button
-					type="button"
-					onClick={handleAddTax}
-					className="mt-4 px-3 py-2 text-[13px] rounded-lg font-semibold"
-					style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
-				>
-					Añadir impuesto
-				</button>
-			</Card>
-		</div>
-	);
+function PaymentsSection() {
+  const [cash, setCash] = useState(true);
+  const [card, setCard] = useState(true);
+  const [tips, setTips] = useState(true);
+  
+  return (
+    <div className='space-y-4'>
+      <Card title='Métodos aceptados'>
+        <Row label='Efectivo'>
+          <Toggle checked={cash} onChange={setCash} />
+        </Row>
+        <Row label='Tarjeta'>
+          <Toggle checked={card} onChange={setCard} />
+        </Row>
+        <Row label='Propinas'>
+          <div className='flex items-center gap-3'>
+            <Toggle checked={tips} onChange={setTips} />
+            <Input placeholder='Porcentajes: 5, 10, 15' />
+          </div>
+        </Row>
+      </Card>
+    </div>
+  );
 }
 
-function NotificationsSection({ register }: SectionProps) {
-	useEffect(() => {
-		const unregister = register({});
-		return unregister;
-	}, [register]);
-
-	const { notifyDaily, notifyLowStock, notifyEmail, set } = useSettingsStore((state) => ({
-		notifyDaily: state.notifyDaily,
-		notifyLowStock: state.notifyLowStock,
-		notifyEmail: state.notifyEmail,
-		set: state.set,
-	}));
-
-	const update = useCallback(
-		(patch: Partial<{ notifyDaily: boolean; notifyLowStock: boolean; notifyEmail: string }>) => set(patch as any),
-		[set],
-	);
-
-	return (
-		<div className="space-y-4">
-			<Card title="Alertas" desc="Recibe avisos por correo sobre la operación del día.">
-				<div className="space-y-4">
-					<div className="flex items-center justify-between gap-3">
-						<div>
-							<div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>
-								Resumen diario
-							</div>
-							<div className="text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-								Recibe ventas totales, propinas y órdenes pendientes cada noche.
-							</div>
-						</div>
-						<Toggle checked={notifyDaily} onChange={(value) => update({ notifyDaily: value })} />
-					</div>
-
-					<div className="flex items-center justify-between gap-3">
-						<div>
-							<div className="text-[13px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>
-								Inventario bajo
-							</div>
-							<div className="text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-								Te avisaremos cuando un producto llegue a su stock mínimo.
-							</div>
-						</div>
-						<Toggle checked={notifyLowStock} onChange={(value) => update({ notifyLowStock: value })} />
-					</div>
-				</div>
-			</Card>
-
-			<Card title="Correo de notificaciones" desc="Es donde recibirás los resúmenes.">
-				<Input value={notifyEmail} onChange={(event) => update({ notifyEmail: event.target.value })} placeholder="operacion@tu-negocio.com" type="email" />
-			</Card>
-		</div>
-	);
+function NotificationsSection() {
+  const [daily, setDaily] = useState(true);
+  const [lowStock, setLowStock] = useState(true);
+  
+  return (
+    <div className='space-y-4'>
+      <Card title='Alertas'>
+        <Row label='Resumen diario'>
+          <Toggle checked={daily} onChange={setDaily} />
+        </Row>
+        <Row label='Stock bajo'>
+          <Toggle checked={lowStock} onChange={setLowStock} />
+        </Row>
+        <Row label='Email de reportes'>
+          <Input placeholder='correo@tu-negocio.com' />
+        </Row>
+      </Card>
+    </div>
+  );
 }
 
-
-
-function LocaleSection({ register }: SectionProps) {
-	useEffect(() => {
-		const unregister = register({});
-		return unregister;
-	}, [register]);
-
-	const { locale, currency, dateFormat, set } = useSettingsStore((state) => ({
-		locale: state.locale,
-		currency: state.currency,
-		dateFormat: state.dateFormat,
-		set: state.set,
-	}));
-
-	const update = useCallback(
-		(patch: Partial<{ locale: LocaleCode; currency: CurrencyCode; dateFormat: SettingsSnapshot['dateFormat'] }>) => set(patch as any),
-		[set],
-	);
-
-	return (
-		<Card title="Idioma y región" desc="Define cómo se mostrarán montos, fechas y textos.">
-			<div className="space-y-4">
-				<Row label="Idioma">
-					<Select value={locale} onChange={(event) => update({ locale: event.target.value as LocaleCode })}>
-						<option value="es-MX">Español (México)</option>
-						<option value="es-ES">Español (España)</option>
-						<option value="en-US">English (US)</option>
-					</Select>
-				</Row>
-				<Row label="Moneda">
-					<Select value={currency} onChange={(event) => update({ currency: event.target.value as CurrencyCode })}>
-						<option value="MXN">Peso mexicano (MXN)</option>
-						<option value="USD">Dólar estadounidense (USD)</option>
-						<option value="EUR">Euro (EUR)</option>
-					</Select>
-				</Row>
-				<Row label="Formato de fecha">
-					<Select value={dateFormat} onChange={(event) => update({ dateFormat: event.target.value as SettingsSnapshot['dateFormat'] })}>
-						<option value="auto">Automático según idioma</option>
-						<option value="DD/MM/YYYY">DD/MM/YYYY</option>
-						<option value="MM/DD/YYYY">MM/DD/YYYY</option>
-						<option value="YYYY-MM-DD">YYYY-MM-DD</option>
-					</Select>
-				</Row>
-			</div>
-		</Card>
-	);
+function LocaleSection() {
+  const { locale, currency, dateFormat, set } = useSettingsStore();
+  
+  return (
+    <div className='space-y-4'>
+      <Card title='Idioma y región'>
+        <Row label='Idioma'>
+          <Select 
+            value={locale} 
+            onChange={(e) => set({ locale: e.target.value as any })}
+          >
+            <option value='es-MX'>Español (MX)</option>
+            <option value='es-ES'>Español (ES)</option>
+            <option value='en-US'>English (US)</option>
+          </Select>
+        </Row>
+        <Row label='Moneda'>
+          <Select 
+            value={currency} 
+            onChange={(e) => set({ currency: e.target.value as any })}
+          >
+            <option value='MXN'>MXN</option>
+            <option value='USD'>USD</option>
+            <option value='EUR'>EUR</option>
+          </Select>
+        </Row>
+        <Row label='Formato de fecha'>
+          <Select 
+            value={dateFormat} 
+            onChange={(e) => set({ dateFormat: e.target.value as any })}
+          >
+            <option value='auto'>Automático (regional)</option>
+            <option value='DD/MM/YYYY'>DD/MM/YYYY</option>
+            <option value='MM/DD/YYYY'>MM/DD/YYYY</option>
+            <option value='YYYY-MM-DD'>YYYY-MM-DD</option>
+          </Select>
+        </Row>
+        <Row label='Formato numérico'>
+          <Select defaultValue='1,234.56'>
+            <option>1,234.56</option>
+            <option>1.234,56</option>
+          </Select>
+        </Row>
+      </Card>
+    </div>
+  );
 }
 
-function AccountSection({ register, onLogout, userId, userEmail, userName }: AccountSectionProps) {
-	const { user, checkAuth, setName } = useUserStore();
-	const [form, setForm] = useState({
-		name: user?.nombre ?? userName ?? '',
-		phone: user?.numero_telefono ?? '',
-		newPassword: '',
-	});
-	const [saving, setSaving] = useState(false);
-	const verificationBadges = useMemo(
-		() => {
-			const verifications = user?.verifications ?? {
-				email: (user as any)?.correo_verificado ?? false,
-				sms: (user as any)?.sms_verificado ?? false,
-				credential: (user as any)?.credencial_verificada ?? false,
-			};
-			return (
-				[
-					{ key: 'email', label: 'Correo', value: verifications.email },
-					{ key: 'sms', label: 'SMS', value: verifications.sms },
-					{ key: 'credential', label: 'Credencial', value: verifications.credential },
-				] as const
-			);
-		},
-		[user],
-	);
-
-	useEffect(() => {
-		setForm({
-			name: user?.nombre ?? userName ?? '',
-			phone: user?.numero_telefono ?? '',
-			newPassword: '',
-		});
-	}, [user, userName]);
-
-	const handleChange = useCallback(
-		(field: 'name' | 'phone' | 'newPassword', value: string) => {
-			setForm((prev) => ({ ...prev, [field]: value }));
-		},
-		[],
-	);
-
-	const save = useCallback(async () => {
-		const targetId = user?.id_usuario ?? userId;
-		if (!targetId) {
-			if (typeof window !== 'undefined') window.alert('No hay usuario autenticado.');
-			return;
-		}
-		if (saving) return;
-		setSaving(true);
-		try {
-			const payload: Record<string, unknown> = {
-				name: form.name.trim() || undefined,
-				phoneNumber: form.phone.trim() ? form.phone.trim() : null,
-			};
-			if (form.newPassword.trim()) payload.newPassword = form.newPassword.trim();
-			await api.updateUserProfile(targetId, payload);
-			setName(form.name.trim() || null);
-			await checkAuth();
-			setForm((prev) => ({ ...prev, newPassword: '' }));
-		} catch (error) {
-			console.error('Error actualizando perfil', error);
-			throw error;
-		} finally {
-			setSaving(false);
-		}
-	}, [checkAuth, form, saving, setName, user, userId]);
-
-	const discard = useCallback(() => {
-		setForm({
-			name: user?.nombre ?? userName ?? '',
-			phone: user?.numero_telefono ?? '',
-			newPassword: '',
-		});
-	}, [user, userName]);
-
-	useEffect(() => {
-		const unregister = register({ save, discard });
-		return unregister;
-	}, [register, save, discard]);
-
-	return (
-		<div className="space-y-4">
-			<Card title="Perfil" desc="Actualiza la información que se muestra en el POS.">
-				<div className="space-y-3">
-					<div className="flex flex-wrap gap-2">
-						{verificationBadges.map((badge) => (
-							<span
-								key={badge.key}
-								className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-									badge.value
-										? 'bg-[var(--pos-accent-green)]/15 text-[var(--pos-accent-green)]'
-										: 'bg-[rgba(0,0,0,0.06)] text-[rgba(0,0,0,0.45)]'
-								}`}
-							>
-								{badge.label}: {badge.value ? 'Verificado' : 'Pendiente'}
-							</span>
-						))}
-					</div>
-					<Row label="Nombre">
-						<Input value={form.name} onChange={(event) => handleChange('name', event.target.value)} placeholder="Tu nombre" disabled={saving} />
-					</Row>
-					<Row label="Teléfono">
-						<Input value={form.phone} onChange={(event) => handleChange('phone', event.target.value)} placeholder="55 1234 5678" disabled={saving} />
-					</Row>
-					<Row label="Correo">
-						<Input value={user?.correo_electronico ?? userEmail ?? ''} disabled className="bg-slate-100 cursor-not-allowed" />
-					</Row>
-					<Row label="Nueva contraseña" hint="Deja en blanco para mantener la actual.">
-						<Input value={form.newPassword} onChange={(event) => handleChange('newPassword', event.target.value)} type="password" placeholder="••••••" disabled={saving} />
-					</Row>
-				</div>
-			</Card>
-			<Card title="Sesiones" desc="Cierra la sesión actual en este dispositivo.">
-				<button
-					onClick={onLogout}
-					className="px-3 py-2 text-[13px] rounded-lg font-semibold"
-					style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
-				>
-					Cerrar sesión
-				</button>
-			</Card>
-		</div>
-	);
+function AccountSection({ onLogout }: { onLogout: () => void }) {
+  const confirm = useConfirm();
+  
+  const handleChangePassword = async () => {
+    const ok = await confirm({ 
+      title: 'Cambiar contraseña', 
+      description: 'Se te pedirá la contraseña actual y una nueva.', 
+      confirmText: 'Continuar', 
+      cancelText: 'Cancelar' 
+    });
+    if (!ok) return;
+  };
+  
+  const handleCloseOthers = async () => {
+    const ok = await confirm({ 
+      title: 'Cerrar otras sesiones', 
+      description: 'Se cerrarán todas las sesiones activas excepto esta.', 
+      confirmText: 'Cerrar sesiones', 
+      cancelText: 'Cancelar', 
+      tone: 'danger' 
+    });
+    if (!ok) return;
+  };
+  
+  return (
+    <div className='space-y-4'>
+      <Card title='Seguridad'>
+        <Row label='Email'>
+          <Input placeholder='correo@tu-negocio.com' />
+        </Row>
+        <Row label='Contraseña'>
+          <div className='flex items-center gap-2'>
+            <Input type='password' placeholder='••••••••' />
+            <button 
+              onClick={handleChangePassword} 
+              className='px-3 py-2 text-[13px] rounded-lg' 
+              style={{background:'rgba(0,0,0,0.06)'}}
+            >
+              Cambiar
+            </button>
+          </div>
+        </Row>
+        <Row label='2FA'>
+          <Toggle checked={false} onChange={() => {}} />
+        </Row>
+      </Card>
+      <Card title='Sesiones' desc='Cierra sesión de este u otros dispositivos'>
+        <div className='flex flex-wrap gap-2'>
+          <button 
+            onClick={handleCloseOthers} 
+            className='px-3 py-2 text-[13px] rounded-lg' 
+            style={{background:'rgba(0,0,0,0.06)'}}
+          >
+            Cerrar otras sesiones
+          </button>
+          <button 
+            onClick={onLogout} 
+            className='px-3 py-2 text-[13px] rounded-lg font-semibold' 
+            style={{background:'var(--pos-accent-green)', color:'#fff'}}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
 }
 
-function AboutSection( ) {
+function AboutSection() {
   return (
     <div className='space-y-4'>
       <Card title='Acerca de FilaCero'>
@@ -1001,11 +728,20 @@ function AboutSection( ) {
       </Card>
       <Card title='Términos y Privacidad'>
         <div className='flex gap-2'>
-          <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Términos</button>
-          <button className='px-3 py-2 text-[13px] rounded-lg' style={{background:'rgba(0,0,0,0.06)'}}>Privacidad</button>
+          <button 
+            className='px-3 py-2 text-[13px] rounded-lg' 
+            style={{background:'rgba(0,0,0,0.06)'}}
+          >
+            Términos
+          </button>
+          <button 
+            className='px-3 py-2 text-[13px] rounded-lg' 
+            style={{background:'rgba(0,0,0,0.06)'}}
+          >
+            Privacidad
+          </button>
         </div>
       </Card>
     </div>
   );
 }
-

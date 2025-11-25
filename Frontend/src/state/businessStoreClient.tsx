@@ -44,3 +44,25 @@ export const useBusinessStore = create<BusinessState>()(
     }
   )
 );
+
+// helpers para llamadas externas que esperan funciones
+export const setActiveBusiness = (b: Business | null) => {
+  const s: any = useBusinessStore;
+  if (s && typeof s.getState === "function" && typeof s.getState().setActiveBusiness === "function") {
+    return s.getState().setActiveBusiness(b);
+  }
+  // fallback: intentar llamar hook directamente (menos seguro)
+  try {
+    useBusinessStore.getState().setActiveBusiness(b);
+  } catch (e) {
+    console.warn("setActiveBusiness: no disponible", e);
+  }
+};
+
+export const getActiveBusiness = () => {
+  try {
+    return useBusinessStore.getState().activeBusiness;
+  } catch {
+    return null;
+  }
+};

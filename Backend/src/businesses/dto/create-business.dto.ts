@@ -23,7 +23,12 @@ export class CreateBusinessDto {
   @IsOptional()
   @IsUrl({}, { message: 'El logo debe ser una URL válida' })
   @MaxLength(2048)
-  logo?: string; // Cambiado de logo_url a logo
+  logo?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'El logo debe ser una URL válida' })
+  @MaxLength(2048)
+  logo_url?: string;
 
   @IsOptional()
   @IsUrl({}, { message: 'La imagen principal debe ser una URL válida' })

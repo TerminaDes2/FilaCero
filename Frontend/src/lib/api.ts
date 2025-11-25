@@ -1,4 +1,5 @@
 /* lib/api.ts */
+/* eslint-disable no-console */
 // Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
 // que será proxyada por Next.js según las rewrites del next.config.mjs.
 function resolveApiBase(): string {
@@ -475,7 +476,7 @@ export const api = {
       return apiFetch<any[]>("categories");
     }
     const query = new URLSearchParams({ id_negocio: String(negocioId) }).toString();
-    return apiFetch<any[]>(`categories?${query}`);
+    return apiFetch<any>(`categories?${query}`);
   },
   
   getCategoryById: (id: string) => apiFetch<any>(`categories/${id}`),
@@ -807,6 +808,19 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+  // --- Subida de archivos (imagen/logo) ---
+  uploadFile: async (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    // apiFetch añade el prefijo /api si está implementado así en tu wrapper
+    const res = await apiFetch<{ url: string }>('uploads', {
+      method: 'POST',
+      body: fd,
+    });
+    if (!res) throw new Error('No se recibió respuesta del servidor');
+    if (typeof res === 'string') return res;
+    return (res as any).url ?? (res as any).data?.url ?? null;
+  },
 };
 
 // Helpers para negocio activo en el cliente

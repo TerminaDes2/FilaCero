@@ -1,20 +1,15 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { PosSidebar } from '../../src/components/pos/sidebar';
 import { CartProvider } from '../../src/pos/cartContext';
-// Category tabs removed in favor of a compact filter button
+import { CategoryTabs } from '../../src/components/pos/filters/CategoryTabs';
 import { ViewToggle } from '../../src/components/pos/controls/ViewToggle';
 import { SearchBox } from '../../src/components/pos/controls/SearchBox';
 import { ProductGrid } from '../../src/components/pos/products/ProductGrid';
-import Link from 'next/link';
-import CategoryFilterButton from '../../src/components/pos/controls/CategoryFilterButton';
-import { KitchenBoard } from '../../src/components/pos/kitchen/KitchenBoard';
-import { useKitchenBoard } from '../../src/state/kitchenBoardStore';
-import { usePOSView } from '../../src/state/posViewStore';
 // Categories CRUD lives on its own page
 import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
+import type { POSProduct } from '../../src/pos/cartContext';
 import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import {BrandLogo} from '../../src/components/BrandLogo'
@@ -23,55 +18,47 @@ import { useRouter } from "next/navigation";
 
 // Categories store not needed here
 
+// Mock product dataset (frontend only)
+const MOCK_PRODUCTS: POSProduct[] = [
+  { id: 'p1', name: 'Café Latte', category: 'bebidas', price: 48, stock: 50, description: 'Shot espresso y leche vaporizada' },
+  { id: 'p2', name: 'Café Americano', category: 'bebidas', price: 35, stock: 80, description: 'Espresso diluido' },
+  { id: 'p3', name: 'Sandwich Jamón', category: 'alimentos', price: 65, stock: 25, description: 'Jamón, queso y pan artesanal' },
+  { id: 'p4', name: 'Galleta Chocochips', category: 'postres', price: 28, stock: 60, description: 'Galleta casera con chispas' },
+  { id: 'p5', name: 'Brownie Nuez', category: 'postres', price: 40, stock: 30, description: 'Brownie intenso con nueces' },
+  { id: 'p6', name: 'Té Verde', category: 'bebidas', price: 32, stock: 40, description: 'Infusión suave antioxidante' },
+  { id: 'p7', name: 'Mollete', category: 'alimentos', price: 42, stock: 15, description: 'Pan, frijol, queso gratinado' },
+  { id: 'p8', name: 'Ensalada César', category: 'alimentos', price: 79, stock: 12, description: 'Clásica con aderezo casero' },
+  { id: 'p9', name: 'Pay de Limón', category: 'postres', price: 55, stock: 18, description: 'Cremoso y cítrico' },
+  { id: 'p10', name: 'Capuccino', category: 'bebidas', price: 46, stock: 40, description: 'Espuma sedosa y espresso' }
+];
+
 export default function POSPage() {
   const settings = useSettingsStore();
   const [view, setView] = useState<'grid'|'list'>(settings.defaultView);
   const [search, setSearch] = useState('');
-  const { categories: storeCategories, selected, setSelected } = useCategoriesStore();
-  const fetchCategories = () => useCategoriesStore.getState().fetchCategories();
+  const { categories: storeCategories, selected, setSelected, replaceAll } = useCategoriesStore();
   const categories = useMemo(() => storeCategories.map(c => c.name), [storeCategories]);
-  const posView = usePOSView((state) => state.view);
-  const setPosView = usePOSView((state) => state.setView);
-  const hydrateFromAPI = useKitchenBoard((state) => state.hydrateFromAPI);
-  const { user } = useUserStore();
-  const { activeBusiness, setActiveBusiness } = useBusinessStore();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const viewParam = searchParams?.get('view');
-  const [needBusiness, setNeedBusiness] = useState(false);
-  const [bizList, setBizList] = useState<any[]>([]);
 
-  // Fetch categories (store handles normalization & business scoping)
+  // Fetch categories from backend (DB source of truth) on first load
   useEffect(() => {
-    if (storeCategories.length === 0) {
-      fetchCategories().catch(() => {});
-    }
-  }, [storeCategories.length]);
-
+    if (storeCategories.length > 0) return;
+    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
+    const controller = new AbortController();
+    fetch(`${base}/categories`, { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        // Map API (id_categoria, nombre) -> store shape
+        const items = data.map((it: any) => ({ id: String(it.id_categoria ?? it.id ?? ''), name: String(it.nombre ?? it.name ?? ''), color: 'brand' as const }))
+          .filter((it: any) => it.id && it.name);
+        if (items.length) replaceAll(items);
+      })
+      .catch(() => { /* silent: keep empty -> only 'Todas' tab */ })
+      .finally(() => { /* no-op */ });
+    return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (viewParam === 'kitchen') {
-      setPosView('kitchen');
-      router.replace('/pos', { scroll: false });
-    }
-  }, [viewParam, setPosView, router]);
-
-  useEffect(() => {
-    if (posView === 'kitchen') {
-      void hydrateFromAPI();
-    }
-  }, [posView, hydrateFromAPI, activeBusiness]);
-
-  // Guard: si es admin y no hay negocio activo, redirige a onboarding
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const roleName = (user as any)?.role_name || user?.role?.nombre_rol || '';
-    const idRol = user?.id_rol;
-    const isAdmin = roleName === 'admin' || roleName === 'superadmin' || idRol === 2;
-    if (isAdmin && !activeBusiness) {
-      router.push('/onboarding/negocio');
-    }
-  }, [user, activeBusiness, router]);
+  }, []);
   
   // Keyboard: 'v' toggles view (grid/list) when not typing in input
   useEffect(() => {
@@ -112,44 +99,37 @@ export default function POSPage() {
             
             <TopRightInfo businessName='Punto de Venta' showLogout />
           </div>
-          {/* Dynamic content wrapper */}
-          {posView === 'kitchen' ? (
-            <div className='flex-1 flex flex-col gap-5 overflow-hidden min-h-0 px-5'>
-              <KitchenBoard />
-            </div>
-          ) : (
+          {/* Columns wrapper: products (left) + cart (right) */}
           <div className='flex-1 flex flex-col lg:flex-row gap-5 overflow-hidden min-h-0'>
-              {/* Products section */}
-              <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
-                {/* Category filter moved into header controls */}
-                <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
-                  <header className='space-y-3 mb-3 flex-none'>
-                    <div className='flex flex-col md:flex-row md:items-center gap-3'>
-                      <SearchBox value={search} onChange={setSearch} />
-                      <div className='flex items-center gap-2'>
-                        <CategoryFilterButton
-                          categories={categories}
-                          value={selected}
-                          onChange={setSelected}
-                        />
-                        <ViewToggle value={view} onChange={setView} />
-                      </div>
-                    </div>
-                  </header>
-                  <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
-                    <ProductGrid category={selected} search={search} view={view} />
-                  </div>
-                </section>
+            {/* Products section */}
+            <div className='flex-1 flex flex-col overflow-hidden min-h-0'>
+              {/* Tabs outside panel to simulate panel tabs */}
+              <div className='relative z-20 px-5 -mb-1'>
+                <CategoryTabs categories={categories} value={selected} onChange={setSelected} />
               </div>
-              <section className='w-full lg:w-72 xl:w-80 lg:pl-4 pt-4 lg:pt-0 flex flex-col flex-shrink-0 min-h-0'>
-                <div className='flex-1 rounded-t-2xl px-4 pt-4 pb-2 flex flex-col overflow-hidden w-full max-w-sm mx-auto lg:max-w-none lg:mx-0' style={{background:'var(--pos-summary-bg)', boxShadow:'0 2px 4px rgba(0,0,0,0.06)'}}>
-                  <CartPanel />
+              {/* Panel container under tabs */}
+              <section className='flex flex-col flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-6 pb-4 -mt-1' style={{background:'var(--pos-bg-sand)', boxShadow:'0 2px 4px rgba(0,0,0,0.04) inset 0 0 0 1px var(--pos-border-soft)'}}>
+                <header className='space-y-3 mb-3 flex-none'>
+                  <div className='flex flex-col md:flex-row md:items-center gap-3'>
+                    <SearchBox value={search} onChange={setSearch} />
+                    <div className='flex items-center gap-2'>
+                      <ViewToggle value={view} onChange={setView} />
+                    </div>
+                  </div>
+                  {/* Categories admin is available in /pos/categories */}
+                </header>
+                <div className='flex-1 min-h-0 overflow-y-auto py-4 pr-1 custom-scroll-area'>
+                  <ProductGrid category={selected} search={search} view={view} />
                 </div>
               </section>
+            </div>
+            <section className='w-full lg:w-72 xl:w-80 lg:pl-4 pt-4 lg:pt-0 flex flex-col flex-shrink-0 min-h-0'>
+              <div className='flex-1 rounded-t-2xl px-4 pt-4 pb-2 flex flex-col overflow-hidden w-full max-w-sm mx-auto lg:max-w-none lg:mx-0' style={{background:'var(--pos-summary-bg)', boxShadow:'0 2px 4px rgba(0,0,0,0.06)'}}>
+                <CartPanel />
+              </div>
+            </section>
           </div>
-          )}
         </main>
-        {/* Fin del layout POS */}
       </div>
     </CartProvider>
   );
