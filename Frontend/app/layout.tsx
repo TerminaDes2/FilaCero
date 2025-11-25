@@ -1,8 +1,9 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import React from 'react';
-import { UserProvider } from '../src/state/userStore'; // Ajusta la ruta
+import { UserProvider } from '../src/state/userStore';
 import ClientSettingsApplier from '../src/components/ClientSettingsApplier';
+import LanguageInitializer from '../src/components/LanguageInitializer';
 import { ConfirmProvider } from '../src/components/system/ConfirmProvider';
 
 
@@ -15,9 +16,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-  <body>
+    <html lang="es">
+      <body>
         <UserProvider>
+          <LanguageInitializer />
           <ClientSettingsApplier />
           <ConfirmProvider>
             {children}

@@ -5,6 +5,7 @@ import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
 import { useUserStore } from "../../state/userStore";
 import { useBusinessStore } from '../../state/businessStore';
+import { useTranslation } from '../../hooks/useTranslation';
 // Imports depurados
 
 interface LoginFormProps {
@@ -18,9 +19,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [submitting, setSubmitting] = useState(false);
 	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
 	const [error, setError] = useState<string | null>(null);
-	const router = useRouter();
-	const { setName, setBackendRole, login } = useUserStore();
-	const { setActiveBusiness } = useBusinessStore();
+ 	const router = useRouter();
+ 	const { setName, setBackendRole, login } = useUserStore();
+ 	const { setActiveBusiness } = useBusinessStore();
+	const { t } = useTranslation();
 	// Navegación directa según rol
 
 	const emailValid = /.+@.+\..+/.test(email);
@@ -50,7 +52,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			
 			// 2. Hacer login para obtener el token
 			const res = await api.login(email.trim().toLowerCase(), password);
-			console.log('[LoginForm] Login response received:', { tokenLength: res.token?.length, userEmail: res.user?.correo_electronico });
+			console.log('[LoginForm] Login response received:', { tokenLength: res.token?.length, userEmail: res.user?.email });
 			
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem('auth_token', res.token);
@@ -175,47 +177,47 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					<path strokeLinecap='round' strokeLinejoin='round' d='M8 10V8a4 4 0 0 1 8 0v2' />
 					<path strokeLinecap='round' strokeLinejoin='round' d='M12 14v3' />
 				</svg>
-				<p>
-					Acceso seguro a tu panel. Tus credenciales se envían cifradas. <span className="hidden sm:inline">¿Nuevo aquí? Regístrate desde el enlace inferior.</span>
-				</p>
+					<p>
+						{t('auth.login.hint')} <span className="hidden sm:inline">{t('auth.login.newAccount')} {t('auth.login.createAccount')}</span>
+					</p>
 			</div>
 			
 			{error && (
 				<div className="text-[12px] text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-900/30 border border-rose-200/70 dark:border-rose-800 rounded-md px-3 py-2">
-					{error}
+					{error || t('auth.login.errorGeneric')}
 				</div>
 			)}
 			
 			<FancyInput
-				label="Correo electrónico"
+				label={t('auth.login.emailLabel')}
 				type="email"
 				value={email}
 				onChange={e=>setEmail(e.target.value)}
 				onBlur={()=>setTouched(t=>({...t,email:true}))}
-				error={touched.email && !emailValid ? 'Ingresa un correo válido' : undefined}
+				error={touched.email && !emailValid ? t('auth.login.emailError') : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M4 6l8 6 8-6M4 6v12h16V6' /></svg>}
-				hint={email ? undefined : 'Usa el correo con el que te registraste'}
+				hint={email ? undefined : t('auth.login.emailHint')}
 			/>
 			
 			<FancyInput
-				label="Contraseña"
+				label={t('auth.login.passwordLabel')}
 				type={showPassword ? 'text' : 'password'}
 				value={password}
 				onChange={e=>setPassword(e.target.value)}
 				onBlur={()=>setTouched(t=>({...t,password:true}))}
-				error={touched.password && !passwordValid ? 'Mínimo 6 caracteres' : undefined}
+				error={touched.password && !passwordValid ? t('auth.login.passwordError') : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><rect x='4' y='8' width='16' height='12' rx='2'/><path strokeLinecap='round' strokeLinejoin='round' d='M8 8V6a4 4 0 1 1 8 0v2' /></svg>}
 				isPassword
 				onTogglePassword={()=>setShowPassword(s=>!s)}
-				hint={!password ? 'Tu contraseña segura' : undefined}
+				hint={!password ? t('auth.login.passwordHint') : undefined}
 			/>
 			
 			<div className="flex items-center justify-between text-xs text-gray-600 dark:text-slate-400">
 				<label className="inline-flex items-center gap-2 cursor-pointer select-none">
 					<input type='checkbox' className='appearance-none h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:bg-brand-600 checked:border-brand-600' />
-					<span>Recordarme</span>
+					<span>{t('auth.login.remember')}</span>
 				</label>
-				<button type='button' className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>¿Olvidaste tu contraseña?</button>
+				<button type='button' className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>{t('auth.login.forgot')}</button>
 			</div>
 			
 			<button
@@ -232,18 +234,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 						</svg>
 					</span>
 				)}
-				{submitting ? 'Ingresando...' : 'Entrar'}
+				{submitting ? t('auth.login.submitting') : t('auth.login.submit')}
 			</button>
 
 			<div className="text-center pt-1">
 				<div className="border-t border-gray-200 pt-3">
 					<p className="text-xs text-gray-600">
-						¿Eres nuevo en FilaCero?{' '}
+						{t('auth.login.newAccount')}&nbsp;
 						<a 
 							href="/register"
 							className="text-brand-600 font-medium hover:underline"
 						> 
-							Crea una cuenta
+							{t('auth.login.createAccount')}
 						</a>
 					</p>
 				</div>

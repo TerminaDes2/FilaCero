@@ -1,0 +1,179 @@
+{
+  "navbar": {
+    "home": "Home",
+    "shop": "Shop Now",
+    "features": "Features",
+    "process": "Process",
+    "benefits": "Benefits",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "login": "Sign In",
+    "signup": "Sign Up",
+    "adminPanel": "POS Panel",
+    "language": "Language"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Free version available",
+      "title": "POS platform + QR orders for",
+      "titleHighlight": "school cafeterias",
+      "subtitle": "Reduce lines and serve more orders during breaks. No native apps, no proprietary hardware, ready in minutes.",
+      "ctaPrimary": "Create free account",
+      "ctaSecondary": "Shop now"
+    },
+    "cards": {
+      "card1": { "badge": "Morning break", "title": "Ready orders", "metric": "12" },
+      "card2": { "badge": "Target ≤ 4 min", "title": "Average time", "metric": "3.2 min" },
+      "card3": { "badge": "No fees", "title": "Average ticket", "metric": "$58" },
+      "card4": { "badge": "Recurring QR", "title": "Active users", "metric": "210" }
+    },
+    "features": {
+      "badge": "Features",
+      "title": "Capabilities that accelerate your operation",
+      "subtitle": "Functional blocks ready to scale as your cafeteria grows.",
+      "items": {
+        "sales": {"title": "Fast, simple sales", "desc": "Streamlined interface to charge without bottlenecks."},
+        "tickets": {"title": "Instant tickets", "desc": "Send and print compatible tickets instantly."},
+        "cashout": {"title": "Assisted cash-out", "desc": "Shifts with totals and automatic reconciliations."},
+        "inventory": {"title": "Barcode inventory", "desc": "Add and search products by scanning codes."},
+        "promos": {"title": "Promos and combos", "desc": "Create discounts and rules for peak hours."},
+        "mobile": {"title": "Mobile orders, no lines", "desc": "Order on mobile and pick up without waiting."}
+      }
+    },
+    "process": {
+      "badge": "How it works",
+      "title": "How our FilaCero works",
+      "subtitle": "A simple flow so you can start operating in minutes.",
+      "steps": {
+        "1": {"title": "Scan the QR.", "text": "Customers access the web app by scanning a QR at the cafeteria."},
+        "2": {"title": "Place the order.", "text": "Select products from the digital menu and confirm payment."},
+        "3": {"title": "Team prepares it.", "text": "The order enters the operations panel ready to be produced without extra steps."},
+        "4": {"title": "Pick up without lines.", "text": "Customers receive their order when it shows as ‘Ready’."}
+      }
+    },
+    "benefits": {
+      "badge": "Benefits",
+      "title": "Impact you can expect",
+      "subtitle": "Practical benefits by digitizing orders and your cafeteria operations.",
+      "items": {
+        "1": {"title": "Less time in lines", "text": "Optimized purchase flow for students and staff."},
+        "2": {"title": "Centralized control", "text": "All operations in a single coherent platform."},
+        "3": {"title": "Data-driven decisions", "text": "Clear reports to adjust prices and stock."},
+        "4": {"title": "Scalable", "text": "Start simple and add modules as you grow."},
+        "5": {"title": "Modern experience", "text": "Clean, fast, accessible UI for any user."},
+        "6": {"title": "Future support", "text": "Foundation prepared to integrate payments and more."}
+      }
+    },
+    "pricing": {
+      "badge": "Access",
+      "title": "Everything included at no cost",
+      "subtitle": "Enable FilaCero Free and add optional services as you grow.",
+      "planFree": {
+        "name": "FilaCero Free",
+        "price": "$0",
+        "period": "",
+        "features": {
+          "1": "Unlimited products, sales and inventory",
+          "2": "QR orders and POS without fees",
+          "3": "Real-time operational reports",
+          "4": "Assisted cash register closes",
+          "5": "Unlimited users per cafeteria"
+        },
+        "details": "The entire core of the software is available at no cost for school cafeterias. Just create your account and activate your catalog.",
+        "cta": "Create free account"
+      },
+      "viewIncluded": "See everything included",
+      "activateFree": "Activate FilaCero Free",
+      "optionalServices": {
+        "title": "Optional services",
+        "subtitle": "We are working on add-ons for teams that need payments, advanced analytics or institutional processes.",
+        "extensions": {
+          "payments": {"name": "Card and wallet payments", "status": "Coming soon", "description": "Integrated payments with automatic reconciliation and per-shift assignment."},
+          "school": {"name": "School system integration", "status": "Exploring", "description": "Sync with student credentials and institutional invoicing."},
+          "analytics": {"name": "Advanced analytics", "status": "Private beta", "description": "Demand projections, peak-hour analysis and smart alerts."}
+        },
+        "contact": "Need something specific? Write us at"
+      }
+    },
+    "cta": {
+      "title": "All of FilaCero, free from day one",
+      "subtitle": "Set up your catalog, create users and take orders in minutes. No cards, no fees, no limited versions.",
+      "primary": "Create free account",
+      "secondary": "View demo store"
+    },
+    "testimonials": {
+      "badge": "Testimonials",
+      "title": "What others say",
+      "subtitle": "Teams that already reduced wait times and organized operations.",
+      "items": {
+        "1": {"name": "School Coordinator", "quote": "We reduced waiting times and breaks are now calmer.", "role": "Aurora School"},
+        "2": {"name": "Administrator", "quote": "Inventory control let us avoid losses and plan better.", "role": "Central Institute"},
+        "3": {"name": "Cafeteria Manager", "quote": "The interface is so simple the team adapted in a day.", "role": "Horizon School"}
+      }
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title": "Frequently asked questions",
+      "subtitle": "We answer key questions before you start.",
+      "items": {
+        "1": {"q": "Do I need to install or download an app?", "a": "No. It runs directly in the browser (web app). Customers just scan the QR and start ordering."},
+        "2": {"q": "How long does setup take?", "a": "You can load your base catalog in minutes. From there, manage products, prices and orders from the panel."},
+        "3": {"q": "Does it work on any device?", "a": "Yes. It’s optimized for mobile, tablets and modern desktops without special requirements."},
+        "4": {"q": "Can I migrate to advanced features later?", "a": "Yes. Start free and enable modules like advanced inventory or deeper reports when you need them."}
+      }
+    },
+    "footer": {
+      "about": {
+        "title": "FilaCero",
+        "text": "Platform to manage products, inventory and sales in school cafeterias efficiently."
+      },
+      "product": {
+        "title": "PRODUCT",
+        "features": "Features",
+        "pricing": "Pricing",
+        "process": "How it works"
+      },
+      "resources": {
+        "title": "RESOURCES",
+        "panel": "Panel",
+        "start": "Get started",
+        "testimonials": "Testimonials",
+        "login": "Sign In",
+        "register": "Sign Up"
+      },
+      "legal": {
+        "title": "LEGAL",
+        "terms": "Terms",
+        "privacy": "Privacy",
+        "contact": "Contact"
+      },
+      "support": {
+        "support": "Support",
+        "status": "Status",
+        "roadmap": "Roadmap"
+      },
+      "copyright": "All rights reserved."
+    }
+  }
+  ,
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "subtitle": "Access your FilaCero account",
+      "hint": "Secure access to your panel. Your credentials are sent encrypted.",
+      "emailLabel": "Email",
+      "emailHint": "Use the email you registered with",
+      "emailError": "Enter a valid email",
+      "passwordLabel": "Password",
+      "passwordHint": "Your secure password",
+      "passwordError": "Minimum 6 characters",
+      "remember": "Remember me",
+      "forgot": "Forgot your password?",
+      "submitting": "Signing in...",
+      "submit": "Sign in",
+      "newAccount": "New to FilaCero?",
+      "createAccount": "Create an account",
+      "errorGeneric": "Error signing in"
+    }
+  }
+}

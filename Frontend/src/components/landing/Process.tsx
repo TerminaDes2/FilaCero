@@ -1,4 +1,6 @@
+"use client";
 import { SectionHeading } from "../../components/SectionHeading";
+import { useTranslation } from "../../hooks/useTranslation";
 type Step = {
   number: number;
   title: string;
@@ -13,41 +15,42 @@ type Step = {
 const steps: Step[] = [
   {
     number: 1,
-    title: "Escanea el QR.",
-    text: "El cliente accede a la app web escaneando un QR en la cafetería.",
+    title: "landing.process.steps.1.title",
+    text: "landing.process.steps.1.text",
     colors: { primary: "#895814", dark: "#382000", light: "#FCE8B7" },
   },
   {
     number: 2,
-    title: "Realiza el pedido.",
-    text: "Selecciona productos del menú digital y confirma el pago.",
+    title: "landing.process.steps.2.title",
+    text: "landing.process.steps.2.text",
     colors: { primary: "#891414", dark: "#2F0000", light: "#FCB7B7" },
   },
   {
     number: 3,
-    title: "Equipo lo prepara.",
-    text: "El pedido entra al panel operativo listo para producirse sin pasos extra.",
+    title: "landing.process.steps.3.title",
+    text: "landing.process.steps.3.text",
     colors: { primary: "#148987", dark: "#002E2F", light: "#B7FCFB" },
   },
   {
     number: 4,
-    title: "Recoge sin filas.",
-    text: "El cliente recibe su pedido cuando aparece como “Listo”.",
+    title: "landing.process.steps.4.title",
+    text: "landing.process.steps.4.text",
     colors: { primary: "#318914", dark: "#002F02", light: "#E2FCB7" },
   },
 ];
 
 export function Process() {
+  const { t } = useTranslation();
   return (
     <section id="process" className="relative py-24 bg-gradient-to-b from-white via-brand-50/30 to-white">
       <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.08) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           align="center"
-          badge="¿Cómo funciona?"
+          badge={t("landing.process.badge")}
           badgeTone="sun"
-          title={<span>Cómo funciona nuestra <span className="text-gradient">FilaCero</span></span> as any}
-          subtitle="Un flujo sencillo para que empieces a operar en minutos." />
+          title={t("landing.process.title")}
+          subtitle={t("landing.process.subtitle")} />
         <ol className="flex gap-5 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-8 md:overflow-visible snap-x snap-mandatory" aria-label="Pasos del flujo">
           {steps.map(s => (
             <li
@@ -101,8 +104,8 @@ export function Process() {
                     )}
                   </div>
                 </div>
-                <h3 className="font-semibold mb-2" style={{ color: s.colors.dark }}>{s.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: s.colors.dark + 'CC' }}>{s.text}</p>
+                <h3 className="font-semibold mb-2" style={{ color: s.colors.dark }}>{t(s.title)}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: s.colors.dark + 'CC' }}>{t(s.text)}</p>
               </div>
             </li>
           ))}

@@ -1,0 +1,179 @@
+{
+  "navbar": {
+    "home": "Inicio",
+    "shop": "Compra ya",
+    "features": "Características",
+    "process": "Flujo",
+    "benefits": "Beneficios",
+    "pricing": "Precios",
+    "contact": "Contacto",
+    "login": "Iniciar sesión",
+    "signup": "Crear cuenta",
+    "adminPanel": "Panel POS",
+    "language": "Idioma"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Versión libre disponible",
+      "title": "Plataforma POS + pedidos QR para",
+      "titleHighlight": "cafeterías escolares",
+      "subtitle": "Reduce filas y atiende más pedidos en cada receso. Sin apps nativas, sin hardware propietario, listo en minutos.",
+      "ctaPrimary": "Crear cuenta gratis",
+      "ctaSecondary": "Compra ahora"
+    },
+    "cards": {
+      "card1": { "badge": "Recreo matutino", "title": "Pedidos listos", "metric": "12" },
+      "card2": { "badge": "Objetivo ≤ 4 min", "title": "Tiempo promedio", "metric": "3.2 min" },
+      "card3": { "badge": "Sin comisiones", "title": "Ticket promedio", "metric": "$58" },
+      "card4": { "badge": "QR recurrentes", "title": "Usuarios activos", "metric": "210" }
+    },
+    "features": {
+      "badge": "Características",
+      "title": "Capacidades que aceleran tu operación",
+      "subtitle": "Bloques funcionales listos para escalar cuando tu cafetería crece.",
+      "items": {
+        "sales": {"title": "Ventas rápidas y simples", "desc": "Interfaz ágil para cobrar sin cuellos de botella."},
+        "tickets": {"title": "Tickets inmediatos", "desc": "Envía e imprime tickets compatibles al instante."},
+        "cashout": {"title": "Cierre de caja asistido", "desc": "Turnos con totales y arqueos automáticos."},
+        "inventory": {"title": "Inventario con códigos", "desc": "Agrega y busca productos escaneando códigos."},
+        "promos": {"title": "Promos y combos", "desc": "Crea descuentos y reglas por horarios pico."},
+        "mobile": {"title": "Pedidos móviles sin filas", "desc": "Ordena desde el móvil y recoge sin esperar."}
+      }
+    },
+    "process": {
+      "badge": "¿Cómo funciona?",
+      "title": "Cómo funciona nuestra FilaCero",
+      "subtitle": "Un flujo sencillo para que empieces a operar en minutos.",
+      "steps": {
+        "1": {"title": "Escanea el QR.", "text": "El cliente accede a la app web escaneando un QR en la cafetería."},
+        "2": {"title": "Realiza el pedido.", "text": "Selecciona productos del menú digital y confirma el pago."},
+        "3": {"title": "Equipo lo prepara.", "text": "El pedido entra al panel operativo listo para producirse sin pasos extra."},
+        "4": {"title": "Recoge sin filas.", "text": "El cliente recibe su pedido cuando aparece como ‘Listo’."}
+      }
+    },
+    "benefits": {
+      "badge": "Beneficios",
+      "title": "Impacto que puedes esperar",
+      "subtitle": "Beneficios prácticos al digitalizar pedidos y la operación de tu cafetería.",
+      "items": {
+        "1": {"title": "Menos tiempo en filas", "text": "Optimización del flujo de compra para estudiantes y personal."},
+        "2": {"title": "Control centralizado", "text": "Toda la operación en una única plataforma coherente."},
+        "3": {"title": "Decisiones con datos", "text": "Reportes claros para ajustar precios y stock."},
+        "4": {"title": "Escalable", "text": "Empieza simple y agrega módulos con el crecimiento."},
+        "5": {"title": "Experiencia moderna", "text": "UI limpia, rápida y accesible para cualquier usuario."},
+        "6": {"title": "Soporte futuro", "text": "Base preparada para integrar pagos y más."}
+      }
+    },
+    "pricing": {
+      "badge": "Acceso",
+      "title": "Todo incluido sin costo",
+      "subtitle": "Activa FilaCero Libre y agrega servicios opcionales a medida que creces.",
+      "planFree": {
+        "name": "FilaCero Libre",
+        "price": "$0",
+        "period": "",
+        "features": {
+          "1": "Productos, ventas e inventario ilimitados",
+          "2": "Pedidos QR y POS sin comisiones",
+          "3": "Reportes operativos en tiempo real",
+          "4": "Cortes de caja asistidos",
+          "5": "Usuarios ilimitados por cafetería"
+        },
+        "details": "Todo el núcleo del software está disponible sin costo para cafeterías y comedores escolares. Solo necesitas crear tu cuenta y activar tu catálogo.",
+        "cta": "Crear cuenta gratuita"
+      },
+      "viewIncluded": "Ver todo lo incluido",
+      "activateFree": "Activar FilaCero Libre",
+      "optionalServices": {
+        "title": "Servicios opcionales",
+        "subtitle": "Estamos trabajando en complementos para equipos que necesitan integrar pagos, analytics avanzadas o procesos institucionales.",
+        "extensions": {
+          "payments": {"name": "Pagos con tarjeta y wallet", "status": "Próximamente", "description": "Cobros integrados con conciliación automática y asignación por turno."},
+          "school": {"name": "Integración con sistemas escolares", "status": "En exploración", "description": "Sincronización con credenciales estudiantiles y facturación institucional."},
+          "analytics": {"name": "Analítica avanzada", "status": "Beta privada", "description": "Proyecciones de demanda, análisis de horarios pico y alertas inteligentes."}
+        },
+        "contact": "¿Necesitas algo específico? Escríbenos a"
+      }
+    },
+    "cta": {
+      "title": "Todo FilaCero, gratis desde el día uno",
+      "subtitle": "Configura tu catálogo, crea usuarios y toma pedidos en minutos. Sin tarjetas, sin comisiones ni versiones limitadas.",
+      "primary": "Crear cuenta gratis",
+      "secondary": "Ver tienda demo"
+    },
+    "testimonials": {
+      "badge": "Testimonios",
+      "title": "Lo que dicen otros",
+      "subtitle": "Equipos que ya redujeron esperas y organizaron su operación.",
+      "items": {
+        "1": {"name": "Coordinadora Escolar", "quote": "Reducimos el tiempo de espera y ahora los recreos son más tranquilos.", "role": "Colegio Aurora"},
+        "2": {"name": "Administrador", "quote": "El control de inventario nos permitió evitar pérdidas y planificar mejor.", "role": "Instituto Central"},
+        "3": {"name": "Encargada Cafetería", "quote": "La interfaz es tan simple que el equipo se adaptó en un día.", "role": "Escuela Horizonte"}
+      }
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title": "Preguntas frecuentes",
+      "subtitle": "Resolvemos dudas clave antes de que empieces.",
+      "items": {
+        "1": {"q": "¿Necesito instalar algo o descargar una app?", "a": "No. Funciona directamente en el navegador (web app). Tus clientes solo escanean el QR y empiezan a pedir."},
+        "2": {"q": "¿Cuánto tardo en configurarlo?", "a": "En minutos puedes cargar tu catálogo base. A partir de ahí gestionas productos, precios y pedidos desde el panel."},
+        "3": {"q": "¿Funciona en cualquier dispositivo?", "a": "Sí. Está optimizado para móviles, tablets y desktops modernos sin requisitos especiales."},
+        "4": {"q": "¿Puedo migrar a funciones avanzadas luego?", "a": "Sí. Empiezas gratis y habilitas módulos como inventario avanzado o reportes profundos cuando los necesites."}
+      }
+    },
+    "footer": {
+      "about": {
+        "title": "FilaCero",
+        "text": "Plataforma para administrar productos, inventario y ventas en cafeterías escolares de forma ágil."
+      },
+      "product": {
+        "title": "PRODUCTO",
+        "features": "Características",
+        "pricing": "Precios",
+        "process": "Cómo funciona"
+      },
+      "resources": {
+        "title": "RECURSOS",
+        "panel": "Panel",
+        "start": "Empezar",
+        "testimonials": "Testimonios",
+        "login": "Iniciar sesión",
+        "register": "Crear cuenta"
+      },
+      "legal": {
+        "title": "LEGAL",
+        "terms": "Términos",
+        "privacy": "Privacidad",
+        "contact": "Contacto"
+      },
+      "support": {
+        "support": "Soporte",
+        "status": "Estado",
+        "roadmap": "Roadmap"
+      },
+      "copyright": "Todos los derechos reservados."
+    }
+  }
+  ,
+  "auth": {
+    "login": {
+      "title": "Inicia sesión en tu cuenta",
+      "subtitle": "Accede a tu cuenta de FilaCero",
+      "hint": "Acceso seguro a tu panel. Tus credenciales se envían cifradas.",
+      "emailLabel": "Correo electrónico",
+      "emailHint": "Usa el correo con el que te registraste",
+      "emailError": "Ingresa un correo válido",
+      "passwordLabel": "Contraseña",
+      "passwordHint": "Tu contraseña segura",
+      "passwordError": "Mínimo 6 caracteres",
+      "remember": "Recordarme",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "submitting": "Ingresando...",
+      "submit": "Entrar",
+      "newAccount": "¿Eres nuevo en FilaCero?",
+      "createAccount": "Crea una cuenta",
+      "errorGeneric": "Error al iniciar sesión"
+    }
+  }
+}

@@ -169,7 +169,7 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
           style={{ background: isActive ? 'var(--fc-brand-600)' : '#999' }}
         >
           {employee.usuario.avatar_url ? (
-            <img src={user.avatar_url} alt={user.nombre} className='w-full h-full rounded-full object-cover' />
+            <img src={employee.usuario.avatar_url} alt={employee.usuario.nombre} className='w-full h-full rounded-full object-cover' />
           ) : (
             initials
           )}

@@ -1,5 +1,7 @@
+"use client";
 import { Reveal } from "../../components/Reveal";
 import { SectionHeading } from "../../components/SectionHeading";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface Feature {
   title: string;
@@ -19,10 +21,9 @@ const iconProps = {
 };
 
 // Uso: colores unificados (brand / teal / sun) para mayor coherencia.
-const features: Feature[] = [
+const featuresData = [
   {
-    title: "Ventas rápidas y simples",
-    description: "Interfaz ágil para cobrar sin cuellos de botella.",
+    key: "sales",
     icon: (
       <svg {...iconProps} aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -31,8 +32,7 @@ const features: Feature[] = [
     accent: 'var(--brand-accent, #e94a6f)'
   },
   {
-    title: "Tickets inmediatos",
-    description: "Envía e imprime tickets compatibles al instante.",
+    key: "tickets",
     icon: (
       <svg {...iconProps} aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 7V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3" />
@@ -43,8 +43,7 @@ const features: Feature[] = [
     accent: 'var(--brand-teal, #4cc1ad)'
   },
   {
-    title: "Cierre de caja asistido",
-    description: "Turnos con totales y arqueos automáticos.",
+    key: "cashout",
     icon: (
       <svg {...iconProps} aria-hidden="true">
         <rect x="3" y="7" width="18" height="10" rx="2" />
@@ -55,8 +54,7 @@ const features: Feature[] = [
     accent: 'var(--brand-sun, #e2a81b)'
   },
   {
-    title: "Inventario con códigos",
-    description: "Agrega y busca productos escaneando códigos.",
+    key: "inventory",
     icon: (
       <svg {...iconProps} aria-hidden="true">
         <path d="M4 6v12M7 6v12M10 6v12M12 6v12M15 6v12M18 6v12" />
@@ -64,8 +62,7 @@ const features: Feature[] = [
     )
   },
   {
-    title: "Promos y combos",
-    description: "Crea descuentos y reglas por horarios pico.",
+    key: "promos",
     icon: (
       <svg {...iconProps} aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 7l10 10" />
@@ -75,8 +72,7 @@ const features: Feature[] = [
     )
   },
   {
-    title: "Pedidos móviles sin filas",
-    description: "Ordena desde el móvil y recoge sin esperar.",
+    key: "mobile",
     icon: (
       <svg {...iconProps} aria-hidden="true">
         <rect x="7" y="2" width="10" height="20" rx="2" />
@@ -87,6 +83,7 @@ const features: Feature[] = [
 ];
 
 export function Features() {
+  const { t } = useTranslation();
   return (
   <section id="features" className="py-28 relative overflow-hidden bg-white" aria-labelledby="features-heading">
       {/* Colored radial accents */}
@@ -97,15 +94,15 @@ export function Features() {
         <SectionHeading
           id="features-heading"
           align="center"
-          badge="Características"
+          badge={t("landing.features.badge")}
           badgeTone="brand"
-          title="Capacidades que aceleran tu operación"
-          subtitle="Bloques funcionales listos para escalar cuando tu cafetería crece." />
+          title={t("landing.features.title")}
+          subtitle={t("landing.features.subtitle")} />
         <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f,i) => {
+          {featuresData.map((f,i) => {
             const accent = f.accent || 'var(--brand-accent, #e94a6f)';
             return (
-              <Reveal delay={70*i} key={f.title} className="relative group">
+              <Reveal delay={70*i} key={f.key} className="relative group">
                 <div
                   className="relative h-full p-5 sm:p-6 rounded-2xl bg-white/85 backdrop-blur-xl overflow-hidden shadow-sm ring-1 ring-gray-200/60 hover:shadow-md transition">
                   <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
@@ -115,8 +112,8 @@ export function Features() {
                       {f.icon}
                     </div>
                   </div>
-                  <h3 className="text-base font-semibold mb-1.5 text-gray-800 tracking-tight">{f.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{f.description}</p>
+                  <h3 className="text-base font-semibold mb-1.5 text-gray-800 tracking-tight">{t(`landing.features.items.${f.key}.title`)}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{t(`landing.features.items.${f.key}.desc`)}</p>
                 </div>
               </Reveal>
             );
