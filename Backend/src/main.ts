@@ -11,6 +11,7 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
+  
   app.enableCors();
   app.useGlobalInterceptors(new BigIntSerializerInterceptor());
   await app.listen(process.env.PORT || 3000);

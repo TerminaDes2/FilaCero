@@ -85,31 +85,43 @@ export default function POSSettingsPage() {
     if (!ok) return;
     // TODO: cuando haya estado local editable, revertirlo aquí
   };
+// En el componente principal POSSettingsPage, actualiza handleSave:
 
-  const handleSave = async () => {
-    const ok = await confirm({
-      title: 'Guardar cambios',
-      description: 'Aplicar los cambios de configuración en este dispositivo.',
-      confirmText: 'Guardar',
-      cancelText: 'Cancelar'
-    });
-    if (!ok) return;
+const handleSave = async () => {
+  const ok = await confirm({
+    title: 'Guardar cambios',
+    description: 'Aplicar los cambios de configuración en este dispositivo.',
+    confirmText: 'Guardar',
+    cancelText: 'Cancelar'
+  });
+  if (!ok) return;
 
-    try {
-      // Persiste el negocio si la sección activa es 'business'
-      if (active === 'business') {
-        await saveBusiness();
-        // recargar desde backend para asegurar consistencia
-        await loadBusinessForCurrentUser();
-      }
-      // TODO: persistir otros ajustes si aplica
-      // feedback mínimo
-      alert('Cambios guardados');
-    } catch (err) {
-      console.error(err);
-      alert('Error al guardar los cambios. Revisa la consola.');
+  try {
+    // Persiste el negocio si la sección activa es 'business'
+    if (active === 'business') {
+      await saveBusiness();
+      // recargar desde backend para asegurar consistencia
+      await loadBusinessForCurrentUser();
     }
-  };
+    // Mostrar notificación de éxito
+    await confirm({
+      title: 'Cambios guardados',
+      description: 'La configuración se ha actualizado correctamente.',
+      confirmText: 'Aceptar',
+      cancelText: null,
+      tone: 'success'
+    });
+  } catch (err) {
+    console.error(err);
+    await confirm({
+      title: 'Error al guardar',
+      description: 'Ha ocurrido un error al guardar los cambios.',
+      confirmText: 'Aceptar',
+      cancelText: null,
+      tone: 'danger'
+    });
+  }
+};
   
   return (
     <div className='h-screen flex pos-pattern overflow-hidden'>
@@ -289,15 +301,16 @@ const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean)=>void }> = ({ 
     <span className={`inline-block w-5 h-5 transform bg-white rounded-full transition ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
   </button>
 );
-
 function BusinessSection() {
   const { business, setBusiness, loadBusinessForCurrentUser, saveBusiness } = useBusinessStore();
   const { loading, user } = useUserStore();
+  const confirm = useConfirm();
 
   const [isEditing, setIsEditing] = useState(false);
   const [local, setLocal] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const fileInputId = 'logo-upload-input';
 
@@ -305,7 +318,10 @@ function BusinessSection() {
     if (!loading && user) loadBusinessForCurrentUser();
   }, [loading, user, loadBusinessForCurrentUser]);
 
-  useEffect(() => setLocal(business ? { ...business } : null), [business]);
+  useEffect(() => {
+    setLocal(business ? { ...business } : null);
+    setLogoError(false);
+  }, [business]);
 
   if (!business) return (
     <Card title="Negocio" desc="Cargando datos del negocio...">
@@ -314,14 +330,18 @@ function BusinessSection() {
   );
 
   const handleStartEdit = () => setIsEditing(true);
-  const handleCancel = () => { setLocal(business ? { ...business } : null); setIsEditing(false); };
+  const handleCancel = () => { 
+    setLocal(business ? { ...business } : null); 
+    setIsEditing(false);
+    setLogoError(false);
+  };
 
   const uploadFile = async (file: File): Promise<string> => {
     setUploading(true);
+    setLogoError(false);
     try {
       const result = await api.uploadFile(file);
       if (!result) throw new Error('No se recibió URL desde el upload');
-      // result puede ser { url: string } o directamente string
       const url = typeof result === 'string' ? result : result;
       if (!url || typeof url !== 'string') {
         throw new Error('URL de respuesta inválida');
@@ -335,22 +355,50 @@ function BusinessSection() {
     }
   };
 
+  const showNotification = async (title: string, description: string, tone: 'success' | 'danger' = 'success') => {
+    await confirm({
+      title,
+      description,
+      confirmText: 'Aceptar',
+      cancelText: null,
+      tone
+    });
+  };
+
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona un archivo de imagen');
-      return;
-    }
-    
-    try {
-      const url = await uploadFile(file);
-      setLocal((prev: any) => ({ ...prev, logo_url: url }));
-    } catch (err: any) {
-      console.error('Error subiendo logo:', err);
-      alert('Error subiendo la imagen: ' + (err?.message ?? String(err)));
-    }
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    await showNotification('Tipo inválido', 'Debe ser una imagen', 'danger');
+    return;
+  }
+
+  try {
+    const uploadedUrl = await uploadFile(file);
+
+    const fullUrl = uploadedUrl.startsWith('http')
+      ? uploadedUrl
+      : `${window.location.origin}${uploadedUrl}`;
+
+    setLocal(prev => ({ ...prev, logo_url: fullUrl }));
+    setLogoError(false);
+
+    await showNotification('Logo actualizado', 'La imagen se cargó correctamente');
+  } catch (err) {
+    console.error('Error subiendo logo:', err);
+    await showNotification('Error al subir', err?.message ?? '', 'danger');
+  }
+};
+
+
+  const handleRemoveLogo = () => {
+    setLocal((prev: any) => ({ ...prev, logo_url: null }));
+    setLogoError(false);
+  };
+
+  const handleImageError = () => {
+    setLogoError(true);
   };
 
   const handleSaveLocal = async () => {
@@ -361,60 +409,210 @@ function BusinessSection() {
       await saveBusiness();
       await loadBusinessForCurrentUser();
       setIsEditing(false);
-      alert('Datos guardados');
+      await showNotification(
+        'Cambios guardados',
+        'Los datos del negocio se han actualizado correctamente'
+      );
     } catch (err) {
       console.error('Error guardando negocio:', err);
-      alert('Error al guardar. Revisa la consola.');
+      await showNotification(
+        'Error al guardar',
+        'Ha ocurrido un error al guardar los cambios',
+        'danger'
+      );
     } finally {
       setSaving(false);
     }
   };
+
+  // Determinar qué logo mostrar
+  const currentLogoUrl = isEditing ? local?.logo_url : business.logo_url;
+  const showLogoPlaceholder = !currentLogoUrl || logoError;
 
   return (
     <div className="space-y-4">
       <Card title="Identidad del negocio" desc="Editar los datos que verán los clientes"
         right={isEditing ? (
           <div className="flex gap-2">
-            <button onClick={handleCancel} className="text-[12px] px-3 py-1.5 rounded-md" style={{background:"rgba(0,0,0,0.06)"}} disabled={saving || uploading}>Cancelar</button>
-            <button onClick={handleSaveLocal} className="text-[12px] px-3 py-1.5 rounded-md font-semibold" style={{background:"var(--pos-accent-green)", color:"#fff"}} disabled={saving || uploading}>{saving ? 'Guardando...' : 'Guardar'}</button>
+            <button 
+              onClick={handleCancel} 
+              className="text-[12px] px-3 py-1.5 rounded-md" 
+              style={{background:"rgba(0,0,0,0.06)"}} 
+              disabled={saving || uploading}
+            >
+              Cancelar
+            </button>
+            <button 
+              onClick={handleSaveLocal} 
+              className="text-[12px] px-3 py-1.5 rounded-md font-semibold" 
+              style={{background:"var(--pos-accent-green)", color:"#fff"}} 
+              disabled={saving || uploading}
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
           </div>
         ) : (
-          <button className="text-[12px] px-3 py-1.5 rounded-md" style={{background:"rgba(0,0,0,0.06)"}} onClick={handleStartEdit}>Editar</button>
+          <button 
+            className="text-[12px] px-3 py-1.5 rounded-md" 
+            style={{background:"rgba(0,0,0,0.06)"}} 
+            onClick={handleStartEdit}
+          >
+            Editar
+          </button>
         )}
       >
         {/* Nombre */}
         <Row label="Nombre">
-          {isEditing ? <Input value={local?.nombre ?? ""} onChange={e => setLocal({...local, nombre: e.target.value})} placeholder="Ej. Cafetería FilaCero" />
-                     : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.nombre || <span className="opacity-60">— vacío —</span>}</div>}
+          {isEditing ? (
+            <Input 
+              value={local?.nombre ?? ""} 
+              onChange={e => setLocal({...local, nombre: e.target.value})} 
+              placeholder="Ej. Cafetería FilaCero" 
+            />
+          ) : (
+            <div className="rounded-lg px-3 py-2 text-[13px] min-h-[40px] flex items-center">
+              {business.nombre || <span className="opacity-60">— vacío —</span>}
+            </div>
+          )}
         </Row>
 
         {/* Logo */}
         <Row label="Logo">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-20 h-20 rounded-lg bg-white/60 overflow-hidden flex items-center justify-center" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
-                {(isEditing ? local?.logo_url : business.logo_url) ? <img src={isEditing ? local?.logo_url : business.logo_url} alt="logo" className="w-full h-full object-cover" /> : <div className="text-[12px] opacity-70">Sin logo</div>}
+          <div className="space-y-3">
+            <div className="flex items-start gap-4">
+              {/* Contenedor del logo */}
+              <div className="flex-shrink-0">
+                <div 
+                  className="w-20 h-20 rounded-lg bg-white/80 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm"
+                >
+                  {showLogoPlaceholder ? (
+                    <div className="flex flex-col items-center justify-center text-center p-2">
+                      <svg 
+                        className="w-6 h-6 opacity-40 mb-1" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-[10px] opacity-60 leading-tight">Sin logo</span>
+                    </div>
+                  ) : (
+                    <img 
+                      src={currentLogoUrl} 
+                      alt="Logo del negocio" 
+                      className="w-full h-full object-cover"
+                      onError={handleImageError}
+                    />
+                  )}
+                </div>
+                {isEditing && currentLogoUrl && !logoError && (
+                  <div className="mt-1 text-[10px] text-center opacity-70">
+                    Vista previa
+                  </div>
+                )}
               </div>
+
+              {/* Controles del logo */}
               {isEditing && (
-                <div className="flex flex-col gap-2">
-                  <input id={fileInputId} type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
-                  <label htmlFor={fileInputId} className="px-3 py-2 rounded-md text-[13px]" style={{ background: 'rgba(0,0,0,0.06)', cursor: 'pointer' }}>{uploading ? 'Subiendo...' : 'Subir imagen'}</label>
-                  <button onClick={() => setLocal((prev:any) => ({ ...prev, logo_url: null }))} className="px-3 py-2 rounded-md text-[13px]" style={{ background: 'rgba(0,0,0,0.06)' }}>Eliminar</button>
+                <div className="flex flex-col gap-2 flex-1">
+                  <div className="space-y-2">
+                    <input 
+                      id={fileInputId} 
+                      type="file" 
+                      accept="uploads/*" 
+                      onChange={handleLogoChange} 
+                      className="hidden" 
+                      disabled={uploading}
+                    />
+                    <label 
+                      htmlFor={fileInputId} 
+                      className={`px-3 py-2 rounded-md text-[13px] text-center block ${
+                        uploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:opacity-90'
+                      }`}
+                      style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
+                    >
+                      {uploading ? '📤 Subiendo...' : '📷 Subir imagen'}
+                    </label>
+                    
+                    {currentLogoUrl && !logoError && (
+                      <button 
+                        onClick={handleRemoveLogo} 
+                        className="px-3 py-2 rounded-md text-[13px] text-center w-full hover:opacity-80 transition-opacity"
+                        style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
+                        disabled={uploading}
+                      >
+                        🗑️ Eliminar logo
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="text-[11px] opacity-60 space-y-1">
+                    <p>• Formatos: JPEG, PNG, WebP</p>
+                    <p>• Tamaño máximo: 5MB</p>
+                    <p>• Recomendado: 1:1 (cuadrado)</p>
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* Estado del logo actual (solo en modo visualización) */}
+            {!isEditing && business.logo_url && !logoError && (
+              <div className="text-[11px] opacity-70">
+                Logo actualmente configurado
+              </div>
+            )}
           </div>
         </Row>
 
-        {/* Dirección, Teléfono, Correo (idéntico comportamiento) */}
-        <Row label="Dirección">{isEditing ? <Input value={local?.direccion ?? ""} onChange={e=> setLocal({...local, direccion: e.target.value})} placeholder="Calle, número, colonia" /> : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.direccion || <span className="opacity-60">— vacío —</span>}</div>}</Row>
-        <Row label="Teléfono">{isEditing ? <Input value={local?.telefono ?? ""} onChange={e=> setLocal({...local, telefono: e.target.value})} placeholder="Ej. +52 1111 2222" /> : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.telefono || <span className="opacity-60">— vacío —</span>}</div>}</Row>
-        <Row label="Correo">{isEditing ? <Input value={local?.correo ?? ""} onChange={e=> setLocal({...local, correo: e.target.value})} placeholder="contacto@tudominio.com" /> : <div className="rounded-lg px-3 py-2 text-[13px]" style={{background:'transparent', minHeight:'40px'}}>{business.correo || <span className="opacity-60">— vacío —</span>}</div>}</Row>
+        {/* Dirección */}
+        <Row label="Dirección">
+          {isEditing ? (
+            <Input 
+              value={local?.direccion ?? ""} 
+              onChange={e => setLocal({...local, direccion: e.target.value})} 
+              placeholder="Calle, número, colonia" 
+            />
+          ) : (
+            <div className="rounded-lg px-3 py-2 text-[13px] min-h-[40px] flex items-center">
+              {business.direccion || <span className="opacity-60">— vacío —</span>}
+            </div>
+          )}
+        </Row>
+
+        {/* Teléfono */}
+        <Row label="Teléfono">
+          {isEditing ? (
+            <Input 
+              value={local?.telefono ?? ""} 
+              onChange={e => setLocal({...local, telefono: e.target.value})} 
+              placeholder="Ej. +52 1111 2222" 
+            />
+          ) : (
+            <div className="rounded-lg px-3 py-2 text-[13px] min-h-[40px] flex items-center">
+              {business.telefono || <span className="opacity-60">— vacío —</span>}
+            </div>
+          )}
+        </Row>
+
+        {/* Correo */}
+        <Row label="Correo">
+          {isEditing ? (
+            <Input 
+              value={local?.correo ?? ""} 
+              onChange={e => setLocal({...local, correo: e.target.value})} 
+              placeholder="contacto@tudominio.com" 
+            />
+          ) : (
+            <div className="rounded-lg px-3 py-2 text-[13px] min-h-[40px] flex items-center">
+              {business.correo || <span className="opacity-60">— vacío —</span>}
+            </div>
+          )}
+        </Row>
       </Card>
     </div>
   );
 }
-
 function AppearanceSection() {
   const { density, accentTeal, set } = useSettingsStore();
   return (

@@ -19,7 +19,7 @@ import { EmailModule } from './email/email.module';
 import { MetricsModule } from './metrics/metrics.module'; // <-- 1. Importa el módulo
 import { SmsModule } from './sms/sms.module';
 import { PaymentsModule } from './payments/payments.module';
-
+import { UploadsModule } from './uploads/uploads.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -39,6 +39,7 @@ import { PaymentsModule } from './payments/payments.module';
     MetricsModule, // <-- 2. Añádelo a la lista
     SmsModule, // módulo de SMS (Twilio Verify)
     PaymentsModule, // módulo de pagos (Stripe)
+    UploadsModule, //Módulo de subida de imagenes
   ],
   controllers: [HealthController],
   providers: [],

@@ -808,21 +808,45 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
-  // --- Subida de archivos (imagen/logo) ---
-  uploadFile: async (file: File) => {
-    const fd = new FormData();
-    fd.append('file', file);
-    // apiFetch añade el prefijo /api si está implementado así en tu wrapper
-    const res = await apiFetch<{ url: string }>('uploads', {
-      method: 'POST',
+// --- Subida de archivos (imagen/logo) ---
+uploadFile: async (file: File) => {
+  console.log("📤 [uploadFile] iniciando subida...");
+
+  const fd = new FormData();
+  fd.append("file", file);
+
+  console.log("📤 [uploadFile] Enviando a endpoint:", "uploads");
+  console.log("📤 [uploadFile] Nombre del archivo:", file.name);
+  console.log("📤 [uploadFile] Tipo:", file.type);
+  console.log("📤 [uploadFile] Tamaño:", file.size, "bytes");
+
+  try {
+    const res = await apiFetch<{ url: string }>("uploads", {
+      method: "POST",
       body: fd,
     });
-    if (!res) throw new Error('No se recibió respuesta del servidor');
-    if (typeof res === 'string') return res;
-    return (res as any).url ?? (res as any).data?.url ?? null;
-  },
-};
 
+    console.log("📥 [uploadFile] Respuesta cruda:", res);
+
+    if (!res) {
+      console.error("❌ [uploadFile] No se recibió respuesta del servidor");
+      throw new Error("No se recibió respuesta del servidor");
+    }
+
+    const url =
+      typeof res === "string"
+        ? res
+        : (res as any).url ?? (res as any).data?.url ?? null;
+
+    console.log("✅ [uploadFile] URL final:", url);
+
+    return url;
+  } catch (err) {
+    console.error("❌ [uploadFile] Error subiendo archivo:", err);
+    throw err;
+  }
+},
+}
 // Helpers para negocio activo en el cliente
 export const activeBusiness = {
   get(): string | null {

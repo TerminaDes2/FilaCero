@@ -67,7 +67,8 @@ export class AuthService {
     // --- (C)reate - REGISTER API ---
     async register(registerDto: RegisterDto) {
         // 1. Verificar si el usuario ya existe (no debemos crear todavía)
-        const existingUser = await this.prisma.usuarios.findUnique({
+        const prisma = this.prisma as any;
+        const existingUser = await prisma.usuarios.findUnique({
             where: { correo_electronico: registerDto.email },
         });
 
@@ -123,7 +124,8 @@ export class AuthService {
     async login(loginDto: LoginDto) { 
         
         // 1. Buscar usuario por 'correo_electronico'
-        const user = await this.prisma.usuarios.findUnique({ 
+        const prisma = this.prisma as any;
+        const user = await prisma.usuarios.findUnique({ 
             where: { correo_electronico: loginDto.correo_electronico },
             select: {
                 id_usuario: true,
@@ -218,7 +220,8 @@ export class AuthService {
         }
 
         // Verificar si el correo aún no existe
-        const existingUser = await this.prisma.usuarios.findUnique({
+        const prisma = this.prisma as any;
+        const existingUser = await prisma.usuarios.findUnique({
             where: { correo_electronico: payload.email },
             select: { id_usuario: true },
         });
@@ -227,16 +230,27 @@ export class AuthService {
         }
 
         // Validar rol
-        const roleId = BigInt(payload.roleId);
-        const desiredRole = await this.prisma.roles.findUnique({ where: { id_rol: roleId } });
+        let roleId: bigint;
+        try {
+            roleId = BigInt(payload.roleId);
+        } catch (e) {
+            this.logger.error(`Invalid roleId conversion: ${payload.roleId}`, e);
+            throw new BadRequestException('Rol no válido para el usuario.');
+        }
+        
+        const desiredRole = await prisma.roles.findUnique({ 
+            where: { id_rol: roleId },
+        });
         if (!desiredRole) {
+            this.logger.warn(`Role not found: ${roleId.toString()}`);
             throw new BadRequestException('Rol no válido para el usuario.');
         }
 
         // Crear usuario con correo verificado
         try {
             const now = new Date();
-            const user = await this.prisma.usuarios.create({
+            const prisma = this.prisma as any;
+            const user = await prisma.usuarios.create({
                 data: {
                     nombre: payload.name,
                     correo_electronico: payload.email,
