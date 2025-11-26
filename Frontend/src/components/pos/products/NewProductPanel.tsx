@@ -335,7 +335,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
               {/* SKU */}
               <div>
                 <label
@@ -344,7 +344,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                 >
                   SKU
                 </label>
-                <div className="flex gap-2">
+                <div className="flex min-w-0">
                   <input
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
@@ -376,7 +376,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
 
               {/* Categoría */}
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center sm:grid-cols-2justify-between">
                   <label
                     className="block text-xs mb-1 font-semibold"
                     style={{ color: "var(--pos-text-heading)" }}
