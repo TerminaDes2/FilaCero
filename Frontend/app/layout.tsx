@@ -4,6 +4,7 @@ import React from 'react';
 import { UserProvider } from '../src/state/userStore'; // Ajusta la ruta
 import ClientSettingsApplier from '../src/components/ClientSettingsApplier';
 import { ConfirmProvider } from '../src/components/system/ConfirmProvider';
+import ThemeApplier from '../src/components/ThemeApplier';
 
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
   <body>
         <UserProvider>
+          <ThemeApplier />
           <ClientSettingsApplier />
           <ConfirmProvider>
             {children}

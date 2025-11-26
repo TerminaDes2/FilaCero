@@ -60,11 +60,11 @@ const BusinessShowcase: React.FC = () => {
         <div className="flex gap-4 px-2 pb-2">
           {Array.from({ length: 4 }).map((_, idx) => (
             <div key={`business-skeleton-${idx}`} className="w-64 shrink-0">
-              <div className="h-32 rounded-[30px] bg-slate-100 animate-pulse" />
+              <div className="h-32 rounded-[30px] bg-slate-100 animate-pulse dark:bg-slate-800/60" />
               <div className="mt-3 space-y-2">
-                <div className="h-3 rounded-full bg-slate-100" />
-                <div className="h-3 w-3/4 rounded-full bg-slate-100" />
-                <div className="h-8 rounded-2xl bg-slate-100" />
+                <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800/60" />
+                <div className="h-3 w-3/4 rounded-full bg-slate-100 dark:bg-slate-800/60" />
+                <div className="h-8 rounded-2xl bg-slate-100 dark:bg-slate-800/60" />
               </div>
             </div>
           ))}
@@ -73,15 +73,15 @@ const BusinessShowcase: React.FC = () => {
     );
   } else if (error) {
     content = (
-      <div className="mt-4 rounded-3xl border border-yellow-200 bg-yellow-50 px-6 py-5 text-sm text-yellow-700">
+      <div className="mt-4 rounded-3xl border border-yellow-200 bg-yellow-50 px-6 py-5 text-sm text-yellow-700 dark:border-yellow-500/40 dark:bg-yellow-500/10 dark:text-yellow-200">
         {error}
       </div>
     );
   } else if (!businesses.length) {
     content = (
-      <div className="mt-4 rounded-3xl border border-dashed border-[var(--fc-border-soft)] bg-white/70 px-6 py-10 text-center text-sm text-slate-500">
+      <div className="mt-4 rounded-3xl border border-dashed border-[var(--fc-border-soft)] bg-white/70 px-6 py-10 text-center text-sm text-[var(--fc-text-secondary)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-secondary)]">
         <div className="text-4xl">🏪</div>
-        <p className="mt-3 font-semibold text-slate-700">Aún no hay negocios publicados</p>
+        <p className="mt-3 font-semibold text-[var(--fc-text-primary)]">Aún no hay negocios publicados</p>
         <p className="mt-2">Cuando activen su catálogo aparecerán aquí.</p>
       </div>
     );
@@ -96,7 +96,7 @@ const BusinessShowcase: React.FC = () => {
             return (
               <article
                 key={business.id_negocio}
-                className="group relative w-64 shrink-0 overflow-hidden rounded-[32px] border border-[var(--fc-border-soft)] bg-white/85 shadow-[0_22px_45px_-36px_rgba(15,23,42,0.55)] backdrop-blur transition hover:-translate-y-1 hover:border-[var(--fc-brand-200)]"
+                className="group relative w-64 shrink-0 overflow-hidden rounded-[32px] border border-[var(--fc-border-soft)] bg-white/85 shadow-[0_22px_45px_-36px_rgba(15,23,42,0.55)] backdrop-blur transition hover:-translate-y-1 hover:border-[var(--fc-brand-200)] dark:border-white/12 dark:bg-[color:rgba(10,15,30,0.9)] dark:shadow-[0_28px_70px_-44px_rgba(2,6,23,0.9)] dark:hover:border-[var(--fc-brand-400)]"
               >
                 <div className="relative h-32">
                   {heroUrl ? (
@@ -113,7 +113,7 @@ const BusinessShowcase: React.FC = () => {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent" />
                   <div className="absolute bottom-3 left-3 flex items-center gap-3">
-                    <div className="relative h-12 w-12 overflow-hidden rounded-2xl border border-white/60 bg-white/80 backdrop-blur">
+                    <div className="relative h-12 w-12 overflow-hidden rounded-2xl border border-white/60 bg-white/80 backdrop-blur dark:border-white/20 dark:bg-[color:rgba(15,23,42,0.68)]">
                       {logoUrl ? (
                         <Image
                           src={logoUrl}
@@ -142,14 +142,14 @@ const BusinessShowcase: React.FC = () => {
 
                 <div className="space-y-4 px-4 pb-5 pt-4">
                   {business.direccion && (
-                    <p className="text-xs text-slate-500 line-clamp-2">{business.direccion}</p>
+                    <p className="text-xs text-[var(--fc-text-secondary)] line-clamp-2">{business.direccion}</p>
                   )}
 
-                  <div className="flex flex-wrap gap-2 text-[11px] text-slate-600">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold">
+                  <div className="flex flex-wrap gap-2 text-[11px] text-[var(--fc-text-secondary)]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold dark:bg-[color:rgba(148,163,184,0.18)]">
                       Productos {formatNumber(business.resumen.totalProductos)}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold dark:bg-[color:rgba(148,163,184,0.18)]">
                       Pedidos {formatNumber(business.resumen.totalPedidos)}
                     </span>
                   </div>
@@ -159,13 +159,13 @@ const BusinessShowcase: React.FC = () => {
                       {business.categorias.slice(0, 3).map((categoria) => (
                         <span
                           key={categoria}
-                          className="inline-flex items-center rounded-full bg-[var(--fc-brand-50)] px-2 py-1 text-[11px] font-medium text-[var(--fc-brand-700)]"
+                          className="inline-flex items-center rounded-full bg-[var(--fc-brand-50)] px-2 py-1 text-[11px] font-medium text-[var(--fc-brand-700)] dark:bg-[color:rgba(233,74,111,0.14)] dark:text-[var(--fc-brand-200)]"
                         >
                           {categoria}
                         </span>
                       ))}
                       {business.categorias.length > 3 && (
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-[var(--fc-text-secondary)]">
                           +{business.categorias.length - 3} más
                         </span>
                       )}
@@ -173,13 +173,13 @@ const BusinessShowcase: React.FC = () => {
                   )}
 
                   {highlightProduct && (
-                    <div className="rounded-2xl border border-[var(--fc-border-soft)] bg-slate-50/80 px-3 py-2 text-[11px] text-slate-600">
-                      <p className="text-xs font-semibold text-slate-800">Destacado</p>
+                    <div className="rounded-2xl border border-[var(--fc-border-soft)] bg-slate-50/80 px-3 py-2 text-[11px] text-[var(--fc-text-secondary)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.75)] dark:text-[var(--fc-text-secondary)]">
+                      <p className="text-xs font-semibold text-[var(--fc-text-primary)]">Destacado</p>
                       <p className="line-clamp-2">{highlightProduct.nombre}</p>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-[11px] text-slate-500">
+                  <div className="flex items-center justify-between text-[11px] text-[var(--fc-text-secondary)]">
                     <span>Desde {formatDate(business.fecha_registro)}</span>
                     <span>{formatCurrency(business.resumen.ingresosAcumulados)}</span>
                   </div>
@@ -203,17 +203,17 @@ const BusinessShowcase: React.FC = () => {
     <section id="negocios" className="mt-14">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-brand-600)]">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-brand-600)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)]">
             Negocios
           </span>
-          <h2 className="text-2xl font-bold text-slate-900">Aliados que ya venden con FilaCero</h2>
-          <p className="max-w-xl text-sm text-slate-500">
+          <h2 className="text-2xl font-bold text-[var(--fc-text-primary)]">Aliados que ya venden con FilaCero</h2>
+          <p className="max-w-xl text-sm text-[var(--fc-text-secondary)]">
             Conoce a los comercios que sincronizan su catálogo y preparan pedidos sin filas. Sus logos te guían para que los identifiques en segundos.
           </p>
         </div>
         <Link
           href="/stores"
-          className="inline-flex items-center justify-center rounded-full border border-[var(--fc-border-soft)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-200)]"
+          className="inline-flex items-center justify-center rounded-full border border-[var(--fc-border-soft)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-200)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)] dark:hover:border-[var(--fc-brand-300)]"
         >
           Ver todos los negocios
         </Link>

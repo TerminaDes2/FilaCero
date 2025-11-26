@@ -3,8 +3,13 @@
 @tailwind utilities;
 
 html { scroll-behavior: smooth; }
-body { background-color: #ffffff; color: #111827; -webkit-font-smoothing: antialiased; }
-::selection { background: #b9ddff; color: #0b1220; }
+body {
+	background-color: var(--fc-surface-base);
+	color: var(--fc-text-primary);
+	-webkit-font-smoothing: antialiased;
+	transition: background-color 240ms ease, color 240ms ease;
+}
+::selection { background: var(--fc-selection-bg); color: var(--fc-selection-text); }
 h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 
 /* === Design Tokens (Color) === */
@@ -59,6 +64,10 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 	--fc-text-primary: #111827;
 	--fc-text-secondary: #4b5563;
 	--fc-text-inverse: #ffffff;
+	--fc-surface-base: #ffffff;
+	--fc-surface-elevated: #fff5f7;
+	--fc-selection-bg: #b9ddff;
+	--fc-selection-text: #0b1220;
 
 	/* Legacy mapping for migration */
 	--brand-accent: var(--fc-brand-500);
@@ -100,6 +109,30 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 	--pos-danger-text: #8c2e3b;
 }
 
+html.dark {
+	--fc-bg-soft: rgba(15,23,42,0.7);
+	--fc-bg-alt: #020617;
+	--fc-border-soft: rgba(148,163,184,0.28);
+	--fc-border-strong: rgba(148,163,184,0.45);
+	--fc-text-primary: #e2e8f0;
+	--fc-text-secondary: #94a3b8;
+	--fc-text-inverse: #020617;
+	--fc-surface-base: #020617;
+	--fc-surface-elevated: rgba(15,23,42,0.92);
+	--fc-selection-bg: rgba(233,74,111,0.35);
+	--fc-selection-text: #f8fafc;
+}
+
+html.dark body {
+	background-color: var(--fc-surface-base);
+	color: var(--fc-text-primary);
+}
+
+html.dark ::selection {
+	background: var(--fc-selection-bg);
+	color: var(--fc-selection-text);
+}
+
 /* Compact density overrides (applied when html has class density-compact) */
 .density-compact {
 	--pos-control-h: 38px;
@@ -114,10 +147,33 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 							linear-gradient(180deg, #ffffff 0%, #fff5f7 100%);
 }
 
+html.dark .bg-app-gradient {
+	background: radial-gradient(circle at 20% 20%, rgba(184,37,78,0.22), transparent 55%),
+					radial-gradient(circle at 80% 35%, rgba(35,184,163,0.18), transparent 60%),
+					linear-gradient(180deg, #020617 0%, #0f172a 100%);
+}
+
 .glass { background: rgba(255,255,255,0.6); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 0 0 1px rgba(255,255,255,0.1),0 4px 40px -8px rgba(233,74,111,0.40); }
+
+html.dark .glass {
+	background: rgba(15,23,42,0.65);
+	backdrop-filter: blur(28px);
+	border: 1px solid rgba(148,163,184,0.18);
+	box-shadow: 0 0 0 1px rgba(148,163,184,0.12), 0 30px 80px -60px rgba(20,184,166,0.45);
+}
 
 .card-hover { transition: .35s ease; }
 .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 32px -8px rgba(233,74,111,0.35); }
+
+html.dark [data-step-card] {
+	--step-surface: var(--step-surface-dark);
+	--step-border: var(--step-border-dark);
+	--step-text: var(--step-text-dark);
+	--step-muted: var(--step-muted-dark);
+	--step-accent: var(--step-accent-dark);
+	--step-accent-soft: var(--step-accent-soft-dark);
+	--step-glow: var(--step-glow-dark);
+}
 
 :focus-visible { outline: none; box-shadow: 0 0 0 2px #DE355F, 0 0 0 4px #ffffff; }
 

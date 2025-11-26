@@ -27,7 +27,7 @@ export const metadata = {
 
 export default function Landing() {
     return (
-        <div className="relative min-h-screen flex flex-col bg-white text-gray-900">
+        <div className="relative min-h-screen flex flex-col bg-[var(--fc-surface-base)] text-[var(--fc-text-primary)] transition-colors">
             <Navbar />
             <main className="flex-1" role="main">
                 <Hero />

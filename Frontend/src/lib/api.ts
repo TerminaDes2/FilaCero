@@ -289,7 +289,14 @@ export interface UserInfo {
   fecha_nacimiento?: string;
   fecha_registro?: string;
   estado?: string;
+  avatar_url?: string | null;
+  avatarUrl?: string | null;
   credential_url?: string;
+  credentialUrl?: string | null;
+  numero_cuenta?: string | null;
+  accountNumber?: string | null;
+  edad?: number | null;
+  age?: number | null;
   verificado?: boolean;
   verified?: boolean;
   correo_verificado?: boolean;
