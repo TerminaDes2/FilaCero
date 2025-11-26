@@ -16,7 +16,7 @@ export function Hero() {
         <div className="grid md:grid-cols-2 gap-14 items-center">
           <Reveal className="space-y-7" >
             <h1 id="hero-heading" className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
-              Plataforma POS + pedidos QR para <span className="text-gradient">cafeterías escolares</span>.
+              Plataforma POS + tienda en linea <span className="text-gradient">cafeterías escolares</span>.
             </h1>
             <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
               Reduce filas y atiende más pedidos en cada receso. Sin apps nativas, sin hardware propietario, listo en minutos.
