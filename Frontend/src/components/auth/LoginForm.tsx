@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FancyInput } from './FancyInput';
-import { api } from '../../lib/api';
+import { api, activeBusiness } from '../../lib/api';
 import { useUserStore } from "../../state/userStore";
 import { useBusinessStore } from '../../state/businessStore';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -17,7 +17,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
-	const [touched, setTouched] = useState<{[k:string]:boolean}>({});
+	const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
 	const [error, setError] = useState<string | null>(null);
  	const router = useRouter();
  	const { setName, setBackendRole, login } = useUserStore();
@@ -29,27 +29,73 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const passwordValid = password.length >= 6;
 	const formValid = emailValid && passwordValid;
 
+	const fetchAndShowBusinessPicker = async (contextLabel: string) => {
+		const businesses = await api.listMyBusinesses();
+		console.log(`📊 Negocios ${contextLabel}:`, businesses);
+		const normalized: Business[] = Array.isArray(businesses)
+			? businesses
+				.map((biz: any) => ({
+					id_negocio: String(biz.id_negocio ?? biz.id ?? biz.idNegocio ?? ''),
+					nombre: biz.nombre ?? 'Negocio',
+					direccion: biz.direccion ?? null,
+					telefono: biz.telefono ?? null,
+					correo: biz.correo ?? null,
+					logo_url: biz.logo_url ?? null,
+					hero_image_url: biz.hero_image_url ?? null,
+				}))
+				.filter((biz: Business) => Boolean(biz.id_negocio))
+			: [];
+
+		if (normalized.length === 0) {
+			console.log(`🎯 ${contextLabel} sin negocios disponibles, redirigiendo a crear negocio`);
+			router.push('/onboarding/negocio');
+			return;
+		}
+
+		console.log(`🎯 ${contextLabel} debe seleccionar negocio antes de entrar al POS`);
+		try { activeBusiness.clear(); } catch { }
+		clearBusiness();
+		setBusinessOptions(normalized);
+		setBusinessPickerOpen(true);
+	};
+
+	const handleBusinessChosen = (business: Business) => {
+		const normalizedId = String(business.id_negocio);
+		activeBusiness.set(normalizedId);
+		setActiveBusiness({
+			id_negocio: normalizedId,
+			nombre: business.nombre,
+			direccion: business.direccion ?? null,
+			telefono: business.telefono ?? null,
+			correo: business.correo ?? null,
+			logo_url: business.logo_url ?? null,
+			hero_image_url: business.hero_image_url ?? null,
+		});
+		setBusinessPickerOpen(false);
+		router.push('/pos');
+	};
+
 	const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setTouched({ email: true, password: true });
-		if(!formValid) return;
-		
+		if (!formValid) return;
+
 		setSubmitting(true);
 		setError(null);
-		
+
 		try {
 			// 1. Limpiar completamente el storage antes del login para evitar headers grandes
 			if (typeof window !== 'undefined') {
-				try { 
+				try {
 					window.localStorage.removeItem('auth_token');
 					window.localStorage.removeItem('auth_user');
 					// Limpiar todas las cookies para evitar 431
 					document.cookie.split(";").forEach((c) => {
 						document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
 					});
-				} catch {}
+				} catch { }
 			}
-			
+
 			// 2. Hacer login para obtener el token
 			const res = await api.login(email.trim().toLowerCase(), password);
 			console.log('[LoginForm] Login response received:', { tokenLength: res.token?.length, userEmail: res.user?.email });
@@ -60,7 +106,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				// Guardar datos básicos del login temporalmente
 				window.localStorage.setItem('auth_user', JSON.stringify(res.user));
 			}
-			
+
 			onSuccess?.();
 			// 3. Redirección temprana para empleados: si el login ya incluye id_rol === 3
 			// redirigimos inmediatamente al POS para mejorar la UX.
@@ -95,10 +141,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			// 4. Obtener información COMPLETA del usuario incluyendo el rol
 			console.log('🔄 Obteniendo información completa del usuario...');
 			const userInfo = await api.me();
-			
+
 			// 4. Actualizar store con login
 			login(res.token, userInfo);
-			
+
 			// 5. Determinar rol y redirigir según reglas de negocio
 			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
 			// Asegurarse de que idRol sea un número antes de comparar
@@ -154,13 +200,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			
 		} catch (err: any) {
 			console.error('❌ Error en login:', err);
-			
+
 			// Limpiar localStorage en caso de error
 			if (typeof window !== 'undefined') {
 				window.localStorage.removeItem('auth_token');
 				window.localStorage.removeItem('auth_user');
 			}
-			
+
 			setError(err?.message || 'Error al iniciar sesión');
 		} finally {
 			setSubmitting(false);
@@ -181,13 +227,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 						{t('auth.login.hint')} <span className="hidden sm:inline">{t('auth.login.newAccount')} {t('auth.login.createAccount')}</span>
 					</p>
 			</div>
-			
+
 			{error && (
 				<div className="text-[12px] text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-900/30 border border-rose-200/70 dark:border-rose-800 rounded-md px-3 py-2">
 					{error || t('auth.login.errorGeneric')}
 				</div>
 			)}
-			
+
 			<FancyInput
 				label={t('auth.login.emailLabel')}
 				type="email"
@@ -198,7 +244,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M4 6l8 6 8-6M4 6v12h16V6' /></svg>}
 				hint={email ? undefined : t('auth.login.emailHint')}
 			/>
-			
+
 			<FancyInput
 				label={t('auth.login.passwordLabel')}
 				type={showPassword ? 'text' : 'password'}
@@ -211,7 +257,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				onTogglePassword={()=>setShowPassword(s=>!s)}
 				hint={!password ? t('auth.login.passwordHint') : undefined}
 			/>
-			
+
 			<div className="flex items-center justify-between text-xs text-gray-600 dark:text-slate-400">
 				<label className="inline-flex items-center gap-2 cursor-pointer select-none">
 					<input type='checkbox' className='appearance-none h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:bg-brand-600 checked:border-brand-600' />
@@ -219,7 +265,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				</label>
 				<button type='button' className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>{t('auth.login.forgot')}</button>
 			</div>
-			
+
 			<button
 				type="submit"
 				disabled={!formValid || submitting}
@@ -229,7 +275,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				{submitting && (
 					<span className="absolute left-4 inline-flex">
 						<svg className='animate-spin h-4 w-4 text-white' viewBox='0 0 24 24'>
-							<circle className='opacity-30' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none'/>
+							<circle className='opacity-30' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none' />
 							<path className='opacity-90' fill='currentColor' d='M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z' />
 						</svg>
 					</span>
@@ -249,8 +295,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 						</a>
 					</p>
 				</div>
-			</div>		
-		{/* Fin del formulario */}
-		</form>
-	);
-};
+			</div>
+
+			<BusinessPickerDialog
+					open={businessPickerOpen}
+					businesses={businessOptions}
+					onChoose={handleBusinessChosen}
+					onCreateNew={() => {
+						setBusinessPickerOpen(false);
+						router.push('/onboarding/negocio');
+					}}
+					onClose={() => setBusinessPickerOpen(false)}
+				/>
+			</form>
+		);
+	};

@@ -57,8 +57,8 @@ export class ZohoHttpService {
         this.logger.debug(`[SEND_EMAIL] to=${mailOptions.to} subject=${mailOptions.subject}`);
 
         try {
-            // Obtener token válido (refresca automáticamente si es necesario)
-            const accessToken = await this.zohoOAuthService.getValidAccessToken();
+            // Obtener token válido para el email específico del remitente
+            const accessToken = await this.zohoOAuthService.getAccessTokenForEmail(mailOptions.from);
             const apiDomain = this.zohoOAuthService.getApiDomain();
 
             // Obtener accountId (necesario para enviar emails)

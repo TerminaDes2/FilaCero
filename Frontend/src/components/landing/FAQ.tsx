@@ -118,21 +118,21 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
   }, [isOpen, animate]);
 
   return (
-    <li className="border border-gray-200 rounded-xl bg-white/80 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md">
+    <li className="rounded-xl border border-gray-200/70 bg-white/80 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md dark:border-white/12 dark:bg-[color:rgba(10,15,28,0.82)] dark:hover:shadow-[0_32px_95px_-62px_rgba(15,20,35,0.95)]">
       <button
         id={`faq-btn-${index}`}
         type="button"
         aria-expanded={isOpen}
         aria-controls={`faq-panel-${index}`}
         onClick={onToggle}
-        className="w-full flex items-center justify-between text-left px-5 py-4 gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
       >
-        <span className="font-medium text-sm text-gray-800 pr-2">
+        <span className="pr-2 text-sm font-medium text-gray-800 dark:text-slate-100">
           {q}
         </span>
         <span
           aria-hidden
-          className="relative w-6 h-6 flex items-center justify-center text-brand-600"
+          className="relative flex h-6 w-6 items-center justify-center text-brand-600 dark:text-brand-200"
         >
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-180 scale-x-0' : 'scale-x-100'}`} />
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-90'}`} />
@@ -147,7 +147,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
         className="px-5 pb-3"
       >
         <div ref={innerRef} className="pt-1">
-          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">{a}</p>
+          <p className="max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-slate-200">{a}</p>
         </div>
       </div>
     </li>
@@ -158,8 +158,9 @@ export function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
   const { t } = useTranslation();
   return (
-    <section id="faq" aria-labelledby="faq-heading" className="py-28 relative overflow-hidden bg-white">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+    <section id="faq" aria-labelledby="faq-heading" className="relative overflow-hidden py-28 bg-[var(--fc-surface-base)] dark:bg-[color:rgba(3,7,15,0.97)]">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(148,163,184,0.2)_1px,transparent_0)] [background-size:18px_18px] dark:opacity-[0.18] dark:[background-image:radial-gradient(rgba(100,116,139,0.18)_1px,transparent_0)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/70 via-white/15 to-transparent dark:from-[color:rgba(2,5,12,0.94)] dark:via-[color:rgba(3,7,15,0.6)] dark:to-[color:rgba(3,7,15,0.92)]" aria-hidden />
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           id="faq-heading"

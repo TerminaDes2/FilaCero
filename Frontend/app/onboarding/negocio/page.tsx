@@ -27,8 +27,8 @@ export default function NegocioOnboardingPage() {
       <BenefitsSection />
 
       {/* Columna derecha: formulario onboarding embebido */}
-      <div className="h-full flex flex-col justify-center items-center px-4 sm:px-6 py-4 lg:py-8 overflow-y-auto">
-        <div className="w-full max-w-sm sm:max-w-md mx-auto">
+      <div className="h-full flex flex-col justify-center items-center sm:px-6 py-4 lg:py-8 overflow-y-auto">
+        <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-2 sm:px-0">
           <div className="mb-4 lg:mb-6 text-center">
             <h1 className="text-lg lg:text-xl font-semibold text-gray-900 tracking-tight mb-1">
               {t('onboarding.business.title')}

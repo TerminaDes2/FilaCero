@@ -5,10 +5,9 @@ type Step = {
   number: number;
   title: string;
   text: string;
-  colors: {
-    primary: string; // circle/accent
-    dark: string;    // text fuerte / borde
-    light: string;   // fondo suave
+  palette: {
+    light: StepPalette;
+    dark: StepPalette;
   };
 };
 
@@ -39,12 +38,57 @@ const steps: Step[] = [
   },
 ];
 
+const StepIcon = ({ step }: { step: number }) => {
+  if (step === 1) {
+    return (
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="h-6 w-6">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18M4 5l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14" />
+        <rect x="7" y="9" width="10" height="6" rx="1" />
+        <path strokeLinecap="round" d="M9 3h6" />
+      </svg>
+    );
+  }
+  if (step === 2) {
+    return (
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="h-6 w-6">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18" />
+        <rect x="4" y="7" width="16" height="13" rx="2" />
+        <path strokeLinecap="round" d="M8 12h8M8 16h6" />
+      </svg>
+    );
+  }
+  if (step === 3) {
+    return (
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="h-6 w-6">
+        <rect x="3" y="4" width="18" height="14" rx="2" />
+        <path strokeLinecap="round" d="M7 20h10" />
+        <circle cx="12" cy="11" r="3" />
+      </svg>
+    );
+  }
+  return (
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="h-6 w-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l4 4L19 6" />
+    </svg>
+  );
+};
+
 export function Process() {
   const { t } = useTranslation();
   return (
-    <section id="process" className="relative py-24 bg-gradient-to-b from-white via-brand-50/30 to-white">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.08) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section
+      id="process"
+      className="relative overflow-hidden py-24 bg-[var(--fc-surface-base)] text-[var(--fc-text-primary)] dark:bg-[color:rgba(5,9,20,0.96)]"
+    >
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(15,23,42,0.16)_1px,transparent_0)] [background-size:18px_18px] dark:opacity-[0.18] dark:[background-image:radial-gradient(rgba(203,213,225,0.12)_1px,transparent_0)]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/20 to-transparent dark:from-[color:rgba(5,9,20,0.9)] dark:via-[color:rgba(5,9,20,0.55)] dark:to-[color:rgba(5,9,20,0.92)]" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-50/18 via-transparent to-teal-50/18 mix-blend-overlay opacity-80 dark:from-brand-500/12 dark:via-transparent dark:to-teal-500/12" aria-hidden />
+      </div>
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           align="center"
           badge={t("landing.process.badge")}
@@ -66,43 +110,33 @@ export function Process() {
                 <div className="absolute inset-x-0 top-0 h-1 opacity-40 group-hover:opacity-70 transition" style={{ background: `linear-gradient(90deg, ${s.colors.primary}22, ${s.colors.primary})` }} />
                 {/* Per-card colored hover glow */}
                 <div
-                  className="pointer-events-none absolute -z-10 -inset-1 rounded-xl blur-md opacity-0 group-hover:opacity-[0.18] transition duration-300"
-                  style={{ background: s.colors.primary }}
-                />
-                <div className="mb-4">
+                  data-step-card
+                  className="relative flex h-full flex-col rounded-2xl border bg-white/80 p-6 shadow-sm transition will-change-transform hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-transparent dark:[--step-card-surface:var(--step-card-surface-dark)] dark:[--step-card-border:var(--step-card-border-dark)] dark:[--step-card-text:var(--step-card-text-dark)] dark:[--step-card-muted:var(--step-card-muted-dark)] dark:[--step-card-accent:var(--step-card-accent-dark)] dark:[--step-card-accent-soft:var(--step-card-accent-soft-dark)] dark:[--step-card-glow:var(--step-card-glow-dark)]"
+                  style={cardStyle}
+                >
                   <div
-                    className="w-11 h-11 flex items-center justify-center rounded-full text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
-                    style={{ backgroundColor: s.colors.primary }}
-                    aria-hidden
-                  >
-                    {/* Icon per step */}
-                    {s.number === 1 && (
-                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18M4 5l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14" />
-                        <rect x="7" y="9" width="10" height="6" rx="1" />
-                        <path strokeLinecap="round" d="M9 3h6" />
-                      </svg>
-                    )}
-                    {s.number === 2 && (
-                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18" />
-                        <rect x="4" y="7" width="16" height="13" rx="2" />
-                        <path strokeLinecap="round" d="M8 12h8M8 16h6" />
-                      </svg>
-                    )}
-                    {s.number === 3 && (
-                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
-                        <rect x="3" y="4" width="18" height="14" rx="2" />
-                        <path strokeLinecap="round" d="M7 20h10" />
-                        <circle cx="12" cy="11" r="3" />
-                      </svg>
-                    )}
-                    {s.number === 4 && (
-                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l4 4L19 6" />
-                      </svg>
-                    )}
+                    className="absolute inset-x-0 top-0 h-1 opacity-50 transition group-hover:opacity-80"
+                    style={{ background: "linear-gradient(90deg, var(--step-card-accent-soft), var(--step-card-accent))" }}
+                  />
+                  <div
+                    className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl blur-xl opacity-0 transition duration-500 group-hover:opacity-80"
+                    style={{ background: "var(--step-card-glow)" }}
+                  />
+                  <div className="mb-4">
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
+                      style={{ background: "var(--step-card-accent)" }}
+                      aria-hidden
+                    >
+                      <StepIcon step={step.number} />
+                    </div>
                   </div>
+                  <h3 className="mb-2 font-semibold tracking-tight" style={{ color: "var(--step-card-text)" }}>
+                    {step.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--step-card-muted)" }}>
+                    {step.text}
+                  </p>
                 </div>
                 <h3 className="font-semibold mb-2" style={{ color: s.colors.dark }}>{t(s.title)}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: s.colors.dark + 'CC' }}>{t(s.text)}</p>

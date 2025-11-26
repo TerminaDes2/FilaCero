@@ -5,6 +5,7 @@ import { UserProvider } from '../src/state/userStore';
 import ClientSettingsApplier from '../src/components/ClientSettingsApplier';
 import LanguageInitializer from '../src/components/LanguageInitializer';
 import { ConfirmProvider } from '../src/components/system/ConfirmProvider';
+import ThemeApplier from '../src/components/ThemeApplier';
 
 
 export const metadata: Metadata = {

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "../../../lib/api";
@@ -120,8 +121,26 @@ export default function StoryRail() {
   }, [categories]);
 
   return (
-    <section className="mt-5" aria-label="Accesos rápidos">
-      <nav className="-mx-2 overflow-x-auto no-scrollbar" aria-label="Categorías destacadas">
+    <section id="categorias" className="mt-12" aria-label="Accesos rápidos">
+      <div className="flex flex-wrap items-start justify-between gap-4 px-2">
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-brand-600)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)]">
+            Categorías
+          </span>
+          <h2 className="text-xl font-semibold text-[var(--fc-text-primary)]">Descubre qué se está pidiendo</h2>
+          <p className="max-w-md text-sm text-[var(--fc-text-secondary)]">
+            Filtra el catálogo por tipo de producto y encuentra lo que necesitas en segundos.
+          </p>
+        </div>
+        <Link
+          href="/productos"
+          className="inline-flex items-center justify-center rounded-full border border-[var(--fc-border-soft)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-200)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)] dark:hover:border-[var(--fc-brand-300)]"
+        >
+          Ver todas las categorías
+        </Link>
+      </div>
+
+      <nav className="-mx-2 mt-4 overflow-x-auto no-scrollbar" aria-label="Categorías destacadas">
         <div className="flex gap-4 px-2 py-2">
           <button
             key="all"
@@ -129,10 +148,10 @@ export default function StoryRail() {
             aria-pressed={activeCategoria === ""}
             className={`inline-flex flex-col items-center w-20 shrink-0 rounded-xl focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-600)] focus-visible:ring-offset-2 focus-visible:ring-offset-white transition ${activeCategoria === "" ? "opacity-100" : "opacity-80 hover:opacity-100"}`}
           >
-            <span className="relative grid place-items-center w-16 h-16 rounded-full bg-white border border-[var(--fc-border-soft)]">
-              <span className="text-lg font-semibold text-slate-700">All</span>
+            <span className="relative grid place-items-center w-16 h-16 rounded-full bg-white border border-[var(--fc-border-soft)] dark:bg-[color:rgba(15,23,42,0.88)] dark:border-white/12">
+              <span className="text-lg font-semibold text-[var(--fc-text-primary)]">All</span>
             </span>
-            <span className="mt-2 text-[12px] text-slate-700 font-medium truncate w-full text-center">
+            <span className="mt-2 text-[12px] text-[var(--fc-text-primary)] font-medium truncate w-full text-center">
               Todo
             </span>
           </button>
@@ -140,14 +159,14 @@ export default function StoryRail() {
           {loading && chips.length === 0 && (
             Array.from({ length: 6 }).map((_, idx) => (
               <div key={idx} className="w-20 shrink-0">
-                <div className="w-16 h-16 rounded-full bg-slate-100 animate-pulse mx-auto" />
-                <div className="h-3 mt-2 rounded-full bg-slate-100 animate-pulse" />
+                <div className="w-16 h-16 rounded-full bg-slate-100 animate-pulse mx-auto dark:bg-slate-800/60" />
+                <div className="h-3 mt-2 rounded-full bg-slate-100 animate-pulse dark:bg-slate-800/60" />
               </div>
             ))
           )}
 
           {!loading && chips.length === 0 && (
-            <div className="text-xs text-slate-500 py-4">Aún no hay categorías con productos.</div>
+            <div className="text-xs text-[var(--fc-text-secondary)] py-4">Aún no hay categorías con productos.</div>
           )}
 
           {chips.map((chip) => {
@@ -160,15 +179,15 @@ export default function StoryRail() {
                 className={`group inline-flex flex-col items-center w-20 shrink-0 rounded-xl focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-600)] focus-visible:ring-offset-2 focus-visible:ring-offset-white transition ${isActive ? "opacity-100" : "opacity-90 hover:opacity-100"}`}
               >
                 <span className={`relative grid place-items-center w-16 h-16 rounded-full bg-gradient-to-br ${chip.gradient} p-0.5`}>
-                  <span className="absolute inset-0 rounded-full opacity-30 blur-md bg-white" />
-                  <span className="relative w-full h-full rounded-full grid place-items-center bg-white text-[13px] font-semibold text-slate-800">
+                  <span className="absolute inset-0 rounded-full opacity-30 blur-md bg-white dark:bg-white/20" />
+                  <span className="relative w-full h-full rounded-full grid place-items-center bg-white text-[13px] font-semibold text-[var(--fc-text-primary)] dark:bg-[color:rgba(15,23,42,0.88)] dark:text-[var(--fc-text-primary)]">
                     {chip.nombre.slice(0, 2).toUpperCase()}
                   </span>
-                  <span className="absolute -bottom-1 right-1 px-1.5 py-0.5 rounded-full bg-white text-[10px] font-semibold text-slate-700 shadow-sm">
+                  <span className="absolute -bottom-1 right-1 px-1.5 py-0.5 rounded-full bg-white text-[10px] font-semibold text-[var(--fc-text-secondary)] shadow-sm dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)] dark:shadow-[0_6px_16px_-10px_rgba(2,6,23,0.85)]">
                     {chip.totalProductos}
                   </span>
                 </span>
-                <span className="mt-2 text-[12px] text-slate-700 font-medium truncate w-full text-center">
+                <span className="mt-2 text-[12px] text-[var(--fc-text-primary)] font-medium truncate w-full text-center">
                   {chip.nombre}
                 </span>
               </button>

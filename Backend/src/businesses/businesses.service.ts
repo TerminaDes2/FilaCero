@@ -265,7 +265,7 @@ export class BusinessesService {
           fecha_registro: new Date(),
           owner_id: uid,
         };
-        if (typeof dto.logo === 'string') data.logo = dto.logo;
+        if (typeof dto.logo === 'string') data.logo_url = dto.logo;
         if (typeof dto.hero_image_url === 'string') data.hero_image_url = dto.hero_image_url;
 
         const negocio = await tx.negocio.create({ data });

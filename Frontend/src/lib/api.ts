@@ -302,7 +302,14 @@ export interface UserInfo {
   fecha_nacimiento?: string;
   fecha_registro?: string;
   estado?: string;
+  avatar_url?: string | null;
+  avatarUrl?: string | null;
   credential_url?: string;
+  credentialUrl?: string | null;
+  numero_cuenta?: string | null;
+  accountNumber?: string | null;
+  edad?: number | null;
+  age?: number | null;
   verificado?: boolean;
   verified?: boolean;
   correo_verificado?: boolean;
@@ -368,6 +375,29 @@ export const api = {
       cache: 'no-store',
     }),
 
+  // Password recovery endpoints
+  requestPasswordRecover: (identifier: string) =>
+    apiFetch<{ delivery: string; expiresAt: string; session?: string }>("auth/recover", {
+      method: "POST",
+      body: JSON.stringify({ identifier }),
+      credentials: 'omit',
+      cache: 'no-store',
+    }),
+
+  verifyPasswordRecover: (session: string, code: string) =>
+    apiFetch<{ verified: boolean; resetSession?: string }>("auth/recover/verify", {
+      method: "POST",
+      body: JSON.stringify({ session, code }),
+      cache: 'no-store',
+    }),
+
+  resetPasswordRecover: (session: string, password: string, passwordConfirm: string) =>
+    apiFetch<{ message?: string }>("auth/recover/reset", {
+      method: "POST",
+      body: JSON.stringify({ session, password, passwordConfirm }),
+      cache: 'no-store',
+    }),
+
   // Información del usuario autenticado
   me: () => apiFetch<UserInfo>("auth/me"),
 
@@ -406,6 +436,20 @@ export const api = {
     apiFetch<{ delivery: 'email'; expiresAt: string; session: string }>("auth/resend-register", {
       method: "POST",
       body: JSON.stringify({ session }),
+      cache: 'no-store',
+    }),
+
+  preRegisterVerifyEmail: (payload: { code: string; session: string }) =>
+    apiFetch<{ token: string; user: AuthUser }>("auth/verify-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    }),
+
+  preRegisterResendCode: (payload: { session: string }) =>
+    apiFetch<{ expiresAt: string; session: string }>("auth/resend-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
       cache: 'no-store',
     }),
 
@@ -805,6 +849,22 @@ export const api = {
     // Hacemos la llamada al nuevo endpoint
     return apiFetch<any>(`metrics?${qp.toString()}`); 
   },
+  // --- Payments ---
+  // Lista métodos guardados para el usuario autenticado
+  getPaymentMethods: () => apiFetch<any[]>("payments/methods"),
+  // Crear PaymentIntent en backend (wrapper)
+  // payload: { pedidoId: string; metadata?: Record<string, any> }
+  createPaymentIntent: (payload: { pedidoId: string; metadata?: Record<string, any> }) =>
+    apiFetch<any>("payments/create-intent", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  // Guarda un método de pago tokenizado (paymentMethodId obtenido desde Stripe.js)
+  savePaymentMethod: (payload: { paymentMethodId: string; makeDefault?: boolean }) =>
+    apiFetch<any>("payments/methods", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   // --- FIN DE LO NUEVO ---
   // --- Verificación SMS ---
   startSmsVerification: (telefono: string, canal: string = "sms") =>

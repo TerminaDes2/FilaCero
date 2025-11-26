@@ -11,8 +11,16 @@ const testimonials = [
 export function Testimonials() {
   const { t } = useTranslation();
   return (
-    <section id="testimonials" aria-labelledby="testimonials-heading" className="py-28 bg-white relative">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+    <section
+      id="testimonials"
+      aria-labelledby="testimonials-heading"
+      className="relative overflow-hidden py-28 bg-[var(--fc-surface-base)] text-[var(--fc-text-primary)]"
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{ backgroundImage: 'radial-gradient(rgba(15,23,42,0.14) 1px, transparent 0)', backgroundSize: '18px 18px' }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/70 via-white/30 to-transparent dark:from-slate-950/70 dark:via-slate-950/35 dark:to-transparent" aria-hidden />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           id="testimonials-heading"
@@ -35,7 +43,7 @@ export function Testimonials() {
                 <span aria-hidden className="select-none text-[var(--fc-brand-400)] font-serif text-xl ml-1">”</span>
               </blockquote>
               <figcaption className="mt-auto flex items-start gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--fc-brand-100)] to-[var(--fc-teal-100)] ring-1 ring-inset ring-gray-200/60 flex items-center justify-center text-[11px] font-medium text-[var(--fc-brand-600)]">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--fc-brand-100)] to-[var(--fc-teal-100)] ring-1 ring-inset ring-gray-200/60 flex items-center justify-center text-[11px] font-medium text-[var(--fc-brand-600)] dark:from-[rgba(233,74,111,0.14)] dark:to-[rgba(76,193,173,0.15)] dark:ring-white/10 dark:text-[var(--fc-brand-100)]">
                   {i + 1}
                 </div>
                 <div>

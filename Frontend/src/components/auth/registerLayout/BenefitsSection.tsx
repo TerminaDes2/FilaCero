@@ -20,12 +20,11 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const { role } = useUserStore();
   const { t } = useTranslation();
 
-  // Colores según el rol (mismos que StepSignup)
-  const roleColor = role === 'OWNER' ? '#4CC1AD' : '#D55D7B';
-  const bgGradient =
-    role === 'OWNER'
-      ? 'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50'
-      : 'bg-gradient-to-br from-rose-50 via-pink-50 to-red-50';
+  const roleColor = isOwner ? '#3CB29A' : '#D45978';
+  const accentSurface = isOwner
+    ? 'from-emerald-50 via-teal-50 to-cyan-50'
+    : 'from-rose-50 via-pink-50 to-orange-50';
+  const chipBg = isOwner ? 'bg-teal-100/70 text-teal-700' : 'bg-rose-100/70 text-rose-700';
 
   // Puntos clave para Clientes
   const clientBenefits = [
@@ -80,65 +79,50 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const welcomeSubtitle = role === 'OWNER' ? t('auth.register.benefits.welcomeSubtitle.owner') : t('auth.register.benefits.welcomeSubtitle.client');
 
   return (
-    <div
-      className={`relative h-full flex flex-col justify-center items-start ${bgGradient} px-6 sm:px-8 lg:px-12 xl:px-16 py-8 lg:py-12 transition-colors duration-700 overflow-hidden`}
+    <section
+      className={`relative h-full w-full overflow-hidden bg-gradient-to-br ${accentSurface} px-6 sm:px-8 lg:px-10 xl:px-14 py-8 lg:py-10 transition-colors duration-500`}
     >
-      {/* Decorative blobs */}
-      <div className="absolute top-10 right-10 w-64 h-64 rounded-full blur-3xl opacity-20 animate-blob"
-           style={{ background: `radial-gradient(circle, ${roleColor}, transparent)` }} />
-      <div className="absolute bottom-10 left-10 w-48 h-48 rounded-full blur-3xl opacity-15 animate-blob-lazy"
-           style={{ background: `radial-gradient(circle, ${roleColor}, transparent)` }} />
-      
-      <div className="max-w-xl lg:max-w-lg xl:max-w-xl relative z-10">
-        {/* Header section with icon */}
-        <div className="mb-8 lg:mb-10">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform"
-                 style={{ background: `linear-gradient(135deg, ${roleColor}ee, ${roleColor})` }}>
-              <Sparkles className="w-6 h-6 text-white" strokeWidth={2.5} />
-            </div>
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 hidden w-56 translate-x-1/3 rounded-full blur-3xl opacity-30 sm:block"
+        style={{ background: `radial-gradient(circle at center, ${roleColor}, transparent 70%)` }}
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 hidden w-40 -translate-x-1/3 rounded-full blur-3xl opacity-20 sm:block"
+        style={{ background: `radial-gradient(circle at center, ${roleColor}, transparent 65%)` }}
+      />
+
+      <div className="relative z-10 flex h-full w-full flex-col gap-6 lg:gap-8">
+        <header className="space-y-3">
+          <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.32em] shadow-sm ${chipBg}`}>
+            <Sparkles className="h-4 w-4" strokeWidth={2.5} />
+            {isOwner ? 'Modo negocio' : 'Modo cliente'}
           </div>
-          
-          <h2
-            className="text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-3 leading-tight"
-            style={{ color: roleColor }}
-          >
-            {welcomeTitle}
+          <h2 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl lg:text-[2.1rem]" style={{ color: roleColor }}>
+            {headline}
           </h2>
-          <p className="text-base lg:text-lg text-gray-700 font-medium">
-            {welcomeSubtitle}
+          <p className="max-w-lg text-sm text-slate-600 sm:text-base">
+            {subtitle}
           </p>
-        </div>
-        
-        {/* Benefits list with enhanced cards */}
-        <ul className="space-y-5 lg:space-y-6">
-          {benefits.map((benefit, index) => (
-            <li 
-              key={index} 
-              className="group relative bg-white/60 backdrop-blur-sm rounded-2xl p-5 shadow-md hover:shadow-xl border border-white/80 transition-all duration-300 hover:scale-[1.02]"
-              style={{ animationDelay: `${index * 100}ms` }}
+        </header>
+
+        <ul className="grid gap-3 sm:gap-4">
+          {benefits.map((benefit) => (
+            <li
+              key={benefit.title}
+              className="group relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 px-4 py-4 shadow-sm backdrop-blur transition-colors duration-200 hover:border-white hover:bg-white"
             >
-              {/* Hover gradient effect */}
-              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                   style={{ background: `linear-gradient(135deg, ${roleColor}10, transparent)` }} />
-              
-              <div className="flex items-start gap-4 relative z-10">
-                <div
-                  className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-110"
-                  style={{ background: `linear-gradient(135deg, ${roleColor}dd, ${roleColor})` }}
+              <div className="flex items-start gap-3">
+                <span
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white shadow-md"
+                  style={{ color: roleColor }}
                 >
-                  <span className="text-white">
-                    {benefit.icon}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3
-                    className="font-bold text-lg lg:text-xl mb-1.5 group-hover:translate-x-1 transition-transform"
-                    style={{ color: roleColor }}
-                  >
+                  {benefit.icon}
+                </span>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-slate-900 sm:text-base" style={{ color: roleColor }}>
                     {benefit.title}
                   </h3>
-                  <p className="text-gray-700 text-sm lg:text-base leading-relaxed">
+                  <p className="mt-1 text-[13px] text-slate-600 sm:text-sm">
                     {benefit.description}
                   </p>
                 </div>
@@ -146,15 +130,14 @@ export function BenefitsSection({}: BenefitsSectionProps) {
             </li>
           ))}
         </ul>
-        
-        {/* Trust badge */}
-        <div className="mt-8 lg:mt-10 flex items-center gap-3 text-sm text-gray-600">
+
+        <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-xs text-slate-600 shadow-sm backdrop-blur sm:text-sm">
           <div className="flex -space-x-2">
-            {[1, 2, 3].map((i) => (
-              <div 
-                key={i}
-                className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                style={{ background: `linear-gradient(135deg, ${roleColor}${90 - i * 10}, ${roleColor}${70 - i * 10})` }}
+            {[roleColor, `${roleColor}CC`, `${roleColor}AA`].map((tone, index) => (
+              <span
+                key={tone + index}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white shadow"
+                style={{ background: `linear-gradient(135deg, ${tone}, ${tone}99)` }}
               />
             ))}
           </div>
@@ -163,6 +146,6 @@ export function BenefitsSection({}: BenefitsSectionProps) {
           </p>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

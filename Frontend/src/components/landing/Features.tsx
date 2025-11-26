@@ -85,11 +85,11 @@ const featuresData = [
 export function Features() {
   const { t } = useTranslation();
   return (
-  <section id="features" className="py-28 relative overflow-hidden bg-white" aria-labelledby="features-heading">
+  <section id="features" className="py-28 relative overflow-hidden bg-white dark:bg-slate-950" aria-labelledby="features-heading">
       {/* Colored radial accents */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.10]" style={{ background: "radial-gradient(circle at 30% 30%, rgba(233,74,111,0.15), transparent 60%), radial-gradient(circle at 70% 20%, rgba(76,193,173,0.12), transparent 65%)" }} />
       {/* Subtle dot grid overlay */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.10) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay dark:mix-blend-soft-light" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.10) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           id="features-heading"
@@ -104,7 +104,7 @@ export function Features() {
             return (
               <Reveal delay={70*i} key={f.key} className="relative group">
                 <div
-                  className="relative h-full p-5 sm:p-6 rounded-2xl bg-white/85 backdrop-blur-xl overflow-hidden shadow-sm ring-1 ring-gray-200/60 hover:shadow-md transition">
+                  className="relative h-full p-5 sm:p-6 rounded-2xl bg-white/85 backdrop-blur-xl overflow-hidden shadow-sm ring-1 ring-gray-200/60 hover:shadow-md transition dark:bg-slate-900/60 dark:ring-white/10 dark:hover:shadow-brand-900/30">
                   <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
                   <div className="mb-4 sm:mb-5">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm ring-1 ring-white/60 bg-gradient-to-br from-brand-500 to-brand-600 relative overflow-hidden" aria-hidden="true">

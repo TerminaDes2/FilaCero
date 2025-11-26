@@ -148,13 +148,22 @@ export default function ProductsFeed() {
     }
 
     arr.sort((a, b) => {
-      if (sortKey === "price") return a.precio - b.precio;
-      if (sortKey === "rating") return 0;
-      if (sortKey === "near") return 0;
-      if (sortKey === "fast") return 0;
+      if (sortKey === "price-asc") {
+        return a.precio - b.precio;
+      }
+      if (sortKey === "price-desc") {
+        return b.precio - a.precio;
+      }
+      if (sortKey === "stock") {
+        const stockA = typeof a.stock === "number" ? a.stock : -1;
+        const stockB = typeof b.stock === "number" ? b.stock : -1;
+        if (stockB !== stockA) return stockB - stockA;
+        return (b.popularity ?? 0) - (a.popularity ?? 0);
+      }
       const pa = a.popularity ?? 0;
       const pb = b.popularity ?? 0;
-      return pb - pa;
+      if (pb !== pa) return pb - pa;
+      return a.nombre.localeCompare(b.nombre);
     });
 
     return arr.map((p) => {
@@ -180,24 +189,34 @@ export default function ProductsFeed() {
     });
   }, [items, params]);
 
-  const handleAdd = useCallback((card: (typeof cards)[number]) => {
-    addToCart(
-      {
-        id: card.id,
-        nombre: card.name,
-        precio: card.price,
-        imagen: card.cover,
-      },
-      1,
-    );
-  }, [addToCart]);
+  const handleAdd = useCallback(
+    (card: (typeof cards)[number]) => {
+      if (typeof card.stock === "number" && card.stock <= 0) {
+        return;
+      }
+
+      addToCart(
+        {
+          id: card.id,
+          nombre: card.name,
+          precio: card.price,
+          imagen: card.cover,
+        },
+        1,
+      );
+    },
+    [addToCart],
+  );
 
   if (loading) {
     return (
       <section className="mt-6" aria-label="Productos">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="animate-pulse rounded-3xl h-40 bg-slate-100" />
+            <div
+              key={i}
+              className="h-40 animate-pulse rounded-3xl bg-slate-100 dark:bg-white/8"
+            />
           ))}
         </div>
       </section>
@@ -215,50 +234,72 @@ export default function ProductsFeed() {
   if (cards.length === 0) {
     return (
       <section className="mt-6" aria-label="Productos">
-        <div className="text-sm text-slate-500">No hay productos disponibles.</div>
+        <div className="text-sm text-[var(--fc-text-secondary)] dark:text-white/60">
+          No hay productos disponibles.
+        </div>
       </section>
     );
   }
 
   return (
     <section className="mt-6" aria-label="Productos">
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {cards.slice(0, visible).map((c) => (
-          <article key={c.id} className="rounded-3xl border border-[var(--fc-border-soft)] bg-white/90 shadow-sm transition hover:shadow-md">
-            <div className="relative h-44 bg-slate-100 overflow-hidden rounded-t-3xl">
-              {c.cover ? (
-                <Image src={c.cover} alt={c.name} fill className="object-cover" sizes="(min-width: 1280px) 25vw, (min-width: 640px) 40vw, 100vw" unoptimized />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center text-slate-400 text-sm">Sin imagen</div>
-              )}
-              {c.category && (
-                <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-white/90 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm">
-                  {c.category}
-                </span>
-              )}
-            </div>
-            <div className="p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-[15px] font-semibold text-slate-900 leading-snug line-clamp-2">{c.name}</h3>
-                <span className="text-sm font-semibold text-slate-900 whitespace-nowrap">{priceLabel(c.price)}</span>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.slice(0, visible).map((c) => {
+          const isOutOfStock = typeof c.stock === "number" && c.stock <= 0;
+
+          return (
+            <article
+              key={c.id}
+              className="rounded-3xl border border-[var(--fc-border-soft)] bg-white/95 shadow-sm transition hover:shadow-md dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:shadow-[0_28px_60px_-45px_rgba(10,15,35,0.9)] dark:hover:shadow-[0_32px_72px_-40px_rgba(12,20,50,0.85)]"
+            >
+              <div className="relative h-44 overflow-hidden rounded-t-3xl bg-slate-100 dark:bg-white/8">
+                {c.cover ? (
+                  <Image src={c.cover} alt={c.name} fill className="object-cover" sizes="(min-width: 1280px) 25vw, (min-width: 640px) 40vw, 100vw" unoptimized />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-sm text-slate-400 dark:text-white/40">Sin imagen</div>
+                )}
+                {c.category && (
+                  <span className="absolute left-3 top-3 inline-flex items-center rounded-full border border-white/60 bg-white/90 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-[var(--fc-text-primary)]">
+                    {c.category}
+                  </span>
+                )}
               </div>
-              {c.description && (
-                <p className="text-[12px] text-slate-500 leading-relaxed line-clamp-2">{c.description}</p>
-              )}
-              <div className="flex items-center justify-between gap-3 pt-1">
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
-                  {c.stockLabel}
-                </span>
-                <button
-                  onClick={() => handleAdd(c)}
-                  className="inline-flex items-center justify-center rounded-full bg-[var(--fc-brand-600)] px-4 py-1.5 text-[12px] font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)]"
-                >
-                  Añadir
-                </button>
+              <div className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[var(--fc-text-strong)] dark:text-white">
+                    {c.name}
+                  </h3>
+                  <span className="whitespace-nowrap text-sm font-semibold text-[var(--fc-text-strong)] dark:text-white">
+                    {priceLabel(c.price)}
+                  </span>
+                </div>
+                {c.description && (
+                  <p className="line-clamp-2 text-[12px] leading-relaxed text-[var(--fc-text-secondary)] dark:text-white/70">
+                    {c.description}
+                  </p>
+                )}
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 dark:border-white/18 dark:bg-[color:rgba(148,163,184,0.16)] dark:text-white/80">
+                    {c.stockLabel}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isOutOfStock}
+                    aria-disabled={isOutOfStock}
+                    onClick={() => handleAdd(c)}
+                    className={`inline-flex items-center justify-center rounded-full px-4 py-1.5 text-[12px] font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
+                      isOutOfStock
+                        ? "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-white/8 dark:text-white/35"
+                        : "bg-[var(--fc-brand-600)] text-white hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
+                    }`}
+                  >
+                    {isOutOfStock ? "Sin stock" : "Añadir"}
+                  </button>
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
       <div ref={sentinelRef} />
     </section>
