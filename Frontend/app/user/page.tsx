@@ -135,83 +135,67 @@ export default function UserProfilePage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [saveFeedback, setSaveFeedback] = useState<"success" | "error" | null>(null);
-
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push("/auth/login");
     }
   }, [isAuthenticated, loading, router]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--fc-surface-base)] text-[var(--fc-brand-600)] dark:bg-[color:rgba(5,8,18,1)] dark:text-[var(--fc-brand-200)]">
-        <span className="inline-flex items-center gap-3 rounded-full border border-[var(--fc-border-soft)] px-4 py-2 text-sm font-medium dark:border-white/12">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Cargando perfil...
-        </span>
-      </div>
-    );
-  }
+  const avatarUrl = pickFirst(user?.avatar_url, user?.avatarUrl);
+  const credentialUrl = pickFirst(user?.credential_url, user?.credentialUrl);
+  const accountNumberValue = pickFirst(user?.numero_cuenta, user?.accountNumber);
+  const ageValue = pickFirst(user?.edad, user?.age);
+  const accountState = capitalize(stripDiacritics(user?.estado ?? "")) || "Activo";
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
-  const avatarUrl = pickFirst(user.avatar_url, user.avatarUrl);
-  const credentialUrl = pickFirst(user.credential_url, user.credentialUrl);
-  const accountNumberValue = pickFirst(user.numero_cuenta, user.accountNumber);
-  const ageValue = pickFirst(user.edad, user.age);
-  const accountState = capitalize(stripDiacritics(user.estado ?? "")) || "Activo";
-
-  const normalizedRole = (user.role?.nombre_rol ?? user.role_name ?? "").toLowerCase();
+  const normalizedRole = (user?.role?.nombre_rol ?? user?.role_name ?? "").toLowerCase();
   const normalizedRoleAscii = stripDiacritics(normalizedRole);
   const isOwner = useMemo(
     () =>
       role === "OWNER" ||
-      user.id_rol === 2 ||
+      user?.id_rol === 2 ||
       normalizedRole.includes("admin") ||
       normalizedRole.includes("owner") ||
       normalizedRoleAscii.includes("dueno"),
-    [normalizedRole, normalizedRoleAscii, role, user.id_rol],
+    [normalizedRole, normalizedRoleAscii, role, user?.id_rol],
   );
 
-  const roleLabel = isOwner ? "Dueno de negocio" : capitalize(stripDiacritics(user.role?.nombre_rol ?? user.role_name ?? "Cliente"));
+  const roleLabel = isOwner ? "Dueno de negocio" : capitalize(stripDiacritics(user?.role?.nombre_rol ?? user?.role_name ?? "Cliente"));
 
-  const joinedAt = formatDate(user.fecha_registro, { day: "2-digit", month: "long", year: "numeric" });
-  const birthDate = formatDate(user.fecha_nacimiento, { day: "2-digit", month: "long", year: "numeric" });
+  const joinedAt = formatDate(user?.fecha_registro, { day: "2-digit", month: "long", year: "numeric" });
+  const birthDate = formatDate(user?.fecha_nacimiento, { day: "2-digit", month: "long", year: "numeric" });
 
-  const emailVerified = Boolean(user.verifications?.email ?? user.correo_verificado ?? user.verified ?? user.verificado ?? false);
-  const smsVerified = Boolean(user.verifications?.sms ?? user.sms_verificado ?? false);
-  const credentialVerified = Boolean(user.verifications?.credential ?? user.credencial_verificada ?? false);
-  const verificationTimestamps = user.verificationTimestamps ?? {
-    email: user.correo_verificado_en ?? null,
-    sms: user.sms_verificado_en ?? null,
-    credential: user.credencial_verificada_en ?? null,
+  const emailVerified = Boolean(user?.verifications?.email ?? user?.correo_verificado ?? user?.verified ?? user?.verificado ?? false);
+  const smsVerified = Boolean(user?.verifications?.sms ?? user?.sms_verificado ?? false);
+  const credentialVerified = Boolean(user?.verifications?.credential ?? user?.credencial_verificada ?? false);
+  const verificationTimestamps = user?.verificationTimestamps ?? {
+    email: user?.correo_verificado_en ?? null,
+    sms: user?.sms_verificado_en ?? null,
+    credential: user?.credencial_verificada_en ?? null,
   };
   const verificationCount = [emailVerified, smsVerified, credentialVerified].filter(Boolean).length;
   const lastVerificationDate = formatDateTime(
     verificationTimestamps.credential || verificationTimestamps.sms || verificationTimestamps.email,
   );
 
-  const userOrders: UserOrder[] = Array.isArray((user as UserInfo & { orders?: UserOrder[] }).orders)
-    ? ((user as UserInfo & { orders?: UserOrder[] }).orders ?? [])
+  const userOrders: UserOrder[] = Array.isArray((user as UserInfo & { orders?: UserOrder[] })?.orders)
+    ? ((user as UserInfo & { orders?: UserOrder[] })?.orders ?? [])
     : [];
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
   const lastOrderDate = lastOrder ? formatDateTime(lastOrder.fecha) : null;
 
-  const initials = getInitials(user.nombre ?? user.correo_electronico ?? null);
+  const initials = getInitials(user?.nombre ?? user?.correo_electronico ?? null);
 
   const initialSnapshot = useMemo<ProfileFormState>(
     () => ({
-      name: user.nombre ?? "",
-      phoneNumber: user.numero_telefono ?? "",
+      name: user?.nombre ?? "",
+      phoneNumber: user?.numero_telefono ?? "",
       accountNumber: accountNumberValue ?? "",
       age: ageValue !== null && ageValue !== undefined ? String(ageValue) : "",
       avatarUrl: avatarUrl ?? "",
       credentialUrl: credentialUrl ?? "",
     }),
-    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user.nombre, user.numero_telefono],
+    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, user?.numero_telefono],
   );
 
   useEffect(() => {
@@ -271,7 +255,7 @@ export default function UserProfilePage() {
 
   const handleFormChange = useCallback(
     (field: keyof ProfileFormState, value: string) => {
-      setFormState((prev) => ({ ...prev, [field]: value }));
+      setFormState((prev: ProfileFormState) => ({ ...prev, [field]: value }));
     },
     [],
   );
@@ -313,7 +297,7 @@ export default function UserProfilePage() {
       setFormError(null);
 
       try {
-        await api.updateUserProfile(user.id_usuario, {
+        await api.updateUserProfile(user?.id_usuario ?? 0, {
           name: trimmedName,
           phoneNumber: trimmedPhone || null,
           accountNumber: trimmedAccount || null,
@@ -380,7 +364,7 @@ export default function UserProfilePage() {
     {
       id: "email",
       label: "Correo electronico",
-      value: user.correo_electronico ?? "Sin registrar",
+      value: user?.correo_electronico ?? "Sin registrar",
       verified: emailVerified,
       timestamp: verificationTimestamps.email,
       description: emailVerified ? "Correo confirmado" : "Confirma tu correo para recibir notificaciones",
@@ -388,7 +372,7 @@ export default function UserProfilePage() {
     {
       id: "sms",
       label: "Telefono movil",
-      value: user.numero_telefono ?? "Sin registrar",
+      value: user?.numero_telefono ?? "Sin registrar",
       verified: smsVerified,
       timestamp: verificationTimestamps.sms,
       description: smsVerified ? "SMS verificado" : "Registra y confirma tu numero para alertas",
@@ -431,31 +415,31 @@ export default function UserProfilePage() {
                     {roleLabel}
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-3 py-1 text-xs font-medium text-white/80">
-                    ID {user.id_usuario}
+                    ID {user?.id_usuario}
                   </span>
                 </div>
 
                 <div className="flex flex-wrap items-start gap-6">
                   <div className="relative h-20 w-20 overflow-hidden rounded-3xl border border-white/30 bg-white/20 shadow-xl">
                     {avatarUrl ? (
-                      <Image src={avatarUrl} alt={user.nombre ?? "Avatar"} fill className="object-cover" sizes="80px" unoptimized />
+                      <Image src={avatarUrl} alt={user?.nombre ?? "Avatar"} fill className="object-cover" sizes="80px" unoptimized />
                     ) : (
                       <span className="grid h-full w-full place-items-center text-2xl font-semibold text-white/90">{initials}</span>
                     )}
                   </div>
                   <div className="space-y-3">
                     <h1 className="text-[2rem] font-semibold leading-tight sm:text-[2.4rem]">
-                      {user.nombre ?? "Usuario FilaCero"}
+                      {user?.nombre ?? "Usuario FilaCero"}
                     </h1>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
                       <span className="inline-flex items-center gap-1.5">
                         <Mail className="h-4 w-4" />
-                        {user.correo_electronico}
+                        {user?.correo_electronico}
                       </span>
-                      {user.numero_telefono && (
+                      {user?.numero_telefono && (
                         <span className="inline-flex items-center gap-1.5">
                           <Phone className="h-4 w-4" />
-                          {user.numero_telefono}
+                          {user?.numero_telefono}
                         </span>
                       )}
                       <span className="inline-flex items-center gap-1.5">
@@ -658,7 +642,7 @@ export default function UserProfilePage() {
                 <dl className="mt-6 space-y-4 text-sm">
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Correo</dt>
-                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{user.correo_electronico}</dd>
+                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{user?.correo_electronico}</dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Fecha de nacimiento</dt>
