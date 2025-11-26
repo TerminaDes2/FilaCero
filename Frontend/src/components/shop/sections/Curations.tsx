@@ -7,37 +7,38 @@ type CurationCard = {
   subtitle?: string;
   colorFrom: string;
   colorTo: string;
-  action: Record<string, string>;
+  action?: Record<string, string>;
+  clearKeys?: string[];
 };
 
 const curations: CurationCard[] = [
   {
-    title: "Promos activas",
-    subtitle: "Ver ofertas vigentes",
+    title: "Catálogo completo",
+    subtitle: "Ver productos sin filtros",
+    colorFrom: "from-[var(--fc-brand-500)]",
+    colorTo: "to-[var(--fc-teal-500)]",
+    clearKeys: ["offers", "sort", "status", "categoria"],
+  },
+  {
+    title: "Ofertas visibles",
+    subtitle: "Detectamos títulos con promo",
     colorFrom: "from-rose-500",
     colorTo: "to-orange-500",
     action: { offers: "1" },
   },
   {
-    title: "Entrega rápida",
-    subtitle: "Listos en menos de 20 min",
+    title: "Abiertos ahora",
+    subtitle: "Productos con estado activo",
     colorFrom: "from-emerald-500",
     colorTo: "to-teal-500",
-    action: { sort: "fast" },
+    action: { status: "activo" },
   },
   {
-    title: "Mejor precio",
-    subtitle: "Ordenar por costo",
+    title: "Sin categoría",
+    subtitle: "Listado para clasificar",
     colorFrom: "from-indigo-500",
     colorTo: "to-fuchsia-500",
-    action: { sort: "price" },
-  },
-  {
-    title: "Cerca de mí",
-    subtitle: "Negocios en tu zona",
-    colorFrom: "from-blue-500",
-    colorTo: "to-cyan-500",
-    action: { sort: "near" },
+    action: { categoria: "__none__" },
   },
 ];
 
@@ -63,61 +64,61 @@ export default function Curations() {
     }, {});
   }, [params]);
 
-  const handleAction = useCallback((action: Record<string, string>) => {
-    const isActive = Object.entries(action).every(([key, value]) => activeMap[key] === value);
-    const updates: Record<string, string | null> = {};
-    Object.entries(action).forEach(([key, value]) => {
-      updates[key] = isActive ? null : value;
-    });
-    const query = buildQuery(params, updates);
-    router.push(query, { scroll: false });
-  }, [activeMap, params, router]);
-
-  const isCardActive = useCallback((action: Record<string, string>) => {
-    return Object.entries(action).every(([key, value]) => activeMap[key] === value);
+  const computeActive = useCallback((card: CurationCard) => {
+    const actionEntries = Object.entries(card.action ?? {});
+    const clearsSatisfied = card.clearKeys ? card.clearKeys.every((key) => !(key in activeMap)) : true;
+    const actionSatisfied = actionEntries.every(([key, value]) => activeMap[key] === value);
+    return clearsSatisfied && actionSatisfied;
   }, [activeMap]);
 
+  const handleCard = useCallback((card: CurationCard) => {
+    const active = computeActive(card);
+    const updates: Record<string, string | null> = {};
+
+    if (card.clearKeys) {
+      card.clearKeys.forEach((key) => {
+        updates[key] = null;
+      });
+    }
+
+    if (card.action) {
+      Object.entries(card.action).forEach(([key, value]) => {
+        updates[key] = active ? null : value;
+      });
+    }
+
+    // Avoid pushing the same URL if nothing changes
+    const query = buildQuery(params, updates);
+    const current = params.toString();
+    const next = query === "?" ? "" : query.slice(1);
+    if (next === current) {
+      return;
+    }
+    router.push(next ? `?${next}` : "?", { scroll: false });
+  }, [computeActive, params, router]);
+
   return (
-    <section className="mt-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4">
-          {curations.slice(0, 2).map((c) => {
-            const active = isCardActive(c.action);
-            return (
+    <section className="mt-6 hidden sm:block">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {curations.map((card) => {
+          const active = computeActive(card);
+          return (
             <button
-              key={c.title}
+              key={card.title}
+              type="button"
               aria-pressed={active}
-              onClick={() => handleAction(c.action)}
-              className={`relative overflow-hidden rounded-3xl p-6 h-40 text-left bg-gradient-to-br ${c.colorFrom} ${c.colorTo} text-white transition-transform hover:translate-y-[-2px] ${active ? "ring-2 ring-white/80" : ""}`}
+              onClick={() => handleCard(card)}
+              className={`relative overflow-hidden rounded-3xl p-6 min-h-[156px] text-left bg-gradient-to-br ${card.colorFrom} ${card.colorTo} text-white transition-transform hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${active ? "ring-2 ring-white/80" : ""}`}
             >
-              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-              <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-black/10 blur-2xl" />
-              <div className="relative">
-                <div className="text-xl font-extrabold leading-tight">{c.title}</div>
-                {c.subtitle && <div className="text-sm opacity-90">{c.subtitle}</div>}
+              <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-white/15 blur-2xl" />
+              <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-black/10 blur-2xl" />
+              <div className="relative space-y-2">
+                <div className="text-lg font-extrabold leading-tight sm:text-xl">{card.title}</div>
+                {card.subtitle && <div className="text-sm font-medium text-white/90">{card.subtitle}</div>}
               </div>
             </button>
-          );})}
-        </div>
-        <div className="grid grid-rows-2 gap-4">
-          {curations.slice(2).map((c) => {
-            const active = isCardActive(c.action);
-            return (
-            <button
-              key={c.title}
-              aria-pressed={active}
-              onClick={() => handleAction(c.action)}
-              className={`relative overflow-hidden rounded-3xl p-6 text-left bg-gradient-to-br ${c.colorFrom} ${c.colorTo} text-white transition-transform hover:translate-y-[-2px] ${active ? "ring-2 ring-white/80" : ""}`}
-            >
-              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-              <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-black/10 blur-2xl" />
-              <div className="relative">
-                <div className="text-xl font-extrabold leading-tight">{c.title}</div>
-                {c.subtitle && <div className="text-sm opacity-90">{c.subtitle}</div>}
-              </div>
-            </button>
-          );})}
-        </div>
+          );
+        })}
       </div>
     </section>
   );

@@ -148,13 +148,22 @@ export default function ProductsFeed() {
     }
 
     arr.sort((a, b) => {
-      if (sortKey === "price") return a.precio - b.precio;
-      if (sortKey === "rating") return 0;
-      if (sortKey === "near") return 0;
-      if (sortKey === "fast") return 0;
+      if (sortKey === "price-asc") {
+        return a.precio - b.precio;
+      }
+      if (sortKey === "price-desc") {
+        return b.precio - a.precio;
+      }
+      if (sortKey === "stock") {
+        const stockA = typeof a.stock === "number" ? a.stock : -1;
+        const stockB = typeof b.stock === "number" ? b.stock : -1;
+        if (stockB !== stockA) return stockB - stockA;
+        return (b.popularity ?? 0) - (a.popularity ?? 0);
+      }
       const pa = a.popularity ?? 0;
       const pb = b.popularity ?? 0;
-      return pb - pa;
+      if (pb !== pa) return pb - pa;
+      return a.nombre.localeCompare(b.nombre);
     });
 
     return arr.map((p) => {
@@ -180,17 +189,24 @@ export default function ProductsFeed() {
     });
   }, [items, params]);
 
-  const handleAdd = useCallback((card: (typeof cards)[number]) => {
-    addToCart(
-      {
-        id: card.id,
-        nombre: card.name,
-        precio: card.price,
-        imagen: card.cover,
-      },
-      1,
-    );
-  }, [addToCart]);
+  const handleAdd = useCallback(
+    (card: (typeof cards)[number]) => {
+      if (typeof card.stock === "number" && card.stock <= 0) {
+        return;
+      }
+
+      addToCart(
+        {
+          id: card.id,
+          nombre: card.name,
+          precio: card.price,
+          imagen: card.cover,
+        },
+        1,
+      );
+    },
+    [addToCart],
+  );
 
   if (loading) {
     return (
@@ -223,42 +239,53 @@ export default function ProductsFeed() {
   return (
     <section className="mt-6" aria-label="Productos">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {cards.slice(0, visible).map((c) => (
-          <article key={c.id} className="rounded-3xl border border-[var(--fc-border-soft)] bg-white/90 shadow-sm transition hover:shadow-md">
-            <div className="relative h-44 bg-slate-100 overflow-hidden rounded-t-3xl">
-              {c.cover ? (
-                <Image src={c.cover} alt={c.name} fill className="object-cover" sizes="(min-width: 1280px) 25vw, (min-width: 640px) 40vw, 100vw" unoptimized />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center text-slate-400 text-sm">Sin imagen</div>
-              )}
-              {c.category && (
-                <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-white/90 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm">
-                  {c.category}
-                </span>
-              )}
-            </div>
-            <div className="p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-[15px] font-semibold text-slate-900 leading-snug line-clamp-2">{c.name}</h3>
-                <span className="text-sm font-semibold text-slate-900 whitespace-nowrap">{priceLabel(c.price)}</span>
+        {cards.slice(0, visible).map((c) => {
+          const isOutOfStock = typeof c.stock === "number" && c.stock <= 0;
+
+          return (
+            <article key={c.id} className="rounded-3xl border border-[var(--fc-border-soft)] bg-white/90 shadow-sm transition hover:shadow-md">
+              <div className="relative h-44 bg-slate-100 overflow-hidden rounded-t-3xl">
+                {c.cover ? (
+                  <Image src={c.cover} alt={c.name} fill className="object-cover" sizes="(min-width: 1280px) 25vw, (min-width: 640px) 40vw, 100vw" unoptimized />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-slate-400 text-sm">Sin imagen</div>
+                )}
+                {c.category && (
+                  <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-white/90 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm">
+                    {c.category}
+                  </span>
+                )}
               </div>
-              {c.description && (
-                <p className="text-[12px] text-slate-500 leading-relaxed line-clamp-2">{c.description}</p>
-              )}
-              <div className="flex items-center justify-between gap-3 pt-1">
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
-                  {c.stockLabel}
-                </span>
-                <button
-                  onClick={() => handleAdd(c)}
-                  className="inline-flex items-center justify-center rounded-full bg-[var(--fc-brand-600)] px-4 py-1.5 text-[12px] font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)]"
-                >
-                  Añadir
-                </button>
+              <div className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-[15px] font-semibold text-slate-900 leading-snug line-clamp-2">{c.name}</h3>
+                  <span className="text-sm font-semibold text-slate-900 whitespace-nowrap">{priceLabel(c.price)}</span>
+                </div>
+                {c.description && (
+                  <p className="text-[12px] text-slate-500 leading-relaxed line-clamp-2">{c.description}</p>
+                )}
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
+                    {c.stockLabel}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isOutOfStock}
+                    aria-disabled={isOutOfStock}
+                    onClick={() => handleAdd(c)}
+                    className={`inline-flex items-center justify-center rounded-full px-4 py-1.5 text-[12px] font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                      isOutOfStock
+                        ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                        : "bg-[var(--fc-brand-600)] text-white hover:bg-[var(--fc-brand-500)]"
+                    }`}
+                  >
+                    {isOutOfStock ? "Sin stock" : "Añadir"}
+                  </button>
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
       <div ref={sentinelRef} />
     </section>

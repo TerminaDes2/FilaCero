@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "../../../lib/api";
@@ -120,8 +121,26 @@ export default function StoryRail() {
   }, [categories]);
 
   return (
-    <section className="mt-5" aria-label="Accesos rápidos">
-      <nav className="-mx-2 overflow-x-auto no-scrollbar" aria-label="Categorías destacadas">
+    <section id="categorias" className="mt-12" aria-label="Accesos rápidos">
+      <div className="flex flex-wrap items-start justify-between gap-4 px-2">
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-brand-600)]">
+            Categorías
+          </span>
+          <h2 className="text-xl font-semibold text-slate-900">Descubre qué se está pidiendo</h2>
+          <p className="max-w-md text-sm text-slate-500">
+            Filtra el catálogo por tipo de producto y encuentra lo que necesitas en segundos.
+          </p>
+        </div>
+        <Link
+          href="/productos"
+          className="inline-flex items-center justify-center rounded-full border border-[var(--fc-border-soft)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-200)]"
+        >
+          Ver todas las categorías
+        </Link>
+      </div>
+
+      <nav className="-mx-2 mt-4 overflow-x-auto no-scrollbar" aria-label="Categorías destacadas">
         <div className="flex gap-4 px-2 py-2">
           <button
             key="all"

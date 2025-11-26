@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, User, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { useUserStore } from "../state/userStore";
 import UserDropdown from "./UserDropdown";
 import { useBusinessStore } from "../state/businessStore";
@@ -344,14 +344,6 @@ export default function Navbar() {
                     <span>Mi perfil</span>
                   </Link>
 
-                  <Link
-                    href="/shop"
-                    onClick={closeUserSheet}
-                    className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
-                  >
-                    <User className="h-4 w-4 text-brand-500" />
-                    <span>Ver tienda demo</span>
-                  </Link>
                 </div>
 
                 <div className="relative border-t border-brand-100/70 bg-brand-50/60 px-5 py-5">
