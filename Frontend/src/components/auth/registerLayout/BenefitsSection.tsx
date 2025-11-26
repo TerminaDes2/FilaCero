@@ -20,6 +20,7 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const { role } = useUserStore();
   const { t } = useTranslation();
 
+  const isOwner = role === 'OWNER';
   const roleColor = isOwner ? '#3CB29A' : '#D45978';
   const accentSurface = isOwner
     ? 'from-emerald-50 via-teal-50 to-cyan-50'
@@ -98,10 +99,10 @@ export function BenefitsSection({}: BenefitsSectionProps) {
             {isOwner ? 'Modo negocio' : 'Modo cliente'}
           </div>
           <h2 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl lg:text-[2.1rem]" style={{ color: roleColor }}>
-            {headline}
+            {welcomeTitle}
           </h2>
           <p className="max-w-lg text-sm text-slate-600 sm:text-base">
-            {subtitle}
+            {welcomeSubtitle}
           </p>
         </header>
 

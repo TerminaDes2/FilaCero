@@ -6,7 +6,8 @@ import { api, activeBusiness } from '../../lib/api';
 import { useUserStore } from "../../state/userStore";
 import { useBusinessStore } from '../../state/businessStore';
 import { useTranslation } from '../../hooks/useTranslation';
-// Imports depurados
+import { BusinessPickerDialog } from '../business/BusinessPickerDialog';
+import type { Business } from '../business/BusinessPickerDialog';
 
 interface LoginFormProps {
 	onSuccess?: () => void;
@@ -19,9 +20,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [submitting, setSubmitting] = useState(false);
 	const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
 	const [error, setError] = useState<string | null>(null);
+	const [businessPickerOpen, setBusinessPickerOpen] = useState(false);
+	const [businessOptions, setBusinessOptions] = useState<Business[]>([]);
  	const router = useRouter();
  	const { setName, setBackendRole, login } = useUserStore();
- 	const { setActiveBusiness } = useBusinessStore();
+ 	const { setActiveBusiness, clearBusiness } = useBusinessStore();
 	const { t } = useTranslation();
 	// Navegación directa según rol
 

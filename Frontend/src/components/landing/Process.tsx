@@ -1,13 +1,15 @@
 "use client";
 import { SectionHeading } from "../../components/SectionHeading";
 import { useTranslation } from "../../hooks/useTranslation";
+
 type Step = {
   number: number;
   title: string;
   text: string;
-  palette: {
-    light: StepPalette;
-    dark: StepPalette;
+  colors: {
+    primary: string;
+    dark: string;
+    light: string;
   };
 };
 
@@ -108,35 +110,14 @@ export function Process() {
                 }}
               >
                 <div className="absolute inset-x-0 top-0 h-1 opacity-40 group-hover:opacity-70 transition" style={{ background: `linear-gradient(90deg, ${s.colors.primary}22, ${s.colors.primary})` }} />
-                {/* Per-card colored hover glow */}
-                <div
-                  data-step-card
-                  className="relative flex h-full flex-col rounded-2xl border bg-white/80 p-6 shadow-sm transition will-change-transform hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-transparent dark:[--step-card-surface:var(--step-card-surface-dark)] dark:[--step-card-border:var(--step-card-border-dark)] dark:[--step-card-text:var(--step-card-text-dark)] dark:[--step-card-muted:var(--step-card-muted-dark)] dark:[--step-card-accent:var(--step-card-accent-dark)] dark:[--step-card-accent-soft:var(--step-card-accent-soft-dark)] dark:[--step-card-glow:var(--step-card-glow-dark)]"
-                  style={cardStyle}
-                >
+                <div className="mb-4">
                   <div
-                    className="absolute inset-x-0 top-0 h-1 opacity-50 transition group-hover:opacity-80"
-                    style={{ background: "linear-gradient(90deg, var(--step-card-accent-soft), var(--step-card-accent))" }}
-                  />
-                  <div
-                    className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl blur-xl opacity-0 transition duration-500 group-hover:opacity-80"
-                    style={{ background: "var(--step-card-glow)" }}
-                  />
-                  <div className="mb-4">
-                    <div
-                      className="flex h-11 w-11 items-center justify-center rounded-full text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
-                      style={{ background: "var(--step-card-accent)" }}
-                      aria-hidden
-                    >
-                      <StepIcon step={step.number} />
-                    </div>
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
+                    style={{ backgroundColor: s.colors.primary }}
+                    aria-hidden
+                  >
+                    <StepIcon step={s.number} />
                   </div>
-                  <h3 className="mb-2 font-semibold tracking-tight" style={{ color: "var(--step-card-text)" }}>
-                    {step.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--step-card-muted)" }}>
-                    {step.text}
-                  </p>
                 </div>
                 <h3 className="font-semibold mb-2" style={{ color: s.colors.dark }}>{t(s.title)}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: s.colors.dark + 'CC' }}>{t(s.text)}</p>
