@@ -23,12 +23,12 @@ export function RegisterLayout({
 
   return (
     <div className={step === 'form'
-      ? "fixed inset-0 w-screen h-screen grid grid-cols-1 lg:grid-cols-2"
-      : "min-h-screen w-full flex flex-col items-center justify-center overflow-hidden px-0 py-0"}>
+      ? "fixed inset-0 w-screen h-screen grid grid-cols-1 lg:grid-cols-2 bg-white dark:bg-slate-950"
+      : "min-h-screen w-full flex flex-col items-center justify-center overflow-hidden px-0 py-0 bg-white dark:bg-slate-950"}>
       
       {/* Brand badge (centrado arriba, chip translúcido) */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
-        <div className="px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-sm">
+        <div className="px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-sm dark:bg-slate-900/80 dark:ring-white/10">
           <BrandLogo withWordmark size={44} asLink={true} />
         </div>
       </div>

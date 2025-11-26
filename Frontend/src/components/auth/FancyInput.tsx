@@ -49,20 +49,24 @@ export const FancyInput: React.FC<FancyInputProps> = ({
     <div className="relative group">
       <div
         className={`relative rounded-xl border bg-white/85 backdrop-blur transition
-        ${hasError ? 'border-rose-300 bg-rose-50/90 shadow-sm' : 'border-gray-200/80 hover:border-gray-300'}
-        focus-within:ring-2 focus-within:ring-brand-400/30 shadow-sm focus-within:shadow-md`}
+        ${hasError
+          ? 'border-rose-300 bg-rose-50/90 shadow-sm dark:border-rose-400/60 dark:bg-rose-500/15'
+          : 'border-gray-200/80 hover:border-gray-300 dark:border-slate-700/70 dark:hover:border-slate-500/70'}
+        focus-within:ring-2 focus-within:ring-brand-400/30 shadow-sm focus-within:shadow-md dark:bg-slate-900/70`}
       >
         {/* Floating label */}
         <label
           htmlFor={id}
           className={`absolute ${leftIcon ? 'left-10' : 'left-3'} transition-[top,transform,color,background-color] px-1 rounded-md text-[11px] tracking-wide font-medium
-            ${(focused || hasContent) ? '-top-2.5 scale-90 bg-white/95 text-brand-600 shadow-sm' : 'top-3 text-gray-500'}
+            ${(focused || hasContent)
+              ? '-top-2.5 scale-90 bg-white/95 text-brand-600 shadow-sm dark:bg-slate-900 dark:text-brand-300'
+              : 'top-3 text-gray-500 dark:text-slate-400'}
             pointer-events-none origin-left duration-200`}
         >
           {label}
         </label>
         {leftIcon && (
-          <span className="absolute inset-y-0 left-3 flex items-center pt-0.5 text-gray-400 pointer-events-none">
+          <span className="absolute inset-y-0 left-3 flex items-center pt-0.5 text-gray-400 pointer-events-none dark:text-slate-400">
             {leftIcon}
           </span>
         )}
@@ -72,7 +76,7 @@ export const FancyInput: React.FC<FancyInputProps> = ({
           type={type}
           aria-invalid={hasError || undefined}
           aria-describedby={describedBy}
-          className={`w-full rounded-xl bg-transparent outline-none appearance-none text-sm text-gray-800 placeholder-transparent
+          className={`w-full rounded-xl bg-transparent outline-none appearance-none text-sm text-gray-800 placeholder-transparent dark:text-slate-100
             ${leftIcon ? 'pl-10' : 'pl-2'} ${isPassword || rightIcon ? 'pr-11' : 'pr-2'} py-3`}
           onFocus={(e) => {
             setFocused(true);
@@ -92,7 +96,7 @@ export const FancyInput: React.FC<FancyInputProps> = ({
             type="button"
             tabIndex={isPassword ? 0 : -1}
             onClick={isPassword ? onTogglePassword : undefined}
-            className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700 transition select-none focus:outline-none focus:ring-0"
+            className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700 transition select-none focus:outline-none focus:ring-0 dark:text-slate-400 dark:hover:text-slate-200"
             aria-label={isPassword ? 'Mostrar / ocultar contraseña' : undefined}
           >
             {isPassword ? (
@@ -123,12 +127,12 @@ export const FancyInput: React.FC<FancyInputProps> = ({
         </div>
       )}
       {hint && !error && (
-        <p id={`${id}-hint`} className="mt-1 text-xs text-gray-500">
+        <p id={`${id}-hint`} className="mt-1 text-xs text-gray-500 dark:text-slate-400">
           {hint}
         </p>
       )}
       {hasError && (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-xs font-medium text-rose-600">
+        <p id={`${id}-error`} role="alert" className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-300">
           {error}
         </p>
       )}

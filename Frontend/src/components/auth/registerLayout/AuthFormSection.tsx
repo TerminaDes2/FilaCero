@@ -14,17 +14,17 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
   // Si no hay rol seleccionado, mostrar mensaje de error
   if (!role) {
     return (
-      <div className="h-full flex flex-col justify-center items-center px-6 sm:px-8 py-8 lg:py-12 bg-gradient-to-br from-gray-50 to-white">
+      <div className="h-full flex flex-col justify-center items-center px-6 sm:px-8 py-8 lg:py-12 bg-gradient-to-br from-gray-50 to-white dark:from-slate-950 dark:to-slate-900">
         <div className="text-center max-w-md">
-          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center dark:from-rose-400/30 dark:to-rose-500/20">
+            <svg className="w-10 h-10 text-rose-600 dark:text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 dark:text-slate-100">
             {t('auth.register.error.noRole.title')}
           </h2>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-gray-600 mb-6 dark:text-slate-300">
             {t('auth.register.error.noRole.subtitle')}
           </p>
           <button
@@ -50,7 +50,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
     : t('auth.register.benefits.welcomeSubtitle.client');
 
   return (
-    <div className={`h-full flex flex-col justify-center items-center px-4 sm:px-6 lg:px-10 xl:px-12 py-6 lg:py-8 overflow-y-auto bg-gradient-to-br ${gradientFrom} ${gradientTo}`}>
+    <div className={`h-full flex flex-col justify-center items-center px-4 sm:px-6 lg:px-10 xl:px-12 py-6 lg:py-8 overflow-y-auto bg-gradient-to-br ${gradientFrom} ${gradientTo} dark:bg-slate-950 dark:from-slate-950 dark:to-slate-900`}>
       <div className="w-full max-w-xl mx-auto">
         {/* Header con diseño mejorado */}
         <div className="mb-5 lg:mb-6 text-center relative">
@@ -73,13 +73,13 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
             </div>
           </div>
           
-          <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 tracking-tight mb-2 dark:text-slate-100">
             {t('auth.register.title.prefix')}{' '}
             <span className="bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent"> 
               {role === 'OWNER' ? t('auth.register.title.role.owner') : t('auth.register.title.role.client')}
             </span>
           </h1>
-          <p className="text-[13px] lg:text-sm text-gray-600 max-w-sm mx-auto leading-relaxed">
+          <p className="text-[13px] lg:text-sm text-gray-600 max-w-sm mx-auto leading-relaxed dark:text-slate-300">
             {subtitle}
           </p>
         </div>
@@ -107,14 +107,14 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
         
         <div className="space-y-3.5 lg:space-y-4">
           {/* Formulario con glassmorphism */}
-          <div className="bg-white/65 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-5 sm:p-6 lg:p-7">
+          <div className="bg-white/65 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-5 sm:p-6 lg:p-7 dark:bg-slate-900/70 dark:border-slate-800/70">
             <SignupForm />
           </div>
           
           {/* Sección "¿Ya tienes una cuenta?" con diseño mejorado */}
           <div className="text-center">
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
-              <p className="text-sm text-gray-700">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/70">
+              <p className="text-sm text-gray-700 dark:text-slate-300">
                 {t('auth.register.alreadyAccount.prefix')}
               </p>
               <a 
@@ -133,7 +133,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
           <div className="block lg:hidden pt-2">
             <button
               onClick={onBackToSelection}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-medium text-gray-700 bg-white/60 hover:bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 transition-all duration-200 hover:shadow-md"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-medium text-gray-700 bg-white/60 hover:bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 transition-all duration-200 hover:shadow-md dark:text-slate-200 dark:bg-slate-900/70 dark:hover:bg-slate-800 dark:border-slate-800"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />

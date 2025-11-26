@@ -7,6 +7,8 @@ import { api } from '../../lib/api';
 import { useUserStore } from '../../state/userStore';
 import { EmailVerificationModal } from './EmailVerificationModal';
 import { useTranslation } from '../../hooks/useTranslation';
+import { SmsVerificationModal } from './SmsVerificationModal';
+import { CredentialVerificationPrompt } from './CredentialVerificationPrompt';
 
 interface SignupFormProps {
 	onSuccess?: () => void;
@@ -76,7 +78,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		if(!/[0-9]/.test(password)) s.push(t('auth.register.form.suggestions.number'));
 		if(!/[^A-Za-z0-9]/.test(password)) s.push(t('auth.register.form.suggestions.symbol'));
 		return s;
-	}, [password]);
+		}, [password, t]);
 
 	const submit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -143,13 +145,37 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		} catch {}
 	}, []);
 
+	const [showSmsVerification, setShowSmsVerification] = useState(false);
+	const [showCredentialPrompt, setShowCredentialPrompt] = useState(false);
+	const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
+
 	const handleVerificationSuccess = useCallback(() => {
 		setShowVerificationModal(false);
 		setPendingEmail(null);
 		setVerificationExpiresAt(null);
-		onSuccess?.();
-		router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
-	}, [isOwner, onSuccess, router]);
+		setVerifiedPhone(null);
+		setShowSmsVerification(true);
+	}, []);
+
+	const handleSmsVerified = useCallback(({ phone }: { phone: string }) => {
+		setVerifiedPhone(phone);
+		const proceed = () => {
+			setShowSmsVerification(false);
+			setShowCredentialPrompt(true);
+		};
+		if (typeof window !== 'undefined') {
+			window.setTimeout(proceed, 800);
+		} else {
+			proceed();
+		}
+	}, []);
+
+	const handleCredentialContinue = useCallback(() => {
+		setShowCredentialPrompt(false);
+		const redirectTo = isOwner ? '/onboarding/negocio' : '/onboarding/customer';
+		const target = `/verification/credencial?redirect=${encodeURIComponent(redirectTo)}`;
+		router.push(target);
+	}, [isOwner, router]);
 
 	return (
 		<>
@@ -325,6 +351,20 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				session={verificationSession}
 				onClose={handleVerificationClosed}
 				onVerified={() => handleVerificationSuccess()}
+			/>
+		)}
+		{showSmsVerification && (
+			<SmsVerificationModal
+				open={showSmsVerification}
+				defaultPhone={verifiedPhone ?? undefined}
+				onVerified={handleSmsVerified}
+			/>
+		)}
+		{showCredentialPrompt && (
+			<CredentialVerificationPrompt
+				open={showCredentialPrompt}
+				phone={verifiedPhone}
+				onContinue={handleCredentialContinue}
 			/>
 		)}
 		</>
