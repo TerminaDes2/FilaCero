@@ -1,14 +1,14 @@
 "use client";
-import type { ReactNode, ElementType } from "react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import {
   CheckCircle2,
-  Clock3,
+  Clock,
   IdCard,
   Mail,
   Phone,
   ShieldAlert,
-  type LucideIcon,
+  Sparkles,
 } from "lucide-react";
 import { UserInfo } from "../../lib/api";
 
@@ -16,7 +16,7 @@ interface VerificationSectionProps {
   user: UserInfo;
 }
 
-type VerificationStatus = "verified" | "pending" | "missing" | "unverified";
+type VerificationStatus = "verified" | "pending" | "missing";
 
 interface VerificationItem {
   id: string;
@@ -27,56 +27,29 @@ interface VerificationItem {
   timestamp?: string | null;
 }
 
-interface StatusStyle {
-  badge: string;
-  accent: string;
-  icon: ReactNode;
-  helper: string;
-  container: string;
-  helperColor: string;
-}
-
-const STATUS_STYLES: Record<VerificationStatus, StatusStyle> = {
+const STATUS_CONFIG = {
   verified: {
-    badge: "bg-[var(--fc-teal-100)] text-[var(--fc-teal-700)]",
-    accent: "from-[var(--fc-teal-200)]/30",
-    icon: <CheckCircle2 className="h-4 w-4 text-[var(--fc-teal-500)]" />,
-    helper: "Ya está sincronizado con los tableros",
-    container: "border-[var(--fc-teal-300)] bg-[var(--fc-teal-50)] text-[var(--fc-teal-700)]",
-    helperColor: "text-[var(--fc-teal-500)]",
+    badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    container: "border-emerald-200 bg-emerald-50",
+    icon: <CheckCircle2 className="h-4 w-4" />,
+    iconColor: "text-emerald-600",
+    text: "Verificado",
   },
   pending: {
-    badge: "bg-[var(--fc-brand-100)] text-[var(--fc-brand-600)]",
-    accent: "from-[var(--fc-brand-200)]/30",
-    icon: <Clock3 className="h-4 w-4 text-[var(--fc-brand-500)]" />,
-    helper: "Revisa este dato para activarlo",
-    container: "border-[var(--fc-brand-200)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)]",
-    helperColor: "text-[var(--fc-brand-500)]",
+    badge: "bg-amber-100 text-amber-700 border-amber-200",
+    container: "border-amber-200 bg-amber-50",
+    icon: <Clock className="h-4 w-4" />,
+    iconColor: "text-amber-600",
+    text: "Pendiente",
   },
   missing: {
-    badge: "bg-[var(--fc-brand-100)] text-[var(--fc-brand-600)]",
-    accent: "from-[var(--fc-brand-200)]/30",
-    icon: <ShieldAlert className="h-4 w-4 text-[var(--fc-brand-500)]" />,
-    helper: "Completa la información para continuar",
-    container: "border-[var(--fc-brand-200)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)]",
-    helperColor: "text-[var(--fc-brand-400)]",
+    badge: "bg-slate-100 text-slate-700 border-slate-200",
+    container: "border-slate-200 bg-slate-50",
+    icon: <ShieldAlert className="h-4 w-4" />,
+    iconColor: "text-slate-600",
+    text: "Sin registrar",
   },
-  unverified: {
-    badge: "bg-rose-100 text-rose-600",
-    accent: "from-rose-200/30",
-    icon: <ShieldAlert className="h-4 w-4 text-rose-500" />,
-    helper: "Necesitamos comprobar estos datos",
-    container: "border-rose-200 bg-rose-50 text-rose-600",
-    helperColor: "text-rose-400",
-  },
-};
-
-const STATUS_TEXT: Record<VerificationStatus, string> = {
-  verified: "Verificado",
-  pending: "Pendiente",
-  missing: "No registrado",
-  unverified: "Sin verificar",
-};
+} as const;
 
 export default function VerificationSection({ user }: VerificationSectionProps) {
   const emailVerified = user.verifications?.email ?? (user as any).correo_verificado ?? false;
@@ -98,37 +71,37 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
   const verificationItems: VerificationItem[] = [
     {
       id: "email",
-      label: "Correo electrónico",
+      label: "Correo Electrónico",
       status: emailVerified ? "verified" : user.correo_electronico ? "pending" : "missing",
       description: emailVerified
-        ? "Listo para recibir confirmaciones y accesos sin fricción."
+        ? "Tu correo está verificado y activo"
         : user.correo_electronico
-          ? "Confirma tu correo para cerrar ventas y pedidos sin bloqueos."
-          : "Agrega un correo institucional para validar tu cuenta.",
+          ? "Verifica tu correo para activar todas las funciones"
+          : "Agrega un correo para continuar",
       icon: Mail,
       timestamp: formatTimestamp(timestamps.email),
     },
     {
       id: "phone",
-      label: "Número de teléfono",
+      label: "Número de Teléfono",
       status: smsVerified ? "verified" : user.numero_telefono ? "pending" : "missing",
       description: smsVerified
-        ? "Usamos este número para alertas instantáneas y reabrir el POS con 2FA."
+        ? "Tu número de teléfono está verificado"
         : user.numero_telefono
-          ? "Confirma tu número para coordinar entregas y notificaciones."
-          : "Registra un número para recibir recordatorios y alertas.",
+          ? "Verifica tu número para recibir notificaciones"
+          : "Registra tu número para recibir alertas",
       icon: Phone,
       timestamp: formatTimestamp(timestamps.sms),
     },
     {
       id: "credential",
-      label: "Credencial estudiantil",
+      label: "Credencial Estudiantil",
       status: credentialVerified ? "verified" : user.credential_url ? "pending" : "missing",
       description: credentialVerified
-        ? "Tu identidad está aprobada para beneficios y acceso express."
+        ? "Tu identidad ha sido validada"
         : user.credential_url
-          ? "Validaremos tu documento para finalizar el proceso."
-          : "Carga tu credencial para activar beneficios académicos.",
+          ? "Estamos revisando tu credencial"
+          : "Sube tu credencial para validar tu identidad",
       icon: IdCard,
       timestamp: formatTimestamp(timestamps.credential),
     },
@@ -140,59 +113,91 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
   return (
     <section
       id="verifications"
-      className="relative overflow-hidden rounded-3xl border border-white/80 bg-white/95 p-6 text-sm text-slate-600 shadow-[0_40px_120px_-90px_rgba(15,23,42,0.25)] xl:p-8"
+      className="relative overflow-hidden rounded-3xl border border-white/80 bg-white p-6 shadow-lg transition-all hover:shadow-xl lg:p-8"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(222,53,95,0.12)_0%,transparent_60%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(38,198,183,0.12)_0%,transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(222,53,95,0.08)_0%,transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(38,198,183,0.08)_0%,transparent_60%)]" />
+      
       <div className="relative space-y-6">
-        <header className="flex flex-col gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[var(--fc-brand-500)]">Verificaciones activas</p>
-          <h2 className="text-xl font-semibold text-slate-900">Configura la identidad que la cocina confía</h2>
-          <p className="text-sm text-slate-500">
-            Todos los datos verificados viajan directo al POS y a la cocina para respaldar cada pedido en segundos.
-          </p>
+        {/* Header */}
+        <header className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <div className="rounded-xl bg-[var(--fc-teal-100)] p-2">
+              <Sparkles className="h-5 w-5 text-[var(--fc-teal-600)]" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Estado de Verificación</h2>
+              <p className="text-sm text-slate-500">
+                Completa todos los pasos para desbloquear todas las funciones
+              </p>
+            </div>
+          </div>
         </header>
 
+        {/* Progress Bar */}
+        <div className="rounded-2xl border-2 border-slate-200 bg-gradient-to-r from-slate-50 to-white p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="font-semibold text-slate-900">Progreso General</span>
+                <span className="font-bold text-[var(--fc-brand-600)]">{verifiedCount}/{verificationItems.length}</span>
+              </div>
+              <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[var(--fc-brand-500)] to-[var(--fc-teal-500)] transition-all duration-500"
+                  style={{ width: `${completion}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--fc-brand-100)] to-[var(--fc-teal-100)] text-2xl font-black text-[var(--fc-brand-700)]">
+              {completion}%
+            </div>
+          </div>
+        </div>
+
+        {/* Verification Items */}
         <div className="space-y-4">
           {verificationItems.map((item) => {
             const Icon = item.icon;
-            const status = STATUS_STYLES[item.status];
+            const config = STATUS_CONFIG[item.status];
 
             return (
               <div
                 key={item.id}
-                className={`relative overflow-hidden rounded-2xl border px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-45px_rgba(15,23,42,0.35)] ${status.container}`}
+                className={`group relative overflow-hidden rounded-2xl border-2 p-4 transition-all hover:shadow-lg ${config.container}`}
               >
-                <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${status.accent} via-transparent to-transparent opacity-70`} />
-                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3 text-sm">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 text-[var(--fc-brand-600)] shadow-sm">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="space-y-2">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className={`rounded-xl bg-white p-3 shadow-sm ${config.iconColor}`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold text-slate-900">{item.label}</h3>
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${status.badge}`}>
-                          {status.icon}
-                          {STATUS_TEXT[item.status]}
+                        <h3 className="text-base font-bold text-slate-900">{item.label}</h3>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${config.badge}`}>
+                          {config.icon}
+                          {config.text}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500">{item.description}</p>
-                      <p className={`text-[11px] ${status.helperColor}`}>{status.helper}</p>
+                      <p className="text-sm text-slate-600">{item.description}</p>
+                      {item.timestamp && (
+                        <p className="text-xs font-medium text-emerald-600">
+                          ✓ Verificado el {item.timestamp}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {item.timestamp && (
-                    <span className="inline-flex items-center gap-2 self-start rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-[var(--fc-teal-600)]">
-                      Verificado el {item.timestamp}
-                    </span>
-                  )}
+                  {/* Action Button */}
                   {item.status === "missing" && (item.id === "phone" || item.id === "credential") && (
                     <Link
                       href={item.id === "phone" ? "/verification/phone" : "/verification/credencial"}
-                      className="inline-flex items-center gap-2 self-start rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--fc-brand-700)]"
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--fc-brand-600)] px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[var(--fc-brand-700)] hover:shadow-lg hover:scale-105"
                     >
-                      {item.id === "phone" ? "Registrar número" : "Registrar credencial"}
+                      {item.id === "phone" ? "Registrar número" : "Subir credencial"}
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </Link>
                   )}
                 </div>
@@ -201,38 +206,14 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
           })}
         </div>
 
-        <footer className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Progreso total de validación</p>
-            <p>Necesitas completar los 3 pasos para desbloquear ventas sin fricción.</p>
+        {/* Footer Message */}
+        {verifiedCount < verificationItems.length && (
+          <div className="rounded-2xl border-2 border-[var(--fc-brand-200)] bg-gradient-to-br from-[var(--fc-brand-50)] to-white p-4">
+            <p className="text-sm font-medium text-slate-700">
+              <span className="font-bold text-[var(--fc-brand-600)]">¡Casi listo!</span> Completa las {verificationItems.length - verifiedCount} verificaciones restantes para aprovechar al máximo tu cuenta.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative grid h-14 w-14 place-items-center rounded-full bg-[var(--fc-brand-100)] text-sm font-semibold text-[var(--fc-brand-600)]">
-              {completion}%
-              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 36 36" aria-hidden>
-                <path
-                  className="text-[var(--fc-brand-200)]"
-                  strokeWidth="3"
-                  stroke="currentColor"
-                  fill="none"
-                  strokeLinecap="round"
-                  d="M18 2a16 16 0 1 1 0 32 16 16 0 0 1 0-32z"
-                />
-                <path
-                  className="text-[var(--fc-brand-600)]"
-                  strokeWidth="3"
-                  stroke="currentColor"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeDasharray="100"
-                  strokeDashoffset={`${100 - completion}`}
-                  d="M18 2a16 16 0 1 1 0 32 16 16 0 0 1 0-32z"
-                />
-              </svg>
-            </div>
-            <span className="text-xs text-slate-500">{verifiedCount}/{verificationItems.length} completados</span>
-          </div>
-        </footer>
+        )}
       </div>
     </section>
   );
