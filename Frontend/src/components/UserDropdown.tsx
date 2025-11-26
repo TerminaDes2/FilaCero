@@ -89,7 +89,7 @@ export default function UserDropdown() {
   return (
     <div className="relative">
       <button
-        className="user-menu-trigger flex items-center gap-3 rounded-full border border-brand-100 bg-white/85 px-3.5 py-2 text-left shadow-sm transition hover:border-brand-200 hover:bg-brand-50/60"
+        className="user-menu-trigger flex items-center gap-3 rounded-full border border-brand-100 bg-white/85 px-3.5 py-2 text-left shadow-sm transition hover:border-brand-200 hover:bg-brand-50/60 md:px-3.5 md:py-2 md:gap-3"
         onClick={(e) => {
           e.stopPropagation();
           setUserMenuOpen(!userMenuOpen);
