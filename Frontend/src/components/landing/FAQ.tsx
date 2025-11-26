@@ -129,7 +129,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
   }, [isOpen, animate]);
 
   return (
-    <li className="border border-gray-200 rounded-xl bg-white/80 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md">
+    <li className="border border-gray-200 rounded-xl bg-white/80 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md dark:border-white/10 dark:bg-slate-900/60 dark:hover:shadow-brand-950/30">
       <button
         id={`faq-btn-${index}`}
         type="button"
@@ -138,12 +138,12 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
         onClick={onToggle}
         className="w-full flex items-center justify-between text-left px-5 py-4 gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
       >
-        <span className="font-medium text-sm text-gray-800 pr-2">
+        <span className="font-medium text-sm text-gray-800 pr-2 dark:text-slate-100">
           {q}
         </span>
         <span
           aria-hidden
-          className="relative w-6 h-6 flex items-center justify-center text-brand-600"
+          className="relative w-6 h-6 flex items-center justify-center text-brand-600 dark:text-brand-200"
         >
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-180 scale-x-0' : 'scale-x-100'}`} />
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-90'}`} />
@@ -158,7 +158,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
         className="px-5 pb-3"
       >
         <div ref={innerRef} className="pt-1">
-          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">{a}</p>
+          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl dark:text-slate-300">{a}</p>
         </div>
       </div>
     </li>
@@ -168,8 +168,9 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
 export function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <section id="faq" aria-labelledby="faq-heading" className="py-28 relative overflow-hidden bg-white">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+    <section id="faq" aria-labelledby="faq-heading" className="relative overflow-hidden py-28 bg-[var(--fc-surface-base)]">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(148,163,184,0.2)_1px,transparent_0)] [background-size:18px_18px] dark:opacity-[0.12] dark:[background-image:radial-gradient(rgba(30,41,59,0.45)_1px,transparent_0)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/70 via-white/15 to-transparent dark:from-slate-950/88 dark:via-slate-950/32 dark:to-slate-950/85" aria-hidden />
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           id="faq-heading"

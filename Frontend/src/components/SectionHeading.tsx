@@ -20,10 +20,26 @@ interface SectionHeadingProps {
 */
 
 const toneMap: Record<string, { bg: string; text: string; border: string }> = {
-  brand: { bg: 'bg-[var(--fc-brand-50)]', text: 'text-[var(--fc-brand-600)]', border: 'border-[var(--fc-brand-200)]/70' },
-  teal: { bg: 'bg-[var(--fc-teal-50)]', text: 'text-[var(--fc-teal-700)]', border: 'border-[var(--fc-teal-200)]/70' },
-  sun: { bg: 'bg-[var(--fc-sun-50)]', text: 'text-[var(--fc-sun-700)]', border: 'border-[var(--fc-sun-200)]/70' },
-  neutral: { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-300/60' },
+  brand: {
+    bg: 'bg-[var(--fc-brand-50)] dark:bg-[rgba(233,74,111,0.12)]',
+    text: 'text-[var(--fc-brand-600)] dark:text-[var(--fc-brand-100)]',
+    border: 'border-[var(--fc-brand-200)]/70 dark:border-[rgba(233,74,111,0.35)]'
+  },
+  teal: {
+    bg: 'bg-[var(--fc-teal-50)] dark:bg-[rgba(35,184,163,0.12)]',
+    text: 'text-[var(--fc-teal-700)] dark:text-[var(--fc-teal-100)]',
+    border: 'border-[var(--fc-teal-200)]/70 dark:border-[rgba(76,193,173,0.35)]'
+  },
+  sun: {
+    bg: 'bg-[var(--fc-sun-50)] dark:bg-[rgba(240,180,74,0.12)]',
+    text: 'text-[var(--fc-sun-700)] dark:text-[var(--fc-sun-100)]',
+    border: 'border-[var(--fc-sun-200)]/70 dark:border-[rgba(240,180,74,0.35)]'
+  },
+  neutral: {
+    bg: 'bg-gray-100 dark:bg-slate-800/60',
+    text: 'text-gray-700 dark:text-slate-200',
+    border: 'border-gray-300/60 dark:border-slate-600/70'
+  },
 };
 
 export const SectionHeading: React.FC<SectionHeadingProps> = ({

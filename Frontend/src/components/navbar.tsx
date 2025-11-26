@@ -10,6 +10,7 @@ import UserDropdown from "./UserDropdown";
 import { useBusinessStore } from "../state/businessStore";
 import { api, activeBusiness as activeBusinessStorage } from "../lib/api";
 import { BusinessPickerDialog, type Business } from "./business/BusinessPickerDialog";
+import ThemeToggle from "./ThemeToggle";
 
 interface NavItem {
   label: string;
@@ -163,30 +164,31 @@ export default function Navbar() {
   const mobileMenu = canRenderPortal && open
     ? createPortal(
         <div className="md:hidden fixed inset-0 z-[70]">
-          <div className="absolute inset-0 bg-white/70 backdrop-blur" onClick={closeMenu} aria-hidden />
+          <div
+            className="absolute inset-0 bg-[rgba(255,255,255,0.78)] backdrop-blur dark:bg-[rgba(2,6,23,0.82)]"
+            onClick={closeMenu}
+            aria-hidden
+          />
           <div className="relative mx-auto flex h-full w-full max-w-lg flex-col px-4 pb-8 pt-6">
-            <div className="relative flex-1 overflow-hidden rounded-3xl border border-white/80 bg-white text-slate-900 shadow-xl shadow-brand-100/60">
-              <div
-                className="absolute inset-0"
-                aria-hidden
-                style={{
-                  background:
-                    "radial-gradient(circle at 4% 0%, rgba(233,74,111,0.16), transparent 55%), radial-gradient(circle at 96% 0%, rgba(76,193,173,0.14), transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.96) 100%)"
-                }}
-              />
+            <div className="relative flex-1 overflow-hidden rounded-3xl border border-white/80 bg-[var(--fc-surface-elevated)] text-[var(--fc-text-primary)] shadow-xl shadow-brand-100/60 dark:border-white/12 dark:bg-[color:rgba(10,15,30,0.9)] dark:text-[var(--fc-text-primary)] dark:shadow-slate-950/60">
+              <div className="pointer-events-none absolute inset-0 mix-blend-normal" aria-hidden>
+                <div className="absolute inset-0 opacity-85 [background-image:radial-gradient(circle_at_4%_0%,rgba(233,74,111,0.18),transparent_55%)] dark:opacity-65 dark:[background-image:radial-gradient(circle_at_4%_0%,rgba(233,74,111,0.24),transparent_55%)]" />
+                <div className="absolute inset-0 opacity-75 [background-image:radial-gradient(circle_at_96%_0%,rgba(76,193,173,0.15),transparent_55%)] dark:opacity-60 dark:[background-image:radial-gradient(circle_at_96%_0%,rgba(56,226,223,0.20),transparent_55%)]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[var(--fc-surface-base)]/92 via-[var(--fc-surface-elevated)]/88 to-[var(--fc-surface-base)]/94 dark:from-[color:rgba(2,6,23,0.96)] dark:via-[color:rgba(15,23,42,0.82)] dark:to-[color:rgba(2,6,23,0.94)]" />
+              </div>
               <div className="relative flex h-full flex-col">
-                <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-brand-100/70">
+                <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-brand-100/70 text-[var(--fc-text-primary)] dark:border-brand-500/25">
                   <div className="flex items-center gap-3">
                     <Image src="/LogoFilaCero.svg" alt="FilaCero" width={32} height={32} className="drop-shadow-sm" />
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.38em] text-brand-500/80">Menú</p>
-                      <p className="text-base font-semibold text-slate-900">Explora FilaCero</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.38em] text-brand-500/80 dark:text-brand-200/80">Menú</p>
+                      <p className="text-base font-semibold text-[var(--fc-text-primary)]">Explora FilaCero</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={closeMenu}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-sm transition hover:bg-brand-50"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-sm transition hover:bg-brand-50 dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-200 dark:hover:bg-[color:rgba(15,23,42,0.9)]"
                     aria-label="Cerrar menú"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
@@ -195,16 +197,16 @@ export default function Navbar() {
                   </button>
                 </div>
 
-                <nav className="relative flex-1 overflow-y-auto px-5 pb-6 pt-4 space-y-3">
+                <nav className="relative flex-1 overflow-y-auto px-5 pb-6 pt-4 space-y-3 text-[var(--fc-text-primary)]">
                   {navItems.map((item, index) => {
                     const content = (
                       <span className="flex items-center gap-3">
-                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-brand-100 bg-white text-[0.8rem] font-semibold text-brand-600 shadow-sm">
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-brand-100 bg-white text-[0.8rem] font-semibold text-brand-600 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100">
                           {(index + 1).toString().padStart(2, "0")}
                         </span>
                         <span className="flex-1 text-left">
-                          <span className="block text-sm font-semibold text-slate-900">{item.label}</span>
-                          <span className="block text-xs text-slate-500">
+                          <span className="block text-sm font-semibold text-[var(--fc-text-primary)]">{item.label}</span>
+                          <span className="block text-xs text-[var(--fc-text-secondary)] dark:text-slate-300">
                             {item.href.startsWith("#") ? "Sección de landing" : "Ruta dedicada"}
                           </span>
                         </span>
@@ -214,7 +216,7 @@ export default function Navbar() {
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
-                          className="h-4 w-4 text-brand-500/80"
+                          className="h-4 w-4 text-brand-500/80 dark:text-brand-200"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
@@ -222,7 +224,7 @@ export default function Navbar() {
                     );
 
                     const commonCls =
-                      "block rounded-2xl border border-brand-100 bg-gradient-to-br from-white via-white to-brand-50/70 px-4 py-3.5 shadow-sm transition hover:border-brand-200 hover:shadow-md";
+                      "block rounded-2xl border border-brand-100 bg-gradient-to-br from-white via-white to-brand-50/70 px-4 py-3.5 shadow-sm transition hover:border-brand-300 hover:shadow-md text-[var(--fc-text-primary)] dark:border-brand-400/30 dark:from-[color:rgba(15,23,42,0.94)] dark:via-[color:rgba(15,23,42,0.82)] dark:to-[color:rgba(233,74,111,0.18)] dark:hover:border-brand-400/45 dark:hover:shadow-brand-950/40 dark:text-[var(--fc-text-primary)]";
 
                     return item.href.startsWith("#") ? (
                       <a key={item.href} href={item.href} onClick={closeMenu} className={commonCls}>
@@ -236,7 +238,7 @@ export default function Navbar() {
                   })}
                 </nav>
 
-                <div className="relative border-t border-brand-100/70 bg-brand-50/60 px-5 py-5 space-y-3">
+                <div className="relative border-t border-brand-100/70 bg-brand-50/60 px-5 py-5 space-y-3 dark:border-brand-400/35 dark:bg-[color:rgba(15,23,42,0.88)]">
                   {isAuthenticated && isAdmin && (
                     <button
                       type="button"
@@ -244,7 +246,7 @@ export default function Navbar() {
                         closeMenu();
                         await handleAdminPanel();
                       }}
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50 dark:border-brand-400/35 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100 dark:hover:bg-[color:rgba(15,23,42,0.88)]"
                     >
                       <LayoutDashboard className="w-4 h-4 text-brand-500" />
                       Ir al panel POS
@@ -255,7 +257,7 @@ export default function Navbar() {
                     <div className="grid grid-cols-1 gap-2">
                       <Link
                         href="/login"
-                        className="w-full rounded-2xl border border-brand-200 px-4 py-3 text-sm font-semibold text-brand-600 text-center transition hover:border-brand-300 hover:bg-brand-50"
+                        className="w-full rounded-2xl border border-brand-200 px-4 py-3 text-sm font-semibold text-brand-600 text-center transition hover:border-brand-300 hover:bg-brand-50 dark:border-brand-400/35 dark:text-brand-100 dark:hover:border-brand-300 dark:hover:bg-[color:rgba(15,23,42,0.85)]"
                         onClick={closeMenu}
                       >
                         Iniciar sesión
@@ -281,28 +283,29 @@ export default function Navbar() {
   const userSheet = canRenderPortal && showUserSheet && user
     ? createPortal(
         <div className="md:hidden fixed inset-0 z-[75]">
-          <div className="absolute inset-0 bg-white/70 backdrop-blur" onClick={closeUserSheet} aria-hidden />
+          <div
+            className="absolute inset-0 bg-[rgba(255,255,255,0.78)] backdrop-blur dark:bg-[rgba(2,6,23,0.82)]"
+            onClick={closeUserSheet}
+            aria-hidden
+          />
           <div className="relative mx-auto flex h-full w-full max-w-lg flex-col px-4 pb-8 pt-6">
-            <div className="relative flex-1 overflow-hidden rounded-3xl border border-white/80 bg-white text-slate-900 shadow-xl shadow-brand-100/60">
-              <div
-                className="absolute inset-0"
-                aria-hidden
-                style={{
-                  background:
-                    "radial-gradient(circle at 6% 0%, rgba(233,74,111,0.15), transparent 55%), radial-gradient(circle at 94% 0%, rgba(76,193,173,0.14), transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(245,248,255,0.96) 100%)"
-                }}
-              />
+            <div className="relative flex-1 overflow-hidden rounded-3xl border border-white/80 bg-[var(--fc-surface-elevated)] text-[var(--fc-text-primary)] shadow-xl shadow-brand-100/60 dark:border-white/12 dark:bg-[color:rgba(10,15,30,0.9)] dark:text-[var(--fc-text-primary)] dark:shadow-slate-950/60">
+              <div className="pointer-events-none absolute inset-0 mix-blend-normal" aria-hidden>
+                <div className="absolute inset-0 opacity-80 [background-image:radial-gradient(circle_at_6%_0%,rgba(233,74,111,0.18),transparent_55%)] dark:opacity-60 dark:[background-image:radial-gradient(circle_at_6%_0%,rgba(233,74,111,0.26),transparent_55%)]" />
+                <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(circle_at_94%_0%,rgba(76,193,173,0.16),transparent_55%)] dark:opacity-55 dark:[background-image:radial-gradient(circle_at_94%_0%,rgba(56,226,223,0.2),transparent_55%)]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[var(--fc-surface-base)]/94 via-[var(--fc-surface-elevated)]/88 to-[var(--fc-surface-base)]/94 dark:from-[color:rgba(2,6,23,0.96)] dark:via-[color:rgba(15,23,42,0.82)] dark:to-[color:rgba(2,6,23,0.94)]" />
+              </div>
               <div className="relative flex h-full flex-col">
-                <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-brand-100/70">
+                <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-brand-100/70 text-[var(--fc-text-primary)] dark:border-brand-500/25">
                   <div className="flex items-center gap-3">
-                    <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-brand-100 bg-brand-50 text-sm font-semibold text-brand-700">
+                    <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-brand-100 bg-brand-50 text-sm font-semibold text-brand-700 dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100">
                       {userInitials}
                       <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" aria-hidden />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">{user.nombre}</p>
-                      {userEmail && <p className="text-xs text-slate-500 truncate">{userEmail}</p>}
-                      <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-600">
+                      <p className="text-sm font-semibold text-[var(--fc-text-primary)] truncate">{user.nombre}</p>
+                      {userEmail && <p className="text-xs text-[var(--fc-text-secondary)] truncate dark:text-slate-300">{userEmail}</p>}
+                      <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-600 dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100">
                         Sesión • {roleLabel}
                       </span>
                     </div>
@@ -310,7 +313,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={closeUserSheet}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-sm transition hover:bg-brand-50"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-sm transition hover:bg-brand-50 dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100 dark:hover:bg-[color:rgba(15,23,42,0.9)]"
                     aria-label="Cerrar panel de usuario"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
@@ -319,8 +322,8 @@ export default function Navbar() {
                   </button>
                 </div>
 
-                <div className="relative flex-1 overflow-y-auto px-5 py-6 space-y-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-brand-500/70">Acciones</p>
+                <div className="relative flex-1 overflow-y-auto px-5 py-6 space-y-4 text-[var(--fc-text-primary)]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-brand-500/70 dark:text-brand-200/70">Acciones</p>
                   {isAdmin && (
                     <button
                       type="button"
@@ -328,7 +331,7 @@ export default function Navbar() {
                         closeUserSheet();
                         await handleAdminPanel();
                       }}
-                      className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
+                      className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50 dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100 dark:hover:bg-[color:rgba(15,23,42,0.88)]"
                     >
                       <LayoutDashboard className="h-4 w-4 text-brand-500" />
                       <span>Ir al panel POS</span>
@@ -338,7 +341,7 @@ export default function Navbar() {
                   <Link
                     href="/user"
                     onClick={closeUserSheet}
-                    className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-brand-50"
+                    className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm font-semibold text-[var(--fc-text-primary)] shadow-sm transition hover:bg-brand-50 dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)] dark:hover:bg-[color:rgba(15,23,42,0.9)]"
                   >
                     <Settings className="h-4 w-4 text-brand-500" />
                     <span>Mi perfil</span>
@@ -346,11 +349,11 @@ export default function Navbar() {
 
                 </div>
 
-                <div className="relative border-t border-brand-100/70 bg-brand-50/60 px-5 py-5">
+                <div className="relative border-t border-brand-100/70 bg-brand-50/60 px-5 py-5 dark:border-brand-400/35 dark:bg-[color:rgba(15,23,42,0.88)]">
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-500/15"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-500/15 dark:border-red-500/35 dark:bg-[color:rgba(127,29,29,0.62)] dark:text-red-100 dark:hover:bg-[color:rgba(127,29,29,0.72)]"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Cerrar sesión</span>
@@ -452,13 +455,14 @@ export default function Navbar() {
 
           {/* Right auth area */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {isAuthenticated ? (
               <UserDropdown />
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="inline-flex items-center rounded-full border border-brand-100/80 bg-white/80 px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800"
+                  className="inline-flex items-center rounded-full border border-brand-100/80 bg-white/80 px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800 dark:border-white/15 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Iniciar sesión
                 </Link>
@@ -474,6 +478,7 @@ export default function Navbar() {
 
           {/* Mobile actions */}
           <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle variant="icon" />
             {isAuthenticated ? (
               <button
                 type="button"
@@ -483,11 +488,11 @@ export default function Navbar() {
                 }}
                 className={`relative inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${
                   elevated
-                    ? "border border-brand-200/70 bg-white/95 text-brand-600 shadow-sm hover:bg-white"
-                    : "border border-white/70 bg-white/85 text-brand-600 shadow-sm hover:bg-white/95"
+                    ? "border border-brand-200/70 bg-white/95 text-brand-600 shadow-sm hover:bg-white dark:border-white/12 dark:bg-slate-950/80 dark:text-brand-200 dark:hover:!bg-slate-900 dark:hover:border-brand-400/40"
+                    : "border border-white/70 bg-white/85 text-brand-600 shadow-sm hover:bg-white/95 dark:border-white/15 dark:bg-slate-950/70 dark:text-brand-200 dark:hover:!bg-slate-900 dark:hover:border-brand-400/40"
                 }`}
               >
-                <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-700 text-sm font-semibold">
+                <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-700 text-sm font-semibold dark:bg-brand-500/20 dark:text-brand-100">
                   {userInitials}
                   <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" aria-hidden />
                 </span>
@@ -501,8 +506,8 @@ export default function Navbar() {
                 href="/login"
                 className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${
                   elevated
-                    ? "border border-slate-200/80 bg-white/95 text-brand-600 shadow-sm hover:bg-white"
-                    : "border border-white/70 bg-white/85 text-brand-600 shadow-sm hover:bg-white/95"
+                    ? "border border-slate-200/80 bg-white/95 text-brand-600 shadow-sm hover:bg-white dark:border-white/10 dark:bg-slate-950/75 dark:text-brand-200 dark:hover:bg-slate-900"
+                    : "border border-white/70 bg-white/85 text-brand-600 shadow-sm hover:bg-white/95 dark:border-white/15 dark:bg-slate-950/65 dark:text-brand-200 dark:hover:bg-slate-900"
                 }`}
               >
                 Inicia sesión
@@ -513,8 +518,8 @@ export default function Navbar() {
               aria-label="Abrir menú"
               className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-400)] ${
                 elevated
-                  ? "border-slate-200/80 bg-white/95 text-[var(--fc-brand-600)] shadow-sm hover:bg-white"
-                  : "border-white/60 bg-white/80 text-[var(--fc-brand-600)] shadow-sm hover:bg-white/95"
+                  ? "border-slate-200/80 bg-white/95 text-[var(--fc-brand-600)] shadow-sm hover:bg-white dark:border-white/12 dark:bg-slate-950/80 dark:text-brand-200 dark:hover:!bg-slate-900 dark:hover:border-brand-400/40"
+                  : "border-white/60 bg-white/80 text-[var(--fc-brand-600)] shadow-sm hover:bg-white/95 dark:border-white/15 dark:bg-slate-950/70 dark:text-brand-200 dark:hover:!bg-slate-900 dark:hover:border-brand-400/35"
               }`}
               onClick={() => setOpen((o) => !o)}
             >
