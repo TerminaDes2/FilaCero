@@ -148,13 +148,22 @@ export default function ProductsFeed() {
     }
 
     arr.sort((a, b) => {
-      if (sortKey === "price") return a.precio - b.precio;
-      if (sortKey === "rating") return 0;
-      if (sortKey === "near") return 0;
-      if (sortKey === "fast") return 0;
+      if (sortKey === "price-asc") {
+        return a.precio - b.precio;
+      }
+      if (sortKey === "price-desc") {
+        return b.precio - a.precio;
+      }
+      if (sortKey === "stock") {
+        const stockA = typeof a.stock === "number" ? a.stock : -1;
+        const stockB = typeof b.stock === "number" ? b.stock : -1;
+        if (stockB !== stockA) return stockB - stockA;
+        return (b.popularity ?? 0) - (a.popularity ?? 0);
+      }
       const pa = a.popularity ?? 0;
       const pb = b.popularity ?? 0;
-      return pb - pa;
+      if (pb !== pa) return pb - pa;
+      return a.nombre.localeCompare(b.nombre);
     });
 
     return arr.map((p) => {

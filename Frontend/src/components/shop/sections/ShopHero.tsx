@@ -5,6 +5,7 @@ import React from "react";
 const featureChips = [
   "Menú siempre vivo",
   "Pagos cashless",
+  "Retiro cronometrado",
   "Alertas instantáneas",
 ];
 
@@ -139,7 +140,7 @@ export default function ShopHero() {
           {floatingPanels.map((panel) => (
             <div
               key={panel.title}
-              className={`absolute ${panel.position} w-52 rounded-[28px] border border-white/60 bg-white/92 p-4 shadow-[0_28px_80px_-58px_rgba(15,23,42,0.75)] backdrop-blur`}
+              className={`hidden sm:block absolute ${panel.position} w-52 rounded-[28px] border border-white/60 bg-white/92 p-4 shadow-[0_28px_80px_-58px_rgba(15,23,42,0.75)] backdrop-blur`}
             >
               <span className={`inline-flex items-center justify-center rounded-full bg-gradient-to-r ${panel.gradient} px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-white`}>FilaCero</span>
               <p className="mt-2 text-sm font-semibold text-slate-900">{panel.title}</p>
