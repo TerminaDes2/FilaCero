@@ -347,6 +347,18 @@ export default function Navbar() {
                     <span>Mi perfil</span>
                   </Link>
 
+                  <div className="rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm font-semibold text-[var(--fc-text-primary)] shadow-sm dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">Tema</p>
+                        <p className="mt-1 text-xs font-medium text-[var(--fc-text-secondary)] dark:text-white/70">
+                          Alterna entre claro y oscuro.
+                        </p>
+                      </div>
+                      <ThemeToggle />
+                    </div>
+                  </div>
+
                 </div>
 
                 <div className="relative border-t border-brand-100/70 bg-brand-50/60 px-5 py-5 dark:border-brand-400/35 dark:bg-[color:rgba(15,23,42,0.88)]">
@@ -455,7 +467,7 @@ export default function Navbar() {
 
           {/* Right auth area */}
           <div className="hidden md:flex items-center gap-3">
-            <ThemeToggle />
+            {!isAuthenticated && <ThemeToggle />}
             {isAuthenticated ? (
               <UserDropdown />
             ) : (
@@ -478,7 +490,7 @@ export default function Navbar() {
 
           {/* Mobile actions */}
           <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle variant="icon" />
+            {!isAuthenticated && <ThemeToggle variant="icon" />}
             {isAuthenticated ? (
               <button
                 type="button"

@@ -412,25 +412,25 @@ export default function UserProfilePage() {
 
       <main className="relative z-10 pt-24 pb-20">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:px-8">
-          <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-br from-[var(--fc-brand-600)] via-[var(--fc-brand-500)] to-[var(--fc-teal-500)] text-white shadow-[0_60px_140px_-70px_rgba(15,118,110,0.6)]">
+          <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-br from-[var(--fc-brand-600)] via-[var(--fc-brand-500)] to-[var(--fc-teal-500)] text-white shadow-[0_60px_140px_-70px_rgba(15,118,110,0.6)] dark:border-white/12 dark:from-[color:rgba(30,41,82,0.9)] dark:via-[color:rgba(15,118,110,0.35)] dark:to-[color:rgba(10,15,32,0.92)] dark:shadow-[0_60px_140px_-70px_rgba(3,6,20,0.85)]">
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18)_0%,transparent_60%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18)_0%,transparent_60%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(148,163,244,0.22)_0%,transparent_62%)]"
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(17,94,89,0.25)_0%,transparent_65%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(17,94,89,0.25)_0%,transparent_65%)] dark:bg-[radial-gradient(circle_at_bottom_right,rgba(15,118,110,0.28)_0%,transparent_65%)]"
             />
             <div className="relative flex flex-col gap-10 p-8 sm:p-10 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex flex-1 flex-col gap-8">
                 <div className="flex flex-wrap items-center gap-4">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em]">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] dark:border-white/20 dark:bg-white/10 dark:text-white">
                     <Sparkles className="h-3.5 w-3.5" /> Perfil FilaCero
                   </span>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] dark:border-white/20 dark:bg-white/10 dark:text-white">
                     {roleLabel}
                   </span>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-3 py-1 text-xs font-medium text-white/80">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-3 py-1 text-xs font-medium text-white/80 dark:border-white/15 dark:bg-white/10 dark:text-white/80">
                     ID {user.id_usuario}
                   </span>
                 </div>
@@ -480,7 +480,7 @@ export default function UserProfilePage() {
                   {heroMetrics.map((metric) => (
                     <div
                       key={metric.label}
-                      className="rounded-2xl border border-white/25 bg-white/10 px-5 py-4 text-sm shadow-sm backdrop-blur"
+                      className="rounded-2xl border border-white/25 bg-white/10 px-5 py-4 text-sm shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/5"
                     >
                       <p className="text-xs uppercase tracking-[0.3em] text-white/70">{metric.label}</p>
                       <p className="mt-2 text-2xl font-semibold">{metric.value}</p>

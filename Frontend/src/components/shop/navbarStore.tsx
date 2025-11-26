@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useUserStore } from "../../state/userStore";
 import UserDropdown from "../UserDropdown";
 import { useCart } from "./CartContext";
+import ThemeToggle from "../ThemeToggle";
 
 interface NavbarStoreProps {
   onToggleCart?: (open: boolean) => void;
@@ -307,6 +308,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              <ThemeToggle variant="icon" />
               <Link
                 href="/auth/login"
                 className="inline-flex h-10 items-center px-3 rounded-full text-sm font-medium text-[var(--fc-text-primary)] border border-slate-200 bg-white/85 backdrop-blur transition hover:border-[var(--fc-brand-200)] hover:text-[var(--fc-brand-600)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.8)] dark:text-[var(--fc-text-primary)] dark:hover:text-[var(--fc-brand-200)]"

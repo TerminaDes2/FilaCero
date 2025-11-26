@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Settings
 } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 // Función robusta para obtener el id_rol como número
 const getRoleId = (id_rol: any): number => {
@@ -201,6 +202,18 @@ export default function UserDropdown() {
                   <Settings className="h-4 w-4 text-brand-500" />
                   <span>Mi perfil</span>
                 </Link>
+
+                <div className="rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm font-semibold text-[var(--fc-text-primary)] shadow-sm dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">Tema</p>
+                      <p className="mt-1 text-xs font-medium text-[var(--fc-text-secondary)] dark:text-white/70">
+                        Cambia entre claro y oscuro.
+                      </p>
+                    </div>
+                    <ThemeToggle />
+                  </div>
+                </div>
 
               </div>
 
