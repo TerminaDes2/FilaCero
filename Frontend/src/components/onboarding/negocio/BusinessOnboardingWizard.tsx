@@ -355,6 +355,7 @@ function FancyInput({
   error,
   leftIcon,
   required,
+  hint,
 }: {
   label: string;
   value: string;
@@ -365,6 +366,7 @@ function FancyInput({
   error?: string;
   leftIcon?: React.ReactNode;
   required?: boolean;
+  hint?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -391,6 +393,7 @@ function FancyInput({
           } pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm backdrop-blur transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/20`}
         />
       </div>
+      {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
       {error && <p className="text-xs text-rose-600">{error}</p>}
     </div>
   );
