@@ -135,83 +135,67 @@ export default function UserProfilePage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [saveFeedback, setSaveFeedback] = useState<"success" | "error" | null>(null);
-
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push("/auth/login");
     }
   }, [isAuthenticated, loading, router]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--fc-surface-base)] text-[var(--fc-brand-600)] dark:bg-[color:rgba(5,8,18,1)] dark:text-[var(--fc-brand-200)]">
-        <span className="inline-flex items-center gap-3 rounded-full border border-[var(--fc-border-soft)] px-4 py-2 text-sm font-medium dark:border-white/12">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Cargando perfil...
-        </span>
-      </div>
-    );
-  }
+  const avatarUrl = pickFirst(user?.avatar_url, user?.avatarUrl);
+  const credentialUrl = pickFirst(user?.credential_url, user?.credentialUrl);
+  const accountNumberValue = pickFirst(user?.numero_cuenta, user?.accountNumber);
+  const ageValue = pickFirst(user?.edad, user?.age);
+  const accountState = capitalize(stripDiacritics(user?.estado ?? "")) || "Activo";
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
-  const avatarUrl = pickFirst(user.avatar_url, user.avatarUrl);
-  const credentialUrl = pickFirst(user.credential_url, user.credentialUrl);
-  const accountNumberValue = pickFirst(user.numero_cuenta, user.accountNumber);
-  const ageValue = pickFirst(user.edad, user.age);
-  const accountState = capitalize(stripDiacritics(user.estado ?? "")) || "Activo";
-
-  const normalizedRole = (user.role?.nombre_rol ?? user.role_name ?? "").toLowerCase();
+  const normalizedRole = (user?.role?.nombre_rol ?? user?.role_name ?? "").toLowerCase();
   const normalizedRoleAscii = stripDiacritics(normalizedRole);
   const isOwner = useMemo(
     () =>
       role === "OWNER" ||
-      user.id_rol === 2 ||
+      user?.id_rol === 2 ||
       normalizedRole.includes("admin") ||
       normalizedRole.includes("owner") ||
       normalizedRoleAscii.includes("dueno"),
-    [normalizedRole, normalizedRoleAscii, role, user.id_rol],
+    [normalizedRole, normalizedRoleAscii, role, user?.id_rol],
   );
 
-  const roleLabel = isOwner ? "Dueno de negocio" : capitalize(stripDiacritics(user.role?.nombre_rol ?? user.role_name ?? "Cliente"));
+  const roleLabel = isOwner ? "Dueno de negocio" : capitalize(stripDiacritics(user?.role?.nombre_rol ?? user?.role_name ?? "Cliente"));
 
-  const joinedAt = formatDate(user.fecha_registro, { day: "2-digit", month: "long", year: "numeric" });
-  const birthDate = formatDate(user.fecha_nacimiento, { day: "2-digit", month: "long", year: "numeric" });
+  const joinedAt = formatDate(user?.fecha_registro, { day: "2-digit", month: "long", year: "numeric" });
+  const birthDate = formatDate(user?.fecha_nacimiento, { day: "2-digit", month: "long", year: "numeric" });
 
-  const emailVerified = Boolean(user.verifications?.email ?? user.correo_verificado ?? user.verified ?? user.verificado ?? false);
-  const smsVerified = Boolean(user.verifications?.sms ?? user.sms_verificado ?? false);
-  const credentialVerified = Boolean(user.verifications?.credential ?? user.credencial_verificada ?? false);
-  const verificationTimestamps = user.verificationTimestamps ?? {
-    email: user.correo_verificado_en ?? null,
-    sms: user.sms_verificado_en ?? null,
-    credential: user.credencial_verificada_en ?? null,
+  const emailVerified = Boolean(user?.verifications?.email ?? user?.correo_verificado ?? user?.verified ?? user?.verificado ?? false);
+  const smsVerified = Boolean(user?.verifications?.sms ?? user?.sms_verificado ?? false);
+  const credentialVerified = Boolean(user?.verifications?.credential ?? user?.credencial_verificada ?? false);
+  const verificationTimestamps = user?.verificationTimestamps ?? {
+    email: user?.correo_verificado_en ?? null,
+    sms: user?.sms_verificado_en ?? null,
+    credential: user?.credencial_verificada_en ?? null,
   };
   const verificationCount = [emailVerified, smsVerified, credentialVerified].filter(Boolean).length;
   const lastVerificationDate = formatDateTime(
     verificationTimestamps.credential || verificationTimestamps.sms || verificationTimestamps.email,
   );
 
-  const userOrders: UserOrder[] = Array.isArray((user as UserInfo & { orders?: UserOrder[] }).orders)
-    ? ((user as UserInfo & { orders?: UserOrder[] }).orders ?? [])
+  const userOrders: UserOrder[] = Array.isArray((user as UserInfo & { orders?: UserOrder[] })?.orders)
+    ? ((user as UserInfo & { orders?: UserOrder[] })?.orders ?? [])
     : [];
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
   const lastOrderDate = lastOrder ? formatDateTime(lastOrder.fecha) : null;
 
-  const initials = getInitials(user.nombre ?? user.correo_electronico ?? null);
+  const initials = getInitials(user?.nombre ?? user?.correo_electronico ?? null);
 
   const initialSnapshot = useMemo<ProfileFormState>(
     () => ({
-      name: user.nombre ?? "",
-      phoneNumber: user.numero_telefono ?? "",
+      name: user?.nombre ?? "",
+      phoneNumber: user?.numero_telefono ?? "",
       accountNumber: accountNumberValue ?? "",
       age: ageValue !== null && ageValue !== undefined ? String(ageValue) : "",
       avatarUrl: avatarUrl ?? "",
       credentialUrl: credentialUrl ?? "",
     }),
-    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user.nombre, user.numero_telefono],
+    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, user?.numero_telefono],
   );
 
   useEffect(() => {
@@ -380,7 +364,7 @@ export default function UserProfilePage() {
     {
       id: "email",
       label: "Correo electronico",
-      value: user.correo_electronico ?? "Sin registrar",
+      value: user?.correo_electronico ?? "Sin registrar",
       verified: emailVerified,
       timestamp: verificationTimestamps.email,
       description: emailVerified ? "Correo confirmado" : "Confirma tu correo para recibir notificaciones",
@@ -388,7 +372,7 @@ export default function UserProfilePage() {
     {
       id: "sms",
       label: "Telefono movil",
-      value: user.numero_telefono ?? "Sin registrar",
+      value: user?.numero_telefono ?? "Sin registrar",
       verified: smsVerified,
       timestamp: verificationTimestamps.sms,
       description: smsVerified ? "SMS verificado" : "Registra y confirma tu numero para alertas",

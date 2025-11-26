@@ -52,7 +52,8 @@ export function ThemeToggle({ variant = "chip" }: ThemeToggleProps) {
     );
   }
 
-  const modeChip = useMemo(() => {
+  // El valor es barato de calcular, no necesita useMemo y evita llamadas condicionales a Hooks
+  const modeChip = (() => {
     switch (mode) {
       case "dark":
         return "Oscuro";
@@ -61,7 +62,7 @@ export function ThemeToggle({ variant = "chip" }: ThemeToggleProps) {
       default:
         return "Sistema";
     }
-  }, [mode]);
+  })();
 
   return (
     <button
