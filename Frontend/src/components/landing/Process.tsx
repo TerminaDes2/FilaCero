@@ -163,15 +163,15 @@ export function Process() {
   return (
     <section
       id="process"
-      className="relative overflow-hidden py-24 bg-[var(--fc-surface-base)] text-[var(--fc-text-primary)]"
+      className="relative overflow-hidden py-24 bg-[var(--fc-surface-base)] text-[var(--fc-text-primary)] dark:bg-[color:rgba(5,9,20,0.96)]"
     >
       <div className="pointer-events-none absolute inset-0">
         <div
           aria-hidden
-          className="absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(15,23,42,0.16)_1px,transparent_0)] [background-size:18px_18px] dark:opacity-[0.12] dark:[background-image:radial-gradient(rgba(148,163,184,0.18)_1px,transparent_0)]"
+          className="absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(15,23,42,0.16)_1px,transparent_0)] [background-size:18px_18px] dark:opacity-[0.18] dark:[background-image:radial-gradient(rgba(203,213,225,0.12)_1px,transparent_0)]"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/20 to-transparent dark:from-slate-950/92 dark:via-slate-950/45 dark:to-slate-950/88" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-50/18 via-transparent to-teal-50/18 mix-blend-overlay opacity-80 dark:from-brand-500/10 dark:via-transparent dark:to-teal-500/10" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/20 to-transparent dark:from-[color:rgba(5,9,20,0.9)] dark:via-[color:rgba(5,9,20,0.55)] dark:to-[color:rgba(5,9,20,0.92)]" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-50/18 via-transparent to-teal-50/18 mix-blend-overlay opacity-80 dark:from-brand-500/12 dark:via-transparent dark:to-teal-500/12" aria-hidden />
       </div>
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
@@ -187,53 +187,53 @@ export function Process() {
         >
           {steps.map((step) => {
             const cardStyle = {
-              "--step-surface": step.palette.light.surface,
-              "--step-surface-dark": step.palette.dark.surface,
-              "--step-border": step.palette.light.border,
-              "--step-border-dark": step.palette.dark.border,
-              "--step-text": step.palette.light.text,
-              "--step-text-dark": step.palette.dark.text,
-              "--step-muted": step.palette.light.muted,
-              "--step-muted-dark": step.palette.dark.muted,
-              "--step-accent": step.palette.light.accent,
-              "--step-accent-dark": step.palette.dark.accent,
-              "--step-accent-soft": step.palette.light.accentSoft,
-              "--step-accent-soft-dark": step.palette.dark.accentSoft,
-              "--step-glow": step.palette.light.glow,
-              "--step-glow-dark": step.palette.dark.glow,
-              background: "var(--step-surface)",
-              borderColor: "var(--step-border)",
-              color: "var(--step-text)",
+              "--step-card-surface": step.palette.light.surface,
+              "--step-card-surface-dark": step.palette.dark.surface,
+              "--step-card-border": step.palette.light.border,
+              "--step-card-border-dark": step.palette.dark.border,
+              "--step-card-text": step.palette.light.text,
+              "--step-card-text-dark": step.palette.dark.text,
+              "--step-card-muted": step.palette.light.muted,
+              "--step-card-muted-dark": step.palette.dark.muted,
+              "--step-card-accent": step.palette.light.accent,
+              "--step-card-accent-dark": step.palette.dark.accent,
+              "--step-card-accent-soft": step.palette.light.accentSoft,
+              "--step-card-accent-soft-dark": step.palette.dark.accentSoft,
+              "--step-card-glow": step.palette.light.glow,
+              "--step-card-glow-dark": step.palette.dark.glow,
+              background: "var(--step-card-surface)",
+              borderColor: "var(--step-card-border)",
+              color: "var(--step-card-text)",
             } as CSSProperties;
 
             return (
               <li key={step.number} className="group relative min-w-[240px] snap-center md:min-w-0">
                 <div
                   data-step-card
-                  className="relative flex h-full flex-col rounded-2xl border bg-white/80 p-6 shadow-sm transition will-change-transform hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-slate-900/50"
+                  className="relative flex h-full flex-col rounded-2xl border bg-white/80 p-6 shadow-sm transition will-change-transform hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-transparent dark:[--step-card-surface:var(--step-card-surface-dark)] dark:[--step-card-border:var(--step-card-border-dark)] dark:[--step-card-text:var(--step-card-text-dark)] dark:[--step-card-muted:var(--step-card-muted-dark)] dark:[--step-card-accent:var(--step-card-accent-dark)] dark:[--step-card-accent-soft:var(--step-card-accent-soft-dark)] dark:[--step-card-glow:var(--step-card-glow-dark)]"
                   style={cardStyle}
                 >
                   <div
                     className="absolute inset-x-0 top-0 h-1 opacity-50 transition group-hover:opacity-80"
-                    style={{ background: "linear-gradient(90deg, var(--step-accent-soft), var(--step-accent))" }}
+                    style={{ background: "linear-gradient(90deg, var(--step-card-accent-soft), var(--step-card-accent))" }}
                   />
                   <div
                     className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl blur-xl opacity-0 transition duration-500 group-hover:opacity-80"
-                    style={{ background: "var(--step-glow)" }}
+                    style={{ background: "var(--step-card-glow)" }}
                   />
                   <div className="mb-4">
                     <div
                       className="flex h-11 w-11 items-center justify-center rounded-full text-white shadow-sm transition-transform duration-300 group-hover:scale-105"
-                      style={{ background: "var(--step-accent)" }}
+                      style={{ background: "var(--step-card-accent)" }}
                       aria-hidden
                     >
                       <StepIcon step={step.number} />
                     </div>
                   </div>
-                  <h3 className="mb-2 font-semibold tracking-tight" style={{ color: "var(--step-text)" }}>
+                  <h3 className="mb-2 font-semibold tracking-tight" style={{ color: "var(--step-card-text)" }}>
                     {step.title}
                   </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--step-muted)" }}>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--step-card-muted)" }}>
                     {step.text}
                   </p>
                 </div>

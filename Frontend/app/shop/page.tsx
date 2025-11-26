@@ -7,7 +7,7 @@ import { useUserStore } from "../../src/state/userStore"; // ✅ nuevo hook glob
 // import ShopSidebar from "../../src/components/shop/ShopSidebar"; // removed per new layout
 import CartSlide from "../../src/components/shop/CartSlide";
 import NavbarStore from "../../src/components/shop/navbarStore";
-import { FAQ } from "../../src/components/landing/FAQ";
+import { Footer } from "../../src/components/landing/Footer";
 import ShopHero from "../../src/components/shop/sections/ShopHero";
 import StoryRail from "../../src/components/shop/sections/StoryRail";
 import Curations from "../../src/components/shop/sections/Curations";
@@ -229,10 +229,9 @@ const HomePage: React.FC = () => {
           </>
         )}
 
-        {/* 📘 FAQ siempre visible */}
-        <FAQ />
       </main>
 
+      <Footer />
       <CartSlide />
     </CartProvider>
   );

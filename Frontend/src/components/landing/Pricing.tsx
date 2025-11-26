@@ -212,21 +212,21 @@ export function Pricing() {
             ))}
           </div>
 
-          <aside className="relative rounded-3xl border border-white/50 bg-white/75 p-8 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/60 dark:shadow-brand-950/40">
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-brand-400/10 via-teal-400/10 to-transparent dark:from-brand-500/15 dark:via-teal-500/12 dark:to-transparent" aria-hidden />
+          <aside className="relative rounded-3xl border border-white/50 bg-white/75 p-8 shadow-sm backdrop-blur dark:border-white/12 dark:bg-[color:rgba(8,14,30,0.85)] dark:shadow-[0_42px_120px_-70px_rgba(7,12,25,0.95)]">
+            <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-brand-400/10 via-teal-400/10 to-transparent dark:from-brand-500/18 dark:via-teal-500/14 dark:to-transparent" aria-hidden />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Servicios opcionales</h3>
             <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
               Estamos trabajando en complementos para equipos que necesitan integrar pagos, analytics avanzadas o procesos institucionales.
             </p>
             <ul className="mt-6 space-y-4">
               {extensions.map((extension) => (
-                <li key={extension.name} className="rounded-2xl border border-gray-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-slate-900/60">
+                <li key={extension.name} className="rounded-2xl border border-gray-200/70 bg-white/80 p-4 transition-shadow dark:border-white/12 dark:bg-[color:rgba(11,18,36,0.82)] dark:hover:shadow-[0_30px_90px_-55px_rgba(12,20,40,0.9)]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-gray-800 dark:text-slate-100">{extension.name}</p>
-                      <p className="text-sm text-gray-500 mt-1 dark:text-slate-400">{extension.description}</p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-slate-300">{extension.description}</p>
                     </div>
-                    <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-100">
+                    <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-600 dark:bg-[color:rgba(233,74,111,0.18)] dark:text-brand-50">
                       {extension.status}
                     </span>
                   </div>
