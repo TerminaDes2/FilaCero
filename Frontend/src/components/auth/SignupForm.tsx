@@ -176,34 +176,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M4 6l8 6 8-6M4 6v12h16V6' /></svg>}
 				hint={!email ? 'Usa un correo válido que controles' : undefined}
 			/>
-			{!isOwner && (
-				<>
-					<FancyInput
-						label="Número de cuenta"
-						value={accountNumber}
-						onChange={e=>setAccountNumber(e.target.value)}
-						onBlur={()=>setTouched(t=>({...t,accountNumber:true}))}
-						error={touched.accountNumber && !accountNumberValid ? 'Debe contener entre 5 y 20 dígitos' : undefined}
-						leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M3 4h18v5H3zM3 13h18v7H3z'/><path strokeLinecap='round' strokeLinejoin='round' d='M7 17h2m4 0h6'/></svg>}
-						hint={accountNumber ? undefined : 'Opcional, solo números'}
-						inputMode="numeric"
-						pattern="[0-9]*"
-						maxLength={20}
-					/>
-					<FancyInput
-						label="Edad"
-						type="number"
-						value={age}
-						onChange={e=>setAge(e.target.value)}
-						onBlur={()=>setTouched(t=>({...t,age:true}))}
-						error={touched.age && !ageValid ? 'Selecciona una edad entre 16 y 120' : undefined}
-						leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M12 8v4l3 1.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z' /></svg>}
-						hint={age ? undefined : 'Opcional, utilizada para beneficios estudiantiles'}
-						min={16}
-						max={120}
-					/>
-				</>
-			)}
+			
 			<FancyInput
 				label="Contraseña"
 				type={showPassword ? 'text' : 'password'}

@@ -198,6 +198,7 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
             <p className="text-sm font-semibold text-slate-900">Progreso total de validación</p>
             <p>Necesitas completar los 3 pasos para desbloquear ventas sin fricción.</p>
           </div>
+
           <div className="flex items-center gap-3">
             <div className="relative grid h-14 w-14 place-items-center rounded-full bg-[var(--fc-brand-100)] text-sm font-semibold text-[var(--fc-brand-600)]">
               {completion}%
@@ -224,7 +225,16 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
             </div>
             <span className="text-xs text-slate-500">{verifiedCount}/{verificationItems.length} completados</span>
           </div>
+
+          {/* Nuevo botón agregado */}
+          <Link
+            href="/verification"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--fc-brand-500)]"
+          >
+            Revisar verificación
+          </Link>
         </footer>
+
       </div>
     </section>
   );

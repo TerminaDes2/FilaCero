@@ -26,7 +26,7 @@ export default function VerificationPage() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  // --- Estados para verificación SMS ---
+
   const [phoneCode, setPhoneCode] = useState("");
   const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState<boolean>(Boolean(user?.sms_verificado));
@@ -48,7 +48,7 @@ export default function VerificationPage() {
       </div>
     );
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setCredentialFile(file);
   };
@@ -151,231 +151,232 @@ export default function VerificationPage() {
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       <NavbarStore />
 
-      <main className="flex-1 pt-24 pb-16 px-6 md:px-10 lg:px-16 max-w-3xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Verificación de cuenta
-        </h1>
-
-        {/* ✉️ VERIFICAR EMAIL */}
-        <section className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Verificación de correo electrónico
-            </h2>
-          </div>
-
-          <p className="text-gray-700 dark:text-gray-300 mb-3">
-            {user.correo_electronico}
+      <main className="flex-1 pt-24 pb-20 px-6 md:px-10 lg:px-16 max-w-3xl mx-auto space-y-10">
+        <header className="text-center space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-brand-600">
+            Verifica tu identidad
           </p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Configuración de seguridad
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
+            Completa los pasos para proteger tu cuenta y acceder a los beneficios estudiantiles.
+          </p>
+        </header>
 
-          {!isEmailVerified ? (
-            <>
-              {!isCodeSent ? (
-                <button
-                  onClick={handleSendCode}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition"
-                >
-                  <Send className="w-4 h-4" />
-                  {isSubmitting ? "Enviando..." : "Enviar código de verificación"}
-                </button>
-              ) : (
-                <div className="mt-3">
-                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Ingresa el código recibido:
-                  </label>
-                  <input
-                    type="text"
-                    value={emailCode}
-                    onChange={(e) => setEmailCode(e.target.value)}
-                    placeholder="Ej. 123456"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white mb-3"
-                  />
-                  <button
-                    onClick={handleVerifyCode}
-                    disabled={isSubmitting || !emailCode}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
-                  >
-                    {isSubmitting ? "Verificando..." : "Verificar código"}
-                  </button>
-                </div>
+        {/* ---------------------- EMAIL ---------------------- */}
+        <section className={`
+          relative overflow-hidden rounded-3xl border p-6 transition shadow-sm
+          ${isEmailVerified
+            ? "border-teal-300 bg-teal-50 text-teal-700"
+            : "border-slate-200 bg-white dark:bg-slate-800 text-slate-700"}
+        `}>
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-200/30 via-transparent to-transparent pointer-events-none" />
+          
+          <div className="relative flex items-start gap-4">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow text-brand-600">
+              <Mail className="h-5 w-5" />
+            </span>
+
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-slate-900 dark:text-white">Correo electrónico</h2>
+                <span className={`
+                  inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold
+                  ${isEmailVerified
+                    ? "bg-teal-100 text-teal-600"
+                    : "bg-rose-100 text-rose-600"}
+                `}>
+                  {isEmailVerified ? <CheckCircle2 className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                  {isEmailVerified ? "Verificado" : "Sin verificar"}
+                </span>
+              </div>
+
+              <p className="text-sm">{user.correo_electronico}</p>
+
+              {!isEmailVerified && (
+                <>
+                  {!isCodeSent ? (
+                    <button
+                      onClick={handleSendCode}
+                      className="mt-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg flex items-center gap-2"
+                    >
+                      <Send className="h-4 w-4" />
+                      Enviar código
+                    </button>
+                  ) : (
+                    <div className="space-y-2 mt-3">
+                      <input
+                        type="text"
+                        value={emailCode}
+                        onChange={(e) => setEmailCode(e.target.value)}
+                        placeholder="Ingresa el código"
+                        className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-700"
+                      />
+                      <button
+                        onClick={handleVerifyCode}
+                        className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg"
+                      >
+                        Verificar
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          ) : (
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mt-3">
-              <ShieldCheck className="w-5 h-5" />
-              <span>Correo verificado correctamente</span>
             </div>
-          )}
+          </div>
         </section>
 
-        {/* 📞 TELÉFONO (Verificación SMS) */}
-        <section className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Número de teléfono
-            </h2>
-          </div>
+        {/* ---------------------- PHONE ---------------------- */}
+        <section className={`
+          relative overflow-hidden rounded-3xl border p-6 transition shadow-sm
+          ${isPhoneVerified
+            ? "border-teal-300 bg-teal-50 text-teal-700"
+            : "border-slate-200 bg-white dark:bg-slate-800 text-slate-700"}
+        `}>
+          <div className="absolute inset-0 bg-gradient-to-br from-green-200/30 via-transparent to-transparent pointer-events-none" />
+          
+          <div className="relative flex items-start gap-4">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow text-green-600">
+              <Phone className="h-5 w-5" />
+            </span>
 
-          <input
-            type="tel"
-            value={phone}
-            disabled={isPhoneVerified || isSubmitting}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Ingresa tu número de teléfono"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white mb-3"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Usa un número válido para recibir notificaciones y confirmar tu
-            identidad.
-          </p>
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-slate-900 dark:text-white">Número de teléfono</h2>
+                <span className={`
+                  inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold
+                  ${isPhoneVerified
+                    ? "bg-teal-100 text-teal-600"
+                    : "bg-rose-100 text-rose-600"}
+                `}>
+                  {isPhoneVerified ? <CheckCircle2 className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                  {isPhoneVerified ? "Verificado" : "Sin verificar"}
+                </span>
+              </div>
 
-          {!isPhoneVerified && (
-            <div className="mt-4 space-y-3">
-              {!isPhoneCodeSent ? (
-                <button
-                  onClick={handleSendSms}
-                  disabled={isSubmitting || !phone}
-                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
-                >
-                  <Send className="w-4 h-4" />
-                  {isSubmitting ? "Enviando..." : "Enviar SMS"}
-                </button>
-              ) : (
-                <div className="space-y-2">
-                  <label className="block text-sm text-gray-600 dark:text-gray-400">
-                    Código recibido:
-                  </label>
-                  <input
-                    type="text"
-                    value={phoneCode}
-                    onChange={(e) => setPhoneCode(e.target.value)}
-                    placeholder="Ej. 1234"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleVerifySms}
-                      disabled={isSubmitting || !phoneCode}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg disabled:opacity-50"
-                    >
-                      {isSubmitting ? "Verificando..." : "Verificar código"}
-                    </button>
+              <input
+                type="tel"
+                value={phone}
+                disabled={isPhoneVerified}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-slate-700"
+              />
+
+              {!isPhoneVerified && (
+                <>
+                  {!isPhoneCodeSent ? (
                     <button
                       onClick={handleSendSms}
-                      disabled={isSubmitting}
-                      className="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg"
+                      className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg"
                     >
-                      Reenviar
+                      Enviar SMS
                     </button>
-                  </div>
-                </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <input
+                        value={phoneCode}
+                        onChange={(e) => setPhoneCode(e.target.value)}
+                        placeholder="Código SMS"
+                        className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-slate-700"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleVerifySms}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                        >
+                          Verificar
+                        </button>
+                        <button
+                          onClick={handleSendSms}
+                          className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-300 rounded-lg"
+                        >
+                          Reenviar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
-              {phoneError && (
-                <p className="text-sm text-red-600 dark:text-red-400">{phoneError}</p>
-              )}
-              {phoneInfo && !phoneError && (
-                <p className="text-sm text-green-600 dark:text-green-400">{phoneInfo}</p>
-              )}
+
+              {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
+              {phoneInfo && <p className="text-sm text-green-600">{phoneInfo}</p>}
             </div>
-          )}
-          {isPhoneVerified && (
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mt-3">
-              <ShieldCheck className="w-5 h-5" />
-              <span>Teléfono verificado</span>
-            </div>
-          )}
+          </div>
         </section>
 
-        {/* 🪪 CREDENCIAL */}
-        <section className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <IdCard className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Credencial estudiantil
-            </h2>
-          </div>
+        {/* ---------------------- CREDENTIAL ---------------------- */}
+        <section className={`
+          relative overflow-hidden rounded-3xl border p-6 transition shadow-sm
+          ${credentialFile
+            ? "border-brand-300 bg-brand-50"
+            : "border-slate-200 bg-white dark:bg-slate-800"}
+        `}>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-200/30 via-transparent to-transparent pointer-events-none" />
 
-          <div className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-brand-500 transition">
-            {credentialFile ? (
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                📎 {credentialFile.name}
+          <div className="relative flex items-start gap-4">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow text-purple-600">
+              <IdCard className="h-5 w-5" />
+            </span>
+
+            <div className="flex-1 space-y-3">
+              <h2 className="font-semibold text-slate-900 dark:text-white">Credencial estudiantil</h2>
+
+              <div className="border-2 mt-3 border-dashed rounded-xl p-5 flex flex-col items-center text-center hover:border-brand-500 transition">
+                {credentialFile ? (
+                  <p className="text-sm">{credentialFile.name}</p>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 text-gray-400" />
+                    <p className="text-gray-500 mt-2">Sube tu credencial</p>
+                    <p className="text-xs text-gray-400">JPG, PNG o PDF</p>
+                  </>
+                )}
+
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  className="mt-3"
+                  onChange={(e) => setCredentialFile(e.target.files?.[0] ?? null)}
+                />
               </div>
-            ) : (
-              <>
-                <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                <p className="text-gray-600 dark:text-gray-300">
-                  Sube una imagen de tu credencial
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Formatos permitidos: JPG, PNG, PDF
-                </p>
-              </>
-            )}
-
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              aria-label="Subir credencial estudiantil"
-              title="Subir credencial estudiantil"
-              className="mt-4 text-sm text-gray-700 dark:text-gray-300"
-              onChange={handleFileChange}
-            />
+            </div>
           </div>
-
-          {/* ✅ Términos y condiciones */}
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-            Al subir tu credencial, aceptas nuestros{" "}
-            <Link
-              href="/terms"
-              className="text-brand-600 hover:text-brand-500 underline font-medium"
-            >
-              Términos y Condiciones
-            </Link>{" "}
-            y la Política de Privacidad.
-          </p>
         </section>
 
-        {/* BOTÓN FINAL */}
-        <div className="flex justify-end pt-4">
+        {/* ----------- SUBMIT ----------- */}
+        <div className="flex justify-between items-center">
+
+          {/* Botón de regresar */}
+          <Link
+            href="/user"
+            className="
+              px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition
+              bg-brand-400 text-white hover:bg-brand-600
+            ">
+            Regresar
+          </Link>
+
+          {/* Botón Guardar (sin verificación) */}
           <button
-            disabled={
-              isSubmitting ||
-              !phone ||
-              !credentialFile ||
-              !isEmailVerified ||
-              !isPhoneVerified
-            }
             onClick={handleSubmit}
-            className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
-              phone && credentialFile && isEmailVerified && isPhoneVerified
-                ? "bg-brand-500 hover:bg-brand-600 text-white shadow-glow"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
+            className="
+              px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition
+              bg-brand-500 text-white hover:bg-brand-600
+            "
           >
-            {isSubmitting ? (
-              <>
-                <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                Procesando...
-              </>
-            ) : success ? (
+            {success ? (
               <>
                 <CheckCircle2 className="w-5 h-5" />
-                ¡Verificado!
+                ¡Guardado!
               </>
             ) : (
-              "Guardar y verificar"
+              "Guardar"
             )}
           </button>
+
         </div>
+
       </main>
     </div>
   );
