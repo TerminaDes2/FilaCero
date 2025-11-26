@@ -297,7 +297,7 @@ export default function UserProfilePage() {
       setFormError(null);
 
       try {
-        await api.updateUserProfile(user.id_usuario, {
+        await api.updateUserProfile(user?.id_usuario ?? 0, {
           name: trimmedName,
           phoneNumber: trimmedPhone || null,
           accountNumber: trimmedAccount || null,
@@ -415,31 +415,31 @@ export default function UserProfilePage() {
                     {roleLabel}
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-3 py-1 text-xs font-medium text-white/80">
-                    ID {user.id_usuario}
+                    ID {user?.id_usuario}
                   </span>
                 </div>
 
                 <div className="flex flex-wrap items-start gap-6">
                   <div className="relative h-20 w-20 overflow-hidden rounded-3xl border border-white/30 bg-white/20 shadow-xl">
                     {avatarUrl ? (
-                      <Image src={avatarUrl} alt={user.nombre ?? "Avatar"} fill className="object-cover" sizes="80px" unoptimized />
+                      <Image src={avatarUrl} alt={user?.nombre ?? "Avatar"} fill className="object-cover" sizes="80px" unoptimized />
                     ) : (
                       <span className="grid h-full w-full place-items-center text-2xl font-semibold text-white/90">{initials}</span>
                     )}
                   </div>
                   <div className="space-y-3">
                     <h1 className="text-[2rem] font-semibold leading-tight sm:text-[2.4rem]">
-                      {user.nombre ?? "Usuario FilaCero"}
+                      {user?.nombre ?? "Usuario FilaCero"}
                     </h1>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
                       <span className="inline-flex items-center gap-1.5">
                         <Mail className="h-4 w-4" />
-                        {user.correo_electronico}
+                        {user?.correo_electronico}
                       </span>
-                      {user.numero_telefono && (
+                      {user?.numero_telefono && (
                         <span className="inline-flex items-center gap-1.5">
                           <Phone className="h-4 w-4" />
-                          {user.numero_telefono}
+                          {user?.numero_telefono}
                         </span>
                       )}
                       <span className="inline-flex items-center gap-1.5">
@@ -642,7 +642,7 @@ export default function UserProfilePage() {
                 <dl className="mt-6 space-y-4 text-sm">
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Correo</dt>
-                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{user.correo_electronico}</dd>
+                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{user?.correo_electronico}</dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Fecha de nacimiento</dt>
