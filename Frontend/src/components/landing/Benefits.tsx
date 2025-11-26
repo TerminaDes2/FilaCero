@@ -1,33 +1,36 @@
+"use client";
 import { SectionHeading } from "../../components/SectionHeading";
+import { useTranslation } from "../../hooks/useTranslation";
 
 const benefits = [
   {
-    title: "Menos tiempo en filas",
-    text: "Optimización del flujo de compra para estudiantes y personal.",
+    title: "landing.benefits.items.1.title",
+    text: "landing.benefits.items.1.text",
   },
   {
-    title: "Control centralizado",
-    text: "Toda la operación en una única plataforma coherente.",
+    title: "landing.benefits.items.2.title",
+    text: "landing.benefits.items.2.text",
   },
   {
-    title: "Decisiones con datos",
-    text: "Reportes claros para ajustar precios y stock.",
+    title: "landing.benefits.items.3.title",
+    text: "landing.benefits.items.3.text",
   },
   {
-    title: "Escalable",
-    text: "Empieza simple y agrega módulos con el crecimiento.",
+    title: "landing.benefits.items.4.title",
+    text: "landing.benefits.items.4.text",
   },
   {
-    title: "Experiencia moderna",
-    text: "UI limpia, rápida y accesible para cualquier usuario.",
+    title: "landing.benefits.items.5.title",
+    text: "landing.benefits.items.5.text",
   },
   {
-    title: "Soporte futuro",
-    text: "Base preparada para integrar pagos y más.",
+    title: "landing.benefits.items.6.title",
+    text: "landing.benefits.items.6.text",
   },
 ];
 
 export function Benefits() {
+  const { t } = useTranslation();
   return (
     <section
       id="benefits"
@@ -47,10 +50,10 @@ export function Benefits() {
         <SectionHeading
           id="benefits-heading"
           align="center"
-          badge="Beneficios"
+          badge={t("landing.benefits.badge")}
           badgeTone="teal"
-          title="Impacto que puedes esperar"
-          subtitle="Beneficios prácticos al digitalizar pedidos y la operación de tu cafetería." />
+          title={t("landing.benefits.title")}
+          subtitle={t("landing.benefits.subtitle")} />
         <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-label="Lista de resultados">
           {benefits.map((b, idx) => (
             <li
@@ -67,12 +70,12 @@ export function Benefits() {
                   >
                     {idx + 1}
                   </span>
-                  <h3 className="font-semibold tracking-tight text-sm text-gray-800 group-hover:text-[var(--fc-brand-600)] transition-colors dark:text-slate-100 dark:group-hover:text-[var(--fc-brand-200)]">
-                    {b.title}
+                  <h3 className="font-semibold tracking-tight text-sm text-gray-800 group-hover:text-[var(--fc-brand-600)] transition-colors">
+                    {t(b.title)}
                   </h3>
                 </div>
-                <p className="text-[13px] leading-relaxed text-gray-600 flex-1 dark:text-slate-300">
-                  {b.text}
+                <p className="text-[13px] leading-relaxed text-gray-600 flex-1">
+                  {t(b.text)}
                 </p>
               </div>
               <span aria-hidden className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-gradient-to-tr from-[var(--fc-brand-400)]/10 via-[var(--fc-teal-400)]/10 to-transparent blur-2xl opacity-0 group-hover:opacity-70 transition duration-500" />

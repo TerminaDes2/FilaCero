@@ -20,6 +20,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   // Se ejecuta al validar un token en una ruta protegida
   async validate(payload: JwtPayload) {
+    console.log('[JWT Strategy] Validando payload:', payload);
+    
     // 1. Busca el usuario para confirmar que sigue activo
     const user = await this.prisma.usuarios.findUnique({
       where: { id_usuario: BigInt(payload.id) },

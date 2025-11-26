@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { useUserStore } from '../../../state/userStore';
+import { useTranslation } from '../../../hooks/useTranslation';
 import {
   Clock,
   Smartphone,
@@ -17,8 +18,9 @@ interface BenefitsSectionProps {}
 
 export function BenefitsSection({}: BenefitsSectionProps) {
   const { role } = useUserStore();
-  const isOwner = role === 'OWNER';
+  const { t } = useTranslation();
 
+  const isOwner = role === 'OWNER';
   const roleColor = isOwner ? '#3CB29A' : '#D45978';
   const accentSurface = isOwner
     ? 'from-emerald-50 via-teal-50 to-cyan-50'
@@ -29,23 +31,23 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const clientBenefits = [
     {
       icon: <Clock className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Ahorra tiempo',
-      description: 'Haz tu pedido y recógelo sin hacer filas. Tu tiempo es valioso.',
+      title: t('auth.register.benefits.client.0.title'),
+      description: t('auth.register.benefits.client.0.description'),
     },
     {
       icon: <Smartphone className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Todo desde tu móvil',
-      description: 'Gestiona tu experiencia en cafeterías de forma fácil y rápida.',
+      title: t('auth.register.benefits.client.1.title'),
+      description: t('auth.register.benefits.client.1.description'),
     },
     {
       icon: <ShieldCheck className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Seguro y rápido',
-      description: 'Tus datos protegidos y tu pedido listo cuando lo necesites.',
+      title: t('auth.register.benefits.client.2.title'),
+      description: t('auth.register.benefits.client.2.description'),
     },
     {
       icon: <Tag className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Ofertas exclusivas',
-      description: 'Accede a promociones especiales solo para usuarios de FilaCero.',
+      title: t('auth.register.benefits.client.3.title'),
+      description: t('auth.register.benefits.client.3.description'),
     },
   ];
 
@@ -53,31 +55,29 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const ownerBenefits = [
     {
       icon: <BarChart3 className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Aumenta tus ventas',
-      description: 'Incrementa tu capacidad de servicio sin necesidad de ampliar tu local.',
+      title: t('auth.register.benefits.owner.0.title'),
+      description: t('auth.register.benefits.owner.0.description'),
     },
     {
       icon: <Zap className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Optimiza tu operación',
-      description: 'Reduce tiempos de espera y mejora la experiencia de tus clientes.',
+      title: t('auth.register.benefits.owner.1.title'),
+      description: t('auth.register.benefits.owner.1.description'),
     },
     {
       icon: <LineChart className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Analíticas en tiempo real',
-      description: 'Monitorea tu negocio con datos detallados de ventas y tendencias.',
+      title: t('auth.register.benefits.owner.2.title'),
+      description: t('auth.register.benefits.owner.2.description'),
     },
     {
       icon: <Users className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Gestiona tu equipo',
-      description: 'Coordina a tu staff y optimiza los turnos de trabajo eficientemente.',
+      title: t('auth.register.benefits.owner.3.title'),
+      description: t('auth.register.benefits.owner.3.description'),
     },
   ];
 
-  const benefits = isOwner ? ownerBenefits : clientBenefits;
-  const headline = isOwner ? 'Impulsa tu negocio con FilaCero' : 'Bienvenido a FilaCero';
-  const subtitle = isOwner
-    ? 'Centraliza pedidos, pagos y métricas en una sola vista siempre activa.'
-    : 'Planifica tus pedidos y recoge sin filas con beneficios automáticos.';
+  const benefits = role === 'OWNER' ? ownerBenefits : clientBenefits;
+  const welcomeTitle = role === 'OWNER' ? t('auth.register.benefits.welcomeTitle.owner') : t('auth.register.benefits.welcomeTitle.client');
+  const welcomeSubtitle = role === 'OWNER' ? t('auth.register.benefits.welcomeSubtitle.owner') : t('auth.register.benefits.welcomeSubtitle.client');
 
   return (
     <section
@@ -99,10 +99,10 @@ export function BenefitsSection({}: BenefitsSectionProps) {
             {isOwner ? 'Modo negocio' : 'Modo cliente'}
           </div>
           <h2 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl lg:text-[2.1rem]" style={{ color: roleColor }}>
-            {headline}
+            {welcomeTitle}
           </h2>
           <p className="max-w-lg text-sm text-slate-600 sm:text-base">
-            {subtitle}
+            {welcomeSubtitle}
           </p>
         </header>
 
@@ -143,8 +143,7 @@ export function BenefitsSection({}: BenefitsSectionProps) {
             ))}
           </div>
           <p className="font-medium">
-            Únete a <span className="font-semibold" style={{ color: roleColor }}>+1,000</span>{' '}
-            {isOwner ? 'negocios que procesan pedidos a tiempo real.' : 'usuarios que ya disfrutan de una experiencia sin filas.'}
+            {role === 'OWNER' ? t('auth.register.benefits.join.owner') : t('auth.register.benefits.join.client')}
           </p>
         </div>
       </div>

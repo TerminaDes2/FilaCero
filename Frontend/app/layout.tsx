@@ -1,10 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import React from 'react';
-import { UserProvider } from '../src/state/userStore'; // Ajusta la ruta
-import ClientSettingsApplier from '../src/components/ClientSettingsApplier';
-import { ConfirmProvider } from '../src/components/system/ConfirmProvider';
-import ThemeApplier from '../src/components/ThemeApplier';
+import ClientLayout from '../src/components/ClientLayout';
 
 
 export const metadata: Metadata = {
@@ -16,15 +13,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-  <body>
-        <UserProvider>
-          <ThemeApplier />
-          <ClientSettingsApplier />
-          <ConfirmProvider>
-            {children}
-          </ConfirmProvider>
-        </UserProvider>
+    <html lang="es">
+      <body>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

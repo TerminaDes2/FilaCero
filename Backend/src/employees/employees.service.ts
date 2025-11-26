@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -112,99 +112,117 @@ export class EmployeesService {
    * Si no existe, crea un usuario básico con rol 'empleado'.
    */
   async create(businessId: bigint, dto: CreateEmployeeDto) {
-    // Verificar que el negocio existe
-    const business = await this.prisma.negocio.findUnique({
-      where: { id_negocio: businessId },
-    });
-
-    if (!business) {
-      throw new NotFoundException(`Negocio con ID ${businessId} no encontrado`);
-    }
-
-    // Buscar usuario por correo
-    let user = await this.prisma.usuarios.findUnique({
-      where: { correo_electronico: dto.correo_electronico },
-    });
-
-    // Si no existe, crear usuario con rol empleado
-    if (!user) {
-      const employeeRole = await this.prisma.roles.findUnique({
-        where: { nombre_rol: 'empleado' },
+    try {
+      // Verificar que el negocio existe
+      const business = await this.prisma.negocio.findUnique({
+        where: { id_negocio: businessId },
       });
 
-      if (!employeeRole) {
-        throw new BadRequestException('Rol empleado no encontrado en el sistema');
+      if (!business) {
+        throw new NotFoundException(`Negocio con ID ${businessId} no encontrado`);
       }
 
-      // Generar password temporal (deberías enviar correo de invitación)
-      const bcrypt = require('bcrypt');
-      const tempPassword = Math.random().toString(36).slice(-8);
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      // Buscar usuario por correo
+      let user = await this.prisma.usuarios.findUnique({
+        where: { correo_electronico: dto.correo_electronico },
+      });
 
-      user = await this.prisma.usuarios.create({
-        data: {
-          correo_electronico: dto.correo_electronico,
-          nombre: dto.nombre || dto.correo_electronico.split('@')[0],
-          password_hash: hashedPassword,
-          id_rol: employeeRole.id_rol,
-          estado: 'pendiente', // Pendiente de verificación
+      // Si no existe, crear usuario con rol empleado
+      if (!user) {
+        const employeeRole = await this.prisma.roles.findUnique({
+          where: { nombre_rol: 'empleado' },
+        });
+
+        if (!employeeRole) {
+          throw new BadRequestException('Rol empleado no encontrado en el sistema');
+        }
+
+        // Generar password temporal (deberías enviar correo de invitación)
+        const bcrypt = require('bcrypt');
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        user = await this.prisma.usuarios.create({
+          data: {
+            correo_electronico: dto.correo_electronico,
+            nombre: dto.nombre || dto.correo_electronico.split('@')[0],
+            password_hash: hashedPassword,
+            id_rol: employeeRole.id_rol,
+            estado: 'pendiente', // Pendiente de verificación
+          },
+        });
+
+        // TODO: Enviar correo de invitación con link para configurar password
+        console.log(`[EMPLEADO CREADO] Enviar invitación a ${dto.correo_electronico} con password temporal: ${tempPassword}`);
+      } else {
+        // Si el usuario ya existe, actualizar su rol a empleado
+        const employeeRole = await this.prisma.roles.findUnique({
+          where: { nombre_rol: 'empleado' },
+        });
+
+        if (!employeeRole) {
+          throw new BadRequestException('Rol empleado no encontrado en el sistema');
+        }
+
+        // Manejar errores al actualizar el rol del usuario
+        try {
+          await this.prisma.usuarios.update({
+            where: { id_usuario: user.id_usuario },
+            data: { id_rol: employeeRole.id_rol },
+          });
+        } catch (error) {
+          throw new InternalServerErrorException('Error al actualizar el rol del usuario.');
+        }
+      }
+
+      // Verificar si ya es empleado de este negocio
+      const existingEmployee = await this.prisma.empleados.findUnique({
+        where: {
+          negocio_id_usuario_id: {
+            negocio_id: businessId,
+            usuario_id: user.id_usuario,
+          },
         },
       });
 
-      // TODO: Enviar correo de invitación con link para configurar password
-      console.log(`[EMPLEADO CREADO] Enviar invitación a ${dto.correo_electronico} con password temporal: ${tempPassword}`);
-    }
+      if (existingEmployee) {
+        throw new ConflictException(`El usuario ${dto.correo_electronico} ya es empleado de este negocio`);
+      }
 
-    // Verificar si ya es empleado de este negocio
-    const existingEmployee = await this.prisma.empleados.findUnique({
-      where: {
-        uq_empleados_negocio_usuario: {
+      // Crear relación empleado
+      const employee = await this.prisma.empleados.create({
+        data: {
           negocio_id: businessId,
           usuario_id: user.id_usuario,
+          estado: 'activo',
         },
-      },
-    });
-
-    if (existingEmployee) {
-      throw new ConflictException(`El usuario ${dto.correo_electronico} ya es empleado de este negocio`);
-    }
-
-    // Crear relación empleado
-    const employee = await this.prisma.empleados.create({
-      data: {
-        negocio_id: businessId,
-        usuario_id: user.id_usuario,
-        estado: 'activo',
-      },
-      include: {
-        usuarios: {
-          select: {
-            id_usuario: true,
-            nombre: true,
-            correo_electronico: true,
-            numero_telefono: true,
-            avatar_url: true,
-            fecha_registro: true,
+        include: {
+          usuarios: {
+            select: {
+              id_usuario: true,
+              nombre: true,
+              correo_electronico: true,
+              numero_telefono: true,
+              avatar_url: true,
+              fecha_registro: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return {
-      id_empleado: employee.id_empleado.toString(),
-      negocio_id: employee.negocio_id.toString(),
-      usuario_id: employee.usuario_id.toString(),
-      estado: employee.estado,
-      fecha_alta: employee.fecha_alta,
-      usuario: {
-        id_usuario: employee.usuarios.id_usuario.toString(),
-        nombre: employee.usuarios.nombre,
-        correo_electronico: employee.usuarios.correo_electronico,
-        numero_telefono: employee.usuarios.numero_telefono,
-        avatar_url: employee.usuarios.avatar_url,
-        fecha_registro: employee.usuarios.fecha_registro,
-      },
-    };
+      // Redirigir al POS
+      const posUrl = `${process.env.POS_BASE_URL}/login?email=${encodeURIComponent(dto.correo_electronico)}`;
+      return {
+        message: `Empleado agregado exitosamente. Redirigiendo al POS...`,
+        posUrl,
+      };
+    } catch (error) {
+      console.error('[EmployeesService] Error creando empleado:', error);
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ConflictException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error interno al crear empleado');
+    }
   }
 
   /**

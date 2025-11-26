@@ -1,9 +1,12 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "../../components/Reveal";
 import BackgroundSquares from "./BackgroundSquares";
+import { useTranslation } from "../../hooks/useTranslation";
 
 export function Hero() {
+  const { t } = useTranslation();
   return (
     <section
       id="hero"
@@ -15,14 +18,14 @@ export function Hero() {
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-center">
           <Reveal className="space-y-7">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.42em] text-brand-700 shadow-sm dark:border-white/20 dark:bg-slate-900/60 dark:text-brand-200">
-              Versión libre disponible
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.42em] text-brand-700 shadow-sm">
+              {t("landing.hero.badge")}
             </span>
             <h1 id="hero-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-              Plataforma POS + pedidos QR para <span className="text-gradient">cafeterías escolares</span>.
+              {t("landing.hero.title")} <span className="text-gradient">{t("landing.hero.titleHighlight")}</span>.
             </h1>
-            <p className="text-lg leading-relaxed max-w-xl text-gray-600 dark:text-slate-300">
-              Reduce filas y atiende más pedidos en cada receso. Sin apps nativas, sin hardware propietario, listo en minutos.
+            <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
+              {t("landing.hero.subtitle")}
             </p>
             {/* Social proof inline */}
             <p className="text-sm font-medium text-gray-700 flex items-center gap-2 dark:text-slate-200">
@@ -49,14 +52,14 @@ export function Hero() {
             </ul>
             <div className="flex flex-wrap gap-4 items-center">
               <Link href="/register" className="group relative inline-flex items-center gap-2 bg-brand-600 text-white px-7 py-3 rounded-full font-semibold shadow-glow hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
-                <span>Crear cuenta gratis</span>
+                <span>{t("landing.hero.ctaPrimary")}</span>
                 <span className="translate-x-0 group-hover:translate-x-1 transition" aria-hidden="true">→</span>
               </Link>
-              <Link href="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold border border-gray-300/70 text-gray-700 hover:border-brand-500 hover:text-brand-600 dark:text-slate-200 dark:border-white/15 dark:hover:border-brand-400 dark:hover:text-brand-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
-                Compra ahora
+              <Link href="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold border border-gray-300/70 text-gray-700 hover:border-brand-500 hover:text-brand-600 dark:text-gray-200 dark:border-white/15 dark:hover:border-brand-400 dark:hover:text-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
+                {t("landing.hero.ctaSecondary")}
               </Link>
-              <Link href="#pricing" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-200">
-                Planes
+              <Link href="#pricing" className="text-sm font-medium text-brand-600 hover:underline">
+                {t("navbar.pricing")}
               </Link>
             </div>
             <div className="flex flex-col sm:flex-row gap-6 pt-2">
@@ -69,8 +72,9 @@ export function Hero() {
                 <strong className="font-semibold text-gray-700 dark:text-slate-200">Sin tarjeta</strong> ni compromisos. Accede a todo el núcleo operativo gratis y agrega servicios opcionales cuando los necesites.
               </p>
             </div>
-            <p className="text-sm text-gray-600 pt-1 dark:text-slate-300">
-              ¿Ya tienes cuenta? <Link href="/login" className="font-medium text-brand-600 hover:underline dark:text-brand-200">Inicia sesión</Link>
+            <p className="text-sm text-gray-600 pt-1">
+              {/* Mantener la pregunta en español por ahora; solo el link traducido */}
+              ¿Ya tienes cuenta? <Link href="/login" className="font-medium text-brand-600 hover:underline">{t("navbar.login")}</Link>
             </p>
           </Reveal>
           <Reveal delay={120} className="relative hidden sm:block">
@@ -92,24 +96,24 @@ export function Hero() {
                 <div className="hidden sm:grid gap-3 sm:grid-cols-2">
                   {[
                     {
-                      title: "Pedidos listos",
-                      metric: "12",
-                      badge: "Recreo matutino",
+                      title: t("landing.cards.card1.title"),
+                      metric: t("landing.cards.card1.metric"),
+                      badge: t("landing.cards.card1.badge"),
                     },
                     {
-                      title: "Tiempo promedio",
-                      metric: "3.2 min",
-                      badge: "Objetivo ≤ 4 min",
+                      title: t("landing.cards.card2.title"),
+                      metric: t("landing.cards.card2.metric"),
+                      badge: t("landing.cards.card2.badge"),
                     },
                     {
-                      title: "Ticket promedio",
-                      metric: "$58",
-                      badge: "Sin comisiones",
+                      title: t("landing.cards.card3.title"),
+                      metric: t("landing.cards.card3.metric"),
+                      badge: t("landing.cards.card3.badge"),
                     },
                     {
-                      title: "Usuarios activos",
-                      metric: "210",
-                      badge: "QR recurrentes",
+                      title: t("landing.cards.card4.title"),
+                      metric: t("landing.cards.card4.metric"),
+                      badge: t("landing.cards.card4.badge"),
                     },
                   ].map((card) => (
                     <div

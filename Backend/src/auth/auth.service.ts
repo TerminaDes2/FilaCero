@@ -4,6 +4,7 @@ import {
     UnauthorizedException,
     ConflictException,
     Logger,
+    InternalServerErrorException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -121,6 +122,7 @@ export class AuthService {
 
     // --- (R)ead - LOGIN API (Corregido y Actualizado) ---
     async login(loginDto: LoginDto) { 
+        this.logger.log(`[LOGIN] Intento de login para: ${loginDto.correo_electronico}`);
         
         // 1. Buscar usuario por 'correo_electronico'
         const user = await this.prisma.usuarios.findUnique({ 
@@ -144,26 +146,42 @@ export class AuthService {
         
         // Si no se encuentra el usuario
         if (!user) {
-            // Se usa la excepción importada
+            this.logger.warn(`[LOGIN] Usuario no encontrado: ${loginDto.correo_electronico}`);
             throw new UnauthorizedException('Credenciales inválidas (Correo no encontrado).');
         }
+
+        this.logger.log(`[LOGIN] Usuario encontrado: ${user.id_usuario}`);
 
         // 2. Comparar la contraseña ingresada con el hash de la DB
         const isPasswordValid = await bcrypt.compare(loginDto.password, user.password_hash); 
         
         // Si la contraseña no coincide
         if (!isPasswordValid) {
-            // Se usa la excepción importada
+            this.logger.warn(`[LOGIN] Contraseña incorrecta para: ${loginDto.correo_electronico}`);
             throw new UnauthorizedException('Credenciales inválidas (Contraseña incorrecta).');
         }
+
+        this.logger.log(`[LOGIN] Contraseña válida, generando token...`);
 
         // 3. Generar y devolver el Token JWT
         const payload: JwtPayload = { 
             id: user.id_usuario.toString(), 
             email: user.correo_electronico 
         };
+
+        const { token, user: tokenUser } = this.generateToken(payload, user);
+
+        const authResponse = {
+            token,
+            user: {
+                ...user,
+                ...tokenUser,
+            },
+        };
+
+        this.logger.log(`[LOGIN] Login exitoso para: ${loginDto.correo_electronico}`);
         
-    return this.generateToken(payload, user);
+        return authResponse;
     }
 
     async verifyAccount(dto: VerifyEmailDto) {
@@ -270,12 +288,10 @@ export class AuthService {
             };
             return this.generateToken(jwtPayload, user);
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            if (error instanceof Error && error.message.includes('P2002')) {
                 throw new ConflictException('El correo o número de cuenta ya se encuentra registrado.');
             }
-            const message = error instanceof Error ? `${error.name}: ${error.message}` : 'Error desconocido al crear usuario';
-            this.logger.error(`[USER_CREATE_AFTER_VERIFY_ERROR] ${message}`);
-            throw new BadRequestException('No se pudo crear el usuario después de verificar el código.');
+            throw new InternalServerErrorException('Error desconocido al procesar la solicitud.');
         }
     }
 

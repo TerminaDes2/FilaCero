@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { CheckCircle2, Store } from 'lucide-react';
-import { FancyInput } from '../../auth/FancyInput';
-import { LoginCard } from '../../auth/LoginCard';
-import { api, activeBusiness } from '../../../lib/api';
-import { useUserStore } from '../../../state/userStore';
-import { useBusinessStore } from '../../../state/businessStore';
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { CheckCircle2, ChevronLeft, ChevronRight, Store, MapPin, Cog, ClipboardList } from 'lucide-react'
+import { useUserStore } from '../../../state/userStore'
+import { useBusinessStore } from '../../../state/businessStore'
+import { LoginCard } from '../../auth/LoginCard'
+import { api, activeBusiness } from '../../../lib/api'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 type FormState = {
   nombre: string;
@@ -41,11 +42,13 @@ function isValidUrl(candidate: string): boolean {
   return false;
 }
 
-export default function BusinessOnboardingWizard({ embed = false }: { embed?: boolean }) {
-  const router = useRouter();
-  const { role, checkAuth } = useUserStore();
-  const { setActiveBusiness } = useBusinessStore();
+type Step = 'identidad' | 'ubicacion' | 'configuracion' | 'exito';
 
+export default function BusinessOnboardingWizard({ embed = false }: { embed?: boolean }) {
+  const router = useRouter()
+  const { role, checkAuth } = useUserStore()
+  const { setActiveBusiness } = useBusinessStore()
+  const { t } = useTranslation()
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [touched, setTouched] = useState<TouchedState>({
     nombre: false,
@@ -57,7 +60,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [submissionError, setSubmissionError] = useState<{ message?: string } | null>(null);
 
   useEffect(() => {
     try {
@@ -185,19 +188,15 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
           hero_image_url: created?.hero_image_url ?? payload.hero_image_url ?? null,
         });
       }
-      resetDraft();
-      setSuccess(true);
-    } catch (submissionError: any) {
-      const status = submissionError?.status;
-      if (status === 401) {
-        await checkAuth();
-        setError('Necesitas iniciar sesión para continuar.');
-        router.push('/login?redirect=/onboarding/negocio');
-        return;
+      // limpiar storage y redirigir al POS
+      try { localStorage.removeItem(STORAGE_KEY) } catch {}
+      router.push('/pos')
+    } catch (e: any) {
+      if (e?.status === 413) {
+        setError(t('onboarding.business.errors.logoTooBig'))
+      } else {
+        setError(e?.message || t('onboarding.business.errors.createFailed'))
       }
-      const message =
-        submissionError?.message || 'No pudimos crear tu negocio. Intenta nuevamente.';
-      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -293,24 +292,13 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
             <h2 className="mt-3 text-lg font-semibold text-gray-900">Personaliza tu presencia</h2>
             <p className="mt-1 text-xs text-gray-500">Usa URLs públicas (Cloudinary, Drive con acceso público, etc.).</p>
           </div>
-          <div className="flex flex-col gap-3 lg:gap-4">
-            <FancyInput
-              label="Logo (URL)"
-              value={form.logoUrl}
-              onChange={handleChange('logoUrl')}
-              onBlur={handleBlur('logoUrl')}
-              error={touched.logoUrl ? validationMessages.logoUrl : undefined}
-              placeholder="https://.../logo.png"
-            />
-            <FancyInput
-              label="Imagen de portada (URL)"
-              value={form.heroImageUrl}
-              onChange={handleChange('heroImageUrl')}
-              onBlur={handleBlur('heroImageUrl')}
-              error={touched.heroImageUrl ? validationMessages.heroImageUrl : undefined}
-              placeholder="https://.../cover.jpg"
-            />
+          <h1 className="text-xl font-bold mb-1">{t('onboarding.business.success.title')}</h1>
+          <p className="text-sm text-gray-600 mb-4">{t('onboarding.business.success.subtitle')}</p>
+          <div className="flex items-center justify-center gap-3">
+            <button onClick={() => router.push('/')} className="fc-btn-secondary">{t('onboarding.business.success.goHome')}</button>
+            <button onClick={() => router.push('/pos')} className={`fc-btn-primary bg-brand-600 hover:bg-brand-700`}>{t('onboarding.business.success.goPOS')}</button>
           </div>
+          <div className="mt-3 text-xs text-gray-500">{t('onboarding.business.success.note')}</div>
         </div>
       </div>
 
@@ -341,42 +329,6 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
     </form>
   );
 
-  if (success) {
-    if (embed) {
-      return (
-        <div className="rounded-2xl border border-white/70 bg-white/95 p-6 shadow-lg">
-          {SuccessView}
-        </div>
-      );
-    }
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <LoginCard
-          brandMark={<Store className="h-6 w-6" />}
-          brandFull
-          title="¡Tu negocio está listo!"
-          subtitle="Ya puedes crear productos y comenzar a vender"
-          size="wide"
-        >
-          {SuccessView}
-        </LoginCard>
-      </div>
-    );
-  }
-
-  if (embed) {
-    return (
-      <div className="space-y-6">
-        {role !== 'OWNER' && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs text-amber-700">
-            Este flujo está optimizado para cuentas de negocio. Puedes continuar igualmente.
-          </div>
-        )}
-        {FormView}
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-6">
       <LoginCard
@@ -387,13 +339,59 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         size="wide"
         compact
       >
-        {role !== 'OWNER' && (
-          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-700">
-            Recomendamos usar el rol Negocio para configurar este flujo.
-          </div>
-        )}
         {FormView}
       </LoginCard>
+    </div>
+  );
+}
+
+function FancyInput({
+  label,
+  value,
+  onChange,
+  onBlur,
+  type = 'text',
+  placeholder,
+  error,
+  leftIcon,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
+  type?: string;
+  placeholder?: string;
+  error?: string;
+  leftIcon?: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">
+        {label}
+        {required && <span className="ml-1 text-rose-500">*</span>}
+      </label>
+      <div className="relative">
+        {leftIcon && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+            {leftIcon}
+          </div>
+        )}
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          placeholder={placeholder}
+          className={`block w-full rounded-xl border ${
+            error ? 'border-rose-300' : 'border-gray-200'
+          } bg-white/80 ${
+            leftIcon ? 'pl-11' : 'pl-4'
+          } pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm backdrop-blur transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/20`}
+        />
+      </div>
+      {error && <p className="text-xs text-rose-600">{error}</p>}
     </div>
   );
 }

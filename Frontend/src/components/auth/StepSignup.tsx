@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useUserStore } from '../../state/userStore';
+import { useTranslation } from '../../hooks/useTranslation';
 
 type StepSignupProps = {
   onBusinessSelect?: () => void;
@@ -13,6 +14,7 @@ type RoleKey = 'customer' | 'owner';
 
 export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepSignupProps) {
   const { setRole } = useUserStore();
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState<RoleKey | null>(null);
   const [focused, setFocused] = useState<RoleKey | null>(null);
 
@@ -36,9 +38,9 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
   const cards = [
     {
       key: 'customer' as RoleKey,
-      badge: 'Para personas',
-      title: 'Cliente FilaCero',
-      copy: 'Crea pedidos en segundos, recibe alertas de recojo y acumula beneficios sin filas.',
+      badge: t('auth.register.selection.card.customer.badge'),
+      title: t('auth.register.selection.card.customer.title'),
+      copy: t('auth.register.selection.card.customer.copy'),
       gradient: 'from-[rgba(233,74,111,0.35)] via-[rgba(236,122,149,0.28)] to-transparent',
       accentBg: 'bg-[rgba(233,74,111,0.16)]/80',
       accentBorder: 'border-[rgba(233,74,111,0.35)]/70',
@@ -53,7 +55,11 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
           </svg>
         </span>
       ),
-      microCopy: ['Pedidos anticipados', 'Wallet digital', 'Recompensas automáticas'],
+      microCopy: [
+        t('auth.register.selection.card.customer.micro.0'),
+        t('auth.register.selection.card.customer.micro.1'),
+        t('auth.register.selection.card.customer.micro.2'),
+      ],
       image: {
         src: '/images/clienteprueba.jpg',
         alt: 'Cliente usando FilaCero desde el móvil'
@@ -62,9 +68,9 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
     },
     {
       key: 'owner' as RoleKey,
-      badge: 'Para negocios',
-      title: 'Negocio Inteligente',
-      copy: 'Centraliza pedidos, pagos y métricas en vivo con herramientas colaborativas para tu equipo.',
+      badge: t('auth.register.selection.card.owner.badge'),
+      title: t('auth.register.selection.card.owner.title'),
+      copy: t('auth.register.selection.card.owner.copy'),
       gradient: 'from-[rgba(76,193,173,0.32)] via-[rgba(107,210,197,0.24)] to-transparent',
       accentBg: 'bg-[rgba(76,193,173,0.14)]/80',
       accentBorder: 'border-[rgba(76,193,173,0.35)]/70',
@@ -79,7 +85,11 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
           </svg>
         </span>
       ),
-      microCopy: ['Dashboard POS', 'Roles y permisos', 'Insights de ventas'],
+      microCopy: [
+        t('auth.register.selection.card.owner.micro.0'),
+        t('auth.register.selection.card.owner.micro.1'),
+        t('auth.register.selection.card.owner.micro.2'),
+      ],
       image: {
         src: '/images/dueñoprueba.jpg',
         alt: 'Equipo de cafetería gestionando pedidos con FilaCero'
@@ -89,10 +99,10 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
   ];
 
   return (
-    <section
+      <section
       role="group"
-      aria-label="Selecciona el tipo de cuenta"
-      className="relative flex min-h-screen w-full flex-col overflow-hidden bg-gradient-to-b from-white via-white to-brand-50 px-4 pb-10 pt-16 sm:px-6 md:pt-20 lg:px-10 lg:pb-16 lg:pt-24"
+      aria-label={t('auth.register.selection.ariaLabel')}
+      className="relative flex min-h-screen w-full flex-col overflow-hidden bg-gradient-to-b from-white via-white to-brand-50 px-4 pb-12 pt-20 sm:px-6 md:pt-24 lg:px-10 lg:pb-20 lg:pt-28"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(233,74,111,0.12),_transparent_55%)]" aria-hidden />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(76,193,173,0.12),_transparent_60%)]" aria-hidden />
@@ -101,31 +111,31 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
         <div className="flex h-full flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-center lg:gap-14">
           <div className="mx-auto w-full text-center lg:mx-0 lg:text-left lg:pr-6 xl:pr-10">
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] text-brand-600 shadow-sm">
-              Tu cuenta FilaCero
+              {t('auth.register.selection.badge')}
             </span>
-            <h1 className="mt-4 text-[1.85rem] font-extrabold tracking-tight text-slate-900 sm:text-[2.25rem] lg:text-[2.75rem] lg:leading-[1.12]">
-              ¿Cómo quieres comenzar?
+            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl lg:text-5xl lg:leading-[1.1]">
+              {t('auth.register.selection.title')}
             </h1>
-            <p className="mt-3 text-sm text-slate-600 sm:text-[0.95rem] lg:text-base lg:text-slate-500">
-              Elige el viaje que mejor describe tu rol y prepara una experiencia con interface personalizada, más rápida y totalmente enlazada al ecosistema FilaCero.
+            <p className="mt-4 text-sm text-slate-600 sm:text-base lg:text-lg lg:text-slate-500">
+              {t('auth.register.selection.subtitle')}
             </p>
 
-            <div className="mt-6 hidden lg:grid gap-2.5 text-sm text-slate-500">
-              <div className="inline-flex items-center gap-2.5 rounded-full border border-white/60 bg-white/60 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-500">
-                Selección guiada
+            <div className="mt-6 hidden lg:grid gap-3 text-sm text-slate-500">
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-brand-500">
+                {t('auth.register.selection.guideBadge')}
               </div>
               <ul className="grid gap-2 text-sm text-slate-600">
-                <li className="inline-flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-3.5 py-2.5 shadow-sm">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-brand-500 text-xs font-semibold">1</span>
-                  <span className="text-[13px]">Escoge tu rol para activar la experiencia correcta.</span>
+                <li className="inline-flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-500 font-semibold">1</span>
+                  <span>{t('auth.register.selection.steps.0')}</span>
                 </li>
-                <li className="inline-flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-3.5 py-2.5 shadow-sm">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-50 text-teal-500 text-xs font-semibold">2</span>
-                  <span className="text-[13px]">Completa un formulario inteligente con bloques adaptados a tu objetivo.</span>
+                <li className="inline-flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-teal-500 font-semibold">2</span>
+                  <span>{t('auth.register.selection.steps.1')}</span>
                 </li>
-                <li className="inline-flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-3.5 py-2.5 shadow-sm">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">3</span>
-                  <span className="text-[13px]">Accede a la plataforma con onboarding guiado y recursos curados.</span>
+                <li className="inline-flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-semibold">3</span>
+                  <span>{t('auth.register.selection.steps.2')}</span>
                 </li>
               </ul>
             </div>
@@ -137,7 +147,7 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
                 key={card.key}
                 type="button"
                 onClick={() => handleSelect(card.key)}
-                aria-label={card.key === 'customer' ? 'Seleccionar tipo de cuenta: Cliente' : 'Seleccionar tipo de cuenta: Negocio'}
+                aria-label={card.key === 'customer' ? t('auth.register.selection.aria.customer') : t('auth.register.selection.aria.owner')}
                 aria-describedby={card.key === 'customer' ? 'desc-cliente' : 'desc-negocio'}
                 onMouseEnter={() => setHovered(card.key)}
                 onMouseLeave={() => setHovered((current) => (current === card.key ? null : current))}
@@ -184,9 +194,9 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
                     </p>
                   </div>
 
-                  <div className="mt-5 flex w-full flex-col gap-2.5">
-                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.24em] text-slate-600">
-                      Capacidades clave
+                  <div className="mt-6 flex w-full flex-col gap-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-[0.26em] text-slate-600">
+                      {t('auth.register.selection.capabilities')}
                       <span className="inline-flex h-1.5 w-1.5 rounded-full bg-slate-300" aria-hidden />
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -202,12 +212,12 @@ export default function StepSignup({ onBusinessSelect, onCustomerSelect }: StepS
                     </div>
 
                     <div className="flex items-center justify-between gap-3">
-                      <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-600">
-                        Comenzar ahora
+                      <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600">
+                        {t('auth.register.selection.startNow')}
                         <span className={`inline-flex h-1 w-8 rounded-full ${card.key === 'customer' ? 'bg-[var(--fc-brand-500)]/70' : 'bg-[var(--fc-teal-500)]/70'}`} aria-hidden />
                       </div>
-                        <div className={`inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-semibold shadow-md transition-opacity duration-300 group-focus-visible:opacity-100 group-hover:opacity-100 md:hidden lg:inline-flex ${card.accentText}`}>
-                        <span>Seleccionar</span>
+                      <div className={`inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-2 text-xs font-semibold shadow-md transition-opacity duration-300 group-focus-visible:opacity-100 group-hover:opacity-100 md:hidden lg:inline-flex ${card.accentText}`}>
+                        <span>{t('auth.register.selection.select')}</span>
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
