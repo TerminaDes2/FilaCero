@@ -205,14 +205,6 @@ export default function UserDropdown() {
                   <span>Mi perfil</span>
                 </Link>
 
-                <Link
-                  href="/shop"
-                  className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
-                  onClick={() => setUserMenuOpen(false)}
-                >
-                  <User className="h-4 w-4 text-brand-500" />
-                  <span>Ver tienda demo</span>
-                </Link>
               </div>
 
               <div className="border-t border-brand-100/70 bg-brand-50/60 px-5 py-4">
