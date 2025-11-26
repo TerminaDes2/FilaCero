@@ -30,9 +30,11 @@ export function EmployeesAdminPanel({
   const filtered = employees.filter((emp) => {
     // Filtro de búsqueda
     const searchLower = search.toLowerCase().trim();
+    const nombre = emp.usuario?.nombre ?? '';
+    const correo = emp.usuario?.correo_electronico ?? '';
     const matchesSearch = !searchLower || 
-      emp.usuario.nombre.toLowerCase().includes(searchLower) ||
-      emp.usuario.correo_electronico.toLowerCase().includes(searchLower);
+      nombre.toLowerCase().includes(searchLower) ||
+      correo.toLowerCase().includes(searchLower);
 
     // Filtro de estado
     const matchesStatus = statusFilter === 'all' || emp.estado === statusFilter;
@@ -40,8 +42,8 @@ export function EmployeesAdminPanel({
     return matchesSearch && matchesStatus;
   });
 
-  const activos = employees.filter(e => e.estado === 'activo').length;
-  const inactivos = employees.filter(e => e.estado === 'inactivo').length;
+  const activos = employees.filter(e => e?.estado === 'activo').length;
+  const inactivos = employees.filter(e => e?.estado === 'inactivo').length;
 
   if (loading && employees.length === 0) {
     return (

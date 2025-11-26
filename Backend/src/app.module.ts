@@ -22,6 +22,7 @@ import { EmailModule } from './email/email.module';
 import { MetricsModule } from './metrics/metrics.module'; // <-- 1. Importa el módulo
 import { SmsModule } from './sms/sms.module';
 import { PaymentsModule } from './payments/payments.module';
+import { TranslationModule } from './translation/translation.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { PaymentsModule } from './payments/payments.module';
     MetricsModule, // <-- 2. Añádelo a la lista
     SmsModule, // módulo de SMS (Twilio Verify)
     PaymentsModule, // módulo de pagos (Stripe)
+    TranslationModule, // módulo de traducción (Azure Cognitive Services)
   ],
   controllers: [HealthController, RecoverController],
   providers: [],

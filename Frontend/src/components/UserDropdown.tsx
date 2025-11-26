@@ -13,7 +13,8 @@ import {
   LogOut, 
   LayoutDashboard, 
   ChevronDown,
-  Settings
+  Settings,
+  Store
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 
@@ -191,6 +192,26 @@ export default function UserDropdown() {
                   >
                     <LayoutDashboard className="h-4 w-4 text-brand-500" />
                     <span>Ir al panel POS</span>
+                  </button>
+                )}
+
+                {shouldShowAdminPanel && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
+                    onClick={async () => {
+                      try {
+                        const list = await api.listMyBusinesses();
+                        setBizList(list || []);
+                      } catch {
+                        setBizList([]);
+                      }
+                      setShowBizPicker(true);
+                      setUserMenuOpen(false);
+                    }}
+                  >
+                    <Store className="h-4 w-4 text-brand-500" />
+                    <span>Seleccionar negocio</span>
                   </button>
                 )}
 

@@ -1,26 +1,15 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SectionHeading } from '../../components/SectionHeading';
+import { useTranslation } from '../../hooks/useTranslation';
 
-interface QA { q: string; a: string; }
+interface QA { qKey: string; aKey: string; }
 
 const faqs: QA[] = [
-  {
-    q: '¿Necesito instalar algo o descargar una app?',
-    a: 'No. Funciona directamente en el navegador (web app). Tus clientes solo escanean el QR y empiezan a pedir.'
-  },
-  {
-    q: '¿Cuánto tardo en configurarlo?',
-    a: 'En minutos puedes cargar tu catálogo base. A partir de ahí gestionas productos, precios y pedidos desde el panel.'
-  },
-  {
-    q: '¿Funciona en cualquier dispositivo?',
-    a: 'Sí. Está optimizado para móviles, tablets y desktops modernos sin requisitos especiales.'
-  },
-  {
-    q: '¿Puedo migrar a funciones avanzadas luego?',
-    a: 'Sí. Empiezas gratis y habilitas módulos como inventario avanzado o reportes profundos cuando los necesites.'
-  }
+  { qKey: 'landing.faq.items.1.q', aKey: 'landing.faq.items.1.a' },
+  { qKey: 'landing.faq.items.2.q', aKey: 'landing.faq.items.2.a' },
+  { qKey: 'landing.faq.items.3.q', aKey: 'landing.faq.items.3.a' },
+  { qKey: 'landing.faq.items.4.q', aKey: 'landing.faq.items.4.a' },
 ];
 
 interface FAQItemProps {
@@ -167,6 +156,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
 
 export function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
+  const { t } = useTranslation();
   return (
     <section id="faq" aria-labelledby="faq-heading" className="relative overflow-hidden py-28 bg-[var(--fc-surface-base)] dark:bg-[color:rgba(3,7,15,0.97)]">
       <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(148,163,184,0.2)_1px,transparent_0)] [background-size:18px_18px] dark:opacity-[0.18] dark:[background-image:radial-gradient(rgba(100,116,139,0.18)_1px,transparent_0)]" aria-hidden />
@@ -175,17 +165,17 @@ export function FAQ() {
         <SectionHeading
           id="faq-heading"
           align="center"
-          badge="FAQ"
+          badge={t('landing.faq.badge')}
           badgeTone="teal"
-          title="Preguntas frecuentes"
-          subtitle="Resolvemos dudas clave antes de que empieces." />
+          title={t('landing.faq.title')}
+          subtitle={t('landing.faq.subtitle')} />
         <ul className="space-y-4" role="list">
           {faqs.map((f, i) => (
             <FAQItem
-              key={f.q}
+              key={f.qKey}
               index={i}
-              q={f.q}
-              a={f.a}
+              q={t(f.qKey)}
+              a={t(f.aKey)}
               isOpen={open === i}
               onToggle={() => setOpen(open === i ? null : i)}
             />

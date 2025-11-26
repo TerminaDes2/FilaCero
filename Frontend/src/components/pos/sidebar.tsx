@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Settings as GearIcon } from 'lucide-react';
 import { useKitchenBoard } from '../../state/kitchenBoardStore';
 import { usePOSView } from '../../state/posViewStore';
+import { useUserStore } from '../../state/userStore';
 
 interface NavItem {
 	key: string;
@@ -139,6 +140,14 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
   // Derived classes
   const widthClass = collapsed ? 'w-16' : 'w-56';
 
+	// Determine role-based visibility
+	const { user, backendRole } = useUserStore();
+	const isEmployee = Boolean(user && Number(user.id_rol) === 3);
+	const isOwner = Boolean(user && (Number(user.id_rol) === 2 || backendRole === 'admin'));
+	const visibleItems = isEmployee
+		? items.filter(i => i.key === 'home' || i.key === 'kitchen')
+		: items;
+
   return (
 		<nav aria-label="Navegación principal POS" className={`h-full flex flex-col ${widthClass} relative rounded-r-2xl`} style={{background:'var(--pos-bg-sidebar)', boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.25),0 4px 14px -4px rgba(149,37,55,0.35)'}}>
       {/* Header / Brand + Toggle */}
@@ -168,7 +177,7 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
       </div>
 			{/* Nav items */}
 			<div className="flex-1 overflow-y-auto py-3 px-2 space-y-1 relative z-10 custom-scrollbar">
-				{items.filter(i=> i.key !== 'logo').map(item => {
+				{visibleItems.filter(i=> i.key !== 'logo').map(item => {
 					const isKitchen = item.key === 'kitchen';
 					const baseActive = pathname === item.href || (item.key === 'home' && pathname === '/pos');
 					const active = isKitchen
