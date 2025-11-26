@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api, type AuthUser } from '../../lib/api';
 import { useUserStore } from '../../state/userStore';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface EmailVerificationModalProps {
   open: boolean;
@@ -22,6 +23,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   onVerified,
 }) => {
   const { checkAuth } = useUserStore();
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -87,7 +89,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       if (remainingMs <= 0) return 'El código actual ha expirado.';
       const totalMinutes = Math.floor(remainingMs / 60000);
       const totalSeconds = Math.floor((remainingMs % 60000) / 1000);
-      return `Expira en ${totalMinutes}m ${totalSeconds.toString().padStart(2, '0')}s`;
+      return `${t('auth.register.verification.expiresPrefix')} ${totalMinutes}m ${totalSeconds.toString().padStart(2, '0')}s`;
     } catch {
       return null;
     }
@@ -102,7 +104,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (code.length !== 6) {
-      setError('Ingresa los 6 dígitos del código.');
+      setError(t('auth.register.verification.errors.invalidLength'));
       return;
     }
     setSubmitting(true);
@@ -121,7 +123,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setCode('');
       onVerified?.({ verifiedAt: new Date().toISOString(), user: response.user });
     } catch (err: any) {
-      setError(err?.message || 'No pudimos verificar el código. Inténtalo nuevamente.');
+      setError(err?.message || t('auth.register.verification.errors.verifyGeneric'));
     } finally {
       setSubmitting(false);
     }
@@ -134,7 +136,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     setInfo(null);
     try {
       const result = await api.resendRegister(currentSession);
-      setInfo('Enviamos un nuevo código a tu correo.');
+      setInfo(t('auth.register.verification.info.resent'));
       setCurrentExpiresAt(result.expiresAt);
       setCurrentSession(result.session);
       try {
@@ -145,7 +147,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       } catch {}
       setResendCooldown(45);
     } catch (err: any) {
-      setError(err?.message || 'No pudimos reenviar el código en este momento.');
+      setError(err?.message || t('auth.register.verification.errors.resendGeneric'));
     } finally {
       setResendLoading(false);
     }
@@ -157,13 +159,13 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Verifica tu correo electrónico</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('auth.register.verification.title')}</h2>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
-              aria-label="Cerrar"
+              aria-label={t('auth.register.verification.closeAria')}
             >
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path
@@ -177,7 +179,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         </div>
 
         <p className="text-sm text-gray-600 mb-4">
-          Hemos enviado un código de 6 dígitos a <span className="font-medium text-gray-900">{email}</span>. Ingrésalo a continuación para activar tu cuenta.
+          {t('auth.register.verification.sentPrefix')} <span className="font-medium text-gray-900">{email}</span>. {t('auth.register.verification.sentSuffix')}
         </p>
 
         {expirationSummary && (
@@ -201,7 +203,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="verification-code" className="block text-xs font-medium text-gray-700">
-              Código de verificación
+              {t('auth.register.verification.field.label')}
             </label>
             <input
               id="verification-code"
@@ -212,7 +214,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
               value={code}
               onChange={(event) => handleChange(event.target.value)}
               className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-center text-lg font-semibold tracking-[0.45em] text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
-              placeholder="000000"
+              placeholder={t('auth.register.verification.field.placeholder')}
               disabled={submitting}
               autoFocus
             />
@@ -233,7 +235,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                 />
               </svg>
             )}
-            {submitting ? 'Verificando...' : 'Confirmar código'}
+            {submitting ? t('auth.register.verification.submit.submitting') : t('auth.register.verification.submit.confirm')}
           </button>
         </form>
 
@@ -244,9 +246,9 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             disabled={resendCooldown > 0 || resendLoading}
             className="font-medium text-brand-600 hover:text-brand-500 disabled:text-gray-400"
           >
-            {resendLoading ? 'Enviando...' : resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : 'Reenviar código'}
+            {resendLoading ? t('auth.register.verification.resend.sending') : resendCooldown > 0 ? `${t('auth.register.verification.resend.waitPrefix')} ${resendCooldown}s` : t('auth.register.verification.resend.action')}
           </button>
-          {!onClose && <span className="text-gray-400">Necesitamos validar tu correo para continuar.</span>}
+          {!onClose && <span className="text-gray-400">{t('auth.register.verification.note')}</span>}
         </div>
       </div>
     </div>

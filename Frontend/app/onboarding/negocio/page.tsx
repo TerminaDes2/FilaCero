@@ -3,8 +3,11 @@ import BusinessOnboardingWizard from '../../../src/components/onboarding/negocio
 import { BenefitsSection } from '../../../src/components/auth/registerLayout/BenefitsSection'
 import { BackButton } from '../../../src/components/auth/registerLayout/BackButton'
 import { BrandLogo } from '../../../src/components/BrandLogo'
+import LanguageSelector from '../../../src/components/LanguageSelector'
+import { useTranslation } from '../../../src/hooks/useTranslation'
 
 export default function NegocioOnboardingPage() {
+  const { t } = useTranslation()
   return (
     <div className="fixed inset-0 w-screen h-screen grid grid-cols-1 lg:grid-cols-2">
       {/* Brand badge centrado arriba */}
@@ -12,6 +15,10 @@ export default function NegocioOnboardingPage() {
         <div className="px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-sm">
           <BrandLogo withWordmark size={44} asLink={true} />
         </div>
+      </div>
+      {/* Selector de idioma */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSelector />
       </div>
       {/* Botón Volver para coherencia visual */}
       <BackButton onBackToSelection={() => history.back()} />
@@ -24,10 +31,10 @@ export default function NegocioOnboardingPage() {
         <div className="w-full max-w-sm sm:max-w-md mx-auto">
           <div className="mb-4 lg:mb-6 text-center">
             <h1 className="text-lg lg:text-xl font-semibold text-gray-900 tracking-tight mb-1">
-              Continúa con tu <span className="text-brand-600 font-bold">Negocio</span>
+              {t('onboarding.business.title')}
             </h1>
             <p className="text-xs text-gray-500">
-              Completa estos pasos para finalizar tu registro
+              {t('onboarding.business.subtitle')}
             </p>
           </div>
           <BusinessOnboardingWizard embed />

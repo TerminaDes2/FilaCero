@@ -175,5 +175,291 @@
       "createAccount": "Crea una cuenta",
       "errorGeneric": "Error al iniciar sesión"
     }
+    ,
+    "register": {
+      "error": {
+        "noRole": {
+          "title": "Error: Tipo de cuenta no seleccionado",
+          "subtitle": "Por favor selecciona tu tipo de cuenta para continuar con el registro",
+          "cta": "Seleccionar tipo"
+        }
+      },
+      "title": {
+        "prefix": "Crea tu",
+        "role": {
+          "owner": "cuenta de Negocio",
+          "client": "cuenta de Cliente"
+        }
+      },
+      "progress": {
+        "typeSelected": "Tipo seleccionado",
+        "complete": "Completa tus datos"
+      },
+      "alreadyAccount": {
+        "prefix": "¿Ya tienes una cuenta?",
+        "action": "Iniciar sesión"
+      },
+      "changeType": "Cambiar tipo de cuenta",
+      "back": {
+        "aria": "Volver a la selección de tipo de cuenta",
+        "label": "Volver"
+      },
+      "benefits": {
+        "welcomeTitle": {
+          "owner": "¡Impulsa tu negocio con FilaCero!",
+          "client": "¡Te damos la bienvenida a FilaCero!"
+        },
+        "welcomeSubtitle": {
+          "owner": "La plataforma definitiva para gestionar tu negocio",
+          "client": "Tu experiencia sin filas comienza aquí"
+        },
+        "client": {
+          "0": { "title": "Ahorra tiempo", "description": "Haz tu pedido y recógelo sin hacer filas." },
+          "1": { "title": "Todo desde tu móvil", "description": "Gestiona tu experiencia en cafeterías de forma fácil y rápida." },
+          "2": { "title": "Seguro y rápido", "description": "Tus datos protegidos y tu pedido listo cuando lo necesites." },
+          "3": { "title": "Ofertas exclusivas", "description": "Accede a promociones especiales solo para usuarios de FilaCero." }
+        },
+        "owner": {
+          "0": { "title": "Aumenta tus ventas", "description": "Incrementa tu capacidad de servicio sin ampliar tu local." },
+          "1": { "title": "Optimiza tu operación", "description": "Reduce tiempos de espera y mejora la experiencia de tus clientes." },
+          "2": { "title": "Analíticas en tiempo real", "description": "Monitorea tu negocio con datos detallados de ventas y tendencias." },
+          "3": { "title": "Gestiona tu equipo", "description": "Coordina a tu staff y optimiza los turnos de trabajo." }
+        },
+        "join": {
+          "owner": "Únete a +1,000 negocios satisfechos",
+          "client": "Únete a +1,000 usuarios satisfechos"
+        }
+      },
+      "form": {
+        "name": { "label": "Nombre", "hint": "Ingresa tu nombre", "error": "Mínimo 2 caracteres" },
+        "email": { "label": "Correo electrónico", "hint": "Usa un correo válido que controles", "error": "Correo inválido" },
+        "accountNumber": { "label": "Número de cuenta", "hint": "Opcional, solo números", "error": "Debe contener entre 5 y 20 dígitos" },
+        "age": { "label": "Edad", "hint": "Opcional, utilizada para beneficios estudiantiles", "error": "Selecciona una edad entre 16 y 120" },
+        "password": { "label": "Contraseña", "hint": "Debe ser robusta", "error": "Fortalece tu contraseña" },
+        "confirm": { "label": "Confirmar contraseña", "hint": "Repite la contraseña", "error": "No coincide" },
+        "suggestions": {
+          "minChars": "Usa al menos 8 caracteres",
+          "upper": "Incluye una mayúscula",
+          "number": "Añade un número",
+          "symbol": "Añade un símbolo"
+        },
+        "terms": { "prefix": "Acepto los", "termsOfService": "Términos de Servicio", "and": "y la", "privacyPolicy": "Política de Privacidad" },
+        "submit": { "create": "Crear mi cuenta", "submitting": "Creando tu cuenta..." },
+        "errors": { "noRole": "Selecciona un rol (Cliente o Negocio) antes de continuar.", "createGeneric": "Error al crear la cuenta", "acceptTerms": "Debes aceptar los términos para continuar." }
+      },
+      "verification": {
+        "title": "Verifica tu correo electrónico",
+        "closeAria": "Cerrar diálogo de verificación",
+        "sentPrefix": "Hemos enviado un código de 6 dígitos a",
+        "sentSuffix": "Ingrésalo a continuación para activar tu cuenta.",
+        "expiresPrefix": "Expira en",
+        "field": { "label": "Código de verificación", "placeholder": "000000" },
+        "submit": { "confirm": "Confirmar código", "submitting": "Verificando..." },
+        "resend": { "sending": "Enviando...", "waitPrefix": "Reenviar en", "action": "Reenviar código" },
+        "info": { "resent": "Enviamos un nuevo código a tu correo." },
+        "note": "Necesitamos validar tu correo para continuar.",
+        "errors": { "invalidLength": "Ingresa los 6 dígitos del código.", "verifyGeneric": "No pudimos verificar el código. Inténtalo nuevamente.", "resendGeneric": "No pudimos reenviar el código en este momento." }
+      },
+      "selection": {
+        "ariaLabel": "Selecciona el tipo de cuenta",
+        "badge": "Tu cuenta FilaCero",
+        "title": "¿Cómo quieres comenzar?",
+        "subtitle": "Elige el viaje que mejor describe tu rol y prepara una experiencia con interfaz personalizada, más rápida y totalmente enlazada al ecosistema FilaCero.",
+        "guideBadge": "Selección guiada",
+        "steps": [
+          "Escoge tu rol para activar la experiencia correcta.",
+          "Completa un formulario inteligente con bloques adaptados a tu objetivo.",
+          "Accede a la plataforma con onboarding guiado y recursos curados."
+        ],
+        "startNow": "Comenzar ahora",
+        "select": "Seleccionar",
+        "capabilities": "Capacidades clave",
+        "card": {
+          "customer": {
+            "badge": "Para personas",
+            "title": "Cliente FilaCero",
+            "copy": "Crea pedidos en segundos, recibe alertas de recojo y acumula beneficios sin filas.",
+            "micro": {
+              "0": "Pedidos anticipados",
+              "1": "Wallet digital",
+              "2": "Recompensas automáticas"
+            }
+          },
+          "owner": {
+            "badge": "Para negocios",
+            "title": "Negocio Inteligente",
+            "copy": "Centraliza pedidos, pagos y métricas en vivo con herramientas colaborativas para tu equipo.",
+            "micro": {
+              "0": "Dashboard POS",
+              "1": "Roles y permisos",
+              "2": "Insights de ventas"
+            }
+          }
+        },
+        "aria": {
+          "customer": "Seleccionar tipo de cuenta: Cliente",
+          "owner": "Seleccionar tipo de cuenta: Negocio"
+        }
+      },
+      "role": {
+        "contextBadge": "Continuando tu registro",
+        "helloPrefix": "Hola",
+        "chooseType": "Elige tu tipo de cuenta",
+        "willUse": "Usaremos",
+        "contextNote": "Esto nos ayuda a personalizar tu experiencia desde el inicio.",
+        "customer": { "title": "Cliente", "desc": "Pide y recoge más rápido" },
+        "owner": { "title": "Negocio", "desc": "Gestiona tu cafetería" }
+      }
+    }
+  },
+  "onboarding": {
+    "business": {
+      "title": "Configura tu Negocio",
+      "subtitle": "Continuando tu registro: completa estos pasos para finalizar",
+      "progress": {
+        "step": "Paso",
+        "of": "de"
+      },
+      "navigation": {
+        "back": "Atrás",
+        "next": "Siguiente",
+        "confirm": "Confirmar y crear",
+        "creating": "Creando…",
+        "shortcuts": "Pulsa Enter para continuar, Esc para volver"
+      },
+      "hints": {
+        "identity": "Usa un nombre fácil de recordar.",
+        "nameTip": "Usa un nombre fácil de recordar.",
+        "hide": "Ocultar tips"
+      },
+      "identity": {
+        "name": {
+          "label": "Nombre comercial",
+          "placeholder": "Ej. Café Aurora"
+        },
+        "category": {
+          "label": "Rubro",
+          "hint": "Selecciona el tipo de negocio",
+          "placeholder": "Selecciona…",
+          "options": {
+            "cafeteria": "Cafetería",
+            "bakery": "Panadería",
+            "pastry": "Pastelería",
+            "cafe": "Resto-Café",
+            "restaurant": "Restaurante",
+            "fastFood": "Comida rápida",
+            "bar": "Bar",
+            "foodTruck": "Food truck",
+            "other": "Otro",
+            "restoCafe": "Resto-Café"
+          }
+        },
+        "logo": {
+          "label": "Logo (opcional)",
+          "hint": "SVG/PNG recomendado. No se sube, solo vista previa.",
+          "preview": "Vista previa"
+        }
+      },
+      "location": {
+        "address": {
+          "label": "Dirección",
+          "placeholder": "Calle 123, Piso 1"
+        },
+        "city": {
+          "label": "Ciudad",
+          "placeholder": "Madrid"
+        },
+        "phone": {
+          "label": "Teléfono",
+          "hint": "Con prefijo",
+          "placeholder": "+34 600 000 000"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "placeholder": "+34 600 000 000"
+        },
+        "website": {
+          "label": "Web (opcional)",
+          "placeholder": "https://cafearora.com"
+        },
+        "hours": {
+          "opens": "Abre a",
+          "closes": "Cierra a",
+          "open": "Abre a",
+          "close": "Cierra a"
+        }
+      },
+      "operation": {
+        "salesModes": {
+          "label": "Modalidades de venta",
+          "hint": "Elige una o ambas",
+          "takeaway": "Para llevar",
+          "dineIn": "En local"
+        },
+        "salesMode": {
+          "label": "Modalidades de venta",
+          "hint": "Elige una o ambas",
+          "takeaway": "Para llevar",
+          "dineIn": "En local"
+        },
+        "prepTime": {
+          "label": "Tiempo medio de preparación (min)"
+        },
+        "paymentMethods": {
+          "label": "Métodos de pago",
+          "hint": "Selecciona los que aceptas",
+          "cash": "Efectivo",
+          "card": "Tarjeta",
+          "qr": "QR"
+        },
+        "currency": {
+          "label": "Moneda"
+        },
+        "inventory": {
+          "label": "Gestión de stock",
+          "activate": "Activar control de stock",
+          "enable": "Activar control de stock"
+        }
+      },
+      "review": {
+        "title": {
+          "identity": "Identidad",
+          "location": "Ubicación",
+          "operation": "Operación"
+        },
+        "labels": {
+          "name": "Nombre",
+          "category": "Rubro",
+          "address": "Dirección",
+          "city": "Ciudad",
+          "phone": "Teléfono",
+          "whatsapp": "WhatsApp",
+          "sales": "Venta",
+          "payments": "Pagos",
+          "currency": "Moneda",
+          "logo": "Logo",
+          "logoUploaded": "Cargado",
+          "yes": "Sí",
+          "no": "No"
+        },
+        "preview": {
+          "title": "Vista previa",
+          "label": "Vista previa",
+          "defaultName": "Tu negocio",
+          "defaultCategory": "Rubro"
+        }
+      },
+      "success": {
+        "title": "¡Tu negocio está listo!",
+        "subtitle": "Puedes empezar a crear productos y aceptar pedidos.",
+        "goHome": "Volver al inicio",
+        "goPOS": "Ir al POS",
+        "note": "Tu negocio activo quedó guardado para este dispositivo."
+      },
+      "errors": {
+        "logoTooBig": "El archivo del logo es demasiado pesado. Usa una imagen más liviana o súbela más tarde.",
+        "createFailed": "No se pudo crear el negocio"
+      }
+    }
   }
 }

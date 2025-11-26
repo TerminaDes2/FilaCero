@@ -175,5 +175,291 @@
       "createAccount": "Create an account",
       "errorGeneric": "Error signing in"
     }
+    ,
+    "register": {
+      "error": {
+        "noRole": {
+          "title": "Error: Account type not selected",
+          "subtitle": "Please select your account type to continue with registration",
+          "cta": "Choose account type"
+        }
+      },
+      "title": {
+        "prefix": "Create your",
+        "role": {
+          "owner": "Business account",
+          "client": "Customer account"
+        }
+      },
+      "progress": {
+        "typeSelected": "Type selected",
+        "complete": "Complete your details"
+      },
+      "alreadyAccount": {
+        "prefix": "Already have an account?",
+        "action": "Sign in"
+      },
+      "changeType": "Change account type",
+      "back": {
+        "aria": "Go back to account type selection",
+        "label": "Back"
+      },
+      "benefits": {
+        "welcomeTitle": {
+          "owner": "Boost your business with FilaCero!",
+          "client": "Welcome to FilaCero!"
+        },
+        "welcomeSubtitle": {
+          "owner": "The definitive platform to manage your business",
+          "client": "Your no-wait experience starts here"
+        },
+        "client": {
+          "0": { "title": "Save time", "description": "Place your order and pick it up without queues." },
+          "1": { "title": "Everything on your phone", "description": "Manage your cafeteria experience easily and quickly." },
+          "2": { "title": "Secure and fast", "description": "Your data protected and your order ready when you need it." },
+          "3": { "title": "Exclusive offers", "description": "Access special promotions for FilaCero users." }
+        },
+        "owner": {
+          "0": { "title": "Increase your sales", "description": "Grow throughput without expanding your premises." },
+          "1": { "title": "Optimize operations", "description": "Reduce wait times and improve customer experience." },
+          "2": { "title": "Real-time analytics", "description": "Monitor your business with detailed sales data." },
+          "3": { "title": "Manage your team", "description": "Coordinate staff and optimize shifts efficiently." }
+        },
+        "join": {
+          "owner": "Join +1,000 satisfied businesses",
+          "client": "Join +1,000 satisfied users"
+        }
+      },
+      "form": {
+        "name": { "label": "Name", "hint": "Enter your name", "error": "Minimum 2 characters" },
+        "email": { "label": "Email", "hint": "Use an email you control", "error": "Invalid email" },
+        "accountNumber": { "label": "Account number", "hint": "Optional, numbers only", "error": "Must contain 5 to 20 digits" },
+        "age": { "label": "Age", "hint": "Optional, used for student benefits", "error": "Select an age between 16 and 120" },
+        "password": { "label": "Password", "hint": "Make it strong", "error": "Strengthen your password" },
+        "confirm": { "label": "Confirm password", "hint": "Repeat the password", "error": "Does not match" },
+        "suggestions": {
+          "minChars": "Use at least 8 characters",
+          "upper": "Include an uppercase letter",
+          "number": "Add a number",
+          "symbol": "Add a symbol"
+        },
+        "terms": { "prefix": "I accept the", "termsOfService": "Terms of Service", "and": "and the", "privacyPolicy": "Privacy Policy" },
+        "submit": { "create": "Create my account", "submitting": "Creating your account..." },
+        "errors": { "noRole": "Select a role (Client or Business) before continuing.", "createGeneric": "Error creating account", "acceptTerms": "You must accept the terms to continue." }
+      },
+      "verification": {
+        "title": "Verify your email",
+        "closeAria": "Close verification dialog",
+        "sentPrefix": "We sent a 6-digit code to",
+        "sentSuffix": "Enter it below to activate your account.",
+        "expiresPrefix": "Expires in",
+        "field": { "label": "Verification code", "placeholder": "000000" },
+        "submit": { "confirm": "Confirm code", "submitting": "Verifying..." },
+        "resend": { "sending": "Sending...", "waitPrefix": "Resend in", "action": "Resend code" },
+        "info": { "resent": "We sent a new code to your email." },
+        "note": "We need to validate your email to continue.",
+        "errors": { "invalidLength": "Enter the 6-digit code.", "verifyGeneric": "Couldn't verify the code. Try again.", "resendGeneric": "Couldn't resend the code right now." }
+      },
+      "selection": {
+        "ariaLabel": "Choose account type",
+        "badge": "Your FilaCero account",
+        "title": "How do you want to start?",
+        "subtitle": "Pick the journey that best describes your role and prepare a personalized, faster experience fully connected to the FilaCero ecosystem.",
+        "guideBadge": "Guided selection",
+        "steps": [
+          "Choose your role to activate the correct experience.",
+          "Complete a smart form with blocks adapted to your goal.",
+          "Access the platform with guided onboarding and curated resources."
+        ],
+        "startNow": "Start now",
+        "select": "Select",
+        "capabilities": "Key capabilities",
+        "card": {
+          "customer": {
+            "badge": "For people",
+            "title": "FilaCero Customer",
+            "copy": "Create orders in seconds, receive pickup alerts and collect benefits without queues.",
+            "micro": {
+              "0": "Ahead orders",
+              "1": "Digital wallet",
+              "2": "Automatic rewards"
+            }
+          },
+          "owner": {
+            "badge": "For businesses",
+            "title": "Smart Business",
+            "copy": "Centralize orders, payments and live metrics with collaborative tools for your team.",
+            "micro": {
+              "0": "POS Dashboard",
+              "1": "Roles & permissions",
+              "2": "Sales insights"
+            }
+          }
+        },
+        "aria": {
+          "customer": "Select account type: Customer",
+          "owner": "Select account type: Business"
+        }
+      },
+      "role": {
+        "contextBadge": "Continuing your signup",
+        "helloPrefix": "Hello",
+        "chooseType": "Choose your account type",
+        "willUse": "We'll use",
+        "contextNote": "This helps us personalize your experience from the start.",
+        "customer": { "title": "Customer", "desc": "Order and pick up faster" },
+        "owner": { "title": "Business", "desc": "Manage your cafeteria" }
+      }
+    }
+  },
+  "onboarding": {
+    "business": {
+      "title": "Set Up Your Business",
+      "subtitle": "Continuing your registration: complete these steps to finish",
+      "progress": {
+        "step": "Step",
+        "of": "of"
+      },
+      "navigation": {
+        "back": "Back",
+        "next": "Next",
+        "confirm": "Confirm and create",
+        "creating": "Creating…",
+        "shortcuts": "Press Enter to continue, Esc to go back"
+      },
+      "hints": {
+        "identity": "Use a name that's easy to remember.",
+        "nameTip": "Use a name that's easy to remember.",
+        "hide": "Hide tips"
+      },
+      "identity": {
+        "name": {
+          "label": "Business name",
+          "placeholder": "E.g. Aurora Café"
+        },
+        "category": {
+          "label": "Category",
+          "hint": "Select the type of business",
+          "placeholder": "Select…",
+          "options": {
+            "cafeteria": "Cafeteria",
+            "bakery": "Bakery",
+            "pastry": "Pastry Shop",
+            "cafe": "Café-Restaurant",
+            "restaurant": "Restaurant",
+            "fastFood": "Fast food",
+            "bar": "Bar",
+            "foodTruck": "Food truck",
+            "other": "Other",
+            "restoCafe": "Café-Restaurant"
+          }
+        },
+        "logo": {
+          "label": "Logo (optional)",
+          "hint": "SVG/PNG recommended. Preview only, not uploaded.",
+          "preview": "Preview"
+        }
+      },
+      "location": {
+        "address": {
+          "label": "Address",
+          "placeholder": "123 Main St, Floor 1"
+        },
+        "city": {
+          "label": "City",
+          "placeholder": "Madrid"
+        },
+        "phone": {
+          "label": "Phone",
+          "hint": "With prefix",
+          "placeholder": "+34 600 000 000"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "placeholder": "+34 600 000 000"
+        },
+        "website": {
+          "label": "Website (optional)",
+          "placeholder": "https://auroracafe.com"
+        },
+        "hours": {
+          "opens": "Opens at",
+          "closes": "Closes at",
+          "open": "Opens at",
+          "close": "Closes at"
+        }
+      },
+      "operation": {
+        "salesModes": {
+          "label": "Sales modes",
+          "hint": "Choose one or both",
+          "takeaway": "Takeaway",
+          "dineIn": "Dine-in"
+        },
+        "salesMode": {
+          "label": "Sales modes",
+          "hint": "Choose one or both",
+          "takeaway": "Takeaway",
+          "dineIn": "Dine-in"
+        },
+        "prepTime": {
+          "label": "Average preparation time (min)"
+        },
+        "paymentMethods": {
+          "label": "Payment methods",
+          "hint": "Select the ones you accept",
+          "cash": "Cash",
+          "card": "Card",
+          "qr": "QR"
+        },
+        "currency": {
+          "label": "Currency"
+        },
+        "inventory": {
+          "label": "Stock management",
+          "activate": "Activate stock control",
+          "enable": "Activate stock control"
+        }
+      },
+      "review": {
+        "title": {
+          "identity": "Identity",
+          "location": "Location",
+          "operation": "Operation"
+        },
+        "labels": {
+          "name": "Name",
+          "category": "Category",
+          "address": "Address",
+          "city": "City",
+          "phone": "Phone",
+          "whatsapp": "WhatsApp",
+          "sales": "Sales",
+          "payments": "Payments",
+          "currency": "Currency",
+          "logo": "Logo",
+          "logoUploaded": "Uploaded",
+          "yes": "Yes",
+          "no": "No"
+        },
+        "preview": {
+          "title": "Preview",
+          "label": "Preview",
+          "defaultName": "Your business",
+          "defaultCategory": "Category"
+        }
+      },
+      "success": {
+        "title": "Your business is ready!",
+        "subtitle": "You can start creating products and accepting orders.",
+        "goHome": "Go to home",
+        "goPOS": "Go to POS",
+        "note": "Your active business was saved for this device."
+      },
+      "errors": {
+        "logoTooBig": "Logo file is too large. Use a lighter image or upload it later.",
+        "createFailed": "Failed to create business"
+      }
+    }
   }
 }

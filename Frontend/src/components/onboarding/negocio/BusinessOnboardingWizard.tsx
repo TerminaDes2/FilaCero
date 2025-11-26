@@ -7,6 +7,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Store, MapPin, Cog, ClipboardL
 import { useUserStore } from '../../../state/userStore'
 import { LoginCard } from '../../auth/LoginCard'
 import { api, activeBusiness } from '../../../lib/api'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 type Step = 'identidad' | 'ubicacion' | 'operacion' | 'revision' | 'exito'
 
@@ -57,6 +58,7 @@ const DRAFT_KEY = 'businessOnboardingDraft'
 export default function BusinessOnboardingWizard({ embed = false }: { embed?: boolean }) {
   const router = useRouter()
   const { role } = useUserStore()
+  const { t } = useTranslation()
   const [step, setStep] = useState<Step>('identidad')
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
   const [showHints, setShowHints] = useState<boolean>(true)
@@ -140,9 +142,9 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
       setStep('exito')
     } catch (e: any) {
       if (e?.status === 413) {
-        setError('El archivo del logo es demasiado pesado. Usa una imagen más liviana o súbela más tarde.')
+        setError(t('onboarding.business.errors.logoTooBig'))
       } else {
-        setError(e?.message || 'No se pudo crear el negocio')
+        setError(e?.message || t('onboarding.business.errors.createFailed'))
       }
     } finally {
       setSaving(false)
@@ -171,13 +173,13 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
           <div className="flex items-center justify-center py-2">
             <CheckCircle2 className={`w-12 h-12 text-brand-600`} />
           </div>
-          <h1 className="text-xl font-bold mb-1">¡Tu negocio está listo!</h1>
-          <p className="text-sm text-gray-600 mb-4">Puedes empezar a crear productos y aceptar pedidos.</p>
+          <h1 className="text-xl font-bold mb-1">{t('onboarding.business.success.title')}</h1>
+          <p className="text-sm text-gray-600 mb-4">{t('onboarding.business.success.subtitle')}</p>
           <div className="flex items-center justify-center gap-3">
-            <button onClick={() => router.push('/')} className="fc-btn-secondary">Volver al inicio</button>
-            <button onClick={() => router.push('/pos')} className={`fc-btn-primary bg-brand-600 hover:bg-brand-700`}>Ir al POS</button>
+            <button onClick={() => router.push('/')} className="fc-btn-secondary">{t('onboarding.business.success.goHome')}</button>
+            <button onClick={() => router.push('/pos')} className={`fc-btn-primary bg-brand-600 hover:bg-brand-700`}>{t('onboarding.business.success.goPOS')}</button>
           </div>
-          <div className="mt-3 text-xs text-gray-500">Tu negocio activo quedó guardado para este dispositivo.</div>
+          <div className="mt-3 text-xs text-gray-500">{t('onboarding.business.success.note')}</div>
         </div>
       )
     }
@@ -186,12 +188,12 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         <LoginCard
           brandMark={<Store className="w-6 h-6" />}
           brandFull
-          title="¡Tu negocio está listo!"
-          subtitle="Puedes empezar a crear productos y aceptar pedidos."
+          title={t('onboarding.business.success.title')}
+          subtitle={t('onboarding.business.success.subtitle')}
           footer={(
             <div className="flex items-center justify-between">
-              <button onClick={() => router.push('/')} className="fc-btn-secondary">Volver al inicio</button>
-              <button onClick={() => router.push('/pos')} className={`fc-btn-primary bg-brand-600 hover:bg-brand-700`}>Ir al POS</button>
+              <button onClick={() => router.push('/')} className="fc-btn-secondary">{t('onboarding.business.success.goHome')}</button>
+              <button onClick={() => router.push('/pos')} className={`fc-btn-primary bg-brand-600 hover:bg-brand-700`}>{t('onboarding.business.success.goPOS')}</button>
             </div>
           )}
         >
@@ -213,29 +215,29 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
           <div className="space-y-4">
             {showHints && (
               <div className="p-3 rounded-xl bg-white/70 ring-1 ring-black/5 text-xs text-gray-600">
-                Usa un nombre fácil de recordar.
-                <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">Ocultar tips</button>
+                {t('onboarding.business.hints.identity')}
+                <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">{t('onboarding.business.hints.hide')}</button>
               </div>
             )}
-            <Field label="Nombre comercial" required>
-              <input value={draft.identidad.nombre} onChange={e=>setDraft(d=>({...d, identidad:{...d.identidad, nombre:e.target.value}}))} className="fc-input" placeholder="Ej. Café Aurora" />
+            <Field label={t('onboarding.business.identity.name.label')} required>
+              <input value={draft.identidad.nombre} onChange={e=>setDraft(d=>({...d, identidad:{...d.identidad, nombre:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.identity.name.placeholder')} />
             </Field>
-            <Field label="Rubro" required hint="Selecciona el tipo de negocio">
+            <Field label={t('onboarding.business.identity.category.label')} required hint={t('onboarding.business.identity.category.hint')}>
               <select value={draft.identidad.rubro} onChange={e=>setDraft(d=>({...d, identidad:{...d.identidad, rubro:e.target.value}}))} className="fc-select">
-                <option value="">Selecciona…</option>
-                <option value="cafeteria">Cafetería</option>
-                <option value="panaderia">Panadería</option>
-                <option value="pasteleria">Pastelería</option>
-                <option value="resto-cafe">Resto-Café</option>
+                <option value="">{t('onboarding.business.identity.category.placeholder')}</option>
+                <option value="cafeteria">{t('onboarding.business.identity.category.options.cafeteria')}</option>
+                <option value="panaderia">{t('onboarding.business.identity.category.options.bakery')}</option>
+                <option value="pasteleria">{t('onboarding.business.identity.category.options.pastry')}</option>
+                <option value="resto-cafe">{t('onboarding.business.identity.category.options.cafe')}</option>
               </select>
             </Field>
             {/* Color de marca removido: acentos fijos a brand */}
-            <Field label="Logo (opcional)" hint="SVG/PNG recomendado. No se sube, solo vista previa.">
+            <Field label={t('onboarding.business.identity.logo.label')} hint={t('onboarding.business.identity.logo.hint')}>
               <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
               {draft.identidad.logoDataUrl && (
                 <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
                   <Image src={draft.identidad.logoDataUrl} alt="Logo preview" width={40} height={40} className="w-10 h-10 object-contain" unoptimized />
-                  <span className="text-xs text-gray-600">Vista previa</span>
+                  <span className="text-xs text-gray-600">{t('onboarding.business.identity.logo.preview')}</span>
                 </div>
               )}
             </Field>
@@ -243,26 +245,26 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         )}
         {step === 'ubicacion' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Dirección" required>
-              <input value={draft.ubicacion.direccion} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, direccion:e.target.value}}))} className="fc-input" placeholder="Calle 123, Piso 1" />
+            <Field label={t('onboarding.business.location.address.label')} required>
+              <input value={draft.ubicacion.direccion} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, direccion:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.address.placeholder')} />
             </Field>
-            <Field label="Ciudad" required>
-              <input value={draft.ubicacion.ciudad} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, ciudad:e.target.value}}))} className="fc-input" placeholder="Madrid" />
+            <Field label={t('onboarding.business.location.city.label')} required>
+              <input value={draft.ubicacion.ciudad} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, ciudad:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.city.placeholder')} />
             </Field>
-            <Field label="Teléfono" hint="Con prefijo">
-              <input value={draft.ubicacion.telefono} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, telefono:e.target.value}}))} className="fc-input" placeholder="+34 600 000 000" />
+            <Field label={t('onboarding.business.location.phone.label')} hint={t('onboarding.business.location.phone.hint')}>
+              <input value={draft.ubicacion.telefono} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, telefono:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.phone.placeholder')} />
             </Field>
-            <Field label="WhatsApp">
-              <input value={draft.ubicacion.whatsapp} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, whatsapp:e.target.value}}))} className="fc-input" placeholder="+34 600 000 000" />
+            <Field label={t('onboarding.business.location.whatsapp.label')}>
+              <input value={draft.ubicacion.whatsapp} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, whatsapp:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.whatsapp.placeholder')} />
             </Field>
-            <Field label="Web (opcional)">
-              <input value={draft.ubicacion.web} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, web:e.target.value}}))} className="fc-input" placeholder="https://cafearora.com" />
+            <Field label={t('onboarding.business.location.website.label')}>
+              <input value={draft.ubicacion.web} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, web:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.website.placeholder')} />
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Abre a">
+              <Field label={t('onboarding.business.location.hours.opens')}>
                 <input type="time" value={draft.ubicacion.horarioApertura} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, horarioApertura:e.target.value}}))} className="fc-input" />
               </Field>
-              <Field label="Cierra a">
+              <Field label={t('onboarding.business.location.hours.closes')}>
                 <input type="time" value={draft.ubicacion.horarioCierre} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, horarioCierre:e.target.value}}))} className="fc-input" />
               </Field>
             </div>
@@ -270,67 +272,67 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         )}
         {step === 'operacion' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Modalidades de venta" hint="Elige una o ambas">
+            <Field label={t('onboarding.business.operation.salesModes.label')} hint={t('onboarding.business.operation.salesModes.hint')}>
               <div className="flex items-center gap-4">
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaParaLlevar} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaParaLlevar:e.target.checked}}))} /> Para llevar</label>
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaEnLocal} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaEnLocal:e.target.checked}}))} /> En local</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaParaLlevar} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaParaLlevar:e.target.checked}}))} /> {t('onboarding.business.operation.salesModes.takeaway')}</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaEnLocal} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaEnLocal:e.target.checked}}))} /> {t('onboarding.business.operation.salesModes.dineIn')}</label>
               </div>
             </Field>
-            <Field label="Tiempo medio de preparación (min)">
+            <Field label={t('onboarding.business.operation.prepTime.label')}>
               <input type="number" min={0} value={draft.operacion.tiempoPrepMin} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, tiempoPrepMin:e.target.value===''?'':Number(e.target.value)}}))} className="fc-input" />
             </Field>
-            <Field label="Métodos de pago" hint="Selecciona los que aceptas">
+            <Field label={t('onboarding.business.operation.paymentMethods.label')} hint={t('onboarding.business.operation.paymentMethods.hint')}>
               <div className="flex items-center gap-4">
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosEfectivo} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosEfectivo:e.target.checked}}))} /> Efectivo</label>
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosTarjeta} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosTarjeta:e.target.checked}}))} /> Tarjeta</label>
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosQR} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosQR:e.target.checked}}))} /> QR</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosEfectivo} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosEfectivo:e.target.checked}}))} /> {t('onboarding.business.operation.paymentMethods.cash')}</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosTarjeta} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosTarjeta:e.target.checked}}))} /> {t('onboarding.business.operation.paymentMethods.card')}</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosQR} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosQR:e.target.checked}}))} /> {t('onboarding.business.operation.paymentMethods.qr')}</label>
               </div>
             </Field>
-            <Field label="Moneda">
+            <Field label={t('onboarding.business.operation.currency.label')}>
               <select value={draft.operacion.moneda} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, moneda:e.target.value as Draft['operacion']['moneda']}}))} className="fc-select">
                 {(['EUR','USD','MXN','ARS','COP','CLP'] as const).map(m=> <option key={m} value={m}>{m}</option>)}
               </select>
             </Field>
-            <Field label="Gestión de stock">
-              <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.gestionarStock} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, gestionarStock:e.target.checked}}))} /> Activar control de stock</label>
+            <Field label={t('onboarding.business.operation.inventory.label')}>
+              <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.gestionarStock} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, gestionarStock:e.target.checked}}))} /> {t('onboarding.business.operation.inventory.activate')}</label>
             </Field>
           </div>
         )}
         {step === 'revision' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <Summary title="Identidad">
-              <Item label="Nombre" value={draft.identidad.nombre} />
-              <Item label="Rubro" value={draft.identidad.rubro} />
+            <Summary title={t('onboarding.business.review.title.identity')}>
+              <Item label={t('onboarding.business.review.labels.name')} value={draft.identidad.nombre} />
+              <Item label={t('onboarding.business.review.labels.category')} value={draft.identidad.rubro} />
             </Summary>
-            <Summary title="Ubicación">
-              <Item label="Dirección" value={draft.ubicacion.direccion} />
-              <Item label="Ciudad" value={draft.ubicacion.ciudad} />
-              {draft.ubicacion.telefono && <Item label="Teléfono" value={draft.ubicacion.telefono} />}
-              {draft.ubicacion.whatsapp && <Item label="WhatsApp" value={draft.ubicacion.whatsapp} />}
+            <Summary title={t('onboarding.business.review.title.location')}>
+              <Item label={t('onboarding.business.review.labels.address')} value={draft.ubicacion.direccion} />
+              <Item label={t('onboarding.business.review.labels.city')} value={draft.ubicacion.ciudad} />
+              {draft.ubicacion.telefono && <Item label={t('onboarding.business.review.labels.phone')} value={draft.ubicacion.telefono} />}
+              {draft.ubicacion.whatsapp && <Item label={t('onboarding.business.review.labels.whatsapp')} value={draft.ubicacion.whatsapp} />}
             </Summary>
-            <Summary title="Operación">
-              <Item label="Venta" value={[draft.operacion.ventaEnLocal && 'En local', draft.operacion.ventaParaLlevar && 'Para llevar'].filter(Boolean).join(' · ')} />
-              <Item label="Pagos" value={[draft.operacion.pagosEfectivo && 'Efectivo', draft.operacion.pagosTarjeta && 'Tarjeta', draft.operacion.pagosQR && 'QR'].filter(Boolean).join(' · ')} />
-              <Item label="Moneda" value={draft.operacion.moneda} />
+            <Summary title={t('onboarding.business.review.title.operation')}>
+              <Item label={t('onboarding.business.review.labels.sales')} value={[draft.operacion.ventaEnLocal && t('onboarding.business.operation.salesModes.dineIn'), draft.operacion.ventaParaLlevar && t('onboarding.business.operation.salesModes.takeaway')].filter(Boolean).join(' · ')} />
+              <Item label={t('onboarding.business.review.labels.payments')} value={[draft.operacion.pagosEfectivo && t('onboarding.business.operation.paymentMethods.cash'), draft.operacion.pagosTarjeta && t('onboarding.business.operation.paymentMethods.card'), draft.operacion.pagosQR && t('onboarding.business.operation.paymentMethods.qr')].filter(Boolean).join(' · ')} />
+              <Item label={t('onboarding.business.review.labels.currency')} value={draft.operacion.moneda} />
             </Summary>
             <div className="md:col-span-2">
-              <Preview draft={draft} />
+              <Preview draft={draft} t={t} />
             </div>
           </div>
         )}
         {/* Navegación (embed) */}
         <div className="mt-4 flex items-center justify-between">
-          <button onClick={back} disabled={step==='identidad'} className="fc-btn-secondary inline-flex items-center gap-2 disabled:opacity-50"><ChevronLeft className="w-4 h-4"/> Atrás</button>
+          <button onClick={back} disabled={step==='identidad'} className="fc-btn-secondary inline-flex items-center gap-2 disabled:opacity-50"><ChevronLeft className="w-4 h-4"/> {t('onboarding.business.navigation.back')}</button>
           <button
             onClick={step==='revision' ? confirmAndCreate : next}
             disabled={!stepValid || (step==='revision' && saving)}
             className={`fc-btn-primary inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50`}
           >
-            {step==='revision' ? (saving ? 'Creando…' : 'Confirmar y crear') : 'Siguiente'}
+            {step==='revision' ? (saving ? t('onboarding.business.navigation.creating') : t('onboarding.business.navigation.confirm')) : t('onboarding.business.navigation.next')}
             <ChevronRight className="w-4 h-4"/>
           </button>
         </div>
-        <div className="mt-2 text-xs text-gray-500 text-center">Pulsa Enter para continuar, Esc para volver</div>
+        <div className="mt-2 text-xs text-gray-500 text-center">{t('onboarding.business.navigation.shortcuts')}</div>
         {error && <div className="mt-2 text-xs text-rose-600 text-center">{error}</div>}
       </div>
     )
@@ -361,29 +363,29 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
           <div className="space-y-4">
             {showHints && (
               <div className="p-3 rounded-xl bg-white/70 ring-1 ring-black/5 text-xs text-gray-600">
-                Usa un nombre fácil de recordar.
-                <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">Ocultar tips</button>
+                {t('onboarding.business.hints.nameTip')}
+                <button type="button" onClick={()=>setShowHints(false)} className="ml-2 text-brand-600 font-medium hover:underline">{t('onboarding.business.hints.hide')}</button>
               </div>
             )}
-            <Field label="Nombre comercial" required>
-              <input value={draft.identidad.nombre} onChange={e=>setDraft(d=>({...d, identidad:{...d.identidad, nombre:e.target.value}}))} className="fc-input" placeholder="Ej. Café Aurora" />
+            <Field label={t('onboarding.business.identity.name.label')} required>
+              <input value={draft.identidad.nombre} onChange={e=>setDraft(d=>({...d, identidad:{...d.identidad, nombre:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.identity.name.placeholder')} />
             </Field>
-            <Field label="Rubro" required hint="Selecciona el tipo de negocio">
+            <Field label={t('onboarding.business.identity.category.label')} required hint={t('onboarding.business.identity.category.hint')}>
               <select value={draft.identidad.rubro} onChange={e=>setDraft(d=>({...d, identidad:{...d.identidad, rubro:e.target.value}}))} className="fc-select">
-                <option value="">Selecciona…</option>
-                <option value="cafeteria">Cafetería</option>
-                <option value="panaderia">Panadería</option>
-                <option value="pasteleria">Pastelería</option>
-                <option value="resto-cafe">Resto-Café</option>
+                <option value="">{t('onboarding.business.identity.category.select')}</option>
+                <option value="cafeteria">{t('onboarding.business.identity.category.options.cafeteria')}</option>
+                <option value="panaderia">{t('onboarding.business.identity.category.options.bakery')}</option>
+                <option value="pasteleria">{t('onboarding.business.identity.category.options.pastry')}</option>
+                <option value="resto-cafe">{t('onboarding.business.identity.category.options.restoCafe')}</option>
               </select>
             </Field>
             {/* Color de marca removido: acentos fijos a brand */}
-            <Field label="Logo (opcional)" hint="SVG/PNG recomendado. No se sube, solo vista previa.">
-              <input type="file" accept="image/*,.svg" onChange={handleFile(setDraft)} />
+            <Field label={t('onboarding.business.identity.logo.label')} hint={t('onboarding.business.identity.logo.hint')}>
+              <FileUploader onUpload={(dataUrl)=>setDraft(d=>({...d, identidad:{...d.identidad, logoDataUrl:dataUrl}}))} accept="image/*,.svg" />
               {draft.identidad.logoDataUrl && (
                 <div className="mt-2 inline-flex items-center gap-3 p-2 rounded-xl bg-white/70 ring-1 ring-black/5">
                   <Image src={draft.identidad.logoDataUrl} alt="Logo preview" width={40} height={40} className="w-10 h-10 object-contain" unoptimized />
-                  <span className="text-xs text-gray-600">Vista previa</span>
+                  <span className="text-xs text-gray-600">{t('onboarding.business.review.preview.label')}</span>
                 </div>
               )}
             </Field>
@@ -391,26 +393,26 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         )}
         {step === 'ubicacion' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Dirección" required>
-              <input value={draft.ubicacion.direccion} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, direccion:e.target.value}}))} className="fc-input" placeholder="Calle 123, Piso 1" />
+            <Field label={t('onboarding.business.location.address.label')} required>
+              <input value={draft.ubicacion.direccion} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, direccion:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.address.placeholder')} />
             </Field>
-            <Field label="Ciudad" required>
-              <input value={draft.ubicacion.ciudad} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, ciudad:e.target.value}}))} className="fc-input" placeholder="Madrid" />
+            <Field label={t('onboarding.business.location.city.label')} required>
+              <input value={draft.ubicacion.ciudad} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, ciudad:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.city.placeholder')} />
             </Field>
-            <Field label="Teléfono" hint="Con prefijo">
-              <input value={draft.ubicacion.telefono} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, telefono:e.target.value}}))} className="fc-input" placeholder="+34 600 000 000" />
+            <Field label={t('onboarding.business.location.phone.label')} hint={t('onboarding.business.location.phone.hint')}>
+              <input value={draft.ubicacion.telefono} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, telefono:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.phone.placeholder')} />
             </Field>
-            <Field label="WhatsApp">
-              <input value={draft.ubicacion.whatsapp} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, whatsapp:e.target.value}}))} className="fc-input" placeholder="+34 600 000 000" />
+            <Field label={t('onboarding.business.location.whatsapp.label')}>
+              <input value={draft.ubicacion.whatsapp} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, whatsapp:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.whatsapp.placeholder')} />
             </Field>
-            <Field label="Web (opcional)">
-              <input value={draft.ubicacion.web} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, web:e.target.value}}))} className="fc-input" placeholder="https://cafearora.com" />
+            <Field label={t('onboarding.business.location.website.label')}>
+              <input value={draft.ubicacion.web} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, web:e.target.value}}))} className="fc-input" placeholder={t('onboarding.business.location.website.placeholder')} />
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Abre a">
+              <Field label={t('onboarding.business.location.hours.open')}>
                 <input type="time" value={draft.ubicacion.horarioApertura} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, horarioApertura:e.target.value}}))} className="fc-input" />
               </Field>
-              <Field label="Cierra a">
+              <Field label={t('onboarding.business.location.hours.close')}>
                 <input type="time" value={draft.ubicacion.horarioCierre} onChange={e=>setDraft(d=>({...d, ubicacion:{...d.ubicacion, horarioCierre:e.target.value}}))} className="fc-input" />
               </Field>
             </div>
@@ -418,51 +420,51 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         )}
         {step === 'operacion' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Modalidades de venta" hint="Elige una o ambas">
+            <Field label={t('onboarding.business.operation.salesMode.label')} hint={t('onboarding.business.operation.salesMode.hint')}>
               <div className="flex items-center gap-4">
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaParaLlevar} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaParaLlevar:e.target.checked}}))} /> Para llevar</label>
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaEnLocal} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaEnLocal:e.target.checked}}))} /> En local</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaParaLlevar} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaParaLlevar:e.target.checked}}))} /> {t('onboarding.business.operation.salesMode.takeaway')}</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.ventaEnLocal} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, ventaEnLocal:e.target.checked}}))} /> {t('onboarding.business.operation.salesMode.dineIn')}</label>
               </div>
             </Field>
-            <Field label="Tiempo medio de preparación (min)">
+            <Field label={t('onboarding.business.operation.prepTime.label')}>
               <input type="number" min={0} value={draft.operacion.tiempoPrepMin} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, tiempoPrepMin:e.target.value===''?'':Number(e.target.value)}}))} className="fc-input" />
             </Field>
-            <Field label="Métodos de pago" hint="Selecciona los que aceptas">
+            <Field label={t('onboarding.business.operation.paymentMethods.label')} hint={t('onboarding.business.operation.paymentMethods.hint')}>
               <div className="flex items-center gap-4">
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosEfectivo} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosEfectivo:e.target.checked}}))} /> Efectivo</label>
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosTarjeta} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosTarjeta:e.target.checked}}))} /> Tarjeta</label>
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosQR} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosQR:e.target.checked}}))} /> QR</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosEfectivo} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosEfectivo:e.target.checked}}))} /> {t('onboarding.business.operation.paymentMethods.cash')}</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosTarjeta} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosTarjeta:e.target.checked}}))} /> {t('onboarding.business.operation.paymentMethods.card')}</label>
+                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.pagosQR} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, pagosQR:e.target.checked}}))} /> {t('onboarding.business.operation.paymentMethods.qr')}</label>
               </div>
             </Field>
-            <Field label="Moneda">
+            <Field label={t('onboarding.business.operation.currency.label')}>
               <select value={draft.operacion.moneda} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, moneda:e.target.value as Draft['operacion']['moneda']}}))} className="fc-select">
                 {(['EUR','USD','MXN','ARS','COP','CLP'] as const).map(m=> <option key={m} value={m}>{m}</option>)}
               </select>
             </Field>
-            <Field label="Gestión de stock">
-              <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.gestionarStock} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, gestionarStock:e.target.checked}}))} /> Activar control de stock</label>
+            <Field label={t('onboarding.business.operation.inventory.label')}>
+              <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.operacion.gestionarStock} onChange={e=>setDraft(d=>({...d, operacion:{...d.operacion, gestionarStock:e.target.checked}}))} /> {t('onboarding.business.operation.inventory.enable')}</label>
             </Field>
           </div>
         )}
         {step === 'revision' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <Summary title="Identidad">
-              <Item label="Nombre" value={draft.identidad.nombre} />
-              <Item label="Rubro" value={draft.identidad.rubro} />
+            <Summary title={t('onboarding.business.review.title.identity')}>
+              <Item label={t('onboarding.business.review.labels.name')} value={draft.identidad.nombre} />
+              <Item label={t('onboarding.business.review.labels.category')} value={draft.identidad.rubro} />
             </Summary>
-            <Summary title="Ubicación">
-              <Item label="Dirección" value={draft.ubicacion.direccion} />
-              <Item label="Ciudad" value={draft.ubicacion.ciudad} />
-              {draft.ubicacion.telefono && <Item label="Teléfono" value={draft.ubicacion.telefono} />}
-              {draft.ubicacion.whatsapp && <Item label="WhatsApp" value={draft.ubicacion.whatsapp} />}
+            <Summary title={t('onboarding.business.review.title.location')}>
+              <Item label={t('onboarding.business.review.labels.address')} value={draft.ubicacion.direccion} />
+              <Item label={t('onboarding.business.review.labels.city')} value={draft.ubicacion.ciudad} />
+              {draft.ubicacion.telefono && <Item label={t('onboarding.business.location.phone.label')} value={draft.ubicacion.telefono} />}
+              {draft.ubicacion.whatsapp && <Item label={t('onboarding.business.location.whatsapp.label')} value={draft.ubicacion.whatsapp} />}
             </Summary>
-            <Summary title="Operación">
-              <Item label="Venta" value={[draft.operacion.ventaEnLocal && 'En local', draft.operacion.ventaParaLlevar && 'Para llevar'].filter(Boolean).join(' · ')} />
-              <Item label="Pagos" value={[draft.operacion.pagosEfectivo && 'Efectivo', draft.operacion.pagosTarjeta && 'Tarjeta', draft.operacion.pagosQR && 'QR'].filter(Boolean).join(' · ')} />
-              <Item label="Moneda" value={draft.operacion.moneda} />
+            <Summary title={t('onboarding.business.review.title.operation')}>
+              <Item label={t('onboarding.business.review.labels.sales')} value={[draft.operacion.ventaEnLocal && t('onboarding.business.operation.salesModes.dineIn'), draft.operacion.ventaParaLlevar && t('onboarding.business.operation.salesModes.takeaway')].filter(Boolean).join(' · ')} />
+              <Item label={t('onboarding.business.review.labels.payments')} value={[draft.operacion.pagosEfectivo && t('onboarding.business.operation.paymentMethods.cash'), draft.operacion.pagosTarjeta && t('onboarding.business.operation.paymentMethods.card'), draft.operacion.pagosQR && t('onboarding.business.operation.paymentMethods.qr')].filter(Boolean).join(' · ')} />
+              <Item label={t('onboarding.business.review.labels.currency')} value={draft.operacion.moneda} />
             </Summary>
             <div className="md:col-span-2">
-              <Preview draft={draft} />
+              <Preview draft={draft} t={t} />
             </div>
           </div>
         )}
@@ -478,7 +480,7 @@ function Progress({ step }: { step: Step }) {
   const pct = (idx - 1) / 4 * 100
   return (
     <div className="w-56">
-      <div className="text-xs font-medium mb-1 text-gray-600">Paso {idx <= 4 ? idx : 4} de 4</div>
+      {(() => { const { t } = useTranslation(); return (<div className="text-xs font-medium mb-1 text-gray-600">{t('onboarding.business.progress.step')} {idx <= 4 ? idx : 4} {t('onboarding.business.progress.of')} 4</div>) })()}
       <div className="h-2 rounded-full bg-gray-200/70 overflow-hidden">
         <div className={`h-full bg-brand-600 transition-all`} style={{ width: `${pct}%`}} />
       </div>
@@ -531,10 +533,10 @@ function Item({ label, value }: { label: string, value: React.ReactNode }) {
   )
 }
 
-function Preview({ draft }: { draft: Draft }) {
+function Preview({ draft, t }: { draft: Draft, t: (key: string) => string }) {
   return (
     <div className="rounded-2xl bg-gradient-to-br from-white/70 to-white/40 ring-1 ring-black/5 p-5 h-full">
-      <div className="text-xs font-semibold text-gray-600 mb-2">Vista previa</div>
+      <div className="text-xs font-semibold text-gray-600 mb-2">{t('onboarding.business.review.preview.title')}</div>
       <div className="rounded-xl p-4 bg-white/80 ring-1 ring-black/5">
         <div className="flex items-center gap-3">
             {draft.identidad.logoDataUrl ? (
@@ -545,14 +547,14 @@ function Preview({ draft }: { draft: Draft }) {
             </div>
           )}
           <div>
-            <div className="text-sm font-semibold text-gray-900">{draft.identidad.nombre || 'Tu negocio'}</div>
-            <div className="text-[11px] text-gray-600">{draft.identidad.rubro || 'Rubro'}</div>
+            <div className="text-sm font-semibold text-gray-900">{draft.identidad.nombre || t('onboarding.business.review.preview.defaultName')}</div>
+            <div className="text-[11px] text-gray-600">{draft.identidad.rubro || t('onboarding.business.review.preview.defaultCategory')}</div>
           </div>
         </div>
         <div className="mt-4 space-y-2 text-xs text-gray-700">
           {draft.ubicacion.direccion && <div className="flex items-center gap-2"><MapPin className={`w-3.5 h-3.5 text-brand-600`} /> <span>{draft.ubicacion.direccion}{draft.ubicacion.ciudad ? `, ${draft.ubicacion.ciudad}`:''}</span></div>}
-          <div className="flex items-center gap-2"><Cog className={`w-3.5 h-3.5 text-brand-600`} /> <span>{[draft.operacion.ventaEnLocal && 'En local', draft.operacion.ventaParaLlevar && 'Para llevar'].filter(Boolean).join(' · ')}</span></div>
-          <div className="flex items-center gap-2"><span className={`inline-flex w-2 h-2 rounded-full bg-brand-500`}/> <span>Moneda: {draft.operacion.moneda}</span></div>
+          <div className="flex items-center gap-2"><Cog className={`w-3.5 h-3.5 text-brand-600`} /> <span>{[draft.operacion.ventaEnLocal && t('onboarding.business.operation.salesModes.dineIn'), draft.operacion.ventaParaLlevar && t('onboarding.business.operation.salesModes.takeaway')].filter(Boolean).join(' · ')}</span></div>
+          <div className="flex items-center gap-2"><span className={`inline-flex w-2 h-2 rounded-full bg-brand-500`}/> <span>{t('onboarding.business.review.labels.currency')}: {draft.operacion.moneda}</span></div>
         </div>
       </div>
     </div>

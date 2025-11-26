@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { useUserStore } from '../../../state/userStore';
+import { useTranslation } from '../../../hooks/useTranslation';
 import {
   Clock,
   Smartphone,
@@ -17,6 +18,7 @@ interface BenefitsSectionProps {}
 
 export function BenefitsSection({}: BenefitsSectionProps) {
   const { role } = useUserStore();
+  const { t } = useTranslation();
 
   // Colores según el rol (mismos que StepSignup)
   const roleColor = role === 'OWNER' ? '#4CC1AD' : '#D55D7B';
@@ -29,23 +31,23 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const clientBenefits = [
     {
       icon: <Clock className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Ahorra tiempo',
-      description: 'Haz tu pedido y recógelo sin hacer filas. Tu tiempo es valioso.',
+      title: t('auth.register.benefits.client.0.title'),
+      description: t('auth.register.benefits.client.0.description'),
     },
     {
       icon: <Smartphone className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Todo desde tu móvil',
-      description: 'Gestiona tu experiencia en cafeterías de forma fácil y rápida.',
+      title: t('auth.register.benefits.client.1.title'),
+      description: t('auth.register.benefits.client.1.description'),
     },
     {
       icon: <ShieldCheck className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Seguro y rápido',
-      description: 'Tus datos protegidos y tu pedido listo cuando lo necesites.',
+      title: t('auth.register.benefits.client.2.title'),
+      description: t('auth.register.benefits.client.2.description'),
     },
     {
       icon: <Tag className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Ofertas exclusivas',
-      description: 'Accede a promociones especiales solo para usuarios de FilaCero.',
+      title: t('auth.register.benefits.client.3.title'),
+      description: t('auth.register.benefits.client.3.description'),
     },
   ];
 
@@ -53,35 +55,29 @@ export function BenefitsSection({}: BenefitsSectionProps) {
   const ownerBenefits = [
     {
       icon: <BarChart3 className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Aumenta tus ventas',
-      description: 'Incrementa tu capacidad de servicio sin necesidad de ampliar tu local.',
+      title: t('auth.register.benefits.owner.0.title'),
+      description: t('auth.register.benefits.owner.0.description'),
     },
     {
       icon: <Zap className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Optimiza tu operación',
-      description: 'Reduce tiempos de espera y mejora la experiencia de tus clientes.',
+      title: t('auth.register.benefits.owner.1.title'),
+      description: t('auth.register.benefits.owner.1.description'),
     },
     {
       icon: <LineChart className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Analíticas en tiempo real',
-      description: 'Monitorea tu negocio con datos detallados de ventas y tendencias.',
+      title: t('auth.register.benefits.owner.2.title'),
+      description: t('auth.register.benefits.owner.2.description'),
     },
     {
       icon: <Users className="w-6 h-6" strokeWidth={2.5} />,
-      title: 'Gestiona tu equipo',
-      description: 'Coordina a tu staff y optimiza los turnos de trabajo eficientemente.',
+      title: t('auth.register.benefits.owner.3.title'),
+      description: t('auth.register.benefits.owner.3.description'),
     },
   ];
 
   const benefits = role === 'OWNER' ? ownerBenefits : clientBenefits;
-  const welcomeTitle =
-    role === 'OWNER'
-      ? '¡Impulsa tu negocio con FilaCero!'
-      : '¡Te damos la bienvenida a FilaCero!';
-  const welcomeSubtitle =
-    role === 'OWNER'
-      ? 'La plataforma definitiva para gestionar tu negocio'
-      : 'Tu experiencia sin filas comienza aquí';
+  const welcomeTitle = role === 'OWNER' ? t('auth.register.benefits.welcomeTitle.owner') : t('auth.register.benefits.welcomeTitle.client');
+  const welcomeSubtitle = role === 'OWNER' ? t('auth.register.benefits.welcomeSubtitle.owner') : t('auth.register.benefits.welcomeSubtitle.client');
 
   return (
     <div
@@ -163,7 +159,7 @@ export function BenefitsSection({}: BenefitsSectionProps) {
             ))}
           </div>
           <p className="font-medium">
-            Únete a <span className="font-bold" style={{ color: roleColor }}>+1,000</span> {role === 'OWNER' ? 'negocios' : 'usuarios'} satisfechos
+            {role === 'OWNER' ? t('auth.register.benefits.join.owner') : t('auth.register.benefits.join.client')}
           </p>
         </div>
       </div>
