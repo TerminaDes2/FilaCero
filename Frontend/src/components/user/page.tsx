@@ -67,27 +67,24 @@ export default function UserProfilePage() {
   const roleName = user.role?.nombre_rol ?? user.role_name ?? (user.id_rol === 2 ? "Administrador" : "Cliente");
   const accountState = normalizeText(user.estado) ?? "Activo";
 
-  const generalInfo: GeneralInfoItem[] = useMemo(
-    () => [
-      { label: "Nombre completo", value: user.nombre ?? null },
-      { label: "Correo electrónico", value: user.correo_electronico ?? null },
-      { label: "Número de teléfono", value: user.numero_telefono ?? null },
-      {
-        label: "Fecha de nacimiento",
-        value: birthDate,
-        caption: user.fecha_nacimiento && birthDate ? `Dato guardado: ${user.fecha_nacimiento}` : undefined,
-      },
-      { label: "Rol", value: normalizeText(roleName) },
-      { label: "Estado de la cuenta", value: accountState },
-      {
-        label: "Miembro desde",
-        value: joinedAt,
-        caption: user.fecha_registro && joinedAt ? `Registrado el ${user.fecha_registro}` : undefined,
-      },
-      { label: "ID de usuario", value: user.id_usuario ? `#${user.id_usuario}` : null },
-    ],
-    [user, birthDate, joinedAt, roleName, accountState],
-  );
+  const generalInfo: GeneralInfoItem[] = [
+    { label: "Nombre completo", value: user.nombre ?? null },
+    { label: "Correo electrónico", value: user.correo_electronico ?? null },
+    { label: "Número de teléfono", value: user.numero_telefono ?? null },
+    {
+      label: "Fecha de nacimiento",
+      value: birthDate,
+      caption: user.fecha_nacimiento && birthDate ? `Dato guardado: ${user.fecha_nacimiento}` : undefined,
+    },
+    { label: "Rol", value: normalizeText(roleName) },
+    { label: "Estado de la cuenta", value: accountState },
+    {
+      label: "Miembro desde",
+      value: joinedAt,
+      caption: user.fecha_registro && joinedAt ? `Registrado el ${user.fecha_registro}` : undefined,
+    },
+    { label: "ID de usuario", value: user.id_usuario ? `#${user.id_usuario}` : null },
+  ];
 
   const emailVerified = Boolean(
     user.correo_verificado ?? user.verifications?.email ?? user.verificado ?? user.verified ?? false,
@@ -95,41 +92,38 @@ export default function UserProfilePage() {
   const smsVerified = Boolean(user.sms_verificado ?? user.verifications?.sms ?? false);
   const identityVerified = Boolean(user.credencial_verificada ?? user.verifications?.credential ?? false);
 
-  const verificationItems: VerificationDisplay[] = useMemo(
-    () => [
-      {
-        id: "email",
-        label: "Correo electrónico",
-        value: user.correo_electronico ?? null,
-        description: emailVerified ? "Correo confirmado" : "Confirma tu correo para recibir notificaciones",
-        verified: emailVerified,
-        icons: { ok: MailCheck },
-      },
-      {
-        id: "sms",
-        label: "Teléfono móvil",
-        value: user.numero_telefono ?? null,
-        description: smsVerified
-          ? "SMS verificado"
-          : user.numero_telefono
-            ? "Verificación SMS pendiente"
-            : "Registra un número para activar esta verificación",
-        verified: smsVerified,
-        icons: { ok: Phone },
-      },
-      {
-        id: "identity",
-        label: "Identidad",
-        value: user.credential_url ? "Credencial subida" : null,
-        description: identityVerified
-          ? "Identidad confirmada por FilaCero"
-          : "Sube tu credencial para desbloquear beneficios",
-        verified: identityVerified,
-        icons: { ok: ShieldCheck, pending: ShieldX },
-      },
-    ],
-    [user, emailVerified, smsVerified, identityVerified],
-  );
+  const verificationItems: VerificationDisplay[] = [
+    {
+      id: "email",
+      label: "Correo electrónico",
+      value: user.correo_electronico ?? null,
+      description: emailVerified ? "Correo confirmado" : "Confirma tu correo para recibir notificaciones",
+      verified: emailVerified,
+      icons: { ok: MailCheck },
+    },
+    {
+      id: "sms",
+      label: "Teléfono móvil",
+      value: user.numero_telefono ?? null,
+      description: smsVerified
+        ? "SMS verificado"
+        : user.numero_telefono
+          ? "Verificación SMS pendiente"
+          : "Registra un número para activar esta verificación",
+      verified: smsVerified,
+      icons: { ok: Phone },
+    },
+    {
+      id: "identity",
+      label: "Identidad",
+      value: user.credential_url ? "Credencial subida" : null,
+      description: identityVerified
+        ? "Identidad confirmada por FilaCero"
+        : "Sube tu credencial para desbloquear beneficios",
+      verified: identityVerified,
+      icons: { ok: ShieldCheck, pending: ShieldX },
+    },
+  ];
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
