@@ -255,7 +255,7 @@ export default function UserProfilePage() {
 
   const handleFormChange = useCallback(
     (field: keyof ProfileFormState, value: string) => {
-      setFormState((prev) => ({ ...prev, [field]: value }));
+      setFormState((prev: ProfileFormState) => ({ ...prev, [field]: value }));
     },
     [],
   );
