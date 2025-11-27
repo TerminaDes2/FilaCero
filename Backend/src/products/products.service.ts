@@ -1,13 +1,15 @@
 // Backend/src/products/products.service.ts
 
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import type { Express } from 'express';
 import { Prisma, producto, categoria } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductMediaInputDto } from './dto/product-media.dto';
-import { ConfigService } from '@nestjs/config'; // <-- 1. IMPORTAR ConfigService
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import FormData from 'form-data';
 
 type SanitizedMedia = { url: string; principal: boolean; tipo: string | null };
 
@@ -25,10 +27,9 @@ type ProductWithRelations = producto & {
 
 @Injectable()
 export class ProductsService {
-  // --- 2. INYECTAR ConfigService ---
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService, // <-- Añadido
+    private configService: ConfigService,
   ) {}
 
   private mapProduct(product: ProductWithRelations, stock?: number | null) {
@@ -159,38 +160,27 @@ export class ProductsService {
     return cat.id_categoria;
   }
 
-  // --- 3. MÉTODO 'create' MODIFICADO ---
   async create(createProductDto: CreateProductDto, file?: Express.Multer.File) {
-    // La firma ahora acepta (dto, file), arreglando el error del controlador
     const { id_categoria, media, ...rest } = createProductDto;
 
     const resolvedCategory = await this.resolveCategoryId(id_categoria);
     
-    // --- 4. LÓGICA DE INTEGRACIÓN DE ARCHIVO ---
-    const mediaInput = media || []; // Usa el 'media' del DTO si existe
+    const mediaInput = media || [];
 
     if (file) {
-      // Construir la URL del archivo subido localmente
-      // Asegúrate de tener 'API_BASE_URL' en tu .env del backend (ej: API_BASE_URL=http://localhost:3000)
-      const baseUrl = this.configService.get<string>('API_BASE_URL') || 'http://localhost:3000';
-      const imageUrl = `${baseUrl}/uploads/${file.filename}`;
-      
-      // Añadir la nueva imagen a la lista, marcándola como principal.
-      // 'sanitizeMediaPayload' se encargará de que solo haya una 'principal'.
+      const imageUrl = await this.uploadToCloudflare(file);
       mediaInput.unshift({ 
         url: imageUrl, 
         principal: true, 
         tipo: file.mimetype 
       });
     }
-    // --- FIN DE LA LÓGICA ---
 
     const sanitizedMedia = this.sanitizeMediaPayload(mediaInput);
 
     const product = await this.prisma.producto.create({
       data: {
         ...rest,
-        // Asegurarse de que el precio es un número (viene de un JSON.parse)
         precio: Number(rest.precio),
         ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }),
         ...(sanitizedMedia.length > 0 && {
@@ -204,7 +194,6 @@ export class ProductsService {
 
     return this.mapProduct(product as unknown as ProductWithRelations);
   }
-  // --- FIN DE LA MODIFICACIÓN ---
 
   async findAll(params: { search?: string; status?: string; id_negocio?: string; categoria?: string }) {
     // ... (tu función findAll sin cambios)
@@ -418,7 +407,6 @@ export class ProductsService {
   }
 
   async remove(id: string) {
-    // ... (tu función remove sin cambios)
     const productId = BigInt(id);
 
     await this.findOne(id);
@@ -449,5 +437,77 @@ export class ProductsService {
     }
 
     return { message: `Producto con ID #${id} eliminado correctamente.`, deleted: true };
+  }
+
+  private async uploadToCloudflare(file: Express.Multer.File): Promise<string> {
+    if (!file || !file.buffer) {
+      throw new BadRequestException('Archivo de imagen inválido o vacío.');
+    }
+    
+    const accountId = this.configService.get<string>('CLOUDFLARE_ACCOUNT_ID');
+    const apiToken = this.configService.get<string>('CLOUDFLARE_API_TOKEN');
+    
+    if (!accountId || !apiToken) {
+      throw new InternalServerErrorException('Configuración de Cloudflare no definida en el servidor.');
+    }
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!file.mimetype || !allowed.includes(file.mimetype)) {
+      throw new BadRequestException('Tipo de archivo no permitido. Usa JPG, PNG o WEBP.');
+    }
+
+    try {
+      const form = new FormData();
+      form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype });
+      
+      const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`;
+      const headers = { Authorization: `Bearer ${apiToken}`, ...form.getHeaders() };
+      const response = await axios.post(url, form, { headers, maxBodyLength: 50 * 1024 * 1024 });
+      const body = response.data;
+      
+      if (!body?.success) {
+        const errMessage = body?.errors?.[0]?.message ?? 'Error al subir imagen a Cloudflare';
+        throw new InternalServerErrorException(errMessage);
+      }
+      
+      const variants = body.result?.variants;
+      const imageUrl = Array.isArray(variants) && variants.length > 0 
+        ? variants[0] 
+        : body.result?.original_url ?? body.result?.uploadURL ?? null;
+      
+      if (!imageUrl) {
+        throw new InternalServerErrorException('Cloudflare no devolvió una URL válida.');
+      }
+      
+      return imageUrl;
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof InternalServerErrorException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error al procesar la subida de imagen.');
+    }
+  }
+
+  async uploadProductImage(id: string, file: Express.Multer.File) {
+    const productId = BigInt(id);
+    
+    await this.findOne(id);
+    
+    const imageUrl = await this.uploadToCloudflare(file);
+    
+    await this.prisma.$executeRawUnsafe(
+      `INSERT INTO producto_media (id_producto, url, principal, tipo) VALUES ($1, $2, $3, $4)`,
+      productId.toString(),
+      imageUrl,
+      false,
+      file.mimetype,
+    );
+    
+    const refreshed = await this.fetchProductWithRelations(productId);
+    if (!refreshed) {
+      throw new NotFoundException(`Producto con ID #${id} no encontrado después de actualizar imagen.`);
+    }
+    
+    return this.mapProduct(refreshed as unknown as ProductWithRelations);
   }
 }
