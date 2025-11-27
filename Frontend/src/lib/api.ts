@@ -2,21 +2,22 @@
 // Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
 // que será proxyada por Next.js según las rewrites del next.config.mjs.
 function resolveApiBase(): string {
+  // En el cliente (navegador), siempre usar localhost:3000 para desarrollo
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    // Si estamos en localhost (desarrollo), conectar directamente al backend
+    if (/^(localhost|127\.0\.0\.1)$/i.test(hostname)) {
+      return `${protocol}//${hostname}:3000/api`;
+    }
+  }
+  
+  // En servidor o producción, usar la variable de entorno
   const raw = (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE as string | undefined;
   if (raw && raw.trim()) {
     return raw.replace(/\/+$/, "");
   }
-  try {
-    if (typeof window !== "undefined") {
-      const { protocol, hostname, port } = window.location;
-      if (/^(localhost|127\.0\.0\.1)$/i.test(hostname)) {
-        if (port && port !== "3000") {
-          return `${protocol}//${hostname}:3000/api`;
-        }
-        return `${protocol}//${hostname}${port ? `:${port}` : ""}/api`;
-      }
-    }
-  } catch {}
+  
+  // Fallback para rutas relativas (solo funciona para rutas públicas sin auth)
   return "/api";
 }
 

@@ -19,26 +19,27 @@ import { BusinessRatingsModule } from './business-ratings/business-ratings.modul
 import { PedidosModule } from './pedidos/pedidos.module';
 import { EmployeesModule } from './employees/employees.module';
 import { EmailModule } from './email/email.module';
-import { MetricsModule } from './metrics/metrics.module'; // <-- 1. Importa el módulo
+import { MetricsModule } from './metrics/metrics.module';
 import { SmsModule } from './sms/sms.module';
 import { PaymentsModule } from './payments/payments.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule,   // acceso a la DB
-    UsersModule,    // módulo de usuarios
-    AuthModule,     // módulo de auth (login/signup)
-    RolesModule,    // módulo de roles
-    ProductsModule, // módulo de productos (Prisma)
-    InventoryModule, // módulo de inventario (Prisma)
-    CategoriesModule, // módulo de categorías (Prisma)
-    SalesModule, // módulo de ventas (Prisma)
-    BusinessesModule, // módulo de negocios (Prisma)
-    BusinessRatingsModule, // módulo de valoraciones
-    EmployeesModule, // módulo de empleados (Prisma)
-    EmailModule, // módulo de email (Prisma)
-    // Registrar JwtModule localmente para exponer JwtService a RecoverController
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    RolesModule,
+    ProductsModule,
+    InventoryModule,
+    CategoriesModule,
+    SalesModule,
+    BusinessesModule,
+    BusinessRatingsModule,
+    EmployeesModule,
+    EmailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -47,10 +48,12 @@ import { PaymentsModule } from './payments/payments.module';
         signOptions: { expiresIn: cfg.get<string>('JWT_EXPIRES_IN') || '3600s' },
       }),
     }),
-    PedidosModule, // módulo de pedidos online
-    MetricsModule, // <-- 2. Añádelo a la lista
-    SmsModule, // módulo de SMS (Twilio Verify)
-    PaymentsModule, // módulo de pagos (Stripe)
+    PedidosModule,
+    MetricsModule,
+    SmsModule,
+    PaymentsModule,
+    NotificationsModule, // módulo de notificaciones WebSocket y email
+    ScheduleModule.forRoot(), // para cron jobs de limpieza
   ],
   controllers: [HealthController, RecoverController],
   providers: [],
