@@ -563,7 +563,7 @@ export default function Navbar() {
       {userSheet}
 
       {/* Business picker dialog */}
-      {showBizPicker && (
+      {canRenderPortal && showBizPicker && createPortal(
         <BusinessPickerDialog
           open={showBizPicker}
           businesses={bizList}
@@ -578,7 +578,8 @@ export default function Navbar() {
             router.push("/onboarding/negocio");
           }}
           onClose={() => setShowBizPicker(false)}
-        />
+        />,
+        document.body
       )}
     </>
   );

@@ -8,6 +8,7 @@ import { useBusinessStore } from "../state/businessStore";
 import { BusinessPickerDialog } from "./business/BusinessPickerDialog";
 import type { Business } from "./business/BusinessPickerDialog";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { useUserStore } from "../state/userStore";
 import { 
   User, 
@@ -52,6 +53,11 @@ const getRoleInfo = (id_rol: any) => {
 };
 
 export default function UserDropdown() {
+  const [canRenderPortal, setCanRenderPortal] = useState(false);
+  useEffect(() => {
+    setCanRenderPortal(true);
+    return () => setCanRenderPortal(false);
+  }, []);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
   const { setActiveBusiness, clearBusiness } = useBusinessStore();
@@ -268,7 +274,7 @@ export default function UserDropdown() {
         </div>
       )}
 
-      {showBizPicker && (
+      {canRenderPortal && showBizPicker && createPortal(
         <BusinessPickerDialog
           open={showBizPicker}
           businesses={bizList}
@@ -285,7 +291,8 @@ export default function UserDropdown() {
           onClose={() => {
             setShowBizPicker(false);
           }}
-        />
+        />,
+        document.body
       )}
     </div>
   );
