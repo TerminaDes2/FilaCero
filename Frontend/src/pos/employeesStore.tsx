@@ -13,7 +13,7 @@ export interface Employee {
     correo_electronico: string;
     numero_telefono?: string | null;
     avatar_url?: string | null;
-    fecha_registro: string;
+    fecha_registro?: string | null;
   };
 }
 
@@ -29,6 +29,22 @@ interface EmployeesState {
 
 // Nota: este módulo usa el cliente `api` que ya resuelve la base de API.
 
+const normalizeEmployee = (item: any, businessId?: string): Employee => ({
+  id_empleado: String(item.id_empleado ?? item.id ?? ''),
+  negocio_id: String(item.negocio_id ?? businessId ?? ''),
+  usuario_id: String(item.usuario_id ?? item.usuario?.id_usuario ?? ''),
+  estado: (item.estado ?? 'pendiente') as Employee['estado'],
+  fecha_alta: item.fecha_alta ?? item.created_at ?? new Date().toISOString(),
+  usuario: {
+    id_usuario: String(item.usuario?.id_usuario ?? item.usuario_id ?? ''),
+    nombre: item.usuario?.nombre ?? item.nombre ?? item.correo_electronico ?? 'Usuario',
+    correo_electronico: item.usuario?.correo_electronico ?? item.correo_electronico ?? '',
+    numero_telefono: item.usuario?.numero_telefono ?? item.numero_telefono ?? null,
+    avatar_url: item.usuario?.avatar_url ?? null,
+    fecha_registro: item.usuario?.fecha_registro ?? null,
+  },
+});
+
 export const useEmployeesStore = create<EmployeesState>((set, get) => ({
   employees: [],
   loading: false,
@@ -38,7 +54,8 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const data = await api.getEmployeesByBusiness(businessId);
-      set({ employees: data, loading: false });
+      const normalized = (data ?? []).map((i: any) => normalizeEmployee(i, businessId));
+      set({ employees: normalized, loading: false });
     } catch (err: any) {
       const message = (err && err.message) || JSON.stringify(err) || 'Error obteniendo empleados';
       set({ error: message, loading: false });
@@ -50,11 +67,12 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const newEmployee = await api.createEmployee(businessId, { correo_electronico, nombre });
+      const normalized = normalizeEmployee(newEmployee, businessId);
       set((state) => ({
-        employees: [newEmployee, ...state.employees],
+        employees: [normalized, ...state.employees],
         loading: false,
       }));
-      return newEmployee;
+      return normalized;
     } catch (err: any) {
       const message = (err && err.message) || JSON.stringify(err) || 'Error creando empleado';
       set({ error: message, loading: false });
@@ -66,8 +84,9 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const updated = await api.updateEmployee(employeeId, { estado });
+      const normalized = normalizeEmployee(updated);
       set((state) => ({
-        employees: state.employees.map((e) => (e.id_empleado === employeeId ? updated : e)),
+        employees: state.employees.map((e) => (e.id_empleado === employeeId ? normalized : e)),
         loading: false,
       }));
     } catch (err: any) {

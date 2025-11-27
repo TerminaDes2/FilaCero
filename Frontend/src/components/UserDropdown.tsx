@@ -63,6 +63,7 @@ export default function UserDropdown() {
   const { setActiveBusiness, clearBusiness } = useBusinessStore();
   const [showBizPicker, setShowBizPicker] = useState(false);
   const [bizList, setBizList] = useState<Business[]>([]);
+  const [bizLoaded, setBizLoaded] = useState(false);
   const router = useRouter();
 
   // Cerrar menú al hacer click fuera
@@ -83,6 +84,44 @@ export default function UserDropdown() {
     };
   }, [userMenuOpen]);
 
+  // Fetch list of businesses when the menu opens (to support employee quick-enter)
+  useEffect(() => {
+    let cancelled = false;
+    if (!userMenuOpen) return;
+    if (bizLoaded) return;
+    (async () => {
+      try {
+        const list = await api.listMyBusinesses();
+        if (cancelled) return;
+        const businesses: Business[] = Array.isArray(list)
+          ? (list as any[])
+              .map((biz) => ({
+                id_negocio: String(biz.id_negocio ?? biz.id ?? biz.idNegocio ?? ''),
+                nombre: biz.nombre ?? 'Negocio',
+                direccion: biz.direccion ?? null,
+                telefono: biz.telefono ?? null,
+                correo: biz.correo ?? null,
+                logo_url: biz.logo_url ?? biz.logo ?? null,
+                hero_image_url: biz.hero_image_url ?? null,
+              }))
+              .filter((biz) => Boolean(biz.id_negocio))
+          : [];
+        setBizList(businesses);
+        setBizLoaded(true);
+      } catch (err) {
+        setBizList([]);
+        setBizLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userMenuOpen, bizLoaded]);
+
+  // If user changes, reset bizLoaded so we refetch companies for the new user
+  useEffect(() => {
+    setBizLoaded(false);
+    setBizList([]);
+  }, [user?.id_usuario]);
+
   const handleLogout = () => {
     logout();
     setUserMenuOpen(false);
@@ -94,6 +133,8 @@ export default function UserDropdown() {
   const roleId = getRoleId(user.id_rol);
   const roleInfo = getRoleInfo(roleId);
   const shouldShowAdminPanel = roleId === 2;
+  const normalizedRole = (user?.role?.nombre_rol ?? user?.role_name ?? '').toLowerCase();
+  const isEmployee = normalizedRole.includes('empleado') || roleId === 3;
 
   return (
     <div className="relative">
@@ -234,6 +275,27 @@ export default function UserDropdown() {
                   >
                     <Store className="h-4 w-4 text-brand-500" />
                     <span>Seleccionar negocio</span>
+                  </button>
+                )}
+
+                {isEmployee && bizList.length > 0 && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
+                    onClick={() => {
+                      const chosen = bizList[0];
+                      if (!chosen || !chosen.id_negocio) return;
+                      try { activeBusinessStorage.clear(); } catch {}
+                      clearBusiness();
+                      setActiveBusiness(chosen);
+                      // Save to local storage and navigate
+                      try { activeBusinessStorage.set(String(chosen.id_negocio)); } catch {}
+                      setUserMenuOpen(false);
+                      router.push('/pos');
+                    }}
+                  >
+                    <Store className="h-4 w-4 text-brand-500" />
+                    <span>Entrar al POS{bizList[0]?.nombre ? ` · ${bizList[0].nombre}` : ''}</span>
                   </button>
                 )}
 
