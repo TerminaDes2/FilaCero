@@ -1,6 +1,7 @@
 // components/UserDropdown.tsx
 "use client";
 import { useState, useEffect } from "react";
+import Image from 'next/image';
 import Link from "next/link";
 import { api, activeBusiness as activeBusinessStorage } from "../lib/api";
 import { useBusinessStore } from "../state/businessStore";
@@ -96,10 +97,21 @@ export default function UserDropdown() {
           setUserMenuOpen(!userMenuOpen);
         }}
       >
-        {/* Avatar con icono */}
+        {/* Avatar con icono o imagen */}
         <div className="relative">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-200 bg-brand-50 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)]">
-            <User className="w-5 h-5 text-brand-600 dark:text-brand-200" />
+          <div className="relative h-10 w-10 overflow-hidden rounded-full border border-brand-200 bg-brand-50 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)]">
+            {user.avatarUrl || user.avatar_url ? (
+              <Image
+                src={String(user.avatarUrl ?? user.avatar_url)}
+                alt={`${user.nombre ?? 'Usuario'} avatar`}
+                fill
+                className="object-cover"
+                sizes="40px"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center"><User className="w-5 h-5 text-brand-600 dark:text-brand-200" /></div>
+            )}
           </div>
           {/* Badge del rol */}
           <div className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-xs font-bold shadow-sm ${roleInfo.color} ${roleInfo.borderColor}`}>
@@ -132,9 +144,13 @@ export default function UserDropdown() {
             </div>
             <div className="relative flex flex-col">
               <div className="flex items-center gap-3 px-5 py-4 border-b border-brand-100/70 text-[var(--fc-text-primary)] dark:border-brand-500/25">
-                <div className="relative">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-brand-200 bg-brand-50 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)]">
-                    <User className="w-6 h-6 text-brand-600 dark:text-brand-200" />
+                  <div className="relative">
+                  <div className="relative h-12 w-12 overflow-hidden rounded-full border border-brand-200 bg-brand-50 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)]">
+                    {user.avatarUrl || user.avatar_url ? (
+                      <Image src={String(user.avatarUrl ?? user.avatar_url)} alt={`${user.nombre ?? 'Usuario'} avatar`} fill className="object-cover" sizes="48px" unoptimized />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center"><User className="w-6 h-6 text-brand-600 dark:text-brand-200" /></div>
+                    )}
                   </div>
                   <div className={`absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-xs font-bold shadow-sm ${roleInfo.color} ${roleInfo.borderColor}`}>
                     {roleId === 2 ? "A" : "U"}
