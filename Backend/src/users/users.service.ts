@@ -120,13 +120,11 @@ export class UsersService {
             });
             return this.serializeUser(updated);
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2025') {
-                    throw new NotFoundException('Usuario no encontrado.');
-                }
-                if (error.code === 'P2002') {
-                    throw new ConflictException('El correo o número de cuenta ya pertenece a otro usuario.');
-                }
+            if ((error as any)?.code === 'P2025') {
+                throw new NotFoundException('Usuario no encontrado.');
+            }
+            if ((error as any)?.code === 'P2002') {
+                throw new ConflictException('El correo o número de cuenta ya pertenece a otro usuario.');
             }
             throw error;
         }
@@ -291,10 +289,8 @@ export class UsersService {
             });
             return this.serializeUser(updated);
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2025') throw new NotFoundException('Usuario no encontrado.');
-                if (error.code === 'P2002') throw new ConflictException('El correo o número de cuenta ya pertenece a otro usuario.');
-            }
+            if ((error as any)?.code === 'P2025') throw new NotFoundException('Usuario no encontrado.');
+            if ((error as any)?.code === 'P2002') throw new ConflictException('El correo o número de cuenta ya pertenece a otro usuario.');
             throw error;
         }
     }
@@ -307,7 +303,7 @@ export class UsersService {
             });
             return { message: 'Cuenta eliminada exitosamente' };
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+            if ((error as any)?.code === 'P2025') {
                 throw new NotFoundException('Usuario no encontrado para eliminar.');
             }
             throw error;
@@ -409,6 +405,44 @@ export class UsersService {
                 const msg = body?.errors?.[0]?.message || error.message;
                 throw new InternalServerErrorException(`Error al subir imagen: ${msg}`);
             }
+            throw error;
+        }
+    }
+
+    // Set avatar URL directly (used when uploading client-side e.g. Cloudinary)
+    async setAvatarUrl(id: bigint, avatarUrl: string) {
+        if (!avatarUrl || typeof avatarUrl !== 'string') {
+            throw new BadRequestException('URL de avatar inválida.');
+        }
+        // Basic length check
+        if (avatarUrl.length > 2000) {
+            throw new BadRequestException('La URL de avatar es demasiado larga.');
+        }
+        try {
+            const updated = await this.prisma.usuarios.update({
+                where: { id_usuario: id },
+                data: { avatar_url: avatarUrl },
+                select: {
+                    id_usuario: true,
+                    nombre: true,
+                    correo_electronico: true,
+                    numero_telefono: true,
+                    id_rol: true,
+                    numero_cuenta: true,
+                    edad: true,
+                    avatar_url: true,
+                    credential_url: true,
+                    correo_verificado: true,
+                    correo_verificado_en: true,
+                    sms_verificado: true,
+                    sms_verificado_en: true,
+                    credencial_verificada: true,
+                    credencial_verificada_en: true,
+                },
+            });
+            return this.serializeUser(updated);
+        } catch (error) {
+            if ((error as any)?.code === 'P2025') throw new NotFoundException('Usuario no encontrado.');
             throw error;
         }
     }

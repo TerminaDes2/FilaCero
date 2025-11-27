@@ -1969,7 +1969,34 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 							<input id="pos-avatar-file" type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0] ?? null; setAvatarFile(f); try{setPreviewUrl(f?URL.createObjectURL(f):null)}catch{setPreviewUrl(null)}}} />
 							<label htmlFor="pos-avatar-file" className="px-3 py-2 rounded-lg border">Seleccionar</label>
 							{previewUrl && <img src={previewUrl} className="h-10 w-10 rounded-full object-cover" alt="preview" />}
-							<button type="button" className="px-3 py-2 rounded-lg bg-[var(--pos-accent-green)] text-white" onClick={async()=>{ if(!avatarFile||!user?.id_usuario) return; setSaving(true); try{ await api.uploadUserAvatar(user.id_usuario, avatarFile); await checkAuth(); setPreviewUrl(null); setAvatarFile(null); }catch(e){ console.error(e);} finally{ setSaving(false);} }}>Subir</button>
+							<button type="button" className="px-3 py-2 rounded-lg bg-[var(--pos-accent-green)] text-white" onClick={async()=>{
+								if(!avatarFile||!user?.id_usuario) return; 
+								setSaving(true);
+								try{
+									const CLOUD_NAME = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '').trim();
+									const UPLOAD_PRESET = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '').trim();
+									if (CLOUD_NAME && UPLOAD_PRESET) {
+										const fd = new FormData();
+										fd.append('file', avatarFile);
+										fd.append('upload_preset', UPLOAD_PRESET);
+										const cloudUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+										const res = await fetch(cloudUrl, { method: 'POST', body: fd });
+										if (!res.ok) {
+											const txt = await res.text();
+											throw new Error(`Error subiendo a Cloudinary: ${txt}`);
+										}
+										const data = await res.json();
+										if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
+										await api.setUserAvatarByUrl(user.id_usuario, data.secure_url);
+									} else {
+										await api.uploadUserAvatar(user.id_usuario, avatarFile);
+									}
+									await checkAuth();
+									setPreviewUrl(null);
+									setAvatarFile(null);
+								}catch(e){ console.error(e); if (typeof window !== 'undefined') window.alert(e instanceof Error ? e.message : 'Error subiendo avatar'); }
+								finally{ setSaving(false);} 
+							}}>Subir</button>
 						</div>
 					</Row>
 					<Row label="Nueva contraseña" hint="Deja en blanco para mantener la actual.">

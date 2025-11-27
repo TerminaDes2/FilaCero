@@ -47,6 +47,7 @@ describe('UsersController endpoints', () => {
     verifyProfileUpdate: jest.fn<any, [{ session: string; code: string }]>(),
     delete: jest.fn<Promise<{ message: string }>, [bigint]>(),
     uploadAvatar: jest.fn<any, [bigint, any]>(),
+    setAvatarUrl: jest.fn<any, [bigint, string]>(),
   };
 
   beforeAll(async () => {
@@ -222,5 +223,31 @@ describe('UsersController endpoints', () => {
 
     expect(res.body).toEqual(updated);
     expect(mockUsersService.uploadAvatar).toHaveBeenCalled();
+  });
+
+  it('POST /api/users/:id/avatar-url sets avatar URL (owner only)', async () => {
+    const updated: SerializedUser = {
+      id: '1',
+      name: 'User',
+      email: 'test@example.com',
+      phoneNumber: null,
+      roleId: null,
+      accountNumber: null,
+      age: null,
+      avatarUrl: 'https://example.com/avatar.jpg',
+      credentialUrl: null,
+      verified: true,
+      verifiedAt: null,
+    };
+    mockUsersService.setAvatarUrl.mockResolvedValueOnce(updated);
+
+    const res = await request(app.getHttpServer())
+      .post('/api/users/1/avatar-url')
+      .set('x-test-user-id', '1')
+      .send({ avatarUrl: 'https://example.com/avatar.jpg' })
+      .expect(200);
+
+    expect(res.body).toEqual(updated);
+    expect(mockUsersService.setAvatarUrl).toHaveBeenCalledWith(1n, 'https://example.com/avatar.jpg');
   });
 });

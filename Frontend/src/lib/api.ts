@@ -920,6 +920,11 @@ export const api = {
       body: fd,
     });
   },
+  setUserAvatarByUrl: (id: string | number, avatarUrl: string) =>
+    apiFetch<any>(`users/${id}/avatar-url`, {
+      method: 'POST',
+      body: JSON.stringify({ avatarUrl }),
+    }),
   confirmProfileUpdate: (session: string, code: string) =>
     apiFetch<any>(`users/confirm-update`, {
       method: "POST",

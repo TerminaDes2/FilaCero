@@ -657,7 +657,26 @@ export default function UserProfilePage() {
                         if (!avatarFile || !(user?.id_usuario)) return;
                         setSaving(true);
                         try {
-                          await api.uploadUserAvatar(user.id_usuario, avatarFile);
+                          const CLOUD_NAME = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '').trim();
+                          const UPLOAD_PRESET = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '').trim();
+                          if (CLOUD_NAME && UPLOAD_PRESET) {
+                            // Upload directly to Cloudinary from client
+                            const fd = new FormData();
+                            fd.append('file', avatarFile);
+                            fd.append('upload_preset', UPLOAD_PRESET);
+                            const cloudUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+                            const res = await fetch(cloudUrl, { method: 'POST', body: fd });
+                            if (!res.ok) {
+                              const txt = await res.text();
+                              throw new Error(`Error subiendo a Cloudinary: ${txt}`);
+                            }
+                            const data = await res.json();
+                            if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
+                            await api.setUserAvatarByUrl(user.id_usuario, data.secure_url);
+                          } else {
+                            // Fallback: send file to backend for server-side Cloudflare upload
+                            await api.uploadUserAvatar(user.id_usuario, avatarFile);
+                          }
                           await checkAuth();
                           setSaveFeedback('success');
                           setPreviewUrl(null);

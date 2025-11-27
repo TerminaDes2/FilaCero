@@ -64,6 +64,19 @@ export class UsersController {
     return this.usersService.uploadAvatar(BigInt(id), file);
   }
 
+  // Set avatar by URL (client-side upload to Cloudinary or other provider -> backend stores URL)
+  @Post(':id/avatar-url')
+  async setAvatarUrl(
+    @Param('id') id: string,
+    @Body('avatarUrl') avatarUrl: string,
+    @Req() req,
+  ) {
+    if (req.user.id_usuario.toString() !== id) {
+      throw new UnauthorizedException('No tienes permiso para modificar este perfil.');
+    }
+    return this.usersService.setAvatarUrl(BigInt(id), avatarUrl);
+  }
+
   // Ruta D: Eliminar Cuenta
   @Delete(':id')
   async deleteAccount(
