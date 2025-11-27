@@ -1,12 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { api } from "../../../lib/api";
 import { Trash2, Star } from "lucide-react";
 
 type Review = {
   id: number;
-  titulo: string | null;
   contenido: string;
   calificacion: number;
   creado_en: string;
@@ -16,6 +15,8 @@ type Review = {
     avatar_url?: string | null;
   };
 };
+
+const skeletonArray = Array.from({ length: 3 });
 
 export default function StoreReviews({
   storeId,
@@ -31,32 +32,36 @@ export default function StoreReviews({
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const loadReviews = async () => {
       try {
+        setLoading(true);
         const res: any = await api.getBusinessComments(storeId);
-        const items = Array.isArray(res) ? res : res.items || [];
-
-        const mapped = items.map((r: any) => ({
-          id: r.id,
-          titulo: null,
-          contenido: r.comentario,
-          calificacion: r.estrellas,
-          creado_en: r.createdAt,
+        const items = Array.isArray(res) ? res : res?.items ?? [];
+        const mapped: Review[] = items.map((review: any) => ({
+          id: review.id ?? review.id_rating ?? Math.random(),
+          contenido: review.comentario ?? review.contenido ?? "",
+          calificacion: Number(review.estrellas ?? review.calificacion ?? 0),
+          creado_en: review.createdAt ?? review.creado_en ?? new Date().toISOString(),
           usuario: {
-            id: r.user?.id,
-            nombre: r.user?.nombre || "Anónimo",
-            avatar_url: r.user?.avatarUrl || null,
+            nombre: review.user?.nombre ?? review.usuario?.nombre ?? "Anónimo",
+            avatar_url: review.user?.avatarUrl ?? review.usuario?.avatar_url ?? null,
           },
         }));
-
-        setReviews(mapped);
-      } catch (err) {
-        console.error("Error al cargar reseñas:", err);
+        if (active) {
+          setReviews(mapped);
+        }
+      } catch (error) {
+        console.error("Error al cargar reseñas:", error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
+
     loadReviews();
+    return () => {
+      active = false;
+    };
   }, [storeId]);
 
 // 🗑️ Eliminar reseña
@@ -106,113 +111,96 @@ const handleSubmit = async () => {
 };
 
 
-   if (loading)
+  const averageRating = useMemo(() => {
+    if (!reviews.length) return null;
+    const sum = reviews.reduce((acc, review) => acc + review.calificacion, 0);
+    return Number((sum / reviews.length).toFixed(1));
+  }, [reviews]);
+
+  if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-center">
-        <p className="text-gray-500 animate-pulse">Cargando reseñas...</p>
-      </div>
+      <section className="rounded-3xl border border-white/70 bg-white/90 p-6">
+        <header className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Experiencia de clientes</h2>
+            <p className="text-sm text-gray-500">Estamos trayendo los comentarios más recientes…</p>
+          </div>
+        </header>
+        <div className="space-y-4">
+          {skeletonArray.map((_, index) => (
+            <div key={index} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </div>
+      </section>
     );
+  }
+
+  if (!reviews.length) {
+    return (
+      <section className="rounded-3xl border border-white/70 bg-white/90 p-6 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-2xl">💬</div>
+        <h2 className="mt-4 text-xl font-semibold text-gray-900">Sé la primera reseña</h2>
+        <p className="mt-2 text-sm text-gray-500">
+          Este negocio recién está empezando su historial de reseñas.
+        </p>
+      </section>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-semibold mb-4">Reseñas de Clientes</h2>
-
-      {/* Scroll horizontal */}
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-        {reviews.length > 0 ? (
-          reviews.map((r) => (
-            <div
-              key={r.id}
-              className="relative flex-shrink-0 w-80 border rounded-xl p-4 shadow-sm hover:shadow-md bg-gray-50 transition-transform transform hover:scale-[1.02]"
-            >
-              {/* Botón eliminar */}
-              {currentUserId === r.usuario.id && (
-                <button
-                  onClick={() => handleDelete(r.id)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              )}
-
-              <div className="flex items-center gap-3 mb-3">
-                <img
-                  src={r.usuario.avatar_url || "/images/profile_picture.png"}
-                  alt={r.usuario.nombre}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="font-semibold">{r.usuario.nombre}</h3>
-                  <p className="text-xs text-gray-500">
-                    {new Date(r.creado_en).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              <p className="text-yellow-500 mb-2">
-                {"★".repeat(r.calificacion)}{"☆".repeat(5 - r.calificacion)}
-              </p>
-              <p className="text-gray-700 text-sm">{r.contenido}</p>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-center">Aún no hay reseñas</p>
-        )}
-
-        {/* 📝 Tarjeta para agregar reseña */}
-        <div className="flex-shrink-0 w-80 border-2 border-dashed rounded-xl p-4 flex flex-col justify-center items-center bg-gray-50 hover:shadow-md transition-transform transform hover:scale-[1.02]">
-          <h4 className="text-lg font-medium mb-2">Agregar reseña</h4>
-          <div className="flex mb-2">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <svg
-                key={s}
-                onClick={() => setRating(s)}
-                xmlns="http://www.w3.org/2000/svg"
-                fill={s <= rating ? "currentColor" : "none"}
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke={s <= rating ? "#FACC15" : "#D1D5DB"}
-                className="w-6 h-6 cursor-pointer text-yellow-400"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M11.48 3.499a.562.562 0 011.04 0l2.262 4.582a.563.563 0 00.424.308l5.061.736a.562.562 0 01.312.959l-3.664 3.57a.563.563 0 00-.162.498l.865 5.044a.562.562 0 01-.816.592L12 17.347l-4.527 2.379a.562.562 0 01-.816-.592l.865-5.044a.563.563 0 00-.162-.498l-3.664-3.57a.562.562 0 01.312-.959l5.061-.736a.563.563 0 00.424-.308L11.48 3.5z"
-                />
-              </svg>
-            ))}
-          </div>
-
-          <textarea
-            className="w-full p-2 border rounded-md text-sm resize-none focus:ring focus:ring-yellow-200"
-            rows={3}
-            placeholder="Escribe tu reseña..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="mt-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-4 py-2 rounded-md transition disabled:opacity-50"
-          >
-            {submitting ? "Enviando..." : "Publicar"}
-          </button>
+    <section className="rounded-3xl border border-white/70 bg-white/95 p-6">
+      <header className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Experiencia de clientes</h2>
+          <p className="text-sm text-gray-500">
+            {reviews.length} {reviews.length === 1 ? "reseña publicada" : "reseñas publicadas"}
+          </p>
         </div>
+        {averageRating != null && (
+          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
+            ⭐ {averageRating}
+            <span className="text-xs font-medium text-emerald-500">Promedio</span>
+          </div>
+        )}
+      </header>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {reviews.map((review) => (
+          <article
+            key={review.id}
+            className="flex flex-col gap-4 rounded-3xl border border-gray-100 bg-white/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-brand-50">
+                <Image
+                  src={review.usuario.avatar_url || "/images/profile_picture.png"}
+                  alt={review.usuario.nombre}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                  unoptimized
+                />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{review.usuario.nombre}</p>
+                <p className="text-xs text-gray-500">{formatDate(review.creado_en)}</p>
+              </div>
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-600">
+                {review.calificacion.toFixed(1)} ★
+              </span>
+            </div>
+
+            <p className="text-sm leading-relaxed text-gray-700">{review.contenido}</p>
+          </article>
+        ))}
       </div>
-    </div>
+    </section>
   );
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }

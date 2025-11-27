@@ -1,26 +1,15 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SectionHeading } from '../../components/SectionHeading';
+import { useTranslation } from '../../hooks/useTranslation';
 
-interface QA { q: string; a: string; }
+interface QA { qKey: string; aKey: string; }
 
 const faqs: QA[] = [
-  {
-    q: '¿Necesito instalar algo o descargar una app?',
-    a: 'No. Funciona directamente en el navegador (web app). Tus clientes solo escanean el QR y empiezan a pedir.'
-  },
-  {
-    q: '¿Cuánto tardo en configurarlo?',
-    a: 'En minutos puedes cargar tu catálogo base. A partir de ahí gestionas productos, precios y pedidos desde el panel.'
-  },
-  {
-    q: '¿Funciona en cualquier dispositivo?',
-    a: 'Sí. Está optimizado para móviles, tablets y desktops modernos sin requisitos especiales.'
-  },
-  {
-    q: '¿Puedo migrar a funciones avanzadas luego?',
-    a: 'Sí. Empiezas gratis y habilitas módulos como inventario avanzado o reportes profundos cuando los necesites.'
-  }
+  { qKey: 'landing.faq.items.1.q', aKey: 'landing.faq.items.1.a' },
+  { qKey: 'landing.faq.items.2.q', aKey: 'landing.faq.items.2.a' },
+  { qKey: 'landing.faq.items.3.q', aKey: 'landing.faq.items.3.a' },
+  { qKey: 'landing.faq.items.4.q', aKey: 'landing.faq.items.4.a' },
 ];
 
 interface FAQItemProps {
@@ -129,21 +118,21 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
   }, [isOpen, animate]);
 
   return (
-    <li className="border border-gray-200 rounded-xl bg-white/80 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md">
+    <li className="rounded-xl border border-gray-200/70 bg-white/80 backdrop-blur overflow-hidden transition-shadow hover:shadow-sm focus-within:shadow-md dark:border-white/12 dark:bg-[color:rgba(10,15,28,0.82)] dark:hover:shadow-[0_32px_95px_-62px_rgba(15,20,35,0.95)]">
       <button
         id={`faq-btn-${index}`}
         type="button"
         aria-expanded={isOpen}
         aria-controls={`faq-panel-${index}`}
         onClick={onToggle}
-        className="w-full flex items-center justify-between text-left px-5 py-4 gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
       >
-        <span className="font-medium text-sm text-gray-800 pr-2">
+        <span className="pr-2 text-sm font-medium text-gray-800 dark:text-slate-100">
           {q}
         </span>
         <span
           aria-hidden
-          className="relative w-6 h-6 flex items-center justify-center text-brand-600"
+          className="relative flex h-6 w-6 items-center justify-center text-brand-600 dark:text-brand-200"
         >
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-180 scale-x-0' : 'scale-x-100'}`} />
           <span className={`absolute block h-0.5 w-3.5 rounded bg-current transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-90'}`} />
@@ -158,7 +147,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
         className="px-5 pb-3"
       >
         <div ref={innerRef} className="pt-1">
-          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">{a}</p>
+          <p className="max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-slate-200">{a}</p>
         </div>
       </div>
     </li>
@@ -167,24 +156,26 @@ const FAQItem: React.FC<FAQItemProps> = ({ index, q, a, isOpen, onToggle }) => {
 
 export function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
+  const { t } = useTranslation();
   return (
-    <section id="faq" aria-labelledby="faq-heading" className="py-28 relative overflow-hidden bg-white">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+    <section id="faq" aria-labelledby="faq-heading" className="relative overflow-hidden py-28 bg-[var(--fc-surface-base)] dark:bg-[color:rgba(3,7,15,0.97)]">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(148,163,184,0.2)_1px,transparent_0)] [background-size:18px_18px] dark:opacity-[0.18] dark:[background-image:radial-gradient(rgba(100,116,139,0.18)_1px,transparent_0)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/70 via-white/15 to-transparent dark:from-[color:rgba(2,5,12,0.94)] dark:via-[color:rgba(3,7,15,0.6)] dark:to-[color:rgba(3,7,15,0.92)]" aria-hidden />
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           id="faq-heading"
           align="center"
-          badge="FAQ"
+          badge={t('landing.faq.badge')}
           badgeTone="teal"
-          title="Preguntas frecuentes"
-          subtitle="Resolvemos dudas clave antes de que empieces." />
+          title={t('landing.faq.title')}
+          subtitle={t('landing.faq.subtitle')} />
         <ul className="space-y-4" role="list">
           {faqs.map((f, i) => (
             <FAQItem
-              key={f.q}
+              key={f.qKey}
               index={i}
-              q={f.q}
-              a={f.a}
+              q={t(f.qKey)}
+              a={t(f.aKey)}
               isOpen={open === i}
               onToggle={() => setOpen(open === i ? null : i)}
             />

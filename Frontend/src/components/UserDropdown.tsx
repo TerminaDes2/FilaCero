@@ -2,7 +2,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { api, activeBusiness as activeBusinessStorage } from "../lib/api";
 import { useBusinessStore } from "../state/businessStore";
+import { BusinessPickerDialog } from "./business/BusinessPickerDialog";
+import type { Business } from "./business/BusinessPickerDialog";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../state/userStore";
 import { 
@@ -10,7 +13,8 @@ import {
   LogOut, 
   LayoutDashboard, 
   ChevronDown,
-  Settings
+  Settings,
+  Store
 } from "lucide-react";
 
 // Función robusta para obtener el id_rol como número
@@ -48,8 +52,9 @@ const getRoleInfo = (id_rol: any) => {
 export default function UserDropdown() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
-  const { activeBusiness, setActiveBusiness } = useBusinessStore();
-  // Navegación directa según estado
+  const { setActiveBusiness, clearBusiness } = useBusinessStore();
+  const [showBizPicker, setShowBizPicker] = useState(false);
+  const [bizList, setBizList] = useState<Business[]>([]);
   const router = useRouter();
 
   // Cerrar menú al hacer click fuera
@@ -85,7 +90,7 @@ export default function UserDropdown() {
   return (
     <div className="relative">
       <button
-        className="user-menu-trigger flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition"
+        className="user-menu-trigger flex items-center gap-3 rounded-full border border-brand-100 bg-white/85 px-3.5 py-2 text-left shadow-sm transition hover:border-brand-200 hover:bg-brand-50/60 md:px-3.5 md:py-2 md:gap-3 dark:border-white/15 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100 dark:hover:border-brand-400/40 dark:hover:bg-[color:rgba(15,23,42,0.9)]"
         onClick={(e) => {
           e.stopPropagation();
           setUserMenuOpen(!userMenuOpen);
@@ -93,100 +98,165 @@ export default function UserDropdown() {
       >
         {/* Avatar con icono */}
         <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center border-2 border-brand-200 dark:border-brand-800">
-            <User className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-200 bg-brand-50 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)]">
+            <User className="w-5 h-5 text-brand-600 dark:text-brand-200" />
           </div>
           {/* Badge del rol */}
-          <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-xs font-bold ${roleInfo.color} ${roleInfo.borderColor}`}>
+          <div className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-xs font-bold shadow-sm ${roleInfo.color} ${roleInfo.borderColor}`}>
             {roleId === 2 ? "A" : "U"}
           </div>
         </div>
         
         <div className="flex flex-col items-start">
-          <span className="text-sm font-medium text-gray-700 dark:text-slate-200 max-w-[120px] truncate">
+          <span className="text-sm font-semibold text-brand-700 max-w-[140px] truncate dark:text-brand-200">
             {user.nombre.split(' ')[0]}
           </span>
-          <span className={`text-xs px-1.5 py-0.5 rounded-full ${roleInfo.color} ${roleInfo.borderColor}`}>
+          <span className={`text-xs px-1.5 py-0.5 rounded-full border ${roleInfo.borderColor} bg-white/80 text-brand-600 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100`}>
             {roleInfo.text}
           </span>
         </div>
         
         <ChevronDown 
-          className={`w-4 h-4 text-gray-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-brand-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''} dark:text-brand-200`}
         />
       </button>
               
       {/* Menú desplegable */}
       {userMenuOpen && (
-        <div className="user-menu-content absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 py-2 z-50">
-          {/* Header del usuario */}
-          <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center border-2 border-brand-200 dark:border-brand-800">
-                  <User className="w-6 h-6 text-brand-600 dark:text-brand-400" />
+        <div className="user-menu-content absolute right-0 top-full mt-3 w-72 z-50">
+          <div className="relative overflow-hidden rounded-2xl border border-brand-100 bg-white text-[var(--fc-text-primary)] shadow-2xl shadow-brand-100/50 dark:border-white/12 dark:bg-[color:rgba(10,15,30,0.95)] dark:text-[var(--fc-text-primary)] dark:shadow-slate-950/50">
+            <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <div className="absolute inset-0 opacity-82 [background-image:radial-gradient(circle_at_6%_0%,rgba(233,74,111,0.16),transparent_55%)] dark:opacity-60 dark:[background-image:radial-gradient(circle_at_6%_0%,rgba(233,74,111,0.22),transparent_55%)]" />
+              <div className="absolute inset-0 opacity-72 [background-image:radial-gradient(circle_at_94%_0%,rgba(76,193,173,0.15),transparent_55%)] dark:opacity-55 dark:[background-image:radial-gradient(circle_at_94%_0%,rgba(56,226,223,0.2),transparent_55%)]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[var(--fc-surface-base)]/94 via-[var(--fc-surface-elevated)]/88 to-[var(--fc-surface-base)]/94 dark:from-[color:rgba(2,6,23,0.96)] dark:via-[color:rgba(15,23,42,0.82)] dark:to-[color:rgba(2,6,23,0.94)]" />
+            </div>
+            <div className="relative flex flex-col">
+              <div className="flex items-center gap-3 px-5 py-4 border-b border-brand-100/70 text-[var(--fc-text-primary)] dark:border-brand-500/25">
+                <div className="relative">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-brand-200 bg-brand-50 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)]">
+                    <User className="w-6 h-6 text-brand-600 dark:text-brand-200" />
+                  </div>
+                  <div className={`absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-xs font-bold shadow-sm ${roleInfo.color} ${roleInfo.borderColor}`}>
+                    {roleId === 2 ? "A" : "U"}
+                  </div>
                 </div>
-                <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-xs font-bold ${roleInfo.color} ${roleInfo.borderColor}`}>
-                  {roleId === 2 ? "A" : "U"}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--fc-text-primary)] truncate">{user.nombre}</p>
+                  <p className="text-xs text-[var(--fc-text-secondary)] truncate dark:text-slate-300">{user.correo_electronico}</p>
+                  <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-600 shadow-sm dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                    Sesión activa • {roleInfo.text}
+                  </div>
                 </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                  {user.nombre}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
-                  {user.correo_electronico}
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <div className={`w-2 h-2 rounded-full ${roleId === 2 ? 'bg-red-500' : 'bg-blue-500'}`}></div>
-                  <span className={`text-xs font-medium ${roleInfo.color} px-2 py-0.5 rounded-full`}>
-                    {roleInfo.text}
-                  </span>
-                </div>
+
+              <div className="px-5 py-4 space-y-3">
+                {shouldShowAdminPanel && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50 dark:border-brand-400/40 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-brand-100 dark:hover:bg-[color:rgba(15,23,42,0.88)]"
+                    onClick={async () => {
+                      try {
+                        const list = await api.listMyBusinesses();
+                        const businesses: Business[] = Array.isArray(list)
+                          ? (list as any[])
+                              .map((biz) => ({
+                                id_negocio: String(biz.id_negocio ?? biz.id ?? biz.idNegocio ?? ''),
+                                nombre: biz.nombre ?? 'Negocio',
+                                direccion: biz.direccion ?? null,
+                                telefono: biz.telefono ?? null,
+                                correo: biz.correo ?? null,
+                                logo_url: biz.logo_url ?? null,
+                                hero_image_url: biz.hero_image_url ?? null,
+                              }))
+                              .filter((biz) => Boolean(biz.id_negocio))
+                          : [];
+
+                        if (businesses.length === 0) {
+                          setUserMenuOpen(false);
+                          router.push('/onboarding/negocio');
+                          return;
+                        }
+
+                        try { activeBusinessStorage.clear(); } catch {}
+                        clearBusiness();
+                        setBizList(businesses);
+                        setShowBizPicker(true);
+                        setUserMenuOpen(false);
+                      } catch {
+                        setUserMenuOpen(false);
+                        router.push('/onboarding/negocio');
+                      }
+                    }}
+                  >
+                    <LayoutDashboard className="h-4 w-4 text-brand-500" />
+                    <span>Ir al panel POS</span>
+                  </button>
+                )}
+
+                {shouldShowAdminPanel && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50"
+                    onClick={async () => {
+                      try {
+                        const list = await api.listMyBusinesses();
+                        setBizList(list || []);
+                      } catch {
+                        setBizList([]);
+                      }
+                      setShowBizPicker(true);
+                      setUserMenuOpen(false);
+                    }}
+                  >
+                    <Store className="h-4 w-4 text-brand-500" />
+                    <span>Seleccionar negocio</span>
+                  </button>
+                )}
+
+                <Link
+                  href="/user"
+                  className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm font-semibold text-[var(--fc-text-primary)] shadow-sm transition hover:bg-brand-50 dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)] dark:hover:bg-[color:rgba(15,23,42,0.9)]"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  <Settings className="h-4 w-4 text-brand-500" />
+                  <span>Mi perfil</span>
+                </Link>
+
+              </div>
+
+              <div className="border-t border-brand-100/70 bg-brand-50/60 px-5 py-4 dark:border-brand-400/35 dark:bg-[color:rgba(15,23,42,0.9)]">
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-500/15 dark:border-red-500/35 dark:bg-[color:rgba(127,29,29,0.62)] dark:text-red-100 dark:hover:bg-[color:rgba(127,29,29,0.72)]"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Cerrar sesión</span>
+                </button>
               </div>
             </div>
           </div>
-          
-          {/* Opciones del menú */}
-          <div className="py-2">
-            {shouldShowAdminPanel && (
-              <button
-                type="button"
-                className="flex w-full text-left items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
-                onClick={async () => {
-                  if (!activeBusiness) { setUserMenuOpen(false); router.push('/onboarding/negocio'); return; }
-                  setUserMenuOpen(false);
-                  router.push('/pos');
-                }}
-              >
-                <LayoutDashboard className="w-4 h-4 text-gray-500 dark:text-slate-400" />
-                <span>Panel Administrador</span>
-              </button>
-            )}
-      {/* Menú de usuario */}
-            
-            <Link 
-              href="/user" 
-              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition"
-              onClick={() => setUserMenuOpen(false)}
-            >
-              <Settings className="w-4 h-4 text-gray-500 dark:text-slate-400" />
-              <span>Mi Perfil</span>
-            </Link>
-          </div>
-          
-          {/* Separador */}
-          <div className="border-t border-gray-100 dark:border-slate-700 my-1"></div>
-          
-          {/* Cerrar sesión */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Cerrar Sesión</span>
-          </button>
         </div>
+      )}
+
+      {showBizPicker && (
+        <BusinessPickerDialog
+          open={showBizPicker}
+          businesses={bizList}
+          onChoose={(b: Business) => {
+            activeBusinessStorage.set(String(b.id_negocio));
+            setActiveBusiness(b);
+            setShowBizPicker(false);
+            router.push("/pos");
+          }}
+          onCreateNew={() => {
+            setShowBizPicker(false);
+            router.push("/onboarding/negocio");
+          }}
+          onClose={() => {
+            setShowBizPicker(false);
+          }}
+        />
       )}
     </div>
   );

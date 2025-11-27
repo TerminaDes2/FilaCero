@@ -4,20 +4,22 @@
 // que será proxyada por Next.js según las rewrites del next.config.mjs.
 function resolveApiBase(): string {
   const raw = (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE as string | undefined;
+  
+  // Si NEXT_PUBLIC_API_BASE está definida en build time (Docker), usarla pero adaptarla al contexto
   if (raw && raw.trim()) {
-    return raw.replace(/\/+$/, "");
-  }
-  try {
-    if (typeof window !== "undefined") {
-      const { protocol, hostname, port } = window.location;
-      if (/^(localhost|127\.0\.0\.1)$/i.test(hostname)) {
-        if (port && port !== "3000") {
-          return `${protocol}//${hostname}:3000/api`;
-        }
-        return `${protocol}//${hostname}${port ? `:${port}` : ""}/api`;
-      }
+    const trimmed = raw.replace(/\/+$/, "");
+    
+    // Si estamos en el navegador (client-side) y la URL apunta a "backend:3000",
+    // reescribir a localhost:3000 porque "backend" no es accesible desde el navegador del host
+    if (typeof window !== "undefined" && trimmed.includes("backend:3000")) {
+      const { protocol } = window.location;
+      return `${protocol}//localhost:3000/api`;
     }
-  } catch {}
+    
+    return trimmed;
+  }
+  
+  // Fallback: usar ruta relativa para que Next.js la proxee
   return "/api";
 }
 
@@ -42,7 +44,9 @@ export interface ApiError {
 function getToken(): string | null {
   try {
     if (typeof window !== "undefined") {
-      return window.localStorage.getItem("auth_token");
+      const token = window.localStorage.getItem("auth_token");
+      console.log('[getToken] Token from localStorage:', token ? `${token.substring(0, 20)}...` : null);
+      return token;
     }
   } catch {}
   return null;
@@ -115,14 +119,15 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   // Debug instrumentation for 431 header issues
   const isLoginDebug = /auth\/login$/.test(pathKey);
-  if (isLoginDebug) {
+  const isMeDebug = /auth\/me$/.test(pathKey);
+  if (isLoginDebug || isMeDebug) {
     try {
       const headerSnapshot = { ...normalizedHeaders };
       if (headerSnapshot.Authorization) {
         headerSnapshot.Authorization = `Bearer <len:${headerSnapshot.Authorization.length}>`;
       }
       // Compute cookie header length if browser would attach (we forced omit, but log anyway)
-      console.debug('[login-debug] request', {
+      console.debug(isMeDebug ? '[me-debug]' : '[login-debug]', 'request', {
         url: baseUrl,
         method: init.method || 'GET',
         headers: headerSnapshot,
@@ -222,6 +227,14 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       message:
         (data && (data.message || data.error)) || res.statusText || "Error",
     };
+    // Log detallado de errores
+    console.error("[apiFetch] Error:", {
+      url: effectiveUrl,
+      status: res.status,
+      statusText: res.statusText,
+      data,
+      error: err
+    });
     throw err;
   }
 
@@ -290,7 +303,14 @@ export interface UserInfo {
   fecha_nacimiento?: string;
   fecha_registro?: string;
   estado?: string;
+  avatar_url?: string | null;
+  avatarUrl?: string | null;
   credential_url?: string;
+  credentialUrl?: string | null;
+  numero_cuenta?: string | null;
+  accountNumber?: string | null;
+  edad?: number | null;
+  age?: number | null;
   verificado?: boolean;
   verified?: boolean;
   correo_verificado?: boolean;
@@ -311,6 +331,40 @@ export interface UserInfo {
   };
 }
 
+export interface BusinessProductSummary {
+  id_producto: number;
+  nombre: string;
+  descripcion?: string | null;
+  precio: number;
+  imagen_url?: string | null;
+  categoria?: string | null;
+  stock: number;
+  stock_minimo: number;
+}
+
+export interface BusinessSummary {
+  id_negocio: number;
+  nombre: string;
+  descripcion?: string | null;
+  direccion?: string | null;
+  telefono?: string | null;
+  correo?: string | null;
+  logo_url?: string | null;
+  hero_image_url?: string | null;
+  fecha_registro?: string | null;
+  categorias: string[];
+  resumen: {
+    totalProductos: number;
+    totalCategorias: number;
+    totalPedidos: number;
+    totalResenas: number;
+    promedioEstrellas: number | null;
+    totalVentasRegistradas: number;
+    ingresosAcumulados: number;
+  };
+  productosDestacados: BusinessProductSummary[];
+}
+
 // --- 👇 Objeto principal con métodos actualizados ---
 export const api = {
   // --- Auth ---
@@ -319,6 +373,29 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ correo_electronico, password }),
       credentials: 'omit',
+      cache: 'no-store',
+    }),
+
+  // Password recovery endpoints
+  requestPasswordRecover: (identifier: string) =>
+    apiFetch<{ delivery: string; expiresAt: string; session?: string }>("auth/recover", {
+      method: "POST",
+      body: JSON.stringify({ identifier }),
+      credentials: 'omit',
+      cache: 'no-store',
+    }),
+
+  verifyPasswordRecover: (session: string, code: string) =>
+    apiFetch<{ verified: boolean; resetSession?: string }>("auth/recover/verify", {
+      method: "POST",
+      body: JSON.stringify({ session, code }),
+      cache: 'no-store',
+    }),
+
+  resetPasswordRecover: (session: string, password: string, passwordConfirm: string) =>
+    apiFetch<{ message?: string }>("auth/recover/reset", {
+      method: "POST",
+      body: JSON.stringify({ session, password, passwordConfirm }),
       cache: 'no-store',
     }),
 
@@ -360,6 +437,20 @@ export const api = {
     apiFetch<{ delivery: 'email'; expiresAt: string; session: string }>("auth/resend-register", {
       method: "POST",
       body: JSON.stringify({ session }),
+      cache: 'no-store',
+    }),
+
+  preRegisterVerifyEmail: (payload: { code: string; session: string }) =>
+    apiFetch<{ token: string; user: AuthUser }>("auth/verify-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    }),
+
+  preRegisterResendCode: (payload: { session: string }) =>
+    apiFetch<{ expiresAt: string; session: string }>("auth/resend-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
       cache: 'no-store',
     }),
 
@@ -553,10 +644,9 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   
-  getPublicBusinesses: async () => {
+  getPublicBusinesses: async (): Promise<BusinessSummary[]> => {
     try {
-      const businesses = await apiFetch<any[]>("businesses");
-      console.log("✅ Negocios cargados desde API:", businesses);
+      const businesses = await apiFetch<BusinessSummary[]>("businesses");
       return businesses;
     } catch (error) {
       console.error("❌ Error cargando negocios públicos:", error);
@@ -773,6 +863,22 @@ export const api = {
     // Hacemos la llamada al nuevo endpoint
     return apiFetch<any>(`metrics?${qp.toString()}`); 
   },
+  // --- Payments ---
+  // Lista métodos guardados para el usuario autenticado
+  getPaymentMethods: () => apiFetch<any[]>("payments/methods"),
+  // Crear PaymentIntent en backend (wrapper)
+  // payload: { pedidoId: string; metadata?: Record<string, any> }
+  createPaymentIntent: (payload: { pedidoId: string; metadata?: Record<string, any> }) =>
+    apiFetch<any>("payments/create-intent", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  // Guarda un método de pago tokenizado (paymentMethodId obtenido desde Stripe.js)
+  savePaymentMethod: (payload: { paymentMethodId: string; makeDefault?: boolean }) =>
+    apiFetch<any>("payments/methods", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   // --- FIN DE LO NUEVO ---
   // --- Verificación SMS ---
   startSmsVerification: (telefono: string, canal: string = "sms") =>

@@ -6,6 +6,7 @@ import { FancyInput } from './FancyInput';
 import { api } from '../../lib/api';
 import { useUserStore } from '../../state/userStore';
 import { EmailVerificationModal } from './EmailVerificationModal';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface SignupFormProps {
 	onSuccess?: () => void;
@@ -36,6 +37,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
 	const { role } = useUserStore();
+	const { t } = useTranslation();
 	const isOwner = role === 'OWNER';
 	const [showVerificationModal, setShowVerificationModal] = useState(false);
 	const [pendingEmail, setPendingEmail] = useState<string | null>(null);
@@ -69,10 +71,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
 	const suggestions = useMemo(() => {
 		const s: string[] = [];
-		if(password.length < 8) s.push('Usa al menos 8 caracteres');
-		if(!/[A-Z]/.test(password)) s.push('Incluye una mayúscula');
-		if(!/[0-9]/.test(password)) s.push('Añade un número');
-		if(!/[^A-Za-z0-9]/.test(password)) s.push('Añade un símbolo');
+		if(password.length < 8) s.push(t('auth.register.form.suggestions.minChars'));
+		if(!/[A-Z]/.test(password)) s.push(t('auth.register.form.suggestions.upper'));
+		if(!/[0-9]/.test(password)) s.push(t('auth.register.form.suggestions.number'));
+		if(!/[^A-Za-z0-9]/.test(password)) s.push(t('auth.register.form.suggestions.symbol'));
 		return s;
 	}, [password]);
 
@@ -90,7 +92,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 		if(!formValid) return;
 		// Exigir selección de rol explícita para evitar registros ambiguos
 		if(!role) {
-			setError('Selecciona un rol (Cliente o Negocio) antes de continuar.');
+			setError(t('auth.register.form.errors.noRole'));
 			return;
 		}
 		setSubmitting(true);
@@ -121,7 +123,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				router.push(isOwner ? '/onboarding/negocio' : '/onboarding/customer');
 			}
 		} catch (err: any) {
-			setError(err?.message || 'Error al crear la cuenta');
+			setError(err?.message || t('auth.register.form.errors.createGeneric'));
 		} finally {
 			setSubmitting(false);
 		}
@@ -151,57 +153,64 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
 	return (
 		<>
-		<form onSubmit={submit} className="space-y-6" noValidate>
+		<form onSubmit={submit} className="space-y-4 md:space-y-5" noValidate>
 			{error && (
-				<div className="text-[12px] text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2">
-					{error}
+				<div className="flex items-start gap-2.5 text-xs text-rose-800 bg-rose-50/90 border border-rose-200 rounded-xl px-3 py-2.5 shadow-sm">
+					<svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<span>{error}</span>
 				</div>
 			)}
 			<FancyInput
-				label="Nombre"
+				label={t('auth.register.form.name.label')}
 				value={name}
 				onChange={e=>setName(e.target.value)}
 				onBlur={()=>setTouched(t=>({...t,name:true}))}
-				error={touched.name && !nameValid ? 'Mínimo 2 caracteres' : undefined}
+				error={touched.name && !nameValid ? t('auth.register.form.name.error') : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5Zm0 2c-4 0-7 2-7 4v1h14v-1c0-2-3-4-7-4Z' /></svg>}
-				hint={!name ? 'Ingresa tu nombre' : undefined}
+				hint={!name ? t('auth.register.form.name.hint') : undefined}
 			/>
 			<FancyInput
-				label="Correo electrónico"
+				label={t('auth.register.form.email.label')}
 				type="email"
 				value={email}
 				onChange={e=>setEmail(e.target.value)}
 				onBlur={()=>setTouched(t=>({...t,email:true}))}
-				error={touched.email && !emailValid ? 'Correo inválido' : undefined}
+				error={touched.email && !emailValid ? t('auth.register.form.email.error') : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M4 6l8 6 8-6M4 6v12h16V6' /></svg>}
 				hint={!email ? 'Usa un correo válido que controles' : undefined}
 			/>
 			
 			<FancyInput
-				label="Contraseña"
+				label={t('auth.register.form.password.label')}
 				type={showPassword ? 'text' : 'password'}
 				value={password}
 				onChange={e=>setPassword(e.target.value)}
 				onBlur={()=>setTouched(t=>({...t,password:true}))}
-				error={touched.password && !passwordStrongEnough ? 'Fortalece tu contraseña' : undefined}
+				error={touched.password && !passwordStrongEnough ? t('auth.register.form.password.error') : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><rect x='4' y='8' width='16' height='12' rx='2'/><path strokeLinecap='round' strokeLinejoin='round' d='M8 8V6a4 4 0 1 1 8 0v2' /></svg>}
 				isPassword
 				onTogglePassword={()=>setShowPassword(s=>!s)}
 				strength={password ? passwordStrength : undefined}
-				hint={!password ? 'Debe ser robusta' : undefined}
+				hint={!password ? t('auth.register.form.password.hint') : undefined}
 			/>
 			{password && suggestions.length > 0 && !passwordStrongEnough && (
 				<div className="flex flex-wrap gap-1.5 -mt-2">
 					{suggestions.map((s, idx) => {
-						const accentClass = idx % 3 === 0 ? 'border-sun-300 text-sun-700' : idx % 3 === 1 ? 'border-brand-200 text-brand-700' : 'border-emerald-200 text-emerald-700';
-						const iconColor = idx % 3 === 0 ? 'text-sun-400' : idx % 3 === 1 ? 'text-brand-500' : 'text-emerald-400';
+						const colors = [
+							{ border: 'border-sun-200/60', bg: 'bg-sun-50/80', text: 'text-sun-700', icon: 'text-sun-500' },
+							{ border: 'border-brand-200/60', bg: 'bg-brand-50/80', text: 'text-brand-700', icon: 'text-brand-500' },
+							{ border: 'border-emerald-200/60', bg: 'bg-emerald-50/80', text: 'text-emerald-700', icon: 'text-emerald-500' }
+						];
+						const colorSet = colors[idx % 3];
 						return (
 							<span
 								key={s}
-								className={`inline-flex items-center gap-1 rounded-full bg-white/70 border ${accentClass} px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur-sm`}
+								className={`inline-flex items-center gap-1.5 rounded-lg ${colorSet.bg} border ${colorSet.border} ${colorSet.text} px-2.5 py-1 text-[11px] font-semibold shadow-sm backdrop-blur-sm`}
 							>
-								<svg className={`w-2.5 h-2.5 ${iconColor}`} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
-									<path strokeLinecap='round' strokeLinejoin='round' d='M12 3v4M12 17v4M4 12h4m8 0h4M7.8 7.8l2.8 2.8m2.8 2.8 2.8 2.8m0-8.4-2.8 2.8m-2.8 2.8-2.8 2.8' />
+								<svg className={`w-2.5 h-2.5 ${colorSet.icon}`} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.25'>
+									<path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
 								</svg>
 								{s}
 							</span>
@@ -210,53 +219,67 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				</div>
 			)}
 			<FancyInput
-				label="Confirmar contraseña"
+				label={t('auth.register.form.confirm.label')}
 				type={showConfirm ? 'text' : 'password'}
 				value={confirm}
 				onChange={e=>setConfirm(e.target.value)}
 				onBlur={()=>setTouched(t=>({...t,confirm:true}))}
-				error={touched.confirm && !confirmValid ? 'No coincide' : undefined}
+				error={touched.confirm && !confirmValid ? t('auth.register.form.confirm.error') : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' /></svg>}
 				isPassword
 				onTogglePassword={()=>setShowConfirm(c=>!c)}
-				hint={!confirm ? 'Repite la contraseña' : undefined}
+				hint={!confirm ? t('auth.register.form.confirm.hint') : undefined}
 			/>
-			<div className="space-y-4">
-				<div className="flex items-start gap-3 rounded-md bg-white/60 border border-gray-200 p-3">
+			<div className="space-y-4 pt-1.5">
+				<div className="flex items-start gap-2.5 rounded-xl bg-gradient-to-br from-white/90 to-gray-50/85 backdrop-blur-sm border border-gray-200/60 p-3 shadow-sm">
 					<input
 						id="terms"
 						type="checkbox"
 						checked={acceptedTerms}
 						onChange={e=>setAcceptedTerms(e.target.checked)}
-						className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+						className="mt-0.5 h-4 w-4 rounded-md border border-gray-300 text-brand-600 focus:ring-1 focus:ring-brand-500 focus:ring-offset-1 transition-all cursor-pointer"
 					/>
-						<label htmlFor="terms" className="text-xs leading-relaxed text-gray-600">
-							Acepto los {' '}
-							<button type="button" onClick={()=>setShowLegal('terminos')} className="font-medium text-brand-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
-								Términos de Servicio
-							</button>{' '}y la{' '}
-							<button type="button" onClick={()=>setShowLegal('privacidad')} className="font-medium text-brand-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
-								Política de Privacidad
+						<label htmlFor="terms" className="text-sm leading-relaxed text-gray-700 cursor-pointer">
+							{t('auth.register.form.terms.prefix')}{' '}
+							<button type="button" onClick={()=>setShowLegal('terminos')} className="font-semibold text-brand-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
+								{t('auth.register.form.terms.termsOfService')}
+							</button>{' '}{t('auth.register.form.terms.and')}{' '}
+							<button type="button" onClick={()=>setShowLegal('privacidad')} className="font-semibold text-brand-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm">
+								{t('auth.register.form.terms.privacyPolicy')}
 							</button>.
 						</label>
 				</div>
 				{touched.terms && !acceptedTerms && (
-					<p className="text-[11px] text-rose-600">Debes aceptar los términos para continuar.</p>
+					<p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1.5">
+						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+						{t('auth.register.form.errors.acceptTerms')}
+					</p>
 				)}
 				<button
 				type="submit"
 					disabled={!formValid || submitting}
-					className="relative w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 shadow-sm hover:shadow-md transition active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-400"
+					className="relative w-full group inline-flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 via-brand-500 to-brand-600 bg-size-200 bg-pos-0 hover:bg-pos-100 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-brand-400/60 focus:ring-offset-2 overflow-hidden"
 				>
+					{/* Shine effect */}
+					{!submitting && (
+						<div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-900 bg-gradient-to-r from-transparent via-white/18 to-transparent" />
+					)}
 					{submitting && (
-						<span className="absolute left-4 inline-flex">
+						<span className="inline-flex">
 							<svg className='animate-spin h-4 w-4 text-white' viewBox='0 0 24 24'>
-								<circle className='opacity-30' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none'/>
-								<path className='opacity-90' fill='currentColor' d='M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z' />
+								<circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none'/>
+								<path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z' />
 							</svg>
 						</span>
 					)}
-					{submitting ? 'Creando...' : 'Crear cuenta'}
+					<span className="relative z-10">{submitting ? t('auth.register.form.submit.submitting') : t('auth.register.form.submit.create')}</span>
+								{!submitting && (
+						<svg className="w-5 h-5 relative z-10 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+						</svg>
+								)}
 				</button>
 				<LegalModal
 					open={!!showLegal}

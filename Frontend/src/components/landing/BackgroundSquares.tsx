@@ -1,39 +1,44 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
+import { useThemeStore } from "../../state/themeStore";
 
 // Decorative background with rotated squares in two pastel colors.
 // Colors: #FFD9D9 and #FFF9D9
 // Usage: Place this component near the top of the page and ensure the parent has position: relative.
 
-const COLORS = ["#FFD9D9", "#FFF9D9"] as const;
+const LIGHT_COLORS = ["#FFD9D9", "#FFF9D9"] as const;
+const DARK_COLORS = ["#3b1f2c", "#1f2a37"] as const;
 
 type SquareSpec = {
   size: number; // px
   rotate: number; // deg
   top: string; // e.g., '10%'
   left: string; // e.g., '20%'
-  color: typeof COLORS[number];
+  color: typeof LIGHT_COLORS[number];
   opacity?: number; // 0..1
   blur?: number; // px
 };
 
 const SQUARES: SquareSpec[] = [
-  { size: 220, rotate: -8, top: "6%", left: "5%", color: COLORS[0], opacity: 0.9 },
-  { size: 140, rotate: 15, top: "16%", left: "28%", color: COLORS[1], opacity: 0.85 },
-  { size: 260, rotate: -18, top: "28%", left: "-3%", color: COLORS[1], opacity: 0.7 },
-  { size: 180, rotate: 12, top: "34%", left: "60%", color: COLORS[0], opacity: 0.8 },
-  { size: 120, rotate: -28, top: "48%", left: "82%", color: COLORS[1], opacity: 0.75 },
-  { size: 200, rotate: 24, top: "62%", left: "12%", color: COLORS[0], opacity: 0.8 },
-  { size: 160, rotate: -10, top: "72%", left: "42%", color: COLORS[1], opacity: 0.85 },
-  { size: 240, rotate: 18, top: "84%", left: "70%", color: COLORS[0], opacity: 0.75 },
+  { size: 220, rotate: -8, top: "6%", left: "5%", color: LIGHT_COLORS[0], opacity: 0.9 },
+  { size: 140, rotate: 15, top: "16%", left: "28%", color: LIGHT_COLORS[1], opacity: 0.85 },
+  { size: 260, rotate: -18, top: "28%", left: "-3%", color: LIGHT_COLORS[1], opacity: 0.7 },
+  { size: 180, rotate: 12, top: "34%", left: "60%", color: LIGHT_COLORS[0], opacity: 0.8 },
+  { size: 120, rotate: -28, top: "48%", left: "82%", color: LIGHT_COLORS[1], opacity: 0.75 },
+  { size: 200, rotate: 24, top: "62%", left: "12%", color: LIGHT_COLORS[0], opacity: 0.8 },
+  { size: 160, rotate: -10, top: "72%", left: "42%", color: LIGHT_COLORS[1], opacity: 0.85 },
+  { size: 240, rotate: 18, top: "84%", left: "70%", color: LIGHT_COLORS[0], opacity: 0.75 },
 ];
 
 export function BackgroundSquares() {
+  const theme = useThemeStore((state) => state.resolved);
   const layerRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
   const target = useRef({ x: 0, y: 0 });
   const current = useRef({ x: 0, y: 0 });
+
+  const palette = useMemo(() => (theme === "dark" ? DARK_COLORS : LIGHT_COLORS), [theme]);
 
   useEffect(() => {
     const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -89,7 +94,8 @@ export function BackgroundSquares() {
       <div ref={layerRef} className="absolute inset-0 will-change-transform">
         {SQUARES.map((sq, i) => {
           const duration = 24 + (i % 5) * 4; // stagger
-            const delay = -(i * 2); // negative for distributed phase
+          const delay = -(i * 2); // negative for distributed phase
+          const fill = palette[i % palette.length];
           return (
             <div
               key={i}
@@ -106,7 +112,7 @@ export function BackgroundSquares() {
               <div
                 className="absolute inset-0 rounded-md bg-[var(--sq-color)] border border-black/5 shadow-[0_10px_25px_rgba(0,0,0,0.07)] sq-float"
                 style={{
-                  ['--sq-color' as any]: sq.color,
+                  ['--sq-color' as any]: fill,
                   animation: `sqFloat ${duration}s ease-in-out ${delay}s infinite`,
                 }}
               />

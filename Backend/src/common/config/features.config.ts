@@ -8,6 +8,7 @@ export interface FeatureFlags {
   PAYMENTS_ENABLED: boolean;
   KITCHEN_BOARD_ENABLED: boolean;
   AUTH_ENABLED: boolean;
+  SAVED_CARDS_ENABLED: boolean;
 }
 
 const logger = new Logger('FeatureFlags');
@@ -25,6 +26,7 @@ const defaults: FeatureFlags = {
   PAYMENTS_ENABLED: true,
   KITCHEN_BOARD_ENABLED: true,
   AUTH_ENABLED: true,
+  SAVED_CARDS_ENABLED: true,
 };
 
 /**

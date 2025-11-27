@@ -47,7 +47,8 @@ services:
     volumes:
       - ./Frontend:/app
       - /app/node_modules
-    command: ["npm","run","dev"]
+    # Ejecuta `npm install` en cada arranque para asegurar dependencias actualizadas
+    command: ["sh","-c","npm install && npm run dev"]
     depends_on:
       - backend
     extra_hosts:

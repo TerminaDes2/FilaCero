@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { MailCheck, RefreshCcw, Sparkles, Timer } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { api, type AuthUser } from '../../lib/api';
 import { useUserStore } from '../../state/userStore';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface EmailVerificationModalProps {
   open: boolean;
@@ -10,7 +13,7 @@ interface EmailVerificationModalProps {
   expiresAt?: string | null;
   session: string;
   onClose?: () => void;
-  onVerified?: (payload: { verifiedAt: string; user: AuthUser }) => void;
+  onVerified?: (payload: { token: string; user: AuthUser }) => void;
 }
 
 export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
@@ -22,6 +25,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   onVerified,
 }) => {
   const { checkAuth } = useUserStore();
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -31,27 +35,36 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(expiresAt ?? null);
   const [currentSession, setCurrentSession] = useState<string>(session);
   const [now, setNow] = useState(() => Date.now());
+  const [isMounted, setIsMounted] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) {
-      setCurrentExpiresAt(expiresAt ?? null);
-      setCode('');
-      setError(null);
-      setInfo(null);
-      setResendCooldown(0);
-      try {
-        if (typeof window !== 'undefined') {
-          // prioridad: prop session; fallback: storage
-          const stored = window.localStorage.getItem('preRegSession');
-          const sess = session || stored || '';
-          setCurrentSession(sess);
-          if (session) window.localStorage.setItem('preRegSession', session);
-          if (expiresAt) window.localStorage.setItem('preRegExpiresAt', expiresAt);
-          if (email) window.localStorage.setItem('preRegEmail', email);
-        }
-      } catch {}
+    if (!open) return;
+
+    setCurrentExpiresAt(expiresAt ?? null);
+    setCode('');
+    setError(null);
+    setInfo(null);
+    setResendCooldown(0);
+
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('preRegSession');
+        const nextSession = session || stored || '';
+        setCurrentSession(nextSession);
+        if (session) window.localStorage.setItem('preRegSession', session);
+        if (expiresAt) window.localStorage.setItem('preRegExpiresAt', expiresAt);
+        if (email) window.localStorage.setItem('preRegEmail', email);
+      }
+    } catch {
+      /* noop */
     }
   }, [open, expiresAt, session, email]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   useEffect(() => {
     setCurrentSession(session);
@@ -59,24 +72,29 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       if (typeof window !== 'undefined' && session) {
         window.localStorage.setItem('preRegSession', session);
       }
-    } catch {}
+    } catch {
+      /* noop */
+    }
   }, [session]);
 
   useEffect(() => {
     if (!open) return;
-    if (resendCooldown <= 0) return;
-    const timer = setTimeout(() => setResendCooldown((prev) => Math.max(prev - 1, 0)), 1000);
-    return () => clearTimeout(timer);
-  }, [resendCooldown, open]);
+    if (!currentExpiresAt) return;
+
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [open, currentExpiresAt]);
 
   useEffect(() => {
-    if (!open || !currentExpiresAt) return;
-    setNow(Date.now());
-    const tick = window.setInterval(() => {
-      setNow(Date.now());
+    if (!open) return;
+    if (!resendCooldown) return;
+
+    const interval = window.setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
-    return () => window.clearInterval(tick);
-  }, [open, currentExpiresAt]);
+
+    return () => window.clearInterval(interval);
+  }, [open, resendCooldown]);
 
   const expirationSummary = useMemo(() => {
     if (!currentExpiresAt) return null;
@@ -87,65 +105,76 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       if (remainingMs <= 0) return 'El código actual ha expirado.';
       const totalMinutes = Math.floor(remainingMs / 60000);
       const totalSeconds = Math.floor((remainingMs % 60000) / 1000);
-      return `Expira en ${totalMinutes}m ${totalSeconds.toString().padStart(2, '0')}s`;
+      return `${t('auth.register.verification.expiresPrefix')} ${totalMinutes}m ${totalSeconds.toString().padStart(2, '0')}s`;
     } catch {
       return null;
     }
-  }, [currentExpiresAt, now]);
+  }, [currentExpiresAt, now, t]);
 
   const handleChange = (value: string) => {
-    const sanitized = value.replace(/\D/g, '').slice(0, 6);
+    const sanitized = value.replace(/[^0-9]/g, '').slice(0, 6);
     setCode(sanitized);
-    if (error) setError(null);
+    setError(null);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (code.length !== 6) {
-      setError('Ingresa los 6 dígitos del código.');
+      setError(t('auth.register.verification.errors.invalidLength'));
       return;
     }
+
     setSubmitting(true);
     setError(null);
-    setInfo(null);
+
     try {
-      const response = await api.verifyRegister(currentSession, code);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('auth_user', JSON.stringify(response.user));
-        window.localStorage.setItem('auth_token', response.token);
-        window.localStorage.removeItem('preRegSession');
-        window.localStorage.removeItem('preRegExpiresAt');
-        window.localStorage.removeItem('preRegEmail');
+      const payload = await api.preRegisterVerifyEmail({
+        code,
+        session: currentSession,
+      });
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('auth_token', payload.token);
+          window.localStorage.setItem('auth_user', JSON.stringify(payload.user));
+          window.localStorage.removeItem('preRegSession');
+          window.localStorage.removeItem('preRegExpiresAt');
+          window.localStorage.removeItem('preRegEmail');
+        }
+      } catch {
+        /* noop */
       }
+      setInfo('Correo verificado correctamente. Redirigiendo...');
       await checkAuth();
       setCode('');
-      onVerified?.({ verifiedAt: new Date().toISOString(), user: response.user });
+      onVerified?.(payload);
     } catch (err: any) {
-      setError(err?.message || 'No pudimos verificar el código. Inténtalo nuevamente.');
+      setError(err?.message || t('auth.register.verification.errors.verifyGeneric'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleResend = async () => {
-    if (resendCooldown > 0) return;
+    if (resendCooldown > 0 || resendLoading) return;
+
     setResendLoading(true);
     setError(null);
     setInfo(null);
+
     try {
       const result = await api.resendRegister(currentSession);
-      setInfo('Enviamos un nuevo código a tu correo.');
+      setInfo(t('auth.register.verification.info.resent'));
       setCurrentExpiresAt(result.expiresAt);
       setCurrentSession(result.session);
       try {
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('preRegSession', result.session);
-          if (result.expiresAt) window.localStorage.setItem('preRegExpiresAt', result.expiresAt);
+          window.localStorage.setItem('preRegExpiresAt', result.expiresAt);
         }
       } catch {}
       setResendCooldown(45);
     } catch (err: any) {
-      setError(err?.message || 'No pudimos reenviar el código en este momento.');
+      setError(err?.message || t('auth.register.verification.errors.resendGeneric'));
     } finally {
       setResendLoading(false);
     }
@@ -153,17 +182,19 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
   if (!open) return null;
 
-  return (
+  if (!isMounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Verifica tu correo electrónico</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('auth.register.verification.title')}</h2>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
-              aria-label="Cerrar"
+              aria-label={t('auth.register.verification.closeAria')}
             >
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path
@@ -177,17 +208,18 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         </div>
 
         <p className="text-sm text-gray-600 mb-4">
-          Hemos enviado un código de 6 dígitos a <span className="font-medium text-gray-900">{email}</span>. Ingrésalo a continuación para activar tu cuenta.
+          {t('auth.register.verification.sentPrefix')} <span className="font-medium text-gray-900">{email}</span>. {t('auth.register.verification.sentSuffix')}
         </p>
 
         {expirationSummary && (
-          <div className="mb-3 rounded-md bg-brand-50/80 px-3 py-2 text-xs text-brand-700">
+          <div className="mb-3 rounded-md border border-blue-200 bg-blue-50/80 px-3 py-2 text-xs text-blue-700 flex items-center gap-2">
+            <Timer className="h-4 w-4" />
             {expirationSummary}
           </div>
         )}
 
         {error && (
-          <div className="mb-3 rounded-md border border-rose-200 bg-rose-50/80 px-3 py-2 text-xs text-rose-700">
+          <div className="mb-3 rounded-md border border-red-200 bg-red-50/80 px-3 py-2 text-xs text-red-700">
             {error}
           </div>
         )}
@@ -200,10 +232,11 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="verification-code" className="block text-xs font-medium text-gray-700">
-              Código de verificación
+            <label htmlFor="verification-code" className="block text-xs font-medium text-gray-700 mb-2">
+              {t('auth.register.verification.field.label')}
             </label>
             <input
+              ref={inputRef}
               id="verification-code"
               type="text"
               inputMode="numeric"
@@ -211,8 +244,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
               maxLength={6}
               value={code}
               onChange={(event) => handleChange(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-center text-lg font-semibold tracking-[0.45em] text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
-              placeholder="000000"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-center text-lg font-semibold tracking-[0.45em] text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              placeholder={t('auth.register.verification.field.placeholder')}
               disabled={submitting}
               autoFocus
             />
@@ -220,20 +253,10 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
           <button
             type="submit"
-            disabled={submitting || code.length !== 6}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:bg-gray-300"
+            disabled={code.length !== 6 || submitting}
+            className="w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting && (
-              <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                />
-              </svg>
-            )}
-            {submitting ? 'Verificando...' : 'Confirmar código'}
+            {submitting ? t('auth.register.verification.submit.submitting') : t('auth.register.verification.submit.confirm')}
           </button>
         </form>
 
@@ -242,13 +265,14 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             type="button"
             onClick={handleResend}
             disabled={resendCooldown > 0 || resendLoading}
-            className="font-medium text-brand-600 hover:text-brand-500 disabled:text-gray-400"
+            className="font-medium text-brand-600 hover:text-brand-500 disabled:text-gray-400 transition"
           >
-            {resendLoading ? 'Enviando...' : resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : 'Reenviar código'}
+            {resendLoading ? t('auth.register.verification.resend.sending') : resendCooldown > 0 ? `${t('auth.register.verification.resend.waitPrefix')} ${resendCooldown}s` : t('auth.register.verification.resend.action')}
           </button>
-          {!onClose && <span className="text-gray-400">Necesitamos validar tu correo para continuar.</span>}
+          {!onClose && <span className="text-gray-400">{t('auth.register.verification.note')}</span>}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

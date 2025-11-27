@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useUserStore, AppRole } from '../../state/userStore';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface RoleSelectorProps {
   compact?: boolean;
@@ -27,6 +28,7 @@ const roles: { key: Exclude<AppRole, null>; title: string; desc: string; icon: R
 
 export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange, nameHint, emailHint, showContext = true }) => {
   const { role, setRole } = useUserStore();
+  const { t } = useTranslation();
   const [nameFromLS, setNameFromLS] = useState<string | undefined>();
   const [emailFromLS, setEmailFromLS] = useState<string | undefined>();
 
@@ -52,21 +54,38 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ compact, onChange, n
   const displayName = nameHint || nameFromLS;
   const displayEmail = emailHint || emailFromLS;
 
+  const roles = useMemo(() => (
+    [
+      {
+        key: 'CUSTOMER' as Exclude<AppRole, null>,
+        title: t('auth.register.role.customer.title'),
+        desc: t('auth.register.role.customer.desc'),
+        icon: <svg className="w-5 h-5" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6h15l-1.5 9h-13z" /><path d="M6 6l-2 0" /><circle cx="9" cy="20" r="1" /><circle cx="17" cy="20" r="1" /></svg>
+      },
+      {
+        key: 'OWNER' as Exclude<AppRole, null>,
+        title: t('auth.register.role.owner.title'),
+        desc: t('auth.register.role.owner.desc'),
+        icon: <svg className="w-5 h-5" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="14" rx="2" /><path d="M8 10h8" /><path d="M8 14h5" /></svg>
+      }
+    ]
+  ), [t]);
+
   return (
     <div className={`${compact ? 'mt-2' : 'mt-4'}`}>
       {showContext && (
         <div className={`mb-3 ${compact ? 'space-y-1' : 'space-y-1.5'}`}>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/80 ring-1 ring-black/5 text-[11px] text-gray-700">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--fc-brand-600)]" />
-            Continuando tu registro
+            {t('auth.register.role.contextBadge')}
           </div>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <h3 className={`font-semibold ${compact ? 'text-sm' : 'text-base'} text-gray-900`}>{displayName ? `Hola, ${displayName}` : 'Elige tu tipo de cuenta'}</h3>
+            <h3 className={`font-semibold ${compact ? 'text-sm' : 'text-base'} text-gray-900`}>{displayName ? `${t('auth.register.role.helloPrefix')}, ${displayName}` : t('auth.register.role.chooseType')}</h3>
             {displayEmail && (
-              <span className="text-[11px] text-gray-600">Usaremos <span className="font-medium text-gray-800">{displayEmail}</span></span>
+              <span className="text-[11px] text-gray-600">{t('auth.register.role.willUse')} <span className="font-medium text-gray-800">{displayEmail}</span></span>
             )}
           </div>
-          <p className="text-[11px] text-gray-600">Esto nos ayuda a personalizar tu experiencia desde el inicio.</p>
+          <p className="text-[11px] text-gray-600">{t('auth.register.role.contextNote')}</p>
         </div>
       )}
 

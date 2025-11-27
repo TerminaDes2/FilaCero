@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '../../../state/userStore';
 import { useBusinessStore } from '../../../../src/state/businessStoreClient';
@@ -7,7 +7,6 @@ import { setActiveBusiness } from '../../../../src/state/businessStoreClient';
 import { useSettingsStore } from '../../../state/settingsStore';
 import { useShortcuts } from '../../system/ShortcutProvider';
 import { useConfirm } from '../../system/ConfirmProvider';
-import { api } from '../../../lib/api';
 
 export interface TopRightInfoProps {
   employeeName?: string;
@@ -28,30 +27,13 @@ export const TopRightInfo: React.FC<TopRightInfoProps> = ({
 }) => {
   const router = useRouter();
   const { reset, user } = useUserStore();
-  const activeBusiness = useBusinessStore((state: any) => state.activeBusiness);
+  const { activeBusiness } = useBusinessStore();
   const { locale, dateFormat } = useSettingsStore();
   const { openHelp } = useShortcuts({ optional: true });
   const confirm = useConfirm();
   const [mounted, setMounted] = useState(false);
-  const hasAttemptedLoad = useRef(false);
   
   useEffect(() => setMounted(true), []);
-  
-  // Cargar negocio del usuario si no hay negocio activo (solo una vez)
-  useEffect(() => {
-    if (!user || activeBusiness || hasAttemptedLoad.current) return;
-    
-    hasAttemptedLoad.current = true;
-    api.listMyBusinesses()
-      .then((businesses) => {
-        if (businesses && businesses.length > 0) {
-          setActiveBusiness(businesses[0]);
-        }
-      })
-      .catch((err) => {
-        console.warn('Error cargando negocio:', err);
-      });
-  }, [user, activeBusiness, setActiveBusiness]);
   const today = useMemo(() => date ?? new Date(), [date]);
   const formatted = useMemo(() => {
     if (!mounted) return '';
