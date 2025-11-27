@@ -145,7 +145,7 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 	const isEmployee = Boolean(user && Number(user.id_rol) === 3);
 	const isOwner = Boolean(user && (Number(user.id_rol) === 2 || backendRole === 'admin'));
 	const visibleItems = isEmployee
-		? items.filter(i => i.key === 'home' || i.key === 'kitchen')
+		? items.filter(i => ['home', 'kitchen', 'cashout'].includes(i.key))
 		: items;
 
   return (
