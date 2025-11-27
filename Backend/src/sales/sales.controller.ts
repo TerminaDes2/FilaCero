@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { VerifiedGuard } from '../auth/verified.guard';
+import { VerifiedOrEmployeeGuard } from '../auth/verified-or-employee.guard';
 import { SalesService } from './sales.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { FindSalesQueryDto } from './dto/find-sales.query';
@@ -54,7 +55,7 @@ export class SalesController {
   }
 
   @Post('cashout')
-  @UseGuards(AuthGuard('jwt'), RolesGuard, VerifiedGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard, VerifiedOrEmployeeGuard)
   createCashout(@Req() req: any, @Body() dto: CreateCashoutDto) {
     return this.salesService.createCashout(dto, req.user);
   }

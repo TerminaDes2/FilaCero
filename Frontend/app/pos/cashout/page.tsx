@@ -5,6 +5,7 @@ import { DollarSign, ReceiptText, Wallet, ArrowDownCircle, RefreshCcw, AlertTria
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { api } from '../../../src/lib/api';
+import { useUserStore } from '../../../src/state/userStore';
 import { useBusinessStore } from '../../../src/state/businessStore';
 
 interface BusinessOption {
@@ -144,6 +145,8 @@ const emptySummary: CashoutSummary = {
 
 export default function CashoutPage() {
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
+  const { user, backendRole } = useUserStore();
+  const isEmployee = Boolean(user && (Number(user.id_rol) === 3 || (backendRole === 'empleado')));
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>('');
   const [fullDayMode, setFullDayMode] = useState<boolean>(true);
@@ -360,7 +363,7 @@ export default function CashoutPage() {
               value={selectedBusinessId}
               options={businesses}
               onChange={handleBusinessChange}
-              disabled={!businesses.length || loadingSummary || loadingHistory}
+              disabled={isEmployee || !businesses.length || loadingSummary || loadingHistory}
             />
             <button
               type="button"
