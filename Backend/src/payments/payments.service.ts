@@ -10,7 +10,6 @@ import { StripeService } from './stripe.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
-import { SavePaymentMethodDto } from './dto/save-payment-method.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -30,7 +29,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   /**
    * Crea un PaymentIntent en Stripe y registra transacción en estado 'pending'.
@@ -534,95 +533,6 @@ export class PaymentsService {
     }
   }
 
-  /**
-   * Lista métodos de pago guardados del usuario.
-   */
-  async getPaymentMethods(userId: bigint): Promise<any[]> {
-    this.logger.log(
-      `▶️ getPaymentMethods iniciado | userId=${userId}`,
-    );
-
-    const usuario = await this.prisma.usuarios.findUnique({
-      where: { id_usuario: userId },
-    });
-    if (!usuario || !usuario.stripe_customer_id) {
-      return [];
-    }
-
-    const methods = await this.prisma.metodo_pago_guardado.findMany({
-      where: { id_usuario: userId, activo: true },
-      orderBy: { is_default: 'desc' },
-    });
-
-    return methods.map((m) => ({
-      id: m.id_metodo.toString(),
-      tipo: m.tipo,
-      marca: m.marca,
-      last4: m.ultima_4_digitos,
-      expMonth: m.mes_expiracion,
-      expYear: m.anio_expiracion,
-      isDefault: m.is_default,
-    }));
-  }
-
-  /**
-   * Guarda un nuevo método de pago tokenizado.
-   */
-  async savePaymentMethod(
-    userId: bigint,
-    dto: SavePaymentMethodDto,
-  ): Promise<any> {
-    this.logger.log(
-      `▶️ savePaymentMethod iniciado | userId=${userId} | paymentMethodId=${dto.paymentMethodId}`,
-    );
-
-    const usuario = await this.prisma.usuarios.findUnique({
-      where: { id_usuario: userId },
-    });
-    if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    // Attach payment method to Stripe customer
-    let customerId = usuario.stripe_customer_id;
-    if (!customerId) {
-      customerId = await this.stripe.getOrCreateCustomer(
-        userId,
-        usuario.correo_electronico,
-        usuario.nombre,
-      );
-      await this.prisma.usuarios.update({
-        where: { id_usuario: userId },
-        data: { stripe_customer_id: customerId },
-      });
-    }
-
-    await this.stripe.attachPaymentMethod(dto.paymentMethodId, customerId);
-
-    // Registrar en BD
-    const metodo = await this.prisma.metodo_pago_guardado.create({
-      data: {
-        id_usuario: userId,
-        stripe_payment_method: dto.paymentMethodId,
-        stripe_customer_id: customerId,
-        tipo: dto.tipo || 'card',
-        marca: dto.marca,
-        ultima_4_digitos: dto.last4,
-        mes_expiracion: dto.expMonth,
-        anio_expiracion: dto.expYear,
-        nombre_tarjeta: dto.cardholderName,
-        is_default: dto.isDefault || false,
-      },
-    });
-
-    this.logger.log(`✅ Método de pago guardado: ${metodo.id_metodo}`);
-    return {
-      id: metodo.id_metodo.toString(),
-      tipo: metodo.tipo,
-      marca: metodo.marca,
-      last4: metodo.ultima_4_digitos,
-    };
-  }
 
   /**
    * Retorna métricas y contadores actuales del servicio de pagos.
@@ -634,3 +544,4 @@ export class PaymentsService {
     };
   }
 }
+
