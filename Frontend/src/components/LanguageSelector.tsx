@@ -119,7 +119,7 @@ export default function LanguageSelector({ variant = "compact" }: LanguageSelect
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 z-50 mt-3 w-48 overflow-hidden rounded-2xl border border-brand-100/70 bg-white/95 p-2 shadow-xl shadow-brand-100/40 backdrop-blur-sm dark:border-white/12 dark:bg-slate-950/95 dark:shadow-slate-950/50">
+        <div className="absolute right-0 bottom-12 z-50 mb-2 w-48 overflow-hidden rounded-2xl border border-brand-100/70 bg-white/95 p-2 shadow-xl shadow-brand-100/40 backdrop-blur-sm dark:border-white/12 dark:bg-slate-950/95 dark:shadow-slate-950/50">
           <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.38em] text-brand-500/70 dark:text-brand-200/80">
             {locale?.startsWith("en") ? "Language" : "Idioma"}
           </div>

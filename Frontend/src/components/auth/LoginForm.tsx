@@ -7,6 +7,7 @@ import { useUserStore } from "../../state/userStore";
 import { useBusinessStore } from '../../state/businessStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { BusinessPickerDialog } from '../business/BusinessPickerDialog';
+import { RecoverPasswordModal } from './RecoverPasswordModal';
 import type { Business } from '../business/BusinessPickerDialog';
 
 interface LoginFormProps {
@@ -21,10 +22,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
 	const [error, setError] = useState<string | null>(null);
 	const [businessPickerOpen, setBusinessPickerOpen] = useState(false);
+	const [recoverModalOpen, setRecoverModalOpen] = useState(false);
 	const [businessOptions, setBusinessOptions] = useState<Business[]>([]);
- 	const router = useRouter();
- 	const { setName, setBackendRole, login } = useUserStore();
- 	const { setActiveBusiness, clearBusiness } = useBusinessStore();
+	const router = useRouter();
+	const { setName, setBackendRole, login } = useUserStore();
+	const { setActiveBusiness, clearBusiness } = useBusinessStore();
 	const { t } = useTranslation();
 	// Navegación directa según rol
 
@@ -102,7 +104,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			// 2. Hacer login para obtener el token
 			const res = await api.login(email.trim().toLowerCase(), password);
 			console.log('[LoginForm] Login response received:', { tokenLength: res.token?.length, userEmail: res.user?.email });
-			
+
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem('auth_token', res.token);
 				console.log('[LoginForm] Token saved to localStorage');
@@ -117,22 +119,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			console.log('[LoginForm] basicUser from login:', basicUser);
 			const basicRoleId = Number(basicUser?.id_rol ?? basicUser?.idRol ?? basicUser?.role?.id_rol ?? basicUser?.role?.id ?? NaN);
 			const basicRoleName = (basicUser?.role_name ?? basicUser?.role?.nombre_rol ?? '').toString().toLowerCase();
-						if (!Number.isNaN(basicRoleId) && basicRoleId === 3) {
-								// Actualizar store y redirigir sin esperar la llamada a /auth/me
-								login(res.token, basicUser);
-								try {
-									const businesses = await api.listMyBusinesses();
-									if (Array.isArray(businesses) && businesses.length > 0) {
-										const b = businesses[0];
-										setActiveBusiness({ id_negocio: String(b.id_negocio ?? b.id ?? b.uuid ?? ''), nombre: b.nombre || '' });
-									}
-								} catch (e) {
-									// ignore
-								}
-								console.log('🎯 Empleado detectado en login, redirigiendo a /pos');
-								router.push('/pos');
-								return;
-						}
+			if (!Number.isNaN(basicRoleId) && basicRoleId === 3) {
+				// Actualizar store y redirigir sin esperar la llamada a /auth/me
+				login(res.token, basicUser);
+				try {
+					const businesses = await api.listMyBusinesses();
+					if (Array.isArray(businesses) && businesses.length > 0) {
+						const b = businesses[0];
+						setActiveBusiness({ id_negocio: String(b.id_negocio ?? b.id ?? b.uuid ?? ''), nombre: b.nombre || '' });
+					}
+				} catch (e) {
+					// ignore
+				}
+				console.log('🎯 Empleado detectado en login, redirigiendo a /pos');
+				router.push('/pos');
+				return;
+			}
 			// Fallback: si el nombre del rol indica empleado (p.ej. 'empleado', 'employee')
 			if (basicRoleName && (basicRoleName.includes('emple') || basicRoleName.includes('employee'))) {
 				login(res.token, basicUser);
@@ -140,7 +142,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				router.push('/pos');
 				return;
 			}
-		
+
 			// 4. Obtener información COMPLETA del usuario incluyendo el rol
 			console.log('🔄 Obteniendo información completa del usuario...');
 			const userInfo = await api.me();
@@ -151,56 +153,56 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			// 5. Determinar rol y redirigir según reglas de negocio
 			const roleName = (userInfo as any).role_name || userInfo.role?.nombre_rol || null;
 			// Asegurarse de que idRol sea un número antes de comparar
-            const idRol = Number(userInfo.id_rol);
+			const idRol = Number(userInfo.id_rol);
 
-            console.log('👤 Información del usuario:', { roleName, idRol, userInfo });
+			console.log('👤 Información del usuario:', { roleName, idRol, userInfo });
 
-            // Lógica de redirección según rol
-            if (idRol === 4) {
-                console.log('🎯 Cliente detectado, redirigiendo a /shop');
-                router.push('/shop');
-                return;
-            }
+			// Lógica de redirección según rol
+			if (idRol === 4) {
+				console.log('🎯 Cliente detectado, redirigiendo a /shop');
+				router.push('/shop');
+				return;
+			}
 
-						if (idRol === 3) {
-								try {
-									const businesses = await api.listMyBusinesses();
-									if (Array.isArray(businesses) && businesses.length > 0) {
-										const b = businesses[0];
-										setActiveBusiness({ id_negocio: String(b.id_negocio ?? b.id ?? b.uuid ?? ''), nombre: b.nombre || '' });
-									}
-								} catch (e) {
-									// ignore
-								}
-								console.log('🎯 Empleado detectado, redirigiendo a /pos');
-								router.push('/pos');
-								return;
-						}
+			if (idRol === 3) {
+				try {
+					const businesses = await api.listMyBusinesses();
+					if (Array.isArray(businesses) && businesses.length > 0) {
+						const b = businesses[0];
+						setActiveBusiness({ id_negocio: String(b.id_negocio ?? b.id ?? b.uuid ?? ''), nombre: b.nombre || '' });
+					}
+				} catch (e) {
+					// ignore
+				}
+				console.log('🎯 Empleado detectado, redirigiendo a /pos');
+				router.push('/pos');
+				return;
+			}
 
-            if (idRol === 2 || idRol === 1) {
-                console.log('🎯 Admin/Superadmin detectado, verificando negocios...');
+			if (idRol === 2 || idRol === 1) {
+				console.log('🎯 Admin/Superadmin detectado, verificando negocios...');
 
-                try {
-                    const businesses = await api.listMyBusinesses();
-                    console.log('📊 Negocios del admin:', businesses);
+				try {
+					const businesses = await api.listMyBusinesses();
+					console.log('📊 Negocios del admin:', businesses);
 
-                    if (businesses && businesses.length > 0) {
-                        console.log('🎯 Admin con negocio(s), redirigiendo a /pos');
-                        router.push('/pos');
-                    } else {
-                        console.log('🎯 Admin sin negocio, redirigiendo a crear negocio');
-                        router.push('/onboarding/negocio');
-                    }
-                } catch (businessErr) {
-                    console.error('❌ Error al obtener negocios:', businessErr);
-                    router.push('/onboarding/negocio');
-                }
-                return;
-            }
+					if (businesses && businesses.length > 0) {
+						console.log('🎯 Admin con negocio(s), redirigiendo a /pos');
+						router.push('/pos');
+					} else {
+						console.log('🎯 Admin sin negocio, redirigiendo a crear negocio');
+						router.push('/onboarding/negocio');
+					}
+				} catch (businessErr) {
+					console.error('❌ Error al obtener negocios:', businessErr);
+					router.push('/onboarding/negocio');
+				}
+				return;
+			}
 
-            console.log('🎯 Rol no identificado, redirigiendo a /shop (fallback)');
-            router.push('/shop');
-			
+			console.log('🎯 Rol no identificado, redirigiendo a /shop (fallback)');
+			router.push('/shop');
+
 		} catch (err: any) {
 			console.error('❌ Error en login:', err);
 
@@ -226,9 +228,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					<path strokeLinecap='round' strokeLinejoin='round' d='M8 10V8a4 4 0 0 1 8 0v2' />
 					<path strokeLinecap='round' strokeLinejoin='round' d='M12 14v3' />
 				</svg>
-					<p>
-						{t('auth.login.hint')} <span className="hidden sm:inline">{t('auth.login.newAccount')} {t('auth.login.createAccount')}</span>
-					</p>
+				<p>
+					{t('auth.login.hint')} <span className="hidden sm:inline">{t('auth.login.newAccount')} {t('auth.login.createAccount')}</span>
+				</p>
 			</div>
 
 			{error && (
@@ -241,8 +243,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				label={t('auth.login.emailLabel')}
 				type="email"
 				value={email}
-				onChange={e=>setEmail(e.target.value)}
-				onBlur={()=>setTouched(t=>({...t,email:true}))}
+				onChange={e => setEmail(e.target.value)}
+				onBlur={() => setTouched(t => ({ ...t, email: true }))}
 				error={touched.email && !emailValid ? t('auth.login.emailError') : undefined}
 				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><path strokeLinecap='round' strokeLinejoin='round' d='M4 6l8 6 8-6M4 6v12h16V6' /></svg>}
 				hint={email ? undefined : t('auth.login.emailHint')}
@@ -252,12 +254,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				label={t('auth.login.passwordLabel')}
 				type={showPassword ? 'text' : 'password'}
 				value={password}
-				onChange={e=>setPassword(e.target.value)}
-				onBlur={()=>setTouched(t=>({...t,password:true}))}
+				onChange={e => setPassword(e.target.value)}
+				onBlur={() => setTouched(t => ({ ...t, password: true }))}
 				error={touched.password && !passwordValid ? t('auth.login.passwordError') : undefined}
-				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><rect x='4' y='8' width='16' height='12' rx='2'/><path strokeLinecap='round' strokeLinejoin='round' d='M8 8V6a4 4 0 1 1 8 0v2' /></svg>}
+				leftIcon={<svg xmlns='http://www.w3.org/2000/svg' className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth='2'><rect x='4' y='8' width='16' height='12' rx='2' /><path strokeLinecap='round' strokeLinejoin='round' d='M8 8V6a4 4 0 1 1 8 0v2' /></svg>}
 				isPassword
-				onTogglePassword={()=>setShowPassword(s=>!s)}
+				onTogglePassword={() => setShowPassword(s => !s)}
 				hint={!password ? t('auth.login.passwordHint') : undefined}
 			/>
 
@@ -266,7 +268,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					<input type='checkbox' className='h-4 w-4 appearance-none rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:border-brand-600 checked:bg-brand-600 dark:border-slate-600 dark:bg-slate-900 dark:checked:border-brand-500 dark:focus:ring-offset-slate-950' />
 					<span>{t('auth.login.remember')}</span>
 				</label>
-				<button type='button' className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>{t('auth.login.forgot')}</button>
+				<button
+					type="button"
+					onClick={() => setRecoverModalOpen(true)}
+					className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'
+				>
+					{t('auth.login.forgot')}
+				</button>
 			</div>
 
 			<button
@@ -290,10 +298,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				<div className="border-t border-gray-200 pt-3 dark:border-slate-800/70">
 					<p className="text-xs text-gray-600 dark:text-slate-300">
 						{t('auth.login.newAccount')}&nbsp;
-						<a 
+						<a
 							href="/register"
 							className="font-medium text-brand-600 hover:underline dark:text-brand-300"
-						> 
+						>
 							{t('auth.login.createAccount')}
 						</a>
 					</p>
@@ -301,15 +309,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			</div>
 
 			<BusinessPickerDialog
-					open={businessPickerOpen}
-					businesses={businessOptions}
-					onChoose={handleBusinessChosen}
-					onCreateNew={() => {
-						setBusinessPickerOpen(false);
-						router.push('/onboarding/negocio');
-					}}
-					onClose={() => setBusinessPickerOpen(false)}
-				/>
-			</form>
-		);
-	};
+				open={businessPickerOpen}
+				businesses={businessOptions}
+				onChoose={handleBusinessChosen}
+				onCreateNew={() => {
+					setBusinessPickerOpen(false);
+					router.push('/onboarding/negocio');
+				}}
+				onClose={() => setBusinessPickerOpen(false)}
+			/>
+
+			<RecoverPasswordModal
+				open={recoverModalOpen}
+				onClose={() => setRecoverModalOpen(false)}
+				initialEmail={email}
+			/>
+		</form>
+	);
+};
