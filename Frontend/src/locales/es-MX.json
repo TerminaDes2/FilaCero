@@ -1,0 +1,465 @@
+{
+  "navbar": {
+    "home": "Inicio",
+    "shop": "Compra ya",
+    "features": "Características",
+    "process": "Flujo",
+    "benefits": "Beneficios",
+    "pricing": "Precios",
+    "contact": "Contacto",
+    "login": "Iniciar sesión",
+    "signup": "Crear cuenta",
+    "adminPanel": "Panel POS",
+    "language": "Idioma"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Versión libre disponible",
+      "title": "Plataforma POS + pedidos QR para",
+      "titleHighlight": "cafeterías escolares",
+      "subtitle": "Reduce filas y atiende más pedidos en cada receso. Sin apps nativas, sin hardware propietario, listo en minutos.",
+      "ctaPrimary": "Crear cuenta gratis",
+      "ctaSecondary": "Compra ahora"
+    },
+    "cards": {
+      "card1": { "badge": "Recreo matutino", "title": "Pedidos listos", "metric": "12" },
+      "card2": { "badge": "Objetivo ≤ 4 min", "title": "Tiempo promedio", "metric": "3.2 min" },
+      "card3": { "badge": "Sin comisiones", "title": "Ticket promedio", "metric": "$58" },
+      "card4": { "badge": "QR recurrentes", "title": "Usuarios activos", "metric": "210" }
+    },
+    "features": {
+      "badge": "Características",
+      "title": "Capacidades que aceleran tu operación",
+      "subtitle": "Bloques funcionales listos para escalar cuando tu cafetería crece.",
+      "items": {
+        "sales": {"title": "Ventas rápidas y simples", "desc": "Interfaz ágil para cobrar sin cuellos de botella."},
+        "tickets": {"title": "Tickets inmediatos", "desc": "Envía e imprime tickets compatibles al instante."},
+        "cashout": {"title": "Cierre de caja asistido", "desc": "Turnos con totales y arqueos automáticos."},
+        "inventory": {"title": "Inventario con códigos", "desc": "Agrega y busca productos escaneando códigos."},
+        "promos": {"title": "Promos y combos", "desc": "Crea descuentos y reglas por horarios pico."},
+        "mobile": {"title": "Pedidos móviles sin filas", "desc": "Ordena desde el móvil y recoge sin esperar."}
+      }
+    },
+    "process": {
+      "badge": "¿Cómo funciona?",
+      "title": "Cómo funciona nuestra FilaCero",
+      "subtitle": "Un flujo sencillo para que empieces a operar en minutos.",
+      "steps": {
+        "1": {"title": "Escanea el QR.", "text": "El cliente accede a la app web escaneando un QR en la cafetería."},
+        "2": {"title": "Realiza el pedido.", "text": "Selecciona productos del menú digital y confirma el pago."},
+        "3": {"title": "Equipo lo prepara.", "text": "El pedido entra al panel operativo listo para producirse sin pasos extra."},
+        "4": {"title": "Recoge sin filas.", "text": "El cliente recibe su pedido cuando aparece como ‘Listo’."}
+      }
+    },
+    "benefits": {
+      "badge": "Beneficios",
+      "title": "Impacto que puedes esperar",
+      "subtitle": "Beneficios prácticos al digitalizar pedidos y la operación de tu cafetería.",
+      "items": {
+        "1": {"title": "Menos tiempo en filas", "text": "Optimización del flujo de compra para estudiantes y personal."},
+        "2": {"title": "Control centralizado", "text": "Toda la operación en una única plataforma coherente."},
+        "3": {"title": "Decisiones con datos", "text": "Reportes claros para ajustar precios y stock."},
+        "4": {"title": "Escalable", "text": "Empieza simple y agrega módulos con el crecimiento."},
+        "5": {"title": "Experiencia moderna", "text": "UI limpia, rápida y accesible para cualquier usuario."},
+        "6": {"title": "Soporte futuro", "text": "Base preparada para integrar pagos y más."}
+      }
+    },
+    "pricing": {
+      "badge": "Acceso",
+      "title": "Todo incluido sin costo",
+      "subtitle": "Activa FilaCero Libre y agrega servicios opcionales a medida que creces.",
+      "planFree": {
+        "name": "FilaCero Libre",
+        "price": "$0",
+        "period": "",
+        "features": {
+          "1": "Productos, ventas e inventario ilimitados",
+          "2": "Pedidos QR y POS sin comisiones",
+          "3": "Reportes operativos en tiempo real",
+          "4": "Cortes de caja asistidos",
+          "5": "Usuarios ilimitados por cafetería"
+        },
+        "details": "Todo el núcleo del software está disponible sin costo para cafeterías y comedores escolares. Solo necesitas crear tu cuenta y activar tu catálogo.",
+        "cta": "Crear cuenta gratuita"
+      },
+      "viewIncluded": "Ver todo lo incluido",
+      "activateFree": "Activar FilaCero Libre",
+      "optionalServices": {
+        "title": "Servicios opcionales",
+        "subtitle": "Estamos trabajando en complementos para equipos que necesitan integrar pagos, analytics avanzadas o procesos institucionales.",
+        "extensions": {
+          "payments": {"name": "Pagos con tarjeta y wallet", "status": "Próximamente", "description": "Cobros integrados con conciliación automática y asignación por turno."},
+          "school": {"name": "Integración con sistemas escolares", "status": "En exploración", "description": "Sincronización con credenciales estudiantiles y facturación institucional."},
+          "analytics": {"name": "Analítica avanzada", "status": "Beta privada", "description": "Proyecciones de demanda, análisis de horarios pico y alertas inteligentes."}
+        },
+        "contact": "¿Necesitas algo específico? Escríbenos a"
+      }
+    },
+    "cta": {
+      "title": "Todo FilaCero, gratis desde el día uno",
+      "subtitle": "Configura tu catálogo, crea usuarios y toma pedidos en minutos. Sin tarjetas, sin comisiones ni versiones limitadas.",
+      "primary": "Crear cuenta gratis",
+      "secondary": "Ver tienda demo"
+    },
+    "testimonials": {
+      "badge": "Testimonios",
+      "title": "Lo que dicen otros",
+      "subtitle": "Equipos que ya redujeron esperas y organizaron su operación.",
+      "items": {
+        "1": {"name": "Coordinadora Escolar", "quote": "Reducimos el tiempo de espera y ahora los recreos son más tranquilos.", "role": "Colegio Aurora"},
+        "2": {"name": "Administrador", "quote": "El control de inventario nos permitió evitar pérdidas y planificar mejor.", "role": "Instituto Central"},
+        "3": {"name": "Encargada Cafetería", "quote": "La interfaz es tan simple que el equipo se adaptó en un día.", "role": "Escuela Horizonte"}
+      }
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title": "Preguntas frecuentes",
+      "subtitle": "Resolvemos dudas clave antes de que empieces.",
+      "items": {
+        "1": {"q": "¿Necesito instalar algo o descargar una app?", "a": "No. Funciona directamente en el navegador (web app). Tus clientes solo escanean el QR y empiezan a pedir."},
+        "2": {"q": "¿Cuánto tardo en configurarlo?", "a": "En minutos puedes cargar tu catálogo base. A partir de ahí gestionas productos, precios y pedidos desde el panel."},
+        "3": {"q": "¿Funciona en cualquier dispositivo?", "a": "Sí. Está optimizado para móviles, tablets y desktops modernos sin requisitos especiales."},
+        "4": {"q": "¿Puedo migrar a funciones avanzadas luego?", "a": "Sí. Empiezas gratis y habilitas módulos como inventario avanzado o reportes profundos cuando los necesites."}
+      }
+    },
+    "footer": {
+      "about": {
+        "title": "FilaCero",
+        "text": "Plataforma para administrar productos, inventario y ventas en cafeterías escolares de forma ágil."
+      },
+      "product": {
+        "title": "PRODUCTO",
+        "features": "Características",
+        "pricing": "Precios",
+        "process": "Cómo funciona"
+      },
+      "resources": {
+        "title": "RECURSOS",
+        "panel": "Panel",
+        "start": "Empezar",
+        "testimonials": "Testimonios",
+        "login": "Iniciar sesión",
+        "register": "Crear cuenta"
+      },
+      "legal": {
+        "title": "LEGAL",
+        "terms": "Términos",
+        "privacy": "Privacidad",
+        "contact": "Contacto"
+      },
+      "support": {
+        "support": "Soporte",
+        "status": "Estado",
+        "roadmap": "Roadmap"
+      },
+      "copyright": "Todos los derechos reservados."
+    }
+  }
+  ,
+  "auth": {
+    "login": {
+      "title": "Inicia sesión en tu cuenta",
+      "subtitle": "Accede a tu cuenta de FilaCero",
+      "hint": "Acceso seguro a tu panel. Tus credenciales se envían cifradas.",
+      "emailLabel": "Correo electrónico",
+      "emailHint": "Usa el correo con el que te registraste",
+      "emailError": "Ingresa un correo válido",
+      "passwordLabel": "Contraseña",
+      "passwordHint": "Tu contraseña segura",
+      "passwordError": "Mínimo 6 caracteres",
+      "remember": "Recordarme",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "submitting": "Ingresando...",
+      "submit": "Entrar",
+      "newAccount": "¿Eres nuevo en FilaCero?",
+      "createAccount": "Crea una cuenta",
+      "errorGeneric": "Error al iniciar sesión"
+    }
+    ,
+    "register": {
+      "error": {
+        "noRole": {
+          "title": "Error: Tipo de cuenta no seleccionado",
+          "subtitle": "Por favor selecciona tu tipo de cuenta para continuar con el registro",
+          "cta": "Seleccionar tipo"
+        }
+      },
+      "title": {
+        "prefix": "Crea tu",
+        "role": {
+          "owner": "cuenta de Negocio",
+          "client": "cuenta de Cliente"
+        }
+      },
+      "progress": {
+        "typeSelected": "Tipo seleccionado",
+        "complete": "Completa tus datos"
+      },
+      "alreadyAccount": {
+        "prefix": "¿Ya tienes una cuenta?",
+        "action": "Iniciar sesión"
+      },
+      "changeType": "Cambiar tipo de cuenta",
+      "back": {
+        "aria": "Volver a la selección de tipo de cuenta",
+        "label": "Volver"
+      },
+      "benefits": {
+        "welcomeTitle": {
+          "owner": "¡Impulsa tu negocio con FilaCero!",
+          "client": "¡Te damos la bienvenida a FilaCero!"
+        },
+        "welcomeSubtitle": {
+          "owner": "La plataforma definitiva para gestionar tu negocio",
+          "client": "Tu experiencia sin filas comienza aquí"
+        },
+        "client": {
+          "0": { "title": "Ahorra tiempo", "description": "Haz tu pedido y recógelo sin hacer filas." },
+          "1": { "title": "Todo desde tu móvil", "description": "Gestiona tu experiencia en cafeterías de forma fácil y rápida." },
+          "2": { "title": "Seguro y rápido", "description": "Tus datos protegidos y tu pedido listo cuando lo necesites." },
+          "3": { "title": "Ofertas exclusivas", "description": "Accede a promociones especiales solo para usuarios de FilaCero." }
+        },
+        "owner": {
+          "0": { "title": "Aumenta tus ventas", "description": "Incrementa tu capacidad de servicio sin ampliar tu local." },
+          "1": { "title": "Optimiza tu operación", "description": "Reduce tiempos de espera y mejora la experiencia de tus clientes." },
+          "2": { "title": "Analíticas en tiempo real", "description": "Monitorea tu negocio con datos detallados de ventas y tendencias." },
+          "3": { "title": "Gestiona tu equipo", "description": "Coordina a tu staff y optimiza los turnos de trabajo." }
+        },
+        "join": {
+          "owner": "Únete a +1,000 negocios satisfechos",
+          "client": "Únete a +1,000 usuarios satisfechos"
+        }
+      },
+      "form": {
+        "name": { "label": "Nombre", "hint": "Ingresa tu nombre", "error": "Mínimo 2 caracteres" },
+        "email": { "label": "Correo electrónico", "hint": "Usa un correo válido que controles", "error": "Correo inválido" },
+        "accountNumber": { "label": "Número de cuenta", "hint": "Opcional, solo números", "error": "Debe contener entre 5 y 20 dígitos" },
+        "age": { "label": "Edad", "hint": "Opcional, utilizada para beneficios estudiantiles", "error": "Selecciona una edad entre 16 y 120" },
+        "password": { "label": "Contraseña", "hint": "Debe ser robusta", "error": "Fortalece tu contraseña" },
+        "confirm": { "label": "Confirmar contraseña", "hint": "Repite la contraseña", "error": "No coincide" },
+        "suggestions": {
+          "minChars": "Usa al menos 8 caracteres",
+          "upper": "Incluye una mayúscula",
+          "number": "Añade un número",
+          "symbol": "Añade un símbolo"
+        },
+        "terms": { "prefix": "Acepto los", "termsOfService": "Términos de Servicio", "and": "y la", "privacyPolicy": "Política de Privacidad" },
+        "submit": { "create": "Crear mi cuenta", "submitting": "Creando tu cuenta..." },
+        "errors": { "noRole": "Selecciona un rol (Cliente o Negocio) antes de continuar.", "createGeneric": "Error al crear la cuenta", "acceptTerms": "Debes aceptar los términos para continuar." }
+      },
+      "verification": {
+        "title": "Verifica tu correo electrónico",
+        "closeAria": "Cerrar diálogo de verificación",
+        "sentPrefix": "Hemos enviado un código de 6 dígitos a",
+        "sentSuffix": "Ingrésalo a continuación para activar tu cuenta.",
+        "expiresPrefix": "Expira en",
+        "field": { "label": "Código de verificación", "placeholder": "000000" },
+        "submit": { "confirm": "Confirmar código", "submitting": "Verificando..." },
+        "resend": { "sending": "Enviando...", "waitPrefix": "Reenviar en", "action": "Reenviar código" },
+        "info": { "resent": "Enviamos un nuevo código a tu correo." },
+        "note": "Necesitamos validar tu correo para continuar.",
+        "errors": { "invalidLength": "Ingresa los 6 dígitos del código.", "verifyGeneric": "No pudimos verificar el código. Inténtalo nuevamente.", "resendGeneric": "No pudimos reenviar el código en este momento." }
+      },
+      "selection": {
+        "ariaLabel": "Selecciona el tipo de cuenta",
+        "badge": "Tu cuenta FilaCero",
+        "title": "¿Cómo quieres comenzar?",
+        "subtitle": "Elige el viaje que mejor describe tu rol y prepara una experiencia con interfaz personalizada, más rápida y totalmente enlazada al ecosistema FilaCero.",
+        "guideBadge": "Selección guiada",
+        "steps": [
+          "Escoge tu rol para activar la experiencia correcta.",
+          "Completa un formulario inteligente con bloques adaptados a tu objetivo.",
+          "Accede a la plataforma con onboarding guiado y recursos curados."
+        ],
+        "startNow": "Comenzar ahora",
+        "select": "Seleccionar",
+        "capabilities": "Capacidades clave",
+        "card": {
+          "customer": {
+            "badge": "Para personas",
+            "title": "Cliente FilaCero",
+            "copy": "Crea pedidos en segundos, recibe alertas de recojo y acumula beneficios sin filas.",
+            "micro": {
+              "0": "Pedidos anticipados",
+              "1": "Wallet digital",
+              "2": "Recompensas automáticas"
+            }
+          },
+          "owner": {
+            "badge": "Para negocios",
+            "title": "Negocio Inteligente",
+            "copy": "Centraliza pedidos, pagos y métricas en vivo con herramientas colaborativas para tu equipo.",
+            "micro": {
+              "0": "Dashboard POS",
+              "1": "Roles y permisos",
+              "2": "Insights de ventas"
+            }
+          }
+        },
+        "aria": {
+          "customer": "Seleccionar tipo de cuenta: Cliente",
+          "owner": "Seleccionar tipo de cuenta: Negocio"
+        }
+      },
+      "role": {
+        "contextBadge": "Continuando tu registro",
+        "helloPrefix": "Hola",
+        "chooseType": "Elige tu tipo de cuenta",
+        "willUse": "Usaremos",
+        "contextNote": "Esto nos ayuda a personalizar tu experiencia desde el inicio.",
+        "customer": { "title": "Cliente", "desc": "Pide y recoge más rápido" },
+        "owner": { "title": "Negocio", "desc": "Gestiona tu cafetería" }
+      }
+    }
+  },
+  "onboarding": {
+    "business": {
+      "title": "Configura tu Negocio",
+      "subtitle": "Continuando tu registro: completa estos pasos para finalizar",
+      "progress": {
+        "step": "Paso",
+        "of": "de"
+      },
+      "navigation": {
+        "back": "Atrás",
+        "next": "Siguiente",
+        "confirm": "Confirmar y crear",
+        "creating": "Creando…",
+        "shortcuts": "Pulsa Enter para continuar, Esc para volver"
+      },
+      "hints": {
+        "identity": "Usa un nombre fácil de recordar.",
+        "nameTip": "Usa un nombre fácil de recordar.",
+        "hide": "Ocultar tips"
+      },
+      "identity": {
+        "name": {
+          "label": "Nombre comercial",
+          "placeholder": "Ej. Café Aurora"
+        },
+        "category": {
+          "label": "Rubro",
+          "hint": "Selecciona el tipo de negocio",
+          "placeholder": "Selecciona…",
+          "options": {
+            "cafeteria": "Cafetería",
+            "bakery": "Panadería",
+            "pastry": "Pastelería",
+            "cafe": "Resto-Café",
+            "restaurant": "Restaurante",
+            "fastFood": "Comida rápida",
+            "bar": "Bar",
+            "foodTruck": "Food truck",
+            "other": "Otro",
+            "restoCafe": "Resto-Café"
+          }
+        },
+        "logo": {
+          "label": "Logo (opcional)",
+          "hint": "SVG/PNG recomendado. No se sube, solo vista previa.",
+          "preview": "Vista previa"
+        }
+      },
+      "location": {
+        "address": {
+          "label": "Dirección",
+          "placeholder": "Calle 123, Piso 1"
+        },
+        "city": {
+          "label": "Ciudad",
+          "placeholder": "Madrid"
+        },
+        "phone": {
+          "label": "Teléfono",
+          "hint": "Con prefijo",
+          "placeholder": "+34 600 000 000"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "placeholder": "+34 600 000 000"
+        },
+        "website": {
+          "label": "Web (opcional)",
+          "placeholder": "https://cafearora.com"
+        },
+        "hours": {
+          "opens": "Abre a",
+          "closes": "Cierra a",
+          "open": "Abre a",
+          "close": "Cierra a"
+        }
+      },
+      "operation": {
+        "salesModes": {
+          "label": "Modalidades de venta",
+          "hint": "Elige una o ambas",
+          "takeaway": "Para llevar",
+          "dineIn": "En local"
+        },
+        "salesMode": {
+          "label": "Modalidades de venta",
+          "hint": "Elige una o ambas",
+          "takeaway": "Para llevar",
+          "dineIn": "En local"
+        },
+        "prepTime": {
+          "label": "Tiempo medio de preparación (min)"
+        },
+        "paymentMethods": {
+          "label": "Métodos de pago",
+          "hint": "Selecciona los que aceptas",
+          "cash": "Efectivo",
+          "card": "Tarjeta",
+          "qr": "QR"
+        },
+        "currency": {
+          "label": "Moneda"
+        },
+        "inventory": {
+          "label": "Gestión de stock",
+          "activate": "Activar control de stock",
+          "enable": "Activar control de stock"
+        }
+      },
+      "review": {
+        "title": {
+          "identity": "Identidad",
+          "location": "Ubicación",
+          "operation": "Operación"
+        },
+        "labels": {
+          "name": "Nombre",
+          "category": "Rubro",
+          "address": "Dirección",
+          "city": "Ciudad",
+          "phone": "Teléfono",
+          "whatsapp": "WhatsApp",
+          "sales": "Venta",
+          "payments": "Pagos",
+          "currency": "Moneda",
+          "logo": "Logo",
+          "logoUploaded": "Cargado",
+          "yes": "Sí",
+          "no": "No"
+        },
+        "preview": {
+          "title": "Vista previa",
+          "label": "Vista previa",
+          "defaultName": "Tu negocio",
+          "defaultCategory": "Rubro"
+        }
+      },
+      "success": {
+        "title": "¡Tu negocio está listo!",
+        "subtitle": "Puedes empezar a crear productos y aceptar pedidos.",
+        "goHome": "Volver al inicio",
+        "goPOS": "Ir al POS",
+        "note": "Tu negocio activo quedó guardado para este dispositivo."
+      },
+      "errors": {
+        "logoTooBig": "El archivo del logo es demasiado pesado. Usa una imagen más liviana o súbela más tarde.",
+        "createFailed": "No se pudo crear el negocio"
+      }
+    }
+  }
+}

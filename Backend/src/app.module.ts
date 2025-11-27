@@ -24,6 +24,7 @@ import { SmsModule } from './sms/sms.module';
 import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TranslationModule } from './translation/translation.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     PaymentsModule,
     NotificationsModule, // módulo de notificaciones WebSocket y email
     ScheduleModule.forRoot(), // para cron jobs de limpieza
+    TranslationModule, // módulo de traducción (Azure Cognitive Services)
   ],
   controllers: [HealthController, RecoverController],
   providers: [],

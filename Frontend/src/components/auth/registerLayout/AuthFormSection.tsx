@@ -1,6 +1,7 @@
 import React from 'react';
 import { SignupForm } from '../../auth/SignupForm';
 import { useUserStore } from '../../../state/userStore';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface AuthFormSectionProps {
   onBackToSelection: () => void;
@@ -8,6 +9,7 @@ interface AuthFormSectionProps {
 
 export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
   const { role } = useUserStore();
+  const { t } = useTranslation();
   
   // Si no hay rol seleccionado, mostrar mensaje de error
   if (!role) {
@@ -20,10 +22,10 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            Error: Tipo de cuenta no seleccionado
+            {t('auth.register.error.noRole.title')}
           </h2>
           <p className="text-sm text-gray-600 mb-6">
-            Por favor, vuelve a seleccionar tu tipo de cuenta para continuar con el registro
+            {t('auth.register.error.noRole.subtitle')}
           </p>
           <button
             onClick={onBackToSelection}
@@ -32,7 +34,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Volver a seleccionar
+            {t('auth.register.error.noRole.cta')}
           </button>
         </div>
       </div>
@@ -43,9 +45,9 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
   const gradientFrom = role === 'OWNER' ? 'from-emerald-50' : 'from-rose-50';
   const gradientTo = role === 'OWNER' ? 'to-teal-50' : 'to-pink-50';
   
-  const subtitle = role === 'OWNER' 
-    ? 'Comienza a gestionar tu negocio de manera eficiente' 
-    : 'Disfruta de una experiencia sin filas en tus cafeterías favoritas';
+  const subtitle = role === 'OWNER'
+    ? t('auth.register.benefits.welcomeSubtitle.owner')
+    : t('auth.register.benefits.welcomeSubtitle.client');
 
   return (
     <div className={`h-full flex flex-col justify-center items-center px-4 sm:px-6 lg:px-10 xl:px-12 py-6 lg:py-8 overflow-y-auto bg-gradient-to-br ${gradientFrom} ${gradientTo}`}>
@@ -71,10 +73,10 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
             </div>
           </div>
           
-          <h1 className="text-[1.65rem] lg:text-[2.1rem] xl:text-[2.35rem] font-bold text-gray-900 tracking-tight mb-2">
-            Crea tu cuenta de{' '}
+          <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 tracking-tight mb-2">
+            {t('auth.register.title.prefix')}{' '}
             <span className="bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent"> 
-              {role === 'OWNER' ? 'Negocio' : 'Cliente'}
+              {role === 'OWNER' ? t('auth.register.title.role.owner') : t('auth.register.title.role.client')}
             </span>
           </h1>
           <p className="text-[13px] lg:text-sm text-gray-600 max-w-sm mx-auto leading-relaxed">
@@ -91,14 +93,14 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <span className="text-emerald-700">Tipo seleccionado</span>
+              <span className="text-emerald-700">{t('auth.register.progress.typeSelected')}</span>
             </div>
             <div className="w-10 h-0.5 bg-gradient-to-r from-emerald-300 to-brand-300 rounded-full" />
             <div className="flex items-center gap-1">
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-brand-400 to-brand-500 flex items-center justify-center shadow-sm">
                 <span className="text-white text-[11px] font-semibold">2</span>
               </div>
-              <span className="text-brand-700 font-semibold">Completa tus datos</span>
+              <span className="text-brand-700 font-semibold">{t('auth.register.progress.complete')}</span>
             </div>
           </div>
         </div>
@@ -111,15 +113,15 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
           
           {/* Sección "¿Ya tienes una cuenta?" con diseño mejorado */}
           <div className="text-center">
-            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
-              <p className="text-[13px] text-gray-700">
-                ¿Ya tienes una cuenta?
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
+              <p className="text-sm text-gray-700">
+                {t('auth.register.alreadyAccount.prefix')}
               </p>
               <a 
                 href="/login"
                 className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-600 hover:text-brand-700 transition-colors group"
               > 
-                Iniciar sesión
+                {t('auth.register.alreadyAccount.action')}
                 <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -136,7 +138,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Cambiar tipo de cuenta
+              {t('auth.register.changeType')}
             </button>
           </div>
         </div>

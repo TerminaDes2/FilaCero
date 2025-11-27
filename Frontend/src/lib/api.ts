@@ -13,11 +13,22 @@ function resolveApiBase(): string {
   
   // En servidor o producción, usar la variable de entorno
   const raw = (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE as string | undefined;
+  
+  // Si NEXT_PUBLIC_API_BASE está definida en build time (Docker), usarla pero adaptarla al contexto
   if (raw && raw.trim()) {
-    return raw.replace(/\/+$/, "");
+    const trimmed = raw.replace(/\/+$/, "");
+    
+    // Si estamos en el navegador (client-side) y la URL apunta a "backend:3000",
+    // reescribir a localhost:3000 porque "backend" no es accesible desde el navegador del host
+    if (typeof window !== "undefined" && trimmed.includes("backend:3000")) {
+      const { protocol } = window.location;
+      return `${protocol}//localhost:3000/api`;
+    }
+    
+    return trimmed;
   }
   
-  // Fallback para rutas relativas (solo funciona para rutas públicas sin auth)
+  // Fallback: usar ruta relativa para que Next.js la proxee
   return "/api";
 }
 
@@ -42,7 +53,9 @@ export interface ApiError {
 function getToken(): string | null {
   try {
     if (typeof window !== "undefined") {
-      return window.localStorage.getItem("auth_token");
+      const token = window.localStorage.getItem("auth_token");
+      console.log('[getToken] Token from localStorage:', token ? `${token.substring(0, 20)}...` : null);
+      return token;
     }
   } catch {}
   return null;
@@ -115,14 +128,15 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   // Debug instrumentation for 431 header issues
   const isLoginDebug = /auth\/login$/.test(pathKey);
-  if (isLoginDebug) {
+  const isMeDebug = /auth\/me$/.test(pathKey);
+  if (isLoginDebug || isMeDebug) {
     try {
       const headerSnapshot = { ...normalizedHeaders };
       if (headerSnapshot.Authorization) {
         headerSnapshot.Authorization = `Bearer <len:${headerSnapshot.Authorization.length}>`;
       }
       // Compute cookie header length if browser would attach (we forced omit, but log anyway)
-      console.debug('[login-debug] request', {
+      console.debug(isMeDebug ? '[me-debug]' : '[login-debug]', 'request', {
         url: baseUrl,
         method: init.method || 'GET',
         headers: headerSnapshot,
@@ -222,6 +236,14 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       message:
         (data && (data.message || data.error)) || res.statusText || "Error",
     };
+    // Log detallado de errores
+    console.error("[apiFetch] Error:", {
+      url: effectiveUrl,
+      status: res.status,
+      statusText: res.statusText,
+      data,
+      error: err
+    });
     throw err;
   }
 
@@ -290,7 +312,14 @@ export interface UserInfo {
   fecha_nacimiento?: string;
   fecha_registro?: string;
   estado?: string;
+  avatar_url?: string | null;
+  avatarUrl?: string | null;
   credential_url?: string;
+  credentialUrl?: string | null;
+  numero_cuenta?: string | null;
+  accountNumber?: string | null;
+  edad?: number | null;
+  age?: number | null;
   verificado?: boolean;
   verified?: boolean;
   correo_verificado?: boolean;
