@@ -143,7 +143,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       } catch {
         /* noop */
       }
-      setInfo('Correo verificado correctamente. Redirigiendo...');
+      setInfo(t('auth.register.verification.info.verified'));
       await checkAuth();
       setCode('');
       onVerified?.(payload);
@@ -186,14 +186,14 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-6">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-6 dark:bg-slate-900 dark:text-slate-100 dark:border dark:border-slate-800">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">{t('auth.register.verification.title')}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{t('auth.register.verification.title')}</h2>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+              className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800"
               aria-label={t('auth.register.verification.closeAria')}
             >
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -207,32 +207,32 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
           )}
         </div>
 
-        <p className="text-sm text-gray-600 mb-4">
-          {t('auth.register.verification.sentPrefix')} <span className="font-medium text-gray-900">{email}</span>. {t('auth.register.verification.sentSuffix')}
+        <p className="text-sm text-gray-600 mb-4 dark:text-slate-300">
+          {t('auth.register.verification.sentPrefix')} <span className="font-medium text-gray-900 dark:text-slate-100">{email}</span>. {t('auth.register.verification.sentSuffix')}
         </p>
 
         {expirationSummary && (
-          <div className="mb-3 rounded-md border border-blue-200 bg-blue-50/80 px-3 py-2 text-xs text-blue-700 flex items-center gap-2">
+          <div className="mb-3 rounded-md border border-blue-200 bg-blue-50/80 px-3 py-2 text-xs text-blue-700 flex items-center gap-2 dark:border-blue-500/40 dark:bg-blue-500/15 dark:text-blue-200">
             <Timer className="h-4 w-4" />
             {expirationSummary}
           </div>
         )}
 
         {error && (
-          <div className="mb-3 rounded-md border border-red-200 bg-red-50/80 px-3 py-2 text-xs text-red-700">
+          <div className="mb-3 rounded-md border border-red-200 bg-red-50/80 px-3 py-2 text-xs text-red-700 dark:border-red-400/60 dark:bg-red-500/15 dark:text-red-200">
             {error}
           </div>
         )}
 
         {info && (
-          <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-700">
+          <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200">
             {info}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="verification-code" className="block text-xs font-medium text-gray-700 mb-2">
+            <label htmlFor="verification-code" className="block text-xs font-medium text-gray-700 mb-2 dark:text-slate-300">
               {t('auth.register.verification.field.label')}
             </label>
             <input
@@ -244,7 +244,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
               maxLength={6}
               value={code}
               onChange={(event) => handleChange(event.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-center text-lg font-semibold tracking-[0.45em] text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-center text-lg font-semibold tracking-[0.45em] text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-brand-400 dark:focus:ring-brand-400/30"
               placeholder={t('auth.register.verification.field.placeholder')}
               disabled={submitting}
               autoFocus
@@ -254,13 +254,13 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
           <button
             type="submit"
             disabled={code.length !== 6 || submitting}
-            className="w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-slate-900"
           >
             {submitting ? t('auth.register.verification.submit.submitting') : t('auth.register.verification.submit.confirm')}
           </button>
         </form>
 
-        <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+        <div className="mt-4 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
           <button
             type="button"
             onClick={handleResend}

@@ -1,10 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BrandLogo } from "../../../src/components/BrandLogo";
+import { useUserStore } from "../../../src/state/userStore";
 
 export default function VerificacionCredencial() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams?.get("redirect") || null;
+  const redirectTarget = useMemo(() => {
+    if (!redirectParam) return null;
+    return redirectParam.startsWith("/") ? redirectParam : null;
+  }, [redirectParam]);
+
+  const { checkAuth } = useUserStore();
+
   const [image, setImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -110,7 +122,8 @@ export default function VerificacionCredencial() {
         
         if (isVerified) {
           setMessageType('success');
-          setMessage('¡Verificación exitosa! Tu credencial ha sido verificada correctamente.');
+          setMessage('¡Verificación exitosa! Redirigiéndote...');
+          await checkAuth();
         } else {
           // La respuesta fue 200 pero la verificación falló (OCR no validó)
           setMessageType('error');
@@ -132,6 +145,14 @@ export default function VerificacionCredencial() {
       setUploading(false);
     }
   };
+
+  useEffect(() => {
+    if (messageType !== 'success' || !redirectTarget) return;
+    const timeout = window.setTimeout(() => {
+      router.replace(redirectTarget);
+    }, 1800);
+    return () => window.clearTimeout(timeout);
+  }, [messageType, redirectTarget, router]);
 
   return (
     <div className="min-h-screen bg-app-gradient relative overflow-hidden">

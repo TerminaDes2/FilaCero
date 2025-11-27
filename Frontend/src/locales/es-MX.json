@@ -135,8 +135,6 @@
       },
       "resources": {
         "title": "RECURSOS",
-        "panel": "Panel",
-        "start": "Empezar",
         "testimonials": "Testimonios",
         "login": "Iniciar sesión",
         "register": "Crear cuenta"
@@ -244,8 +242,27 @@
           "symbol": "Añade un símbolo"
         },
         "terms": { "prefix": "Acepto los", "termsOfService": "Términos de Servicio", "and": "y la", "privacyPolicy": "Política de Privacidad" },
-        "submit": { "create": "Crear mi cuenta", "submitting": "Creando tu cuenta..." },
-        "errors": { "noRole": "Selecciona un rol (Cliente o Negocio) antes de continuar.", "createGeneric": "Error al crear la cuenta", "acceptTerms": "Debes aceptar los términos para continuar." }
+        "submit": { "create": "Crear mi cuenta", "submitting": "Creando tu cuenta...", "pending": "Completa las verificaciones" },
+        "errors": {
+          "noRole": "Selecciona un rol (Cliente o Negocio) antes de continuar.",
+          "createGeneric": "Error al crear la cuenta",
+          "acceptTerms": "Debes aceptar los términos para continuar.",
+          "pendingVerification": "Termina las verificaciones pendientes para continuar."
+        },
+        "pendingVerification": {
+          "title": "Verificación pendiente",
+          "resume": "Reanudar verificaciones",
+          "resending": "Reenviando...",
+          "messages": {
+            "email": "Confirma el código que enviamos a tu correo antes de continuar.",
+            "sms": "Verifica tu teléfono por SMS para desbloquear el siguiente paso.",
+            "credential": "Confirma tu credencial oficial para terminar el registro."
+          },
+          "errors": {
+            "sessionExpired": "La sesión de verificación expiró. Inicia el registro nuevamente.",
+            "resendFailed": "No pudimos reenviar el código. Inténtalo otra vez en un momento."
+          }
+        }
       },
       "verification": {
         "title": "Verifica tu correo electrónico",
@@ -256,7 +273,10 @@
         "field": { "label": "Código de verificación", "placeholder": "000000" },
         "submit": { "confirm": "Confirmar código", "submitting": "Verificando..." },
         "resend": { "sending": "Enviando...", "waitPrefix": "Reenviar en", "action": "Reenviar código" },
-        "info": { "resent": "Enviamos un nuevo código a tu correo." },
+        "info": {
+          "resent": "Enviamos un nuevo código a tu correo.",
+          "verified": "Correo verificado correctamente. Continuemos con la validación de seguridad."
+        },
         "note": "Necesitamos validar tu correo para continuar.",
         "errors": { "invalidLength": "Ingresa los 6 dígitos del código.", "verifyGeneric": "No pudimos verificar el código. Inténtalo nuevamente.", "resendGeneric": "No pudimos reenviar el código en este momento." }
       },
@@ -309,6 +329,54 @@
         "contextNote": "Esto nos ayuda a personalizar tu experiencia desde el inicio.",
         "customer": { "title": "Cliente", "desc": "Pide y recoge más rápido" },
         "owner": { "title": "Negocio", "desc": "Gestiona tu cafetería" }
+      },
+      "smsVerification": {
+        "badge": "Verificación adicional",
+        "title": "Confirma tu número de teléfono",
+        "description": "Necesitamos validar tu teléfono móvil para activar todas las funciones de tu cuenta.",
+        "closeAria": "Cerrar verificación SMS",
+        "phone": {
+          "label": "Número de teléfono",
+          "placeholder": "+52 55 0000 0000"
+        },
+        "code": {
+          "label": "Código SMS",
+          "placeholder": "123456"
+        },
+        "send": {
+          "action": "Enviar código",
+          "sending": "Enviando...",
+          "resend": "Reenviar código",
+          "resendIn": "Reenviar en"
+        },
+        "verify": {
+          "action": "Verificar código",
+          "verifying": "Verificando..."
+        },
+        "sent": "Te enviamos un código por SMS. Revisa tu teléfono.",
+        "success": "Teléfono verificado. Solo queda confirmar tu credencial.",
+        "expires": "El código ha expirado. Solicita uno nuevo.",
+        "expiresIn": "Expira en",
+        "errors": {
+          "phoneRequired": "Ingresa un número válido (mínimo 6 caracteres).",
+          "sendGeneric": "No pudimos enviar el SMS. Intenta de nuevo.",
+          "codeRequired": "Ingresa el código recibido (mínimo 4 dígitos).",
+          "invalidCode": "Código incorrecto. Revisa e inténtalo nuevamente.",
+          "verifyGeneric": "No pudimos verificar el código en este momento."
+        }
+      },
+      "credentialPrompt": {
+        "badge": "Último paso",
+        "title": "Verifica tu credencial oficial",
+        "subtitle": "Con tu credencial validamos tu identidad y desbloqueamos la experiencia completa de FilaCero.",
+        "steps": {
+          "title": "¿Qué sigue?",
+          "capture": "Sube una foto clara de tu credencial vigente.",
+          "verify": "Nuestro sistema revisará los datos en segundos.",
+          "next": "Te redirigiremos automáticamente al onboarding personalizado."
+        },
+        "cta": "Ir a verificar credencial",
+        "phoneConfirmed": "Número confirmado: {{phone}}"
       }
     }
   },

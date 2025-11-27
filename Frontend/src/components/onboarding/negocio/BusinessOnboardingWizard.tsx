@@ -353,9 +353,9 @@ function FancyInput({
   type = 'text',
   placeholder,
   error,
+  hint,
   leftIcon,
   required,
-  hint,
 }: {
   label: string;
   value: string;
@@ -364,9 +364,9 @@ function FancyInput({
   type?: string;
   placeholder?: string;
   error?: string;
+  hint?: string;
   leftIcon?: React.ReactNode;
   required?: boolean;
-  hint?: string;
 }) {
   return (
     <div className="space-y-2">

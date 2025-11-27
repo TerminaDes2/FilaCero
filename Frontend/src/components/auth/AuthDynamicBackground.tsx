@@ -12,11 +12,18 @@ interface Particle {
 
 interface PathDef { c: [number,number,number,number,number,number,number,number]; length: number; }
 
-const PHASE_COLORS = [
-  'rgba(247,201,120,0.55)',      // created (amber soft)
-  'rgba(213,93,123,0.60)',       // preparing (brand)
-  'rgba(76,193,173,0.65)',       // ready (mint)
-  'rgba(76,193,173,0.0)'         // collected (fade out)
+const LIGHT_PHASE_COLORS = [
+  'rgba(247,201,120,0.55)',
+  'rgba(213,93,123,0.60)',
+  'rgba(76,193,173,0.65)',
+  'rgba(76,193,173,0.0)'
+];
+
+const DARK_PHASE_COLORS = [
+  'rgba(253,224,71,0.55)',
+  'rgba(244,114,182,0.62)',
+  'rgba(45,212,191,0.72)',
+  'rgba(45,212,191,0.0)'
 ];
 
 export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = ({ showAmbientStats }) => {
@@ -24,6 +31,24 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [paths, setPaths] = useState<PathDef[]>([]);
   const [reduced, setReduced] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  // Detect active color scheme (prefers-color-scheme + Tailwind class toggle)
+  useEffect(() => {
+    const root = document.documentElement;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => {
+      setIsDark(root.classList.contains('dark') || media.matches);
+    };
+    update();
+    media.addEventListener('change', update);
+    const observer = new MutationObserver(update);
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => {
+      media.removeEventListener('change', update);
+      observer.disconnect();
+    };
+  }, []);
 
   // Detect reduced motion
   useEffect(() => {
@@ -59,6 +84,10 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
   if(!ctx) return;
   // From here ctx is definitively non-null; helper to satisfy TS
   const draw = (fn: (c: CanvasRenderingContext2D) => void) => fn(ctx);
+
+    const palette = isDark ? DARK_PHASE_COLORS : LIGHT_PHASE_COLORS;
+    const gradientStart = isDark ? '#f472b6' : '#D55D7B';
+    const gradientEnd = isDark ? '#22d3ee' : '#4CC1AD';
 
     const DPR = window.devicePixelRatio || 1;
     const particles: Particle[] = [];
@@ -111,9 +140,9 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
           c.beginPath();
           c.moveTo(sx*w, sy*h);
           c.bezierCurveTo(cx1*w,cy1*h,cx2*w,cy2*h,ex*w,ey*h);
-          const grad = c.createLinearGradient(sx*w,sy*h,ex*w,ey*h);
-          grad.addColorStop(0,'#D55D7B');
-          grad.addColorStop(1,'#4CC1AD');
+            const grad = c.createLinearGradient(sx*w,sy*h,ex*w,ey*h);
+            grad.addColorStop(0, gradientStart);
+            grad.addColorStop(1, gradientEnd);
           c.strokeStyle = grad;
           c.stroke();
         });
@@ -134,7 +163,7 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
         const def = paths[p.pathIndex];
         const {x,y} = bezierPoint(def.c, p.t);
         const px = x*w; const py = y*h;
-        const color = PHASE_COLORS[p.phase];
+        const color = palette[p.phase];
           c.beginPath();
           c.fillStyle = color;
           c.shadowColor = color.replace(/0\.[0-9]+\)/,'0.35)');
@@ -151,7 +180,7 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
     const visHandler = () => { if(document.hidden){ running=false; } else { if(!reduced){ running=true; last=performance.now(); requestAnimationFrame(step);} } };
     document.addEventListener('visibilitychange', visHandler);
     return () => { running=false; document.removeEventListener('visibilitychange', visHandler); window.removeEventListener('resize', resize); };
-  }, [paths, reduced]);
+  }, [paths, reduced, isDark]);
 
   // Parallax + halo intensity
   useEffect(() => {
@@ -189,8 +218,10 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
   return (
     <div ref={wrapperRef} className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {/* Base gradient & subtle texture */}
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(213,93,123,0.18),transparent_65%),radial-gradient(circle_at_75%_70%,rgba(76,193,173,0.18),transparent_60%),linear-gradient(120deg,#ffffff,#fffaf7,#f4fffb)]" />
-      <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay" style={{ backgroundImage:'linear-gradient(rgba(0,0,0,0.12) 1px,transparent 0),linear-gradient(90deg,rgba(0,0,0,0.12) 1px,transparent 0)', backgroundSize:'90px 90px' }} />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(213,93,123,0.18),transparent_65%),radial-gradient(circle_at_75%_70%,rgba(76,193,173,0.18),transparent_60%),linear-gradient(120deg,#ffffff,#fffaf7,#f4fffb)] dark:hidden" />
+      <div className="absolute inset-0 hidden dark:block bg-[radial-gradient(circle_at_20%_25%,rgba(244,114,182,0.12),transparent_70%),radial-gradient(circle_at_80%_70%,rgba(14,165,233,0.18),transparent_65%),linear-gradient(140deg,#020617,#0f172a,#020617)]" />
+      <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay dark:hidden" style={{ backgroundImage:'linear-gradient(rgba(0,0,0,0.12) 1px,transparent 0),linear-gradient(90deg,rgba(0,0,0,0.12) 1px,transparent 0)', backgroundSize:'90px 90px' }} />
+      <div className="absolute inset-0 hidden opacity-[0.12] mix-blend-soft-light dark:block" style={{ backgroundImage:'linear-gradient(rgba(148,163,184,0.12) 1px,transparent 0),linear-gradient(90deg,rgba(148,163,184,0.12) 1px,transparent 0)', backgroundSize:'110px 110px' }} />
 
       {/* Canvas particles + paths */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
@@ -204,14 +235,15 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
           const opacity = p < 0.8 ? 0.28 : 0.28 * (1 - (p-0.8)/0.2);
           return (
             <span key={t.id} style={{ left:t.x+'%', top:t.y+'%', transform:`translate(-50%, -50%) rotate(${t.rot}deg) scale(${scale})` }} className="absolute">
-              <span style={{opacity}} className="block w-28 h-10 rounded-md bg-white/60 backdrop-blur-sm shadow-sm ring-1 ring-white/50" />
+              <span style={{opacity}} className="block h-10 w-28 rounded-md bg-white/60 shadow-sm ring-1 ring-white/50 backdrop-blur-sm dark:bg-white/12 dark:shadow-[0_0_28px_rgba(14,165,233,0.12)] dark:ring-cyan-300/20" />
             </span>
           );
         })}
       </div>
 
       {/* Halo spotlight */}
-  <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at var(--halo-x,50%) var(--halo-y,50%), rgba(255,255,255,0.0), rgba(255,255,255,0.55))' }} />
+      <div className="absolute inset-0 dark:hidden" style={{ background: 'radial-gradient(circle at var(--halo-x,50%) var(--halo-y,50%), rgba(255,255,255,0.0), rgba(255,255,255,0.55))' }} />
+      <div className="absolute inset-0 hidden dark:block" style={{ background: 'radial-gradient(circle at var(--halo-x,50%) var(--halo-y,50%), rgba(30,64,175,0.0), rgba(56,189,248,0.18))' }} />
 
       {/* Peripheral ambient stats (optional) */}
       {showAmbientStats && !reduced && (
@@ -222,7 +254,8 @@ export const AuthDynamicBackground: React.FC<{ showAmbientStats?: boolean }> = (
       )}
 
       {/* Subtle noise layer */}
-      <div className="absolute inset-0 opacity-[0.035] mix-blend-overlay" style={{ backgroundImage:'radial-gradient(rgba(0,0,0,0.18) 1px, transparent 0)', backgroundSize:'26px 26px' }} />
+      <div className="absolute inset-0 opacity-[0.035] mix-blend-overlay dark:hidden" style={{ backgroundImage:'radial-gradient(rgba(0,0,0,0.18) 1px, transparent 0)', backgroundSize:'26px 26px' }} />
+      <div className="absolute inset-0 hidden opacity-[0.12] mix-blend-soft-light dark:block" style={{ backgroundImage:'radial-gradient(rgba(59,130,246,0.16) 1px, transparent 0)', backgroundSize:'34px 34px' }} />
     </div>
   );
 };

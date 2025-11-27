@@ -81,7 +81,7 @@ export function BenefitsSection({}: BenefitsSectionProps) {
 
   return (
     <section
-      className={`relative h-full w-full overflow-hidden bg-gradient-to-br ${accentSurface} px-6 sm:px-8 lg:px-10 xl:px-14 py-8 lg:py-10 transition-colors duration-500`}
+      className={`relative h-full w-full overflow-hidden bg-gradient-to-br ${accentSurface} px-6 sm:px-8 lg:px-10 xl:px-14 py-8 lg:py-10 transition-colors duration-500 dark:bg-slate-950 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900`}
     >
       <div
         className="pointer-events-none absolute inset-y-0 right-0 hidden w-56 translate-x-1/3 rounded-full blur-3xl opacity-30 sm:block"
@@ -98,10 +98,10 @@ export function BenefitsSection({}: BenefitsSectionProps) {
             <Sparkles className="h-4 w-4" strokeWidth={2.5} />
             {isOwner ? 'Modo negocio' : 'Modo cliente'}
           </div>
-          <h2 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl lg:text-[2.1rem]" style={{ color: roleColor }}>
+          <h2 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl lg:text-[2.1rem] dark:text-slate-100" style={{ color: roleColor }}>
             {welcomeTitle}
           </h2>
-          <p className="max-w-lg text-sm text-slate-600 sm:text-base">
+          <p className="max-w-lg text-sm text-slate-600 sm:text-base dark:text-slate-300">
             {welcomeSubtitle}
           </p>
         </header>
@@ -110,20 +110,20 @@ export function BenefitsSection({}: BenefitsSectionProps) {
           {benefits.map((benefit) => (
             <li
               key={benefit.title}
-              className="group relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 px-4 py-4 shadow-sm backdrop-blur transition-colors duration-200 hover:border-white hover:bg-white"
+              className="group relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 px-4 py-4 shadow-sm backdrop-blur transition-colors duration-200 hover:border-white hover:bg-white dark:border-slate-800/70 dark:bg-slate-900/70 dark:hover:bg-slate-800/80"
             >
               <div className="flex items-start gap-3">
                 <span
-                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white shadow-md"
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white shadow-md dark:bg-slate-900/80"
                   style={{ color: roleColor }}
                 >
                   {benefit.icon}
                 </span>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-slate-900 sm:text-base" style={{ color: roleColor }}>
+                  <h3 className="text-sm font-semibold text-slate-900 sm:text-base dark:text-slate-100" style={{ color: roleColor }}>
                     {benefit.title}
                   </h3>
-                  <p className="mt-1 text-[13px] text-slate-600 sm:text-sm">
+                  <p className="mt-1 text-[13px] text-slate-600 sm:text-sm dark:text-slate-300">
                     {benefit.description}
                   </p>
                 </div>
@@ -132,12 +132,12 @@ export function BenefitsSection({}: BenefitsSectionProps) {
           ))}
         </ul>
 
-        <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-xs text-slate-600 shadow-sm backdrop-blur sm:text-sm">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-xs text-slate-600 shadow-sm backdrop-blur sm:text-sm dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-300">
           <div className="flex -space-x-2">
             {[roleColor, `${roleColor}CC`, `${roleColor}AA`].map((tone, index) => (
               <span
                 key={tone + index}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white shadow"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white shadow dark:border-slate-700"
                 style={{ background: `linear-gradient(135deg, ${tone}, ${tone}99)` }}
               />
             ))}
