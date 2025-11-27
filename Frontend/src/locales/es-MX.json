@@ -135,8 +135,6 @@
       },
       "resources": {
         "title": "RECURSOS",
-        "panel": "Panel",
-        "start": "Empezar",
         "testimonials": "Testimonios",
         "login": "Iniciar sesión",
         "register": "Crear cuenta"
@@ -244,8 +242,27 @@
           "symbol": "Añade un símbolo"
         },
         "terms": { "prefix": "Acepto los", "termsOfService": "Términos de Servicio", "and": "y la", "privacyPolicy": "Política de Privacidad" },
-        "submit": { "create": "Crear mi cuenta", "submitting": "Creando tu cuenta..." },
-        "errors": { "noRole": "Selecciona un rol (Cliente o Negocio) antes de continuar.", "createGeneric": "Error al crear la cuenta", "acceptTerms": "Debes aceptar los términos para continuar." }
+        "submit": { "create": "Crear mi cuenta", "submitting": "Creando tu cuenta...", "pending": "Completa las verificaciones" },
+        "errors": {
+          "noRole": "Selecciona un rol (Cliente o Negocio) antes de continuar.",
+          "createGeneric": "Error al crear la cuenta",
+          "acceptTerms": "Debes aceptar los términos para continuar.",
+          "pendingVerification": "Termina las verificaciones pendientes para continuar."
+        },
+        "pendingVerification": {
+          "title": "Verificación pendiente",
+          "resume": "Reanudar verificaciones",
+          "resending": "Reenviando...",
+          "messages": {
+            "email": "Confirma el código que enviamos a tu correo antes de continuar.",
+            "sms": "Verifica tu teléfono por SMS para desbloquear el siguiente paso.",
+            "credential": "Confirma tu credencial oficial para terminar el registro."
+          },
+          "errors": {
+            "sessionExpired": "La sesión de verificación expiró. Inicia el registro nuevamente.",
+            "resendFailed": "No pudimos reenviar el código. Inténtalo otra vez en un momento."
+          }
+        }
       },
       "verification": {
         "title": "Verifica tu correo electrónico",

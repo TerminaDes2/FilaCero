@@ -135,8 +135,6 @@
       },
       "resources": {
         "title": "RESOURCES",
-        "panel": "Panel",
-        "start": "Get started",
         "testimonials": "Testimonials",
         "login": "Sign In",
         "register": "Sign Up"
@@ -244,8 +242,27 @@
           "symbol": "Add a symbol"
         },
         "terms": { "prefix": "I accept the", "termsOfService": "Terms of Service", "and": "and the", "privacyPolicy": "Privacy Policy" },
-        "submit": { "create": "Create my account", "submitting": "Creating your account..." },
-        "errors": { "noRole": "Select a role (Client or Business) before continuing.", "createGeneric": "Error creating account", "acceptTerms": "You must accept the terms to continue." }
+        "submit": { "create": "Create my account", "submitting": "Creating your account...", "pending": "Complete the verifications" },
+        "errors": {
+          "noRole": "Select a role (Client or Business) before continuing.",
+          "createGeneric": "Error creating account",
+          "acceptTerms": "You must accept the terms to continue.",
+          "pendingVerification": "Finish the pending verifications before continuing."
+        },
+        "pendingVerification": {
+          "title": "Pending verification",
+          "resume": "Resume verifications",
+          "resending": "Resending...",
+          "messages": {
+            "email": "Confirm the code we sent to your email before continuing.",
+            "sms": "Verify your phone via SMS to unlock the next step.",
+            "credential": "Confirm your official ID to finish registration."
+          },
+          "errors": {
+            "sessionExpired": "The verification session expired. Start the signup again.",
+            "resendFailed": "We couldn't resend the code. Try again shortly."
+          }
+        }
       },
       "verification": {
         "title": "Verify your email",

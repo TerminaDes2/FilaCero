@@ -39,7 +39,7 @@ export default function CartSlide() {
   const count = items.reduce((s, i) => s + i.cantidad, 0);
 
   const header = (
-    <div className="border-b border-[var(--fc-border-soft)] bg-white/95 px-4 pt-4 pb-3 sm:px-5 dark:border-white/12 dark:bg-[color:rgba(6,10,22,0.94)]">
+    <div className="border-b border-[var(--fc-border-soft)] bg-white/95 px-4 pt-4 pb-3 transition-colors sm:px-5 dark:border-white/12 dark:bg-[color:rgba(6,10,22,0.94)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[var(--fc-brand-600)] text-white shadow-sm">
@@ -61,24 +61,24 @@ export default function CartSlide() {
   const itemsContainerClass = `px-4 sm:px-5 py-4 overflow-y-auto space-y-3 ${heightClass}`;
 
   const itemsContent = (
-    <div className={`${itemsContainerClass} text-[var(--fc-text-primary)] dark:text-white/85`}>
+    <div className={`${itemsContainerClass} text-slate-900 transition-colors dark:text-slate-100`}>
       {items.length === 0 ? (
-        <div className="mt-8 text-center text-gray-500 dark:text-slate-300">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border border-[var(--fc-border-soft)] bg-gradient-to-br from-[var(--fc-teal-50)] to-[var(--fc-brand-50)] dark:border-white/12 dark:bg-[color:rgba(10,18,36,0.78)]">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-400 dark:text-slate-400"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
+        <div className="mt-8 text-center text-gray-500 transition-colors dark:text-slate-300">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border border-[var(--fc-border-soft)] bg-gradient-to-br from-[var(--fc-teal-50)] to-[var(--fc-brand-50)] transition-colors dark:border-white/12 dark:bg-[color:rgba(12,18,32,0.72)]">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-400 transition-colors dark:text-slate-400"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
           </div>
-          <p className="mt-3 text-sm font-medium text-gray-700 dark:text-white">Tu carrito está vacío</p>
-          <p className="text-xs text-gray-500 dark:text-white/60">Empieza agregando productos deliciosos.</p>
+          <p className="mt-3 text-sm font-medium text-gray-700 transition-colors dark:text-white">Tu carrito está vacío</p>
+          <p className="text-xs text-gray-500 transition-colors dark:text-white/60">Empieza agregando productos deliciosos.</p>
         </div>
       ) : (
         items.map((item) => (
-          <div key={item.id} className="group rounded-xl border border-[var(--fc-border-soft)] bg-white/90 px-3 py-2.5 shadow-sm transition hover:bg-white dark:border-white/12 dark:bg-[color:rgba(9,14,28,0.85)] dark:hover:bg-[color:rgba(12,18,35,0.9)]">
+          <div key={item.id} className="group rounded-xl border border-[var(--fc-border-soft)] bg-white/90 px-3 py-2.5 shadow-sm transition hover:bg-white dark:border-white/12 dark:bg-[color:rgba(8,13,24,0.88)] dark:hover:bg-[color:rgba(13,19,33,0.94)]">
             <div className="flex gap-3">
               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-slate-100 dark:bg-white/10">
                 {item.imagen ? (
                   <Image src={item.imagen} alt={item.nombre} fill className="object-cover" sizes="64px" unoptimized />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400 dark:text-white/45">Sin imagen</div>
+                  <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400 transition-colors dark:text-white/45">Sin imagen</div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -87,7 +87,7 @@ export default function CartSlide() {
                   <span className="whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-white">{currencyFormatter.format(item.precio * item.cantidad)}</span>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="inline-flex items-center rounded-full border border-[var(--fc-border-soft)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.35)]">
+                  <div className="inline-flex items-center rounded-full border border-[var(--fc-border-soft)] transition-colors dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.35)]">
                     <button className="flex h-7 w-7 items-center justify-center rounded-l-full text-slate-700 hover:bg-slate-50 dark:text-white/80 dark:hover:bg-white/10" onClick={() => updateQty(item.id, item.cantidad - 1)} aria-label="Restar">
                       −
                     </button>
@@ -96,7 +96,7 @@ export default function CartSlide() {
                       +
                     </button>
                   </div>
-                  <button className="ml-1 text-[12px] text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400" onClick={() => removeFromCart(item.id)}>
+                  <button className="ml-1 text-[12px] text-gray-500 transition hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400" onClick={() => removeFromCart(item.id)}>
                     Eliminar
                   </button>
                 </div>
@@ -109,16 +109,16 @@ export default function CartSlide() {
   );
 
   const footer = (
-    <div className="sticky bottom-0 border-t border-[var(--fc-border-soft)] bg-white/92 px-4 pb-5 pt-3 backdrop-blur-xl sm:px-5 dark:border-white/10 dark:bg-[color:rgba(5,8,18,0.96)]">
+    <div className="sticky bottom-0 border-t border-[var(--fc-border-soft)] bg-white/92 px-4 pb-5 pt-3 backdrop-blur-xl transition-colors sm:px-5 dark:border-white/10 dark:bg-[color:rgba(5,8,18,0.96)]">
       {items.length > 0 ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-slate-400">Total</span>
+            <span className="text-sm text-gray-600 transition-colors dark:text-slate-400">Total</span>
             <span className="text-lg font-bold text-slate-900 dark:text-white">{currencyFormatter.format(total)}</span>
           </div>
           <div className="flex gap-2">
             <button
-              className="flex-1 h-10 rounded-lg border border-[var(--fc-border-soft)] text-sm font-medium hover:bg-slate-50 dark:border-white/12 dark:text-white/80 dark:hover:bg-white/5"
+              className="flex-1 h-10 rounded-lg border border-[var(--fc-border-soft)] text-sm font-medium transition hover:bg-slate-50 dark:border-white/12 dark:text-white/80 dark:hover:bg-white/5"
               onClick={() => { clearCart(); toggleOpen(false); }}
             >
               Vaciar
@@ -126,15 +126,15 @@ export default function CartSlide() {
             <Link
               href="/checkout"
               onClick={() => toggleOpen(false)}
-              className="flex-1 inline-flex h-10 items-center justify-center rounded-lg bg-[var(--fc-brand-600)] text-sm font-semibold text-white shadow-sm hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
+              className="flex-1 inline-flex h-10 items-center justify-center rounded-lg bg-[var(--fc-brand-600)] text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
             >
               Pagar ahora
             </Link>
           </div>
-          <p className="text-[11px] text-gray-500 dark:text-white/50">Impuestos incluidos donde aplique.</p>
+          <p className="text-[11px] text-gray-500 transition-colors dark:text-white/50">Impuestos incluidos donde aplique.</p>
         </div>
       ) : (
-        <div className="text-center text-xs text-gray-500 dark:text-white/60">Añade productos para poder pagar.</div>
+        <div className="text-center text-xs text-gray-500 transition-colors dark:text-white/60">Añade productos para poder pagar.</div>
       )}
     </div>
   );

@@ -90,12 +90,12 @@ export const terminos: LegalDocument = {
       id: 'contacto',
       title: '9. Contacto',
       body: (
-        <p>Para dudas legales o solicitudes escríbenos a <a href="mailto:legal@filacero.app" className="text-brand-600 underline">legal@filacero.app</a>.</p>
+        <p>Para dudas legales o solicitudes escríbenos a <a href="mailto:legal@filacero.app" className="font-medium text-brand-600 underline underline-offset-2 transition-colors hover:text-brand-500 dark:text-brand-300 dark:hover:text-brand-200">legal@filacero.app</a>.</p>
       )
     }
   ],
   disclaimer: (
-    <p className="text-xs text-gray-500">Este documento es una versión inicial de referencia y no constituye asesoría legal. Se recomienda revisión jurídica profesional antes del lanzamiento comercial.</p>
+    <p className="text-xs text-gray-500 dark:text-slate-400">Este documento es una versión inicial de referencia y no constituye asesoría legal. Se recomienda revisión jurídica profesional antes del lanzamiento comercial.</p>
   )
 };
 
@@ -191,12 +191,12 @@ export const privacidad: LegalDocument = {
       id: 'contacto',
       title: '10. Contacto',
       body: (
-        <p>Para ejercer derechos o dudas de privacidad: <a href="mailto:privacy@filacero.app" className="text-brand-600 underline">privacy@filacero.app</a>.</p>
+        <p>Para ejercer derechos o dudas de privacidad: <a href="mailto:privacy@filacero.app" className="font-medium text-brand-600 underline underline-offset-2 transition-colors hover:text-brand-500 dark:text-brand-300 dark:hover:text-brand-200">privacy@filacero.app</a>.</p>
       )
     }
   ],
   disclaimer: (
-    <p className="text-xs text-gray-500">Esta Política es preliminar y deberá revisarse por asesoría legal especializada antes del escalado comercial.</p>
+    <p className="text-xs text-gray-500 dark:text-slate-400">Esta Política es preliminar y deberá revisarse por asesoría legal especializada antes del escalado comercial.</p>
   )
 };
 

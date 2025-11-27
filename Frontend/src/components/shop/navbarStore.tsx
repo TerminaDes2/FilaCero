@@ -148,9 +148,9 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             </span>
             <span className="min-w-[110px] text-left">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-300">Carrito</span>
-              <span className="block text-sm font-semibold text-[var(--fc-text-primary)]">{cartTitle}</span>
-              <span className="block text-[11px] text-[var(--fc-text-secondary)]">{cartSubtitle}</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-200">Carrito</span>
+              <span className="block text-sm font-semibold text-[var(--fc-text-primary)] dark:text-white">{cartTitle}</span>
+              <span className="block text-[11px] text-[var(--fc-text-secondary)] dark:text-slate-300">{cartSubtitle}</span>
             </span>
             {items.length > 0 && (
               <span className="absolute -top-1 -right-1 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full border border-white/70 bg-[var(--fc-brand-600)] px-2 text-[11px] font-bold text-white shadow-[0_8px_16px_-10px_rgba(15,23,42,0.6)] dark:border-white/20">

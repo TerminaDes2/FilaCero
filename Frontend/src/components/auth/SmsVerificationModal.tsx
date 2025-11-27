@@ -275,9 +275,9 @@ export const SmsVerificationModal: React.FC<SmsVerificationModalProps> = ({
           )}
 
           {error && (
-            <div className="rounded-lg border border-rose-300 bg-rose-50/80 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/60 dark:bg-rose-500/15 dark:text-rose-200">
-              {error}
-            </div>
+          <div className="rounded-lg border border-rose-300 bg-rose-50/85 px-3 py-2 text-sm text-rose-700 shadow-sm dark:border-rose-400/70 dark:bg-rose-500/35 dark:text-rose-50">
+            {error}
+          </div>
           )}
 
           {info && !error && (

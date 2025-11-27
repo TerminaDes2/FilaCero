@@ -38,12 +38,12 @@ export default function PaymentMethod({
 }: Props) {
   const isStandalone = displayMode !== "embedded";
   const wrapperClasses = isStandalone
-    ? "rounded-3xl border border-white/70 bg-white/90 shadow-sm backdrop-blur"
+    ? "rounded-3xl border border-white/70 bg-white/90 shadow-sm backdrop-blur transition-colors dark:border-white/12 dark:bg-[color:rgba(6,10,22,0.92)] dark:shadow-[0_48px_120px_-80px_rgba(2,6,23,0.88)]"
     : "space-y-6";
-  const headerClasses = `flex items-start gap-3 ${isStandalone ? "border-b border-white/60 px-6 py-5" : ""}`;
+  const headerClasses = `flex items-start gap-3 ${isStandalone ? "border-b border-white/60 px-6 py-5 dark:border-white/10" : ""}`;
   const iconClasses = isStandalone
     ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--fc-brand-600)] to-[var(--fc-teal-400)] text-white shadow-sm"
-    : "inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--fc-brand-600)]/10 text-[var(--fc-brand-600)]";
+    : "inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--fc-brand-600)]/10 text-[var(--fc-brand-600)] dark:bg-[color:rgba(14,34,53,0.65)] dark:text-[color:rgba(186,230,253,0.95)]";
   const copyClasses = isStandalone ? "space-y-1" : "space-y-0.5";
   const contentPadding = isStandalone ? "px-6 py-6" : "";
 
@@ -67,9 +67,9 @@ export default function PaymentMethod({
           <CreditCard className="h-5 w-5" />
         </span>
         <div className={copyClasses}>
-          <p className={`${isStandalone ? "text-xs" : "text-[11px]"} font-semibold uppercase tracking-[0.22em] text-brand-600`}>Paso 2</p>
-          <h2 className={`${isStandalone ? "text-xl" : "text-lg"} font-bold text-slate-900`}>Selecciona cómo cobrarás</h2>
-          <p className={`${isStandalone ? "text-sm" : "text-xs"} text-slate-500`}>
+          <p className={`${isStandalone ? "text-xs" : "text-[11px]"} font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-[color:rgba(186,230,253,0.95)]`}>Paso 2</p>
+          <h2 className={`${isStandalone ? "text-xl" : "text-lg"} font-bold text-slate-900 dark:text-white`}>Selecciona cómo cobrarás</h2>
+          <p className={`${isStandalone ? "text-sm" : "text-xs"} text-slate-500 dark:text-slate-400`}>
             La venta se registrará en el POS con el método que elijas para mantener los reportes alineados.
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function PaymentMethod({
 
       <div className={`${contentPadding} grid gap-4 sm:grid-cols-2`}>
         {filteredMethods.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500">
+          <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
             No hay métodos de pago disponibles en este flujo.
           </div>
         ) : (
@@ -91,8 +91,8 @@ export default function PaymentMethod({
                 onClick={() => setPaymentMethod(method.id)}
                 className={`group h-full rounded-2xl border px-5 py-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                   isActive
-                    ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-                    : "border-slate-200/80 bg-white hover:border-[var(--fc-brand-200)] hover:shadow-sm"
+                    ? "border-slate-900 bg-slate-900 text-white shadow-lg dark:border-white/10 dark:bg-[color:rgba(15,23,42,0.82)]"
+                    : "border-slate-200/80 bg-white hover:border-[var(--fc-brand-200)] hover:shadow-sm dark:border-white/10 dark:bg-[color:rgba(6,10,22,0.9)] dark:hover:border-[color:rgba(56,189,248,0.35)]"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -101,14 +101,14 @@ export default function PaymentMethod({
                       isActive ? "bg-white/15" : "bg-[var(--fc-brand-50)] text-[var(--fc-brand-600)]"
                     }`}
                   >
-                    <Icon className={`h-5 w-5 ${isActive ? "text-white" : "text-[var(--fc-brand-600)]"}`} />
+                    <Icon className={`h-5 w-5 ${isActive ? "text-white" : "text-[var(--fc-brand-600)] dark:text-[color:rgba(186,230,253,0.95)]"}`} />
                   </span>
                   <div className="space-y-0.5">
-                    <div className={`text-sm font-semibold ${isActive ? "text-white" : "text-slate-900"}`}>{method.title}</div>
-                    <p className={`text-xs ${isActive ? "text-white/80" : "text-slate-500"}`}>{method.description}</p>
+                    <div className={`text-sm font-semibold ${isActive ? "text-white" : "text-slate-900 dark:text-white"}`}>{method.title}</div>
+                    <p className={`text-xs ${isActive ? "text-white/80" : "text-slate-500 dark:text-slate-400"}`}>{method.description}</p>
                   </div>
                 </div>
-                <ul className={`mt-4 space-y-1 text-[11px] ${isActive ? "text-white/80" : "text-slate-500"}`}>
+                <ul className={`mt-4 space-y-1 text-[11px] ${isActive ? "text-white/80" : "text-slate-500 dark:text-slate-400"}`}>
                   {method.perks.map((perk) => (
                     <li key={perk} className="flex items-center gap-1.5">
                       <span className={`inline-block h-1.5 w-1.5 rounded-full ${isActive ? "bg-white" : "bg-[var(--fc-brand-400)]"}`} />

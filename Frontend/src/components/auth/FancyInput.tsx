@@ -45,6 +45,10 @@ export const FancyInput: React.FC<FancyInputProps> = ({
     internalValue.length > 0
   );
 
+  const textColorClasses = isPassword
+    ? 'text-slate-900 dark:text-slate-100'
+    : 'text-gray-800 dark:text-slate-100';
+
   return (
     <div className="relative group">
       <div
@@ -76,7 +80,7 @@ export const FancyInput: React.FC<FancyInputProps> = ({
           type={type}
           aria-invalid={hasError || undefined}
           aria-describedby={describedBy}
-          className={`w-full rounded-xl bg-transparent outline-none appearance-none text-sm text-gray-800 placeholder-transparent dark:text-slate-100
+          className={`w-full rounded-xl bg-transparent outline-none appearance-none text-sm ${textColorClasses} placeholder-transparent
             ${leftIcon ? 'pl-10' : 'pl-2'} ${isPassword || rightIcon ? 'pr-11' : 'pr-2'} py-3`}
           onFocus={(e) => {
             setFocused(true);

@@ -133,12 +133,18 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
           <div className="block lg:hidden pt-2">
             <button
               onClick={onBackToSelection}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-medium text-gray-700 bg-white/60 hover:bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 transition-all duration-200 hover:shadow-md dark:text-slate-200 dark:bg-slate-900/70 dark:hover:bg-slate-800 dark:border-slate-800"
+              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-2xl border border-gray-200/60 bg-white/80 px-4 py-2.5 text-[13px] font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:shadow-lg hover:shadow-brand-500/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-800/70 dark:bg-gradient-to-r dark:from-[#0f162c] dark:via-[#131d36] dark:to-[#0f162c] dark:text-slate-100 dark:shadow-[0_24px_48px_-28px_rgba(15,23,42,0.9)] dark:hover:shadow-[0_28px_58px_-28px_rgba(15,23,42,0.95)] dark:focus-visible:ring-brand-300/70 dark:focus-visible:ring-offset-slate-950"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              {t('auth.register.changeType')}
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#D55D7B]/12 via-transparent to-[#42A8C2]/18 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-[#D55D7B]/22 dark:via-[#9864FF]/18 dark:to-[#42A8C2]/28" />
+              <span className="pointer-events-none absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-white/45 to-transparent opacity-0 blur-sm transition-all duration-[1100ms] group-hover:translate-x-[120%] group-hover:opacity-100 dark:via-white/25" />
+              <span className="relative z-10 inline-flex items-center gap-2">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="tracking-wide">
+                  {t('auth.register.changeType')}
+                </span>
+              </span>
             </button>
           </div>
         </div>
