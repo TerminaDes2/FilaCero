@@ -31,6 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         correo_electronico: true,
         id_rol: true,
         avatar_url: true,
+        numero_telefono: true,
         credential_url: true,
         correo_verificado: true,
         correo_verificado_en: true,
@@ -39,11 +40,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         credencial_verificada: true,
         credencial_verificada_en: true,
         numero_cuenta: true,
+        fecha_registro: true,
         edad: true,
         role: { select: { nombre_rol: true } },
+        _count: { select: { venta: true } },
       },
     });
 
+    console.log('[JWT Strategy] User from DB:', user);
+    
     if (!user) {
       throw new UnauthorizedException();
     }
@@ -54,6 +59,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     return {
       ...user,
+      fecha_registro: user.fecha_registro ? (user.fecha_registro as Date).toISOString() : null,
+      ordersCount: (user as any)._count?.venta ?? 0,
       verificado: emailVerified,
       verified: emailVerified,
       verifications: {

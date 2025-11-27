@@ -63,7 +63,7 @@ export default function UserProfilePage() {
     .join("") || "FC";
 
   const joinedAt = formatDate(user.fecha_registro);
-  const birthDate = formatDate(user.fecha_nacimiento);
+  const orderCount = (user as any)?.ordersCount ?? (user as any)?._count?.venta ?? 0;
   const roleName = user.role?.nombre_rol ?? user.role_name ?? (user.id_rol === 2 ? "Administrador" : "Cliente");
   const accountState = normalizeText(user.estado) ?? "Activo";
 
@@ -71,12 +71,8 @@ export default function UserProfilePage() {
     { label: "Nombre completo", value: user.nombre ?? null },
     { label: "Correo electrónico", value: user.correo_electronico ?? null },
     { label: "Número de teléfono", value: user.numero_telefono ?? null },
-    {
-      label: "Fecha de nacimiento",
-      value: birthDate,
-      caption: user.fecha_nacimiento && birthDate ? `Dato guardado: ${user.fecha_nacimiento}` : undefined,
-    },
     { label: "Rol", value: normalizeText(roleName) },
+    { label: "Pedidos registrados", value: String(orderCount ?? 0) },
     { label: "Estado de la cuenta", value: accountState },
     {
       label: "Miembro desde",

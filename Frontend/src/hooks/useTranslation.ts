@@ -11,7 +11,7 @@ const translations = {
 export function useTranslation() {
   const locale = useLanguageStore((state) => state.locale);
 
-  const t = (key: string): string => {
+  const t = (key: string, variables?: Record<string, string | number>): string => {
     const keys = key.split('.');
     let value: any = translations[locale];
 
@@ -24,7 +24,17 @@ export function useTranslation() {
       }
     }
 
-    return typeof value === 'string' ? value : key;
+    if (typeof value === 'string') {
+      // Interpolación de variables: reemplaza {{variable}} con el valor
+      if (variables) {
+        return value.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
+          return variables[varName]?.toString() ?? match;
+        });
+      }
+      return value;
+    }
+
+    return key;
   };
 
   return { t, locale };

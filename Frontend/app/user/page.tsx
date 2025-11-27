@@ -50,6 +50,7 @@ type ProfileFormState = {
   age: string;
   avatarUrl: string;
   credentialUrl: string;
+  email?: string;
 };
 
 const ORDER_SECTION_ID = "orders-section";
@@ -131,10 +132,17 @@ export default function UserProfilePage() {
     age: "",
     avatarUrl: "",
     credentialUrl: "",
+    email: "",
   });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [saveFeedback, setSaveFeedback] = useState<"success" | "error" | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pendingSession, setPendingSession] = useState<{ session: string; expiresAt?: string; delivery?: string } | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push("/auth/login");
@@ -145,6 +153,7 @@ export default function UserProfilePage() {
   const credentialUrl = pickFirst(user?.credential_url, user?.credentialUrl);
   const accountNumberValue = pickFirst(user?.numero_cuenta, user?.accountNumber);
   const ageValue = pickFirst(user?.edad, user?.age);
+  const userPhone = pickFirst(user?.numero_telefono, (user as any)?.telefono, (user as any)?.phoneNumber);
   const accountState = capitalize(stripDiacritics(user?.estado ?? "")) || "Activo";
 
   const normalizedRole = (user?.role?.nombre_rol ?? user?.role_name ?? "").toLowerCase();
@@ -162,7 +171,6 @@ export default function UserProfilePage() {
   const roleLabel = isOwner ? "Dueno de negocio" : capitalize(stripDiacritics(user?.role?.nombre_rol ?? user?.role_name ?? "Cliente"));
 
   const joinedAt = formatDate(user?.fecha_registro, { day: "2-digit", month: "long", year: "numeric" });
-  const birthDate = formatDate(user?.fecha_nacimiento, { day: "2-digit", month: "long", year: "numeric" });
 
   const emailVerified = Boolean(user?.verifications?.email ?? user?.correo_verificado ?? user?.verified ?? user?.verificado ?? false);
   const smsVerified = Boolean(user?.verifications?.sms ?? user?.sms_verificado ?? false);
@@ -183,19 +191,21 @@ export default function UserProfilePage() {
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
   const lastOrderDate = lastOrder ? formatDateTime(lastOrder.fecha) : null;
+    const orderCount = (user as any)?.ordersCount ?? (user as any)?._count?.venta ?? 0;
 
   const initials = getInitials(user?.nombre ?? user?.correo_electronico ?? null);
 
   const initialSnapshot = useMemo<ProfileFormState>(
     () => ({
       name: user?.nombre ?? "",
-      phoneNumber: user?.numero_telefono ?? "",
+      email: user?.correo_electronico ?? "",
+      phoneNumber: userPhone ?? "",
       accountNumber: accountNumberValue ?? "",
       age: ageValue !== null && ageValue !== undefined ? String(ageValue) : "",
       avatarUrl: avatarUrl ?? "",
       credentialUrl: credentialUrl ?? "",
     }),
-    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, user?.numero_telefono],
+    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, user?.correo_electronico, userPhone],
   );
 
   useEffect(() => {
@@ -280,7 +290,6 @@ export default function UserProfilePage() {
       const trimmedPhone = formState.phoneNumber.trim();
       const trimmedAccount = formState.accountNumber.trim();
       const trimmedAvatar = formState.avatarUrl.trim();
-      const trimmedCredential = formState.credentialUrl.trim();
       const ageInput = formState.age.trim();
 
       let ageNumber: number | null = null;
@@ -297,14 +306,21 @@ export default function UserProfilePage() {
       setFormError(null);
 
       try {
-        await api.updateUserProfile(user?.id_usuario ?? 0, {
+        const result = await api.updateUserProfile(user?.id_usuario ?? 0, {
           name: trimmedName,
-          phoneNumber: trimmedPhone || null,
+          email: formState.email?.trim() || null,
           accountNumber: trimmedAccount || null,
           age: ageNumber,
           avatarUrl: trimmedAvatar || null,
-          credentialUrl: trimmedCredential || null,
         });
+        // If the backend returns a 'session', then the update requires verification.
+        if (result && result.session) {
+          setPendingSession({ session: result.session, expiresAt: result.expiresAt, delivery: result.delivery });
+          setSaveFeedback(null);
+          setFormError(null);
+          setSaving(false);
+          return;
+        }
         await checkAuth();
         setSaveFeedback("success");
         setTimeout(() => setSaveFeedback(null), 4000);
@@ -319,6 +335,29 @@ export default function UserProfilePage() {
     },
     [checkAuth, formState, user],
   );
+
+  const handleConfirmUpdate = useCallback(async () => {
+    if (!pendingSession) return;
+    if (!verificationCode || verificationCode.trim().length !== 6) {
+      setVerifyError('Ingresa un código de 6 dígitos');
+      return;
+    }
+    setVerifying(true);
+    setVerifyError(null);
+    try {
+      await api.confirmProfileUpdate(pendingSession.session, verificationCode.trim());
+      await checkAuth();
+      setPendingSession(null);
+      setVerificationCode("");
+      setSaveFeedback('success');
+      setTimeout(() => setSaveFeedback(null), 3000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al confirmar el código';
+      setVerifyError(message);
+    } finally {
+      setVerifying(false);
+    }
+  }, [checkAuth, pendingSession, verificationCode]);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -346,8 +385,8 @@ export default function UserProfilePage() {
           }
         : {
             label: "Pedidos registrados",
-            value: String(totalOrders),
-            hint: totalOrders > 0 ? lastOrderDate ?? "Actividad reciente" : "Aun sin pedidos",
+            value: String(orderCount),
+            hint: orderCount > 0 ? lastOrderDate ?? "Actividad reciente" : "Aun sin pedidos",
             tone: "teal",
           },
       {
@@ -358,7 +397,7 @@ export default function UserProfilePage() {
       },
     ];
     return metrics;
-  }, [accountState, businessLoading, businesses.length, isOwner, joinedAt, lastOrderDate, totalOrders, verificationCount]);
+  }, [accountState, businessLoading, businesses.length, isOwner, joinedAt, lastOrderDate, orderCount, verificationCount]);
 
   const verificationItems = [
     {
@@ -372,7 +411,7 @@ export default function UserProfilePage() {
     {
       id: "sms",
       label: "Telefono movil",
-      value: user?.numero_telefono ?? "Sin registrar",
+      value: userPhone ?? "Sin registrar",
       verified: smsVerified,
       timestamp: verificationTimestamps.sms,
       description: smsVerified ? "SMS verificado" : "Registra y confirma tu numero para alertas",
@@ -436,16 +475,20 @@ export default function UserProfilePage() {
                         <Mail className="h-4 w-4" />
                         {user?.correo_electronico}
                       </span>
-                      {user?.numero_telefono && (
+                      {userPhone && (
                         <span className="inline-flex items-center gap-1.5">
                           <Phone className="h-4 w-4" />
-                          {user?.numero_telefono}
+                          {userPhone}
                         </span>
                       )}
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarDays className="h-4 w-4" />
                         {joinedAt ?? "Registro pendiente"}
                       </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Sparkles className="h-4 w-4" />
+                          {String(orderCount ?? 0)}
+                        </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/70">
                       <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white px-3 py-1 text-[var(--fc-text-secondary)] shadow-sm dark:border-white/25 dark:bg-white/10 dark:text-white/80">
@@ -531,10 +574,12 @@ export default function UserProfilePage() {
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
+                  <label htmlFor="phone-input" className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
                     Nombre completo
                   </label>
                   <input
+                    id="phone-input"
+                    placeholder="Ej. +52 81 0000 0000"
                     value={formState.name}
                     onChange={(event) => handleFormChange("name", event.target.value)}
                     className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
@@ -542,12 +587,14 @@ export default function UserProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
+                  <label htmlFor="credential-url" className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
                     Telefono
                   </label>
                   <input
+                    id="credential-url"
                     value={formState.phoneNumber}
                     onChange={(event) => handleFormChange("phoneNumber", event.target.value)}
+                    disabled
                     className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
                     placeholder="Ej. +52 81 0000 0000"
                   />
@@ -577,13 +624,85 @@ export default function UserProfilePage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
-                    Avatar (URL)
+                    Avatar (Subir foto)
+                  </label>
+                  <div className="mt-2 flex gap-3 items-center">
+                    <input
+                      id="avatar-file"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        if (file) {
+                          try { setPreviewUrl(URL.createObjectURL(file)); } catch { setPreviewUrl(null); }
+                          setAvatarFile(file);
+                        } else {
+                          setPreviewUrl(null);
+                          setAvatarFile(null);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label htmlFor="avatar-file" className="inline-flex items-center gap-2 rounded-xl border border-[var(--fc-border-soft)] px-3 py-2 cursor-pointer">
+                      Subir avatar
+                    </label>
+                    {previewUrl && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={previewUrl} alt="Avatar preview" className="h-12 w-12 rounded-full object-cover" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!avatarFile || !(user?.id_usuario)) return;
+                        setSaving(true);
+                        try {
+                          const CLOUD_NAME = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '').trim();
+                          const UPLOAD_PRESET = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '').trim();
+                          if (CLOUD_NAME && UPLOAD_PRESET) {
+                            // Upload directly to Cloudinary from client
+                            const fd = new FormData();
+                            fd.append('file', avatarFile);
+                            fd.append('upload_preset', UPLOAD_PRESET);
+                            const cloudUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+                            const res = await fetch(cloudUrl, { method: 'POST', body: fd });
+                            if (!res.ok) {
+                              const txt = await res.text();
+                              throw new Error(`Error subiendo a Cloudinary: ${txt}`);
+                            }
+                            const data = await res.json();
+                            if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
+                            await api.setUserAvatarByUrl(user.id_usuario, data.secure_url);
+                          } else {
+                            // Fallback: send file to backend for server-side Cloudflare upload
+                            await api.uploadUserAvatar(user.id_usuario, avatarFile);
+                          }
+                          await checkAuth();
+                          setSaveFeedback('success');
+                          setPreviewUrl(null);
+                          setAvatarFile(null);
+                        } catch (err) {
+                          setFormError(err instanceof Error ? err.message : 'Error subiendo avatar');
+                          setSaveFeedback('error');
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-3 py-2 text-sm font-semibold text-white"
+                    >
+                      Subir
+                    </button>
+                  </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
+                    Correo electrónico
                   </label>
                   <input
-                    value={formState.avatarUrl}
-                    onChange={(event) => handleFormChange("avatarUrl", event.target.value)}
+                    value={formState.email}
+                    onChange={(event) => handleFormChange('email', event.target.value)}
                     className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
-                    placeholder="https://"
+                    placeholder="correo@ejemplo.com"
+                    type="email"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -592,9 +711,9 @@ export default function UserProfilePage() {
                   </label>
                   <input
                     value={formState.credentialUrl}
-                    onChange={(event) => handleFormChange("credentialUrl", event.target.value)}
-                    className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
-                    placeholder="https://"
+                    disabled
+                    className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white/50 px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white"
+                    title="Credential URL"
                   />
                 </div>
               </div>
@@ -626,6 +745,43 @@ export default function UserProfilePage() {
                   Restaurar valores
                 </button>
               </div>
+              {/* Verification UI shown when backend requires confirmation */}
+              {pendingSession && (
+                <div className="mt-6 rounded-2xl border border-[var(--fc-border-soft)] bg-white/90 p-4 shadow-sm dark:border-white/12 dark:bg-[color:rgba(9,13,24,0.92)]">
+                  <p className="text-sm font-semibold text-[var(--fc-text-primary)] dark:text-white">Confirma cambios con código</p>
+                  <p className="text-sm text-[var(--fc-text-secondary)] dark:text-white/70">Hemos enviado un código a tu correo. Ingresa a continuación para aplicar los cambios.</p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <label htmlFor="profile-code" className="sr-only">Código de verificación</label>
+                    <input
+                      id="profile-code"
+                      aria-label="Código de verificación"
+                      placeholder="Código de 6 dígitos"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(event) => setVerificationCode(event.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                      className="w-40 rounded-xl border border-[var(--fc-border-soft)] bg-white px-3 py-2 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleConfirmUpdate}
+                      disabled={verifying}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPendingSession(null); setVerificationCode(''); setVerifyError(null); }}
+                      className="inline-flex items-center gap-1 rounded-full border border-[var(--fc-border-soft)] px-3 py-2 text-sm font-semibold text-[var(--fc-brand-600)]"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                  {verifyError && (
+                    <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{verifyError}</p>
+                  )}
+                </div>
+              )}
             </form>
 
             <aside className="grid gap-4">
@@ -641,16 +797,30 @@ export default function UserProfilePage() {
                 </div>
                 <dl className="mt-6 space-y-4 text-sm">
                   <div>
+                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Nombre completo</dt>
+                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">
+                      {user?.nombre ?? <span className="italic">Sin registrar</span>}
+                    </dd>
+                  </div>
+                  <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Correo</dt>
                     <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{user?.correo_electronico}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Fecha de nacimiento</dt>
-                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">{birthDate ?? <span className="italic">Sin registrar</span>}</dd>
+                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Pedidos registrados</dt>
+                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{String(orderCount ?? 0)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Teléfono</dt>
+                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">
+                      {userPhone ?? <span className="italic">Sin registrar</span>}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Edad</dt>
-                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">{ageValue ?? <span className="italic">Sin registrar</span>}</dd>
+                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">
+                      {ageValue !== null && ageValue !== undefined ? `${ageValue} años` : <span className="italic">Sin registrar</span>}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Numero de cuenta</dt>

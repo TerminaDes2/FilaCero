@@ -1832,6 +1832,12 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 		newPassword: '',
 	});
 	const [saving, setSaving] = useState(false);
+	const [avatarFile, setAvatarFile] = useState<File | null>(null);
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	const [pendingSession, setPendingSession] = useState<{ session: string; expiresAt?: string; delivery?: string } | null>(null);
+	const [verificationCode, setVerificationCode] = useState('');
+	const [verifying, setVerifying] = useState(false);
+	const [verifyError, setVerifyError] = useState<string | null>(null);
 	const verificationBadges = useMemo(
 		() => {
 			const verifications = user?.verifications ?? {
@@ -1876,10 +1882,16 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 		try {
 			const payload: Record<string, unknown> = {
 				name: form.name.trim() || undefined,
-				phoneNumber: form.phone.trim() ? form.phone.trim() : null,
+				// phone is not allowed to be updated via settings
 			};
 			if (form.newPassword.trim()) payload.newPassword = form.newPassword.trim();
-			await api.updateUserProfile(targetId, payload);
+			const result = await api.updateUserProfile(targetId, payload);
+			// If verification required, show panel instead of applying immediately
+			if (result && result.session) {
+				setPendingSession({ session: result.session, expiresAt: result.expiresAt, delivery: result.delivery });
+				setSaving(false);
+				return;
+			}
 			setName(form.name.trim() || null);
 			await checkAuth();
 			setForm((prev) => ({ ...prev, newPassword: '' }));
@@ -1890,6 +1902,27 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 			setSaving(false);
 		}
 	}, [checkAuth, form, saving, setName, user, userId]);
+
+	const handleConfirmUpdate = useCallback(async () => {
+		if (!pendingSession) return;
+		if (!verificationCode || verificationCode.trim().length !== 6) {
+			setVerifyError('Ingresa un código de 6 dígitos');
+			return;
+		}
+		setVerifying(true);
+		setVerifyError(null);
+		try {
+			await api.confirmProfileUpdate(pendingSession.session, verificationCode.trim());
+			await checkAuth();
+			setPendingSession(null);
+			setVerificationCode('');
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Error al confirmar el código';
+			setVerifyError(message);
+		} finally {
+			setVerifying(false);
+		}
+	}, [checkAuth, pendingSession, verificationCode]);
 
 	const discard = useCallback(() => {
 		setForm({
@@ -1926,14 +1959,79 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 						<Input value={form.name} onChange={(event) => handleChange('name', event.target.value)} placeholder="Tu nombre" disabled={saving} />
 					</Row>
 					<Row label="Teléfono">
-						<Input value={form.phone} onChange={(event) => handleChange('phone', event.target.value)} placeholder="55 1234 5678" disabled={saving} />
+						<Input value={form.phone} onChange={(event) => handleChange('phone', event.target.value)} placeholder="55 1234 5678" disabled />
 					</Row>
 					<Row label="Correo">
 						<Input value={user?.correo_electronico ?? userEmail ?? ''} disabled className="bg-slate-100 cursor-not-allowed" />
 					</Row>
+					<Row label="Avatar">
+						<div className="flex items-center gap-3">
+							<input id="pos-avatar-file" type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0] ?? null; setAvatarFile(f); try{setPreviewUrl(f?URL.createObjectURL(f):null)}catch{setPreviewUrl(null)}}} />
+							<label htmlFor="pos-avatar-file" className="px-3 py-2 rounded-lg border">Seleccionar</label>
+							{/* eslint-disable-next-line @next/next/no-img-element */}
+							{previewUrl && <img src={previewUrl} className="h-10 w-10 rounded-full object-cover" alt="preview" />}
+							<button type="button" className="px-3 py-2 rounded-lg bg-[var(--pos-accent-green)] text-white" onClick={async()=>{
+								if(!avatarFile||!user?.id_usuario) return; 
+								setSaving(true);
+								try{
+									const CLOUD_NAME = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '').trim();
+									const UPLOAD_PRESET = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '').trim();
+									if (CLOUD_NAME && UPLOAD_PRESET) {
+										const fd = new FormData();
+										fd.append('file', avatarFile);
+										fd.append('upload_preset', UPLOAD_PRESET);
+										const cloudUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+										const res = await fetch(cloudUrl, { method: 'POST', body: fd });
+										if (!res.ok) {
+											const txt = await res.text();
+											throw new Error(`Error subiendo a Cloudinary: ${txt}`);
+										}
+										const data = await res.json();
+										if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
+										await api.setUserAvatarByUrl(user.id_usuario, data.secure_url);
+									} else {
+										await api.uploadUserAvatar(user.id_usuario, avatarFile);
+									}
+									await checkAuth();
+									setPreviewUrl(null);
+									setAvatarFile(null);
+								}catch(e){ console.error(e); if (typeof window !== 'undefined') window.alert(e instanceof Error ? e.message : 'Error subiendo avatar'); }
+								finally{ setSaving(false);} 
+							}}>Subir</button>
+						</div>
+					</Row>
 					<Row label="Nueva contraseña" hint="Deja en blanco para mantener la actual.">
 						<Input value={form.newPassword} onChange={(event) => handleChange('newPassword', event.target.value)} type="password" placeholder="••••••" disabled={saving} />
 					</Row>
+
+					{pendingSession && (
+						<div className="mt-3 rounded-lg border px-4 py-3" style={{ background: 'rgba(255,255,255,0.9)' }}>
+							<div className="mb-2 text-[13px] font-medium">Confirma cambios con código</div>
+							<div className="flex items-center gap-3">
+								<input
+									placeholder="Código de 6 dígitos"
+									value={verificationCode}
+									onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+									className="w-40 rounded-lg px-3 py-2 text-[13px] outline-none"
+								/>
+								<button
+									onClick={handleConfirmUpdate}
+									disabled={verifying}
+									className="px-3 py-2 rounded-lg font-semibold"
+									style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
+								>
+									{verifying ? 'Confirmando...' : 'Confirmar'}
+								</button>
+								<button
+									onClick={() => { setPendingSession(null); setVerificationCode(''); setVerifyError(null); }}
+									className="px-2 py-1 rounded-lg font-semibold"
+								>
+									Cancelar
+								</button>
+							</div>
+							{verifyError && <div className="mt-2 text-sm text-red-600">{verifyError}</div>}
+						</div>
+					)}
 				</div>
 			</Card>
 			<Card title="Sesiones" desc="Cierra la sesión actual en este dispositivo.">

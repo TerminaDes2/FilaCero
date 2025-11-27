@@ -3,8 +3,10 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
 import {
   UpdatePedidoDto,
@@ -14,7 +16,10 @@ import {
 
 @Injectable()
 export class PedidosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   private normalizeId(id: string | number | bigint): bigint {
     if (typeof id === 'bigint') {
@@ -110,6 +115,10 @@ export class PedidosService {
           },
         });
       });
+
+      // NOTA: El email de confirmación se envía desde PaymentsService cuando el pago es exitoso
+      // Aquí NO enviamos notificación para evitar duplicados
+      // Solo se notifica al POS mediante WebSocket cuando el pedido es confirmado (pagado)
 
       return {
         success: true,
@@ -297,14 +306,60 @@ export class PedidosService {
 
   /**
    * Actualizar el estado del pedido (con lógica de triggers)
+   * IMPORTANTE: Incluye validación de ownership del negocio
    */
-  async updateEstado(id: string | number | bigint, updateEstadoDto: UpdateEstadoPedidoDto) {
+  async updateEstado(
+    id: string | number | bigint,
+    updateEstadoDto: UpdateEstadoPedidoDto,
+    userContext?: { id_usuario: number; id_negocio?: number; rol?: string },
+  ) {
     const pedidoId = this.normalizeId(id);
     // Verificar que existe
     const pedidoActual = await this.findOne(pedidoId);
 
     const estadoAnterior = pedidoActual.data.estado;
     const nuevoEstado = updateEstadoDto.estado;
+
+    // VALIDACIÓN DE OWNERSHIP (crítico para seguridad)
+    if (userContext) {
+      const pedidoIdNegocio = Number(pedidoActual.data.id_negocio);
+      const userIdNegocio = userContext.id_negocio;
+
+      // Verificar que el usuario pertenece al negocio del pedido
+      if (userIdNegocio && userIdNegocio !== pedidoIdNegocio) {
+        throw new ForbiddenException(
+          `No tienes permiso para modificar pedidos del negocio ${pedidoIdNegocio}. ` +
+            `Tu negocio es ${userIdNegocio}.`,
+        );
+      }
+
+      // Si no tiene id_negocio en el token, verificar que es owner del negocio
+      if (!userIdNegocio && userContext.rol !== 'superadmin') {
+        // Verificar ownership mediante consulta a BD
+        const negocio = await this.prisma.negocio.findFirst({
+          where: {
+            id_negocio: pedidoActual.data.id_negocio,
+            owner_id: BigInt(userContext.id_usuario),
+          },
+        });
+
+        if (!negocio) {
+          throw new ForbiddenException(
+            `No tienes permiso para modificar pedidos de este negocio.`,
+          );
+        }
+      }
+    }
+
+    // Si el estado es el mismo, no hacer nada
+    if (estadoAnterior === nuevoEstado) {
+      return {
+        success: true,
+        message: `Pedido ya está en estado: ${nuevoEstado}`,
+        data: pedidoActual.data,
+        estado_anterior: estadoAnterior,
+      };
+    }
 
     // Validar transiciones de estado permitidas
     this.validarTransicionEstado(estadoAnterior, nuevoEstado);
@@ -334,6 +389,51 @@ export class PedidosService {
         },
       });
 
+      // Enviar email de confirmación cuando el pedido es aceptado
+      // CONDICIONES para enviar email:
+      // 1. Viene de 'pendiente' (primera vez que se acepta)
+      // 2. Va a 'confirmado' o 'en_preparacion' (estados de aceptación)
+      // 3. NO tiene fecha_confirmacion previa (evita duplicado con PaymentsService)
+      const yaFueConfirmadoPorPago = pedidoActual.data.fecha_confirmacion != null;
+      const esAceptacionInicial = estadoAnterior === 'pendiente' && 
+        (nuevoEstado === 'confirmado' || nuevoEstado === 'en_preparacion');
+      const debeEnviarEmail = esAceptacionInicial && !yaFueConfirmadoPorPago;
+      
+      if (debeEnviarEmail) {
+        try {
+          await this.notificationsService.notifyNewOrder(pedidoActualizado);
+          console.log(`✅ Email de confirmación enviado para pedido ${pedidoId} (${estadoAnterior} → ${nuevoEstado})`);
+        } catch (emailError) {
+          console.error('⚠️ Error enviando email de confirmación:', emailError);
+          // No lanzar error para no afectar el flujo
+        }
+      }
+
+      // Notificar cambio de estado al cliente (WebSocket y notificaciones BD)
+      // SOLO si NO acabamos de enviar el email de confirmación inicial
+      if (!debeEnviarEmail) {
+        try {
+          await this.notificationsService.notifyOrderStatusChange(
+            pedidoActualizado,
+            nuevoEstado,
+          );
+        } catch (notifError) {
+          console.error('Error enviando notificación de cambio de estado:', notifError);
+        }
+      }
+
+      // Si el pedido llega a estado final, cerrar sala WebSocket
+      if (nuevoEstado === 'entregado' || nuevoEstado === 'cancelado') {
+        try {
+          const gateway = this.notificationsService['gateway'];
+          if (gateway && typeof gateway.closeOrderRoom === 'function') {
+            gateway.closeOrderRoom(Number(pedidoId));
+          }
+        } catch (closeError) {
+          console.error('Error cerrando sala de pedido:', closeError);
+        }
+      }
+
       return {
         success: true,
         message: `Pedido actualizado a estado: ${nuevoEstado}`,
@@ -342,11 +442,22 @@ export class PedidosService {
       };
     } catch (error) {
       // Si el error es de stock insuficiente (del trigger), retornarlo amigable
-      if (error.message?.includes('Stock insuficiente')) {
-        throw new BadRequestException(error.message);
+      const errorMessage = error.message || String(error);
+      
+      // Extraer mensaje limpio de stock insuficiente
+      if (errorMessage.includes('Stock insuficiente')) {
+        const match = errorMessage.match(/Stock insuficiente para producto (\d+): disponible (\d+) < requerido (\d+)/);
+        if (match) {
+          const [, productoId, disponible, requerido] = match;
+          throw new BadRequestException(
+            `No hay suficiente stock para completar el pedido. Producto ${productoId}: disponible ${disponible}, necesario ${requerido}`,
+          );
+        }
+        throw new BadRequestException('Stock insuficiente para completar el pedido');
       }
+      
       throw new InternalServerErrorException(
-        'Error al actualizar el estado: ' + error.message,
+        'Error al actualizar el estado: ' + errorMessage,
       );
     }
   }
@@ -394,7 +505,7 @@ export class PedidosService {
    */
   private validarTransicionEstado(estadoActual: string, nuevoEstado: string) {
     const transicionesPermitidas: Record<string, string[]> = {
-      pendiente: ['confirmado', 'cancelado'],
+      pendiente: ['confirmado', 'en_preparacion', 'cancelado'], // Permitir saltar confirmado
       confirmado: ['en_preparacion', 'cancelado'],
       en_preparacion: ['listo', 'cancelado'],
       listo: ['entregado'],

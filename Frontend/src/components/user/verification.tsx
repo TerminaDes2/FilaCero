@@ -49,8 +49,8 @@ export default function VerificationSection({ user }: VerificationSectionProps) 
     {
       id: 'profile',
       label: 'Perfil completo',
-      status: user.fecha_nacimiento && user.numero_telefono ? 'verified' : 'pending',
-      description: user.fecha_nacimiento && user.numero_telefono ? 'Perfil completo' : 'Completa tu información',
+      status: user.numero_telefono && user.correo_electronico ? 'verified' : 'pending',
+      description: user.numero_telefono && user.correo_electronico ? 'Perfil completo' : 'Completa tu información',
       icon: Shield,
     },
   ];

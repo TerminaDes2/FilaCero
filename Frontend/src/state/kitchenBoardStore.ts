@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api, activeBusiness } from '../lib/api';
+import type { EventEnvelope } from '../lib/websocket';
 
 export type KitchenStatus = 'pending' | 'prepping' | 'ready' | 'served';
 export type PedidoEstado = 'pendiente' | 'confirmado' | 'en_preparacion' | 'listo' | 'entregado' | 'cancelado';
@@ -45,11 +46,25 @@ interface KitchenBoardState {
   lastSyncAt?: string;
   error?: string | null;
   filters: KitchenFilters;
+  
+  // WebSocket state
+  wsConnected: boolean;
+  wsReconnectionAttempts: number;
+  processedEventIds: Set<string>;
+  showReconnectionBanner: boolean;
+  
   hydrateFromAPI: () => Promise<void>;
   move: (id: string, to: KitchenStatus) => Promise<void>;
   addMockTicket: () => void;
   setFilters: (partial: Partial<KitchenFilters>) => void;
   clear: () => void;
+  
+  // WebSocket methods
+  addOrUpdateTicket: (eventEnvelope: EventEnvelope) => void;
+  setWsConnected: (connected: boolean) => void;
+  setWsReconnectionAttempts: (attempts: number) => void;
+  handleMaxReconnections: () => void;
+  dismissReconnectionBanner: () => void;
 }
 
 const RAW_PIPELINE: PedidoEstado[] = ['pendiente', 'confirmado', 'en_preparacion', 'listo', 'entregado'];
@@ -170,6 +185,12 @@ export const useKitchenBoard = create<KitchenBoardState>()(
         soundOn: true,
         autoRefresh: true,
       },
+      
+      // WebSocket state initialization
+      wsConnected: false,
+      wsReconnectionAttempts: 0,
+      processedEventIds: new Set<string>(),
+      showReconnectionBanner: false,
       async hydrateFromAPI() {
         const biz = activeBusiness.get();
         if (!biz) {
@@ -308,6 +329,73 @@ export const useKitchenBoard = create<KitchenBoardState>()(
       },
       clear() {
         set({ tickets: [], lastSyncAt: undefined });
+      },
+      
+      // WebSocket methods
+      addOrUpdateTicket(eventEnvelope: EventEnvelope) {
+        const { eventId, payload } = eventEnvelope;
+        
+        // Validar que el evento tiene ID
+        if (!eventId) {
+          console.warn('[KitchenBoard] Event without eventId, skipping');
+          return;
+        }
+        
+        // Deduplicación: verificar si ya procesamos este evento
+        const state = get();
+        if (state.processedEventIds.has(eventId)) {
+          console.log(`[KitchenBoard] Event ${eventId} already processed, skipping`);
+          return;
+        }
+        
+        // Agregar a cache de eventos procesados
+        const newProcessedIds = new Set(state.processedEventIds);
+        newProcessedIds.add(eventId); // eventId ya validado arriba
+        
+        // Mantener cache bajo control (últimos 100)
+        if (newProcessedIds.size > 100) {
+          const [firstItem] = Array.from(newProcessedIds);
+          if (firstItem) {
+            newProcessedIds.delete(firstItem);
+          }
+        }
+        
+        // Procesar el pedido del payload
+        const ticket = mapPedidoToTicket(payload);
+        
+        if (ticket) {
+          // Actualizar o agregar ticket
+          const filtered = state.tickets.filter((t) => t.id !== ticket.id);
+          set({
+            tickets: sortTickets([ticket, ...filtered]),
+            lastSyncAt: new Date().toISOString(),
+            processedEventIds: newProcessedIds,
+            error: null,
+          });
+          
+          console.log(`[KitchenBoard] Ticket ${ticket.id} updated via WebSocket`);
+        }
+      },
+      
+      setWsConnected(connected: boolean) {
+        set({ wsConnected: connected });
+      },
+      
+      setWsReconnectionAttempts(attempts: number) {
+        set({ wsReconnectionAttempts: attempts });
+      },
+      
+      handleMaxReconnections() {
+        set({
+          wsConnected: false,
+          showReconnectionBanner: true,
+          error: 'Conexión perdida. Por favor recarga la página.',
+        });
+        console.error('[KitchenBoard] Max reconnections reached');
+      },
+      
+      dismissReconnectionBanner() {
+        set({ showReconnectionBanner: false });
       },
     }),
     {

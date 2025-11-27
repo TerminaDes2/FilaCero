@@ -22,7 +22,7 @@ const stripePk =
   '';
 const stripePromise = stripePk ? loadStripe(stripePk) : null;
 
-function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCartAndRedirect }: any) {
+function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCartAndRedirect, onReady }: any) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -92,12 +92,10 @@ function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCa
       const pi = result.paymentIntent;
       if (pi && pi.status === 'succeeded') {
         // Si el usuario pidió guardar la tarjeta, intentamos guardar el método
-        if (saveCard && pi.payment_method) {
+        if (saveCard && (pi as any).payment_method) {
           try {
-            await api.savePaymentMethod({ paymentMethodId: String(pi.payment_method), makeDefault: true });
-          } catch (err) {
-            console.warn('No se pudo guardar el método de pago', err);
-          }
+            await api.savePaymentMethod({ paymentMethodId: String((pi as any).payment_method), makeDefault: true });
+          } catch (err) { console.warn('No se pudo guardar el método de pago', err); }
         }
         onSuccess?.();
         // Limpiar carrito y redirigir
@@ -112,6 +110,14 @@ function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCa
       setLoading(false);
     }
   };
+
+  // Exponer handlePay al componente padre
+  useEffect(() => {
+    if (onReady) {
+      onReady({ handlePay });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onReady]);
 
   return (
     <div className="space-y-3">
@@ -188,12 +194,13 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [hasCard, setHasCard] = useState(false);
-  const [saveCard, setSaveCard] = useState(false);
   const [verificationsOk, setVerificationsOk] = useState(false);
   const [business, setBusiness] = useState<BusinessSummary | null>(null);
   const [bizLoading, setBizLoading] = useState(true);
   const [pendingPedidoId, setPendingPedidoId] = useState<string | null>(null);
+  const [cardFormRef, setCardFormRef] = useState<{ handlePay: () => Promise<void> } | null>(null);
+  const [hasCard, setHasCard] = useState(false);
+  const [saveCard, setSaveCard] = useState(false);
   const cardOnlyMethods = useMemo(() => ["tarjeta"] as Array<"efectivo" | "tarjeta">, []);
 
   useEffect(() => {
@@ -230,13 +237,12 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [userLoading, isAuthenticated, router]);
 
-  // Recompute verifications and load payment methods when user or auth state changes
+  // Recompute verifications when user or auth state changes
   useEffect(() => {
     if (!isAuthenticated) {
       setVerificationsOk(false);
-      setHasCard(false);
       return;
     }
 
@@ -245,24 +251,6 @@ export default function CheckoutPage() {
       const credentialVerified = user.verifications?.credential ?? Boolean((user as any).credencial_verificada);
       setVerificationsOk(Boolean(emailVerified && credentialVerified));
     }
-
-    let activeLocal = true;
-    const loadMethods = async () => {
-      try {
-        const methods = await api.getPaymentMethods();
-        if (!activeLocal) return;
-        setHasCard(Array.isArray(methods) && methods.length > 0);
-      } catch (err) {
-        console.warn("[checkout] No se pudieron cargar métodos de pago", err);
-        if (activeLocal) setHasCard(false);
-      }
-    };
-
-    void loadMethods();
-
-    return () => {
-      activeLocal = false;
-    };
   }, [isAuthenticated, user]);
 
   const grandTotal = useMemo(() => {
@@ -283,7 +271,7 @@ export default function CheckoutPage() {
     return true;
   };
 
-  // Permitimos pago sin tarjeta guardada: el usuario puede ingresar una tarjeta en el checkout
+  // Cambiar el label del botón si hay un pedido pendiente con tarjeta
   const confirmDisabled =
     !items.length || !paymentMethod || !deliveryTime || isSubmitting || !verificationsOk;
   const primaryDisabled =
@@ -291,7 +279,9 @@ export default function CheckoutPage() {
   const primaryLabel =
     activeStep === steps.length
       ? isSubmitting
-        ? "Enviando pedido…"
+        ? "Procesando…"
+        : pendingPedidoId && paymentMethod === "tarjeta"
+        ? "Pagar ahora"
         : "Enviar a cocina"
       : activeStep === steps.length - 1
       ? "Ir a confirmación"
@@ -310,6 +300,12 @@ export default function CheckoutPage() {
     if (!isAuthenticated) {
       setSubmitError("Inicia sesión para confirmar tu pedido.");
       router.push("/auth/login?redirect=/checkout");
+      return;
+    }
+
+    // Si ya existe un pedido pendiente con tarjeta, ejecutar el pago
+    if (pendingPedidoId && paymentMethod === 'tarjeta' && cardFormRef) {
+      await cardFormRef.handlePay();
       return;
     }
 
@@ -486,6 +482,7 @@ export default function CheckoutPage() {
                         setSuccessMessage('Pago procesado. Pedido enviado a cocina.');
                         setTimeout(() => router.push('/shop?order=confirmed'), 900);
                       }}
+                      onReady={(ref: any) => setCardFormRef(ref)}
                     />
                   </Elements>
                 ) : (

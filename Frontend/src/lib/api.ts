@@ -2,6 +2,16 @@
 // Usa la base externa si está definida; si no, utiliza la ruta relativa '/api'
 // que será proxyada por Next.js según las rewrites del next.config.mjs.
 function resolveApiBase(): string {
+  // En el cliente (navegador), siempre usar localhost:3000 para desarrollo
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    // Si estamos en localhost (desarrollo), conectar directamente al backend
+    if (/^(localhost|127\.0\.0\.1)$/i.test(hostname)) {
+      return `${protocol}//${hostname}:3000/api`;
+    }
+  }
+  
+  // En servidor o producción, usar la variable de entorno
   const raw = (globalThis as any).process?.env?.NEXT_PUBLIC_API_BASE as string | undefined;
   
   // Si NEXT_PUBLIC_API_BASE está definida en build time (Docker), usarla pero adaptarla al contexto
@@ -310,6 +320,7 @@ export interface UserInfo {
   accountNumber?: string | null;
   edad?: number | null;
   age?: number | null;
+  ordersCount?: number;
   verificado?: boolean;
   verified?: boolean;
   correo_verificado?: boolean;
@@ -889,6 +900,7 @@ export const api = {
     payload: Partial<{
       name: string | null;
       phoneNumber: string | null;
+      email: string | null;
       newPassword: string | null;
       avatarUrl: string | null;
       credentialUrl: string | null;
@@ -899,6 +911,24 @@ export const api = {
     apiFetch<any>(`users/${id}`, {
       method: "PUT",
       body: JSON.stringify(payload),
+    }),
+  uploadUserAvatar: (id: string | number, file: File) => {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    return apiFetch<any>(`users/${id}/avatar`, {
+      method: 'POST',
+      body: fd,
+    });
+  },
+  setUserAvatarByUrl: (id: string | number, avatarUrl: string) =>
+    apiFetch<any>(`users/${id}/avatar-url`, {
+      method: 'POST',
+      body: JSON.stringify({ avatarUrl }),
+    }),
+  confirmProfileUpdate: (session: string, code: string) =>
+    apiFetch<any>(`users/confirm-update`, {
+      method: "POST",
+      body: JSON.stringify({ session, code }),
     }),
 };
 

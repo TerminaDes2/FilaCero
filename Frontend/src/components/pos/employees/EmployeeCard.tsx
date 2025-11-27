@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Employee, useEmployeesStore } from '../../../pos/employeesStore';
 
 interface EmployeeCardProps {
@@ -87,7 +88,7 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
           style={{ background: isActive ? 'var(--fc-brand-600)' : '#999' }}
         >
           {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.nombre} className='w-full h-full rounded-full object-cover' />
+            <Image src={user.avatar_url} alt={user.nombre} width={48} height={48} className='w-full h-full rounded-full object-cover' />
           ) : (
             initials
           )}
@@ -169,7 +170,7 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
           style={{ background: isActive ? 'var(--fc-brand-600)' : '#999' }}
         >
           {employee.usuario.avatar_url ? (
-            <img src={employee.usuario.avatar_url} alt={employee.usuario.nombre} className='w-full h-full rounded-full object-cover' />
+            <Image src={employee.usuario.avatar_url} alt={employee.usuario.nombre} width={56} height={56} className='w-full h-full rounded-full object-cover' />
           ) : (
             initials
           )}
