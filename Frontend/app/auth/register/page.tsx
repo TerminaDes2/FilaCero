@@ -43,14 +43,14 @@ function RegisterPageWithRole() {
 
 export default function RegisterPage() {
   return (
-    <div>
+    <>
       <div className="fixed top-4 left-4 z-50">
         {/* keep brand if layout centers it; RegisterLayout already renders brand chip, but keep left spot reserved */}
       </div>
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed bottom-6 right-6 z-50">
         <LanguageSelector />
       </div>
       <RegisterPageWithRole />
-    </div>
+    </>
   );
 }

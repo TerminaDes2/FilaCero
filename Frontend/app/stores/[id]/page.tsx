@@ -10,6 +10,7 @@ import StoreLoading from "../../../src/components/shop/stores/StoreLoading";
 import NavbarStore from "../../../src/components/shop/navbarStore";
 import StoreReviews from "../../../src/components/shop/stores/StoreReviews";
 import { resolveProductImage } from "../../../src/lib/media";
+import { useCart } from "../../../src/components/shop/CartContext";
 
 type Product = {
   id_producto: number;
@@ -56,7 +57,7 @@ export default function StorePage() {
   useEffect(() => {
     const fetchStore = async () => {
       if (!storeId) {
-        setError("ID de tienda no válido");
+        setError("ID de tienda no valido");
         setLoading(false);
         return;
       }
@@ -70,7 +71,7 @@ export default function StorePage() {
         }
         setStore(data);
       } catch (err: any) {
-        console.error("❌ Error al cargar tienda:", err);
+        console.error("Error al cargar tienda:", err);
         setError("No se pudo cargar la tienda");
       } finally {
         setLoading(false);
@@ -147,17 +148,21 @@ export default function StorePage() {
 
   if (error || !store) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#fefcf8] to-white">
+      <div className="min-h-screen bg-[var(--fc-surface-base)] text-[var(--fc-text-primary)] dark:bg-[color:rgba(3,6,16,1)] dark:text-white">
         <NavbarStore />
         <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center">
-          <div className="mb-4 text-5xl">😞</div>
-          <h1 className="text-2xl font-bold text-gray-900">{error || "Tienda no encontrada"}</h1>
-          <p className="mt-3 text-sm text-gray-500">La tienda que buscas no existe o no está disponible.</p>
+          <div className="mb-4 text-5xl" aria-hidden>
+            :(
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{error || "Tienda no encontrada"}</h1>
+          <p className="mt-3 text-sm text-gray-500 dark:text-white/70">
+            La tienda que buscas no existe o no esta disponible.
+          </p>
           <Link
             href="/shop"
-            className="mt-6 inline-flex items-center justify-center rounded-xl bg-[var(--fc-brand-600)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)]"
+            className="mt-6 inline-flex items-center justify-center rounded-xl bg-[var(--fc-brand-600)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
           >
-            Volver a la tienda en línea
+            Volver a la tienda en linea
           </Link>
         </div>
       </div>
@@ -167,7 +172,8 @@ export default function StorePage() {
   const businessId = store.id_negocio.toString();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fefcf8] via-white to-[#f6fbf9]">
+    <div className="relative min-h-screen bg-[var(--fc-surface-base)] text-[var(--fc-text-primary)] dark:bg-[color:rgba(3,6,16,1)] dark:text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--fc-brand-100)_0%,transparent_60%)] opacity-60 dark:bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18)_0%,transparent_65%)]" />
       <NavbarStore />
       <StoreHeader store={store} metrics={metrics} />
 
@@ -175,8 +181,8 @@ export default function StorePage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr),320px]">
             <main className="space-y-10">
-              <SignatureShowcase products={signatureProducts} />
-              <StoreProductList productos={productos} />
+              <SignatureShowcase products={signatureProducts} storeId={businessId} storeName={store.nombre} />
+              <StoreProductList productos={productos} storeId={businessId} storeName={store.nombre} />
               <StoreReviews storeId={businessId} />
             </main>
 
@@ -192,16 +198,33 @@ export default function StorePage() {
   );
 }
 
-const SignatureShowcase: React.FC<{ products: Product[] }> = ({ products }) => {
+const SignatureShowcase: React.FC<{ products: Product[]; storeId: string; storeName: string }> = ({ products, storeId, storeName }) => {
+  const { addToCart } = useCart();
   if (!products.length) return null;
+
+  const handleAdd = (product: Product) => {
+    addToCart(
+      {
+        id: product.id_producto,
+        nombre: product.nombre,
+        precio: Number(product.precio ?? 0),
+        imagen: resolveProductImage(product) ?? undefined,
+        id_negocio: storeId,
+      },
+      1,
+    );
+  };
+
   return (
-    <section className="rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_24px_48px_-32px_rgba(15,118,110,0.35)]">
-      <header className="flex flex-col gap-2 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+    <section className="rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_24px_48px_-32px_rgba(15,118,110,0.35)] dark:border-white/10 dark:bg-[color:rgba(10,14,28,0.92)]">
+      <header className="flex flex-col gap-2 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Favoritos de la casa</h2>
-          <p className="text-sm text-gray-500">Lo que más sale del horno según el inventario en vivo</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Favoritos de la casa</h2>
+          <p className="text-sm text-gray-500 dark:text-white/70">Lo mas vendido del inventario en vivo</p>
         </div>
-        <span className="text-xs font-semibold uppercase tracking-wide text-brand-500">Curado automáticamente</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-[var(--fc-brand-600)] dark:text-[var(--fc-brand-200)]">
+          Curado automaticamente
+        </span>
       </header>
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         {products.map((product) => {
@@ -209,9 +232,9 @@ const SignatureShowcase: React.FC<{ products: Product[] }> = ({ products }) => {
           return (
             <div
               key={product.id_producto}
-              className="relative overflow-hidden rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-emerald-50 p-5 shadow-sm"
+              className="relative overflow-hidden rounded-2xl border border-[var(--fc-brand-100)] bg-gradient-to-br from-[var(--fc-brand-50)] via-white to-emerald-50 p-5 shadow-sm transition hover:-translate-y-0.5 dark:border-white/10 dark:from-[color:rgba(46,56,96,0.55)] dark:via-[color:rgba(17,24,39,0.75)] dark:to-[color:rgba(16,185,129,0.15)]"
             >
-              <div className="relative mb-4 h-32 w-full overflow-hidden rounded-2xl bg-white/60">
+              <div className="relative mb-4 h-32 w-full overflow-hidden rounded-2xl bg-white/60 dark:bg-[color:rgba(15,23,42,0.65)]">
                 {imageUrl ? (
                   <Image
                     src={imageUrl}
@@ -222,20 +245,32 @@ const SignatureShowcase: React.FC<{ products: Product[] }> = ({ products }) => {
                     unoptimized
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-brand-400">
+                  <div className="flex h-full items-center justify-center text-sm text-[var(--fc-brand-500)] dark:text-[var(--fc-brand-200)]/80">
                     Imagen no disponible
                   </div>
                 )}
-                <span className="absolute right-4 top-4 rounded-full bg-white/75 px-3 py-1 text-xs font-semibold text-brand-600">
+                <span className="absolute right-4 top-4 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[var(--fc-brand-600)] dark:bg-[color:rgba(17,24,39,0.8)] dark:text-[var(--fc-brand-200)]">
                   {product.categoria || "Especial"}
                 </span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{product.nombre}</h3>
-              <p className="mt-2 text-sm text-gray-600 line-clamp-3">{product.descripcion || "Este producto está ganando popularidad entre los clientes."}</p>
-              <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
-                <span className="font-semibold text-brand-700">{moneyFormatter.format(Number(product.precio ?? 0))}</span>
+              <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 dark:text-white">{product.nombre}</h3>
+              <p className="mt-2 text-sm text-gray-600 line-clamp-3 dark:text-white/70">
+                {product.descripcion || "Este producto esta ganando popularidad entre los clientes."}
+              </p>
+              <div className="mt-6 flex items-center justify-between text-sm text-gray-500 dark:text-white/60">
+                <span className="font-semibold text-[var(--fc-brand-700)] dark:text-[var(--fc-brand-200)]">
+                  {moneyFormatter.format(Number(product.precio ?? 0))}
+                </span>
                 <span>Stock: {product.stock ?? 0}</span>
               </div>
+              <button
+                type="button"
+                onClick={() => handleAdd(product)}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--fc-brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-200)] focus:ring-offset-1 dark:hover:bg-[var(--fc-brand-400)]"
+              >
+                Agregar al carrito
+              </button>
+              <span className="mt-2 block text-xs text-gray-400 dark:text-white/50">{storeName}</span>
             </div>
           );
         })}
@@ -249,20 +284,20 @@ const ContactPanel: React.FC<{ store: Store }> = ({ store }) => {
   const encodedAddress = address ? `https://maps.google.com/?q=${encodeURIComponent(address)}` : null;
 
   return (
-    <section className="rounded-3xl border border-white/70 bg-white/95 p-5 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-900">Contacto directo</h3>
-      <p className="mt-1 text-sm text-gray-500">Conecta con el equipo antes de tu visita.</p>
-      <div className="mt-4 space-y-3 text-sm text-gray-700">
+    <section className="rounded-3xl border border-white/70 bg-white/95 p-5 shadow-sm dark:border-white/10 dark:bg-[color:rgba(15,19,34,0.92)]">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Contacto directo</h3>
+      <p className="mt-1 text-sm text-gray-500 dark:text-white/70">Conecta con el equipo antes de tu visita.</p>
+      <div className="mt-4 space-y-3 text-sm text-gray-700 dark:text-white/70">
         {address && (
-          <div className="rounded-2xl bg-gray-50 px-4 py-3">
-            <p className="font-semibold">Ubicación</p>
-            <p className="text-gray-500">{address}</p>
+          <div className="rounded-2xl bg-gray-50 px-4 py-3 dark:bg-white/5">
+            <p className="font-semibold text-gray-900 dark:text-white">Ubicacion</p>
+            <p className="text-gray-500 dark:text-white/70">{address}</p>
             {encodedAddress && (
               <a
                 href={encodedAddress}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 inline-flex text-xs font-semibold text-brand-600 hover:text-brand-700"
+                className="mt-2 inline-flex text-xs font-semibold text-[var(--fc-brand-600)] hover:text-[var(--fc-brand-500)] dark:text-[var(--fc-brand-200)] dark:hover:text-[var(--fc-brand-100)]"
               >
                 Abrir en Maps ↗
               </a>
@@ -270,18 +305,21 @@ const ContactPanel: React.FC<{ store: Store }> = ({ store }) => {
           </div>
         )}
         {store.telefono && (
-          <div className="rounded-2xl bg-gray-50 px-4 py-3">
-            <p className="font-semibold">Teléfono</p>
-            <a href={`tel:${store.telefono}`} className="text-brand-600 hover:text-brand-700">
+          <div className="rounded-2xl bg-gray-50 px-4 py-3 dark:bg-white/5">
+            <p className="font-semibold text-gray-900 dark:text-white">Telefono</p>
+            <a
+              href={`tel:${store.telefono}`}
+              className="text-[var(--fc-brand-600)] hover:text-[var(--fc-brand-500)] dark:text-[var(--fc-brand-200)] dark:hover:text-[var(--fc-brand-100)]"
+            >
               {store.telefono}
             </a>
           </div>
         )}
-        <div className="rounded-2xl bg-gray-50 px-4 py-3">
-          <p className="font-semibold">Correo electrónico</p>
+        <div className="rounded-2xl bg-gray-50 px-4 py-3 dark:bg-white/5">
+          <p className="font-semibold text-gray-900 dark:text-white">Correo electronico</p>
           <a
             href={`mailto:${store.correo ?? "contacto@filacero.com"}`}
-            className="text-brand-600 hover:text-brand-700"
+            className="text-[var(--fc-brand-600)] hover:text-[var(--fc-brand-500)] dark:text-[var(--fc-brand-200)] dark:hover:text-[var(--fc-brand-100)]"
           >
             {store.correo ?? "contacto@filacero.com"}
           </a>
@@ -299,24 +337,26 @@ const InfoBadge: React.FC<{
     topCategory: string | null;
   };
 }> = ({ metrics }) => (
-  <section className="rounded-3xl border border-white/70 bg-gradient-to-br from-emerald-500/10 via-white to-white/80 p-5 shadow-sm">
-    <h3 className="text-sm font-semibold uppercase tracking-wide text-brand-600">Resumen del catálogo</h3>
+  <section className="rounded-3xl border border-white/70 bg-gradient-to-br from-emerald-500/10 via-white to-white/80 p-5 shadow-sm dark:border-white/10 dark:from-[color:rgba(21,94,117,0.28)] dark:via-[color:rgba(15,23,42,0.8)] dark:to-[color:rgba(15,118,110,0.15)]">
+    <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--fc-brand-600)] dark:text-[var(--fc-brand-200)]">
+      Resumen del catalogo
+    </h3>
     <dl className="mt-4 space-y-3">
       <div className="flex items-center justify-between">
-        <dt className="text-sm text-gray-500">Productos activos</dt>
-        <dd className="text-base font-semibold text-gray-900">{metrics.productCount}</dd>
+        <dt className="text-sm text-gray-500 dark:text-white/60">Productos activos</dt>
+        <dd className="text-base font-semibold text-gray-900 dark:text-white">{metrics.productCount}</dd>
       </div>
       <div className="flex items-center justify-between">
-        <dt className="text-sm text-gray-500">Categorías</dt>
-        <dd className="text-base font-semibold text-gray-900">{metrics.categories.length}</dd>
+        <dt className="text-sm text-gray-500 dark:text-white/60">Categorias</dt>
+        <dd className="text-base font-semibold text-gray-900 dark:text-white">{metrics.categories.length}</dd>
       </div>
       <div className="flex items-center justify-between">
-        <dt className="text-sm text-gray-500">Favorito</dt>
-        <dd className="text-base font-semibold text-gray-900">{metrics.topCategory ?? "Por definir"}</dd>
+        <dt className="text-sm text-gray-500 dark:text-white/60">Favorito</dt>
+        <dd className="text-base font-semibold text-gray-900 dark:text-white">{metrics.topCategory ?? "Por definir"}</dd>
       </div>
       <div className="flex items-center justify-between">
-        <dt className="text-sm text-gray-500">Ticket promedio</dt>
-        <dd className="text-base font-semibold text-gray-900">
+        <dt className="text-sm text-gray-500 dark:text-white/60">Ticket promedio</dt>
+        <dd className="text-base font-semibold text-gray-900 dark:text-white">
           {metrics.averagePrice != null ? moneyFormatter.format(metrics.averagePrice) : "—"}
         </dd>
       </div>
@@ -325,9 +365,9 @@ const InfoBadge: React.FC<{
 );
 
 const SharePanel: React.FC<{ store: Store }> = ({ store }) => (
-  <section className="rounded-3xl border border-white/70 bg-white/95 p-5 text-sm text-gray-600 shadow-sm">
-    <h3 className="text-lg font-semibold text-gray-900">Comparte la tienda</h3>
-    <p className="mt-2 text-sm text-gray-500">
+  <section className="rounded-3xl border border-white/70 bg-white/95 p-5 text-sm text-gray-600 shadow-sm dark:border-white/10 dark:bg-[color:rgba(15,19,34,0.92)] dark:text-white/70">
+    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Comparte la tienda</h3>
+    <p className="mt-2 text-sm text-gray-500 dark:text-white/70">
       Invita a tus clientes a pre-ordenar desde la tienda digital y evita filas en mostrador.
     </p>
     <div className="mt-4 flex flex-col gap-2">
@@ -341,11 +381,11 @@ const SharePanel: React.FC<{ store: Store }> = ({ store }) => (
               .catch(() => alert("No se pudo copiar el enlace"));
           }
         }}
-        className="inline-flex items-center justify-center rounded-lg bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--fc-brand-500)]"
+        className="inline-flex items-center justify-center rounded-lg bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--fc-brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-200)] focus:ring-offset-1 dark:hover:bg-[var(--fc-brand-400)]"
       >
         Copiar enlace
       </button>
-      <span className="text-xs text-gray-400">{store.nombre}</span>
+      <span className="text-xs text-gray-400 dark:text-white/50">{store.nombre}</span>
     </div>
   </section>
 );

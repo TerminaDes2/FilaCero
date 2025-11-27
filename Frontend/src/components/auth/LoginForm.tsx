@@ -220,7 +220,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	return (
 		<form onSubmit={submit} className="space-y-6" aria-describedby="login-hint">
 			{/* Supportive microcopy / context */}
-			<div id="login-hint" className="text-[11px] leading-relaxed -mb-1 rounded-lg border border-white/60 bg-gradient-to-r from-brand-50/70 to-emerald-50/60 px-3 py-2 text-gray-600 flex items-start gap-3">
+			<div id="login-hint" className="-mb-1 flex items-start gap-3 rounded-lg border border-white/60 bg-gradient-to-r from-brand-50/70 to-emerald-50/60 px-3 py-2 text-[11px] leading-relaxed text-gray-600 shadow-sm dark:border-slate-700/70 dark:bg-gradient-to-r dark:from-slate-900/75 dark:via-slate-900/80 dark:to-slate-900/70 dark:text-slate-200/90 dark:shadow-[0_18px_32px_-28px_rgba(2,6,23,0.7)]">
 				<svg className='w-5 h-5 mt-0.5 text-brand-600' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
 					<rect x='3' y='10' width='18' height='11' rx='2' />
 					<path strokeLinecap='round' strokeLinejoin='round' d='M8 10V8a4 4 0 0 1 8 0v2' />
@@ -263,7 +263,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
 			<div className="flex items-center justify-between text-xs text-gray-600 dark:text-slate-400">
 				<label className="inline-flex items-center gap-2 cursor-pointer select-none">
-					<input type='checkbox' className='appearance-none h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:bg-brand-600 checked:border-brand-600' />
+					<input type='checkbox' className='h-4 w-4 appearance-none rounded border-gray-300 text-brand-600 focus:ring-brand-500 checked:border-brand-600 checked:bg-brand-600 dark:border-slate-600 dark:bg-slate-900 dark:checked:border-brand-500 dark:focus:ring-offset-slate-950' />
 					<span>{t('auth.login.remember')}</span>
 				</label>
 				<button type='button' className='font-medium text-brand-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded'>{t('auth.login.forgot')}</button>
@@ -272,7 +272,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			<button
 				type="submit"
 				disabled={!formValid || submitting}
-				className="group relative w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 shadow-sm hover:shadow-md transition active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-400"
+				className="group relative inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f43f5e] via-[#ec4899] to-[#14b8a6] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-xl hover:brightness-[1.02] active:scale-[0.985] focus:outline-none focus:ring-2 focus:ring-[#f472b6]/60 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:from-gray-500 disabled:via-gray-500 disabled:to-gray-500 dark:from-[#fb7185] dark:via-[#f472b6] dark:to-[#22d3ee] dark:shadow-[0_18px_54px_-30px_rgba(45,212,191,0.55)] dark:focus:ring-[#22d3ee]/60 dark:focus:ring-offset-slate-950"
 			>
 				<span className="absolute -top-2 right-2 kbd-hint opacity-0 group-focus-visible:opacity-100">Enter para entrar</span>
 				{submitting && (
@@ -286,13 +286,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 				{submitting ? t('auth.login.submitting') : t('auth.login.submit')}
 			</button>
 
-			<div className="text-center pt-1">
-				<div className="border-t border-gray-200 pt-3">
-					<p className="text-xs text-gray-600">
+			<div className="pt-1 text-center">
+				<div className="border-t border-gray-200 pt-3 dark:border-slate-800/70">
+					<p className="text-xs text-gray-600 dark:text-slate-300">
 						{t('auth.login.newAccount')}&nbsp;
 						<a 
 							href="/register"
-							className="text-brand-600 font-medium hover:underline"
+							className="font-medium text-brand-600 hover:underline dark:text-brand-300"
 						> 
 							{t('auth.login.createAccount')}
 						</a>

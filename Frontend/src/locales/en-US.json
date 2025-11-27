@@ -135,8 +135,6 @@
       },
       "resources": {
         "title": "RESOURCES",
-        "panel": "Panel",
-        "start": "Get started",
         "testimonials": "Testimonials",
         "login": "Sign In",
         "register": "Sign Up"
@@ -244,8 +242,27 @@
           "symbol": "Add a symbol"
         },
         "terms": { "prefix": "I accept the", "termsOfService": "Terms of Service", "and": "and the", "privacyPolicy": "Privacy Policy" },
-        "submit": { "create": "Create my account", "submitting": "Creating your account..." },
-        "errors": { "noRole": "Select a role (Client or Business) before continuing.", "createGeneric": "Error creating account", "acceptTerms": "You must accept the terms to continue." }
+        "submit": { "create": "Create my account", "submitting": "Creating your account...", "pending": "Complete the verifications" },
+        "errors": {
+          "noRole": "Select a role (Client or Business) before continuing.",
+          "createGeneric": "Error creating account",
+          "acceptTerms": "You must accept the terms to continue.",
+          "pendingVerification": "Finish the pending verifications before continuing."
+        },
+        "pendingVerification": {
+          "title": "Pending verification",
+          "resume": "Resume verifications",
+          "resending": "Resending...",
+          "messages": {
+            "email": "Confirm the code we sent to your email before continuing.",
+            "sms": "Verify your phone via SMS to unlock the next step.",
+            "credential": "Confirm your official ID to finish registration."
+          },
+          "errors": {
+            "sessionExpired": "The verification session expired. Start the signup again.",
+            "resendFailed": "We couldn't resend the code. Try again shortly."
+          }
+        }
       },
       "verification": {
         "title": "Verify your email",
@@ -256,7 +273,10 @@
         "field": { "label": "Verification code", "placeholder": "000000" },
         "submit": { "confirm": "Confirm code", "submitting": "Verifying..." },
         "resend": { "sending": "Sending...", "waitPrefix": "Resend in", "action": "Resend code" },
-        "info": { "resent": "We sent a new code to your email." },
+        "info": {
+          "resent": "We sent a new code to your email.",
+          "verified": "Email verified. Let’s secure your account with the remaining checks."
+        },
         "note": "We need to validate your email to continue.",
         "errors": { "invalidLength": "Enter the 6-digit code.", "verifyGeneric": "Couldn't verify the code. Try again.", "resendGeneric": "Couldn't resend the code right now." }
       },
@@ -309,6 +329,54 @@
         "contextNote": "This helps us personalize your experience from the start.",
         "customer": { "title": "Customer", "desc": "Order and pick up faster" },
         "owner": { "title": "Business", "desc": "Manage your cafeteria" }
+      },
+      "smsVerification": {
+        "badge": "Next security step",
+        "title": "Confirm your phone number",
+        "description": "We need to validate your mobile phone to enable every feature in your account.",
+        "closeAria": "Close SMS verification",
+        "phone": {
+          "label": "Phone number",
+          "placeholder": "+1 555 000 0000"
+        },
+        "code": {
+          "label": "SMS code",
+          "placeholder": "123456"
+        },
+        "send": {
+          "action": "Send code",
+          "sending": "Sending...",
+          "resend": "Resend code",
+          "resendIn": "Resend in"
+        },
+        "verify": {
+          "action": "Verify code",
+          "verifying": "Verifying..."
+        },
+        "sent": "We sent you a verification code via SMS. Check your phone.",
+        "success": "Phone number verified. Only your credential is pending.",
+        "expires": "The code expired. Request a new one.",
+        "expiresIn": "Expires in",
+        "errors": {
+          "phoneRequired": "Enter a valid phone number (min 6 characters).",
+          "sendGeneric": "We couldn’t send the SMS. Try again.",
+          "codeRequired": "Enter the received code (minimum 4 digits).",
+          "invalidCode": "Incorrect code. Please try again.",
+          "verifyGeneric": "We couldn’t verify the code right now."
+        }
+      },
+      "credentialPrompt": {
+        "badge": "Final step",
+        "title": "Verify your official ID",
+        "subtitle": "With your credential we confirm your identity and unlock the full FilaCero experience.",
+        "steps": {
+          "title": "What happens next?",
+          "capture": "Upload a clear photo of your valid credential.",
+          "verify": "Our system will validate the data in seconds.",
+          "next": "We’ll redirect you automatically to the tailored onboarding."
+        },
+        "cta": "Go verify credential",
+        "phoneConfirmed": "Phone confirmed: {{phone}}"
       }
     }
   },

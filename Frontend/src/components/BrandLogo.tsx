@@ -22,9 +22,9 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ withWordmark = true, class
         style={{ height: 'auto', width: 'auto', maxHeight: size, maxWidth: size }}
       />
       {withWordmark && (
-        <span className="hidden sm:inline text-[2rem] font-extrabold leading-none select-none">
-          <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
-          <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
+        <span className="hidden select-none text-[2rem] font-extrabold leading-none sm:inline">
+          <span className="transition-colors duration-300 text-brand-600 dark:text-brand-200">Fila</span>
+          <span className="transition-colors duration-300 text-teal-500 dark:text-teal-200">Cero</span>
         </span>
       )}
     </div>

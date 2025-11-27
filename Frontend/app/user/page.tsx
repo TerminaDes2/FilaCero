@@ -396,25 +396,25 @@ export default function UserProfilePage() {
 
       <main className="relative z-10 pt-24 pb-20">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:px-8">
-          <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-br from-[var(--fc-brand-600)] via-[var(--fc-brand-500)] to-[var(--fc-teal-500)] text-white shadow-[0_60px_140px_-70px_rgba(15,118,110,0.6)]">
+          <section className="relative overflow-hidden rounded-[36px] border border-white/70 bg-gradient-to-br from-white via-white to-[var(--fc-brand-50)] text-[var(--fc-text-primary)] shadow-[0_60px_140px_-80px_rgba(15,23,42,0.28)] dark:border-white/12 dark:from-[color:rgba(6,9,18,0.98)] dark:via-[color:rgba(9,13,24,0.9)] dark:to-[color:rgba(190,24,93,0.28)] dark:text-white dark:shadow-[0_60px_140px_-80px_rgba(2,6,23,0.82)]">
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18)_0%,transparent_60%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,70,141,0.18)_0%,transparent_60%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.32)_0%,transparent_64%)]"
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(17,94,89,0.25)_0%,transparent_65%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(251,146,60,0.2)_0%,transparent_65%)] dark:bg-[radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.25)_0%,transparent_65%)]"
             />
             <div className="relative flex flex-col gap-10 p-8 sm:p-10 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex flex-1 flex-col gap-8">
                 <div className="flex flex-wrap items-center gap-4">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em]">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-brand-200)] bg-[var(--fc-brand-50)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-[var(--fc-brand-700)] dark:border-white/20 dark:bg-white/10 dark:text-white">
                     <Sparkles className="h-3.5 w-3.5" /> Perfil FilaCero
                   </span>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[color:rgba(233,74,111,0.28)] bg-[color:rgba(254,226,226,0.95)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[color:rgba(159,18,57,0.95)] dark:border-white/20 dark:bg-white/10 dark:text-white">
                     {roleLabel}
                   </span>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-3 py-1 text-xs font-medium text-white/80">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-brand-100)] bg-white px-3 py-1 text-xs font-medium text-[var(--fc-text-secondary)] shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white/80">
                     ID {user?.id_usuario}
                   </span>
                 </div>
@@ -428,10 +428,10 @@ export default function UserProfilePage() {
                     )}
                   </div>
                   <div className="space-y-3">
-                    <h1 className="text-[2rem] font-semibold leading-tight sm:text-[2.4rem]">
+                    <h1 className="text-[2rem] font-semibold leading-tight text-[var(--fc-text-strong)] sm:text-[2.4rem] dark:text-white">
                       {user?.nombre ?? "Usuario FilaCero"}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--fc-text-secondary)] dark:text-white/80">
                       <span className="inline-flex items-center gap-1.5">
                         <Mail className="h-4 w-4" />
                         {user?.correo_electronico}
@@ -447,12 +447,12 @@ export default function UserProfilePage() {
                         {joinedAt ?? "Registro pendiente"}
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
-                      <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/8 px-3 py-1">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/70">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white px-3 py-1 text-[var(--fc-text-secondary)] shadow-sm dark:border-white/25 dark:bg-white/10 dark:text-white/80">
                         Estado: {accountState}
                       </span>
                       {accountNumberValue && (
-                        <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-3 py-1">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white px-3 py-1 text-[var(--fc-text-secondary)] shadow-sm dark:border-white/20 dark:bg-white/10 dark:text-white/80">
                           Cuenta: {maskAccountNumber(accountNumberValue)}
                         </span>
                       )}
@@ -464,11 +464,11 @@ export default function UserProfilePage() {
                   {heroMetrics.map((metric) => (
                     <div
                       key={metric.label}
-                      className="rounded-2xl border border-white/25 bg-white/10 px-5 py-4 text-sm shadow-sm backdrop-blur"
+                      className="rounded-2xl border border-[var(--fc-border-soft)] bg-white/90 px-5 py-4 text-sm shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/5"
                     >
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/70">{metric.label}</p>
-                      <p className="mt-2 text-2xl font-semibold">{metric.value}</p>
-                      <p className="text-xs text-white/70">{metric.hint}</p>
+                      <p className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/70">{metric.label}</p>
+                      <p className="mt-2 text-2xl font-semibold text-[var(--fc-text-primary)] dark:text-white">{metric.value}</p>
+                      <p className="text-xs text-[var(--fc-text-secondary)] dark:text-white/70">{metric.hint}</p>
                     </div>
                   ))}
                 </div>
@@ -478,7 +478,7 @@ export default function UserProfilePage() {
                 <button
                   type="button"
                   onClick={() => scrollTo(FORM_SECTION_ID)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[var(--fc-brand-600)] shadow-sm transition hover:bg-white/90"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)]"
                 >
                   <UserCircle className="h-4 w-4" />
                   Editar perfil
@@ -486,7 +486,7 @@ export default function UserProfilePage() {
                 <button
                   type="button"
                   onClick={() => scrollTo(VERIFICATION_SECTION_ID)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--fc-brand-200)] bg-white px-5 py-3 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-300)] hover:text-[var(--fc-brand-700)] dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Revisar verificaciones
@@ -494,14 +494,14 @@ export default function UserProfilePage() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/20"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-red-200/60 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100 dark:border-red-500/35 dark:bg-[color:rgba(127,29,29,0.3)] dark:text-red-100 dark:hover:bg-[color:rgba(127,29,29,0.45)]"
                 >
                   <LogOut className="h-4 w-4" />
                   Cerrar sesion
                 </button>
-                <div className="rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-xs text-white/80">
-                  <p className="font-semibold">Estado de seguridad</p>
-                  <p className="mt-1 text-white/70">
+                <div className="rounded-2xl border border-[var(--fc-border-soft)] bg-white px-5 py-4 text-xs text-[var(--fc-text-secondary)] shadow-sm dark:border-white/20 dark:bg-white/10 dark:text-white/80">
+                  <p className="font-semibold text-[var(--fc-text-primary)] dark:text-white">Estado de seguridad</p>
+                  <p className="mt-1">
                     {lastVerificationDate
                       ? `Ultima verificacion registrada el ${lastVerificationDate}`
                       : "Aun hay verificaciones pendientes."}

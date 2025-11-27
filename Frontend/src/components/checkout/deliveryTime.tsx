@@ -49,12 +49,12 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
 
   const isStandalone = displayMode !== "embedded";
   const wrapperClasses = isStandalone
-    ? "rounded-3xl border border-white/70 bg-white/90 shadow-sm backdrop-blur"
+    ? "rounded-3xl border border-white/70 bg-white/90 shadow-sm backdrop-blur transition-colors dark:border-white/12 dark:bg-[color:rgba(6,10,22,0.92)] dark:shadow-[0_48px_120px_-80px_rgba(2,6,23,0.88)]"
     : "space-y-6";
-  const headerClasses = `flex items-start gap-3 ${isStandalone ? "border-b border-white/60 px-6 py-5" : ""}`;
+  const headerClasses = `flex items-start gap-3 ${isStandalone ? "border-b border-white/60 px-6 py-5 dark:border-white/10" : ""}`;
   const iconClasses = isStandalone
-    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--fc-brand-500)] to-[var(--fc-teal-400)] text-white shadow-sm"
-    : "inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--fc-brand-500)]/10 text-[var(--fc-brand-600)]";
+    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--fc-brand-500)] to-[var(--fc-teal-400)] text-white shadow-sm dark:from-[var(--fc-brand-500)] dark:to-[var(--fc-teal-400)]"
+    : "inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--fc-brand-500)]/10 text-[var(--fc-brand-600)] dark:bg-[color:rgba(14,34,53,0.65)] dark:text-[color:rgba(190,227,248,0.95)]";
   const copyClasses = isStandalone ? "space-y-1" : "space-y-0.5";
   const contentPadding = isStandalone ? "px-6 py-6" : "";
 
@@ -74,9 +74,9 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
           <Clock3 className="h-5 w-5" />
         </span>
         <div className={copyClasses}>
-          <p className={`${isStandalone ? "text-xs" : "text-[11px]"} font-semibold uppercase tracking-[0.22em] text-brand-600`}>Paso 1</p>
-          <h2 className={`${isStandalone ? "text-xl" : "text-lg"} font-bold text-slate-900`}>Define la ventana de retiro</h2>
-          <p className={`${isStandalone ? "text-sm" : "text-xs"} text-slate-500`}>
+          <p className={`${isStandalone ? "text-xs" : "text-[11px]"} font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-[color:rgba(190,227,248,0.95)]`}>Paso 1</p>
+          <h2 className={`${isStandalone ? "text-xl" : "text-lg"} font-bold text-slate-900 dark:text-white`}>Define la ventana de retiro</h2>
+          <p className={`${isStandalone ? "text-sm" : "text-xs"} text-slate-500 dark:text-slate-400`}>
             Elige entre los horarios sugeridos o marca la hora exacta en la que pasarás por tu pedido.
           </p>
         </div>
@@ -93,22 +93,22 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
                 onClick={() => handleSelect(slot.value)}
                 className={`rounded-2xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                   isActive
-                    ? "border-[var(--fc-brand-600)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)] shadow-sm"
-                    : "border-slate-200/80 bg-white hover:border-[var(--fc-brand-200)]"
+                    ? "border-[var(--fc-brand-600)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)] shadow-sm dark:border-[var(--fc-brand-400)] dark:bg-[color:rgba(12,74,110,0.45)] dark:text-[color:rgba(190,227,248,0.95)]"
+                    : "border-slate-200/80 bg-white hover:border-[var(--fc-brand-200)] dark:border-white/10 dark:bg-[color:rgba(6,10,22,0.9)] dark:hover:border-[color:rgba(56,189,248,0.35)]"
                 }`}
               >
-                <div className="text-sm font-semibold">{slot.label}</div>
-                <p className="text-xs text-slate-500">{slot.description}</p>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">{slot.label}</div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{slot.description}</p>
               </button>
             );
           })}
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-4">
+        <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-4 transition-colors dark:border-white/10 dark:bg-[color:rgba(6,10,22,0.9)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-slate-800">¿Prefieres un horario exacto?</p>
-              <p className="text-xs text-slate-500">Ingresa la hora para que cocina lo sincronice con su kanban.</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-white">¿Prefieres un horario exacto?</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Ingresa la hora para que cocina lo sincronice con su kanban.</p>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -121,12 +121,12 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
                     setDeliveryTime(value);
                   }
                 }}
-                className="h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-700 focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-200)]"
+                className="h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-700 transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-200)] dark:border-white/15 dark:bg-[color:rgba(6,10,22,0.95)] dark:text-white dark:focus:border-[color:rgba(56,189,248,0.45)] dark:focus:ring-[color:rgba(56,189,248,0.25)]"
               />
               <button
                 type="button"
                 onClick={() => handleSelect("asap")}
-                className="text-xs font-medium text-[var(--fc-brand-600)] hover:underline"
+                className="text-xs font-medium text-[var(--fc-brand-600)] transition hover:underline dark:text-[color:rgba(190,227,248,0.95)]"
               >
                 Resetear
               </button>
@@ -134,8 +134,8 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Sparkles className="h-4 w-4 text-[var(--fc-brand-500)]" />
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <Sparkles className="h-4 w-4 text-[var(--fc-brand-500)] dark:text-[color:rgba(190,227,248,0.95)]" />
           Cocina recibirá este horario junto con la venta para organizar la producción.
         </div>
       </div>
