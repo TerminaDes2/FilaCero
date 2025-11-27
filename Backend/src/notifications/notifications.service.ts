@@ -16,7 +16,7 @@ interface EmailTemplate {
 }
 
 /**
- * Convierte BigInt a número para evitar errores de serialización JSON
+ * Convierte BigInt y Decimal a número para evitar errores de serialización JSON
  */
 function serializeBigInt(obj: any): any {
   if (obj === null || obj === undefined) {
@@ -25,6 +25,11 @@ function serializeBigInt(obj: any): any {
 
   if (typeof obj === 'bigint') {
     return Number(obj);
+  }
+
+  // Manejar Prisma Decimal (tiene un método toNumber())
+  if (obj && typeof obj === 'object' && typeof obj.toNumber === 'function') {
+    return obj.toNumber();
   }
 
   if (Array.isArray(obj)) {
