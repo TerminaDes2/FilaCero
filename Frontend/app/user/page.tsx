@@ -137,6 +137,8 @@ export default function UserProfilePage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [saveFeedback, setSaveFeedback] = useState<"success" | "error" | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingSession, setPendingSession] = useState<{ session: string; expiresAt?: string; delivery?: string } | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [verifying, setVerifying] = useState(false);
@@ -288,7 +290,6 @@ export default function UserProfilePage() {
       const trimmedPhone = formState.phoneNumber.trim();
       const trimmedAccount = formState.accountNumber.trim();
       const trimmedAvatar = formState.avatarUrl.trim();
-      const trimmedCredential = formState.credentialUrl.trim();
       const ageInput = formState.age.trim();
 
       let ageNumber: number | null = null;
@@ -308,11 +309,9 @@ export default function UserProfilePage() {
         const result = await api.updateUserProfile(user?.id_usuario ?? 0, {
           name: trimmedName,
           email: formState.email?.trim() || null,
-          phoneNumber: trimmedPhone || null,
           accountNumber: trimmedAccount || null,
           age: ageNumber,
           avatarUrl: trimmedAvatar || null,
-          credentialUrl: trimmedCredential || null,
         });
         // If the backend returns a 'session', then the update requires verification.
         if (result && result.session) {
@@ -575,10 +574,12 @@ export default function UserProfilePage() {
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
+                  <label htmlFor="phone-input" className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
                     Nombre completo
                   </label>
                   <input
+                    id="phone-input"
+                    placeholder="Ej. +52 81 0000 0000"
                     value={formState.name}
                     onChange={(event) => handleFormChange("name", event.target.value)}
                     className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
@@ -586,12 +587,15 @@ export default function UserProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
+                  <label htmlFor="credential-url" className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
                     Telefono
                   </label>
                   <input
+                    id="credential-url"
+                    placeholder="https://"
                     value={formState.phoneNumber}
                     onChange={(event) => handleFormChange("phoneNumber", event.target.value)}
+                    disabled
                     className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
                     placeholder="Ej. +52 81 0000 0000"
                   />
@@ -621,14 +625,55 @@ export default function UserProfilePage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
-                    Avatar (URL)
+                    Avatar (Subir foto)
                   </label>
-                  <input
-                    value={formState.avatarUrl}
-                    onChange={(event) => handleFormChange("avatarUrl", event.target.value)}
-                    className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
-                    placeholder="https://"
-                  />
+                  <div className="mt-2 flex gap-3 items-center">
+                    <input
+                      id="avatar-file"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        if (file) {
+                          try { setPreviewUrl(URL.createObjectURL(file)); } catch { setPreviewUrl(null); }
+                          setAvatarFile(file);
+                        } else {
+                          setPreviewUrl(null);
+                          setAvatarFile(null);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label htmlFor="avatar-file" className="inline-flex items-center gap-2 rounded-xl border border-[var(--fc-border-soft)] px-3 py-2 cursor-pointer">
+                      Subir avatar
+                    </label>
+                    {previewUrl && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={previewUrl} alt="Avatar preview" className="h-12 w-12 rounded-full object-cover" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!avatarFile || !(user?.id_usuario)) return;
+                        setSaving(true);
+                        try {
+                          await api.uploadUserAvatar(user.id_usuario, avatarFile);
+                          await checkAuth();
+                          setSaveFeedback('success');
+                          setPreviewUrl(null);
+                          setAvatarFile(null);
+                        } catch (err) {
+                          setFormError(err instanceof Error ? err.message : 'Error subiendo avatar');
+                          setSaveFeedback('error');
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-3 py-2 text-sm font-semibold text-white"
+                    >
+                      Subir
+                    </button>
+                  </div>
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
@@ -648,9 +693,9 @@ export default function UserProfilePage() {
                   </label>
                   <input
                     value={formState.credentialUrl}
-                    onChange={(event) => handleFormChange("credentialUrl", event.target.value)}
-                    className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
-                    placeholder="https://"
+                    disabled
+                    className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white/50 px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white"
+                    title="Credential URL"
                   />
                 </div>
               </div>

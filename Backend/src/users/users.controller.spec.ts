@@ -46,6 +46,7 @@ describe('UsersController endpoints', () => {
     requestProfileUpdate: jest.fn<any, [bigint, UpdateUserDto]>(),
     verifyProfileUpdate: jest.fn<any, [{ session: string; code: string }]>(),
     delete: jest.fn<Promise<{ message: string }>, [bigint]>(),
+    uploadAvatar: jest.fn<any, [bigint, any]>(),
   };
 
   beforeAll(async () => {
@@ -193,5 +194,33 @@ describe('UsersController endpoints', () => {
 
     expect(res.body).toEqual(updatedUser);
     expect(mockUsersService.verifyProfileUpdate).toHaveBeenCalledWith(dto, 1n);
+  });
+
+  it('POST /api/users/:id/avatar uploads avatar (owner only)', async () => {
+    const fakeFile = Buffer.from('fake');
+    const userId = 1n;
+    const updated: SerializedUser = {
+      id: '1',
+      name: 'User',
+      email: 'test@example.com',
+      phoneNumber: null,
+      roleId: null,
+      accountNumber: null,
+      age: null,
+      avatarUrl: 'https://example.com/avatar.jpg',
+      credentialUrl: null,
+      verified: true,
+      verifiedAt: null,
+    };
+    mockUsersService.uploadAvatar.mockResolvedValueOnce(updated);
+
+    const res = await request(app.getHttpServer())
+      .post('/api/users/1/avatar')
+      .set('x-test-user-id', '1')
+      .attach('file', Buffer.from('XXX'), 'avatar.png')
+      .expect(200);
+
+    expect(res.body).toEqual(updated);
+    expect(mockUsersService.uploadAvatar).toHaveBeenCalled();
   });
 });

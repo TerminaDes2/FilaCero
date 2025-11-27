@@ -1832,6 +1832,8 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 		newPassword: '',
 	});
 	const [saving, setSaving] = useState(false);
+	const [avatarFile, setAvatarFile] = useState<File | null>(null);
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [pendingSession, setPendingSession] = useState<{ session: string; expiresAt?: string; delivery?: string } | null>(null);
 	const [verificationCode, setVerificationCode] = useState('');
 	const [verifying, setVerifying] = useState(false);
@@ -1880,7 +1882,7 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 		try {
 			const payload: Record<string, unknown> = {
 				name: form.name.trim() || undefined,
-				phoneNumber: form.phone.trim() ? form.phone.trim() : null,
+				// phone is not allowed to be updated via settings
 			};
 			if (form.newPassword.trim()) payload.newPassword = form.newPassword.trim();
 			const result = await api.updateUserProfile(targetId, payload);
@@ -1957,10 +1959,18 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 						<Input value={form.name} onChange={(event) => handleChange('name', event.target.value)} placeholder="Tu nombre" disabled={saving} />
 					</Row>
 					<Row label="Teléfono">
-						<Input value={form.phone} onChange={(event) => handleChange('phone', event.target.value)} placeholder="55 1234 5678" disabled={saving} />
+						<Input value={form.phone} onChange={(event) => handleChange('phone', event.target.value)} placeholder="55 1234 5678" disabled />
 					</Row>
 					<Row label="Correo">
 						<Input value={user?.correo_electronico ?? userEmail ?? ''} disabled className="bg-slate-100 cursor-not-allowed" />
+					</Row>
+					<Row label="Avatar">
+						<div className="flex items-center gap-3">
+							<input id="pos-avatar-file" type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0] ?? null; setAvatarFile(f); try{setPreviewUrl(f?URL.createObjectURL(f):null)}catch{setPreviewUrl(null)}}} />
+							<label htmlFor="pos-avatar-file" className="px-3 py-2 rounded-lg border">Seleccionar</label>
+							{previewUrl && <img src={previewUrl} className="h-10 w-10 rounded-full object-cover" alt="preview" />}
+							<button type="button" className="px-3 py-2 rounded-lg bg-[var(--pos-accent-green)] text-white" onClick={async()=>{ if(!avatarFile||!user?.id_usuario) return; setSaving(true); try{ await api.uploadUserAvatar(user.id_usuario, avatarFile); await checkAuth(); setPreviewUrl(null); setAvatarFile(null); }catch(e){ console.error(e);} finally{ setSaving(false);} }}>Subir</button>
+						</div>
 					</Row>
 					<Row label="Nueva contraseña" hint="Deja en blanco para mantener la actual.">
 						<Input value={form.newPassword} onChange={(event) => handleChange('newPassword', event.target.value)} type="password" placeholder="••••••" disabled={saving} />

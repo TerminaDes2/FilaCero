@@ -1,4 +1,5 @@
-import { Controller, Put, Delete, Param, Body, UseGuards, Req, Get, UnauthorizedException, Post } from '@nestjs/common';
+import { Controller, Put, Delete, Param, Body, UseGuards, Req, Get, UnauthorizedException, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -47,6 +48,20 @@ export class UsersController {
     }
     // La verificación se hace contra la sesión incluida en el body
     return this.usersService.verifyProfileUpdate({ session: dto.session, code: dto.code }, BigInt(id));
+  }
+
+  // Upload avatar
+  @Post(':id/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req,
+  ) {
+    if (req.user.id_usuario.toString() !== id) {
+      throw new UnauthorizedException('No tienes permiso para modificar este perfil.');
+    }
+    return this.usersService.uploadAvatar(BigInt(id), file);
   }
 
   // Ruta D: Eliminar Cuenta

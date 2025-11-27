@@ -912,6 +912,14 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+  uploadUserAvatar: (id: string | number, file: File) => {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    return apiFetch<any>(`users/${id}/avatar`, {
+      method: 'POST',
+      body: fd,
+    });
+  },
   confirmProfileUpdate: (session: string, code: string) =>
     apiFetch<any>(`users/confirm-update`, {
       method: "POST",

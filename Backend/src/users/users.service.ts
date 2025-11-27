@@ -1,9 +1,12 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto'; 
 import * as bcrypt from 'bcrypt'; // Necesario si permites cambiar la contraseña
 import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import FormData from 'form-data';
 import { EmailVerificationService } from './email-verification/email-verification.service';
 
 @Injectable()
@@ -15,6 +18,7 @@ export class UsersService {
         private prisma: PrismaService,
         private jwtService: JwtService,
         private emailVerificationService: EmailVerificationService,
+        private configService: ConfigService,
     ) {}
 
   // --- R (Read) - Obtener por ID ---
@@ -47,47 +51,52 @@ export class UsersService {
   }
 
   // --- U (Update) - Actualizar Perfil ---
-  async update(id: bigint, updateUserDto: UpdateUserDto) {
-    const dataToUpdate: any = {};
-    
-    // 1. Manejar campos normales (nombre, teléfono)
+    async update(id: bigint, updateUserDto: UpdateUserDto) {
+        const dataToUpdate: any = {};
+
+        // 1. Normal fields (name)
         if (updateUserDto.name !== undefined) {
             const trimmed = updateUserDto.name?.trim();
             if (trimmed && trimmed.length > 0) {
                 dataToUpdate.nombre = trimmed;
             }
         }
+
+        // Do not allow modifying the phone via this endpoint
         if (updateUserDto.phoneNumber !== undefined) {
-            const trimmed = updateUserDto.phoneNumber?.trim();
-            dataToUpdate.numero_telefono = trimmed && trimmed.length > 0 ? trimmed : null;
+            throw new BadRequestException('No está permitido modificar el número de teléfono por este endpoint.');
         }
+
+        // Avatar URL can be set via this endpoint (but prefer upload API)
         if (updateUserDto.avatarUrl !== undefined) {
             dataToUpdate.avatar_url = updateUserDto.avatarUrl ?? null;
         }
+
+        // Credential URL not allowed here
         if (updateUserDto.credentialUrl !== undefined) {
-            dataToUpdate.credential_url = updateUserDto.credentialUrl ?? null;
+            throw new BadRequestException('No está permitido modificar la URL de la credencial desde el perfil. Usa la sección de verificación para subir credenciales.');
         }
 
         if (updateUserDto.accountNumber !== undefined) {
-      const trimmed = updateUserDto.accountNumber?.trim();
-      dataToUpdate.numero_cuenta = trimmed && trimmed.length > 0 ? trimmed : null;
-    }
+            const trimmed = updateUserDto.accountNumber?.trim();
+            dataToUpdate.numero_cuenta = trimmed && trimmed.length > 0 ? trimmed : null;
+        }
 
         if (updateUserDto.email !== undefined) {
             dataToUpdate.correo_electronico = updateUserDto.email?.trim().toLowerCase() ?? null;
         }
 
-    if (updateUserDto.age !== undefined) {
-      dataToUpdate.edad = updateUserDto.age ?? null;
-    }
+        if (updateUserDto.age !== undefined) {
+            dataToUpdate.edad = updateUserDto.age ?? null;
+        }
 
-    // 2. Manejar la contraseña (si se proporciona, debe hashearse)
-    if (updateUserDto.newPassword) {
-        const salt = await bcrypt.genSalt(10);
-        dataToUpdate.password_hash = await bcrypt.hash(updateUserDto.newPassword, salt);
-    }
+        // Password change must be hashed
+        if (updateUserDto.newPassword) {
+            const salt = await bcrypt.genSalt(10);
+            dataToUpdate.password_hash = await bcrypt.hash(updateUserDto.newPassword, salt);
+        }
 
-    try {
+        try {
             const updated = await this.prisma.usuarios.update({
                 where: { id_usuario: id },
                 data: dataToUpdate,
@@ -121,7 +130,7 @@ export class UsersService {
             }
             throw error;
         }
-  }
+    }
 
     // --- (P)repare - Request a profile update with verification ---
     async requestProfileUpdate(id: bigint, updateUserDto: UpdateUserDto) {
@@ -129,6 +138,14 @@ export class UsersService {
         const user = await this.prisma.usuarios.findUnique({ where: { id_usuario: id } });
         if (!user) {
             throw new NotFoundException('Usuario no encontrado.');
+        }
+
+        // Reject attempts to change phone or credential via this flow
+        if (updateUserDto.phoneNumber !== undefined) {
+            throw new BadRequestException('No está permitido modificar el número de teléfono por este flujo.');
+        }
+        if (updateUserDto.credentialUrl !== undefined) {
+            throw new BadRequestException('No está permitido modificar la URL de la credencial por este flujo.');
         }
 
         // If the update includes an email change, ensure it's not already used
@@ -218,7 +235,13 @@ export class UsersService {
         if (actorId !== undefined && actorId !== userId) {
             throw new BadRequestException('No tienes permiso para confirmar esta actualización.');
         }
-        const updates = payload.updates ?? {};
+                const updates = payload.updates ?? {};
+                if (updates.phoneNumber !== undefined) {
+                    throw new BadRequestException('No está permitido modificar el número de teléfono por este flujo.');
+                }
+                if (updates.credentialUrl !== undefined) {
+                    throw new BadRequestException('No está permitido modificar la URL de la credencial por este flujo.');
+                }
 
         // If email provided, ensure it's not in use (double-check to avoid race)
         if (updates.email) {
@@ -323,5 +346,70 @@ export class UsersService {
     private generateNumericToken(): string {
             const random = Math.floor(Math.random() * Math.pow(10, this.TOKEN_LENGTH));
             return random.toString().padStart(this.TOKEN_LENGTH, '0');
+    }
+
+    // Upload avatar file to Cloudflare (server-side) and update avatar_url in DB
+    async uploadAvatar(id: bigint, file: Express.Multer.File) {
+        if (!file || !file.buffer) {
+            throw new BadRequestException('Archivo de imagen inválido o vacío.');
+        }
+        const accountId = this.configService.get<string>('CLOUDFLARE_ACCOUNT_ID');
+        const apiToken = this.configService.get<string>('CLOUDFLARE_API_TOKEN');
+        if (!accountId || !apiToken) {
+            throw new InternalServerErrorException('Configuración de Cloudflare no definida en el servidor.');
+        }
+
+        // Validate file mime type
+        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!file.mimetype || !allowed.includes(file.mimetype)) {
+            throw new BadRequestException('Tipo de archivo no permitido. Usa JPG, PNG o WEBP.');
+        }
+
+        try {
+            const form = new FormData();
+            form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype });
+            // Optional: set requireSignedURLs etc.
+            const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`;
+            const headers = { Authorization: `Bearer ${apiToken}`, ...form.getHeaders() };
+            const response = await axios.post(url, form, { headers, maxBodyLength: 50 * 1024 * 1024 });
+            const body = response.data;
+            if (!body?.success) {
+                const errMessage = body?.errors?.[0]?.message ?? 'Error al subir imagen a Cloudflare';
+                throw new InternalServerErrorException(errMessage);
+            }
+            const variants = body.result?.variants;
+            const avatarUrl = Array.isArray(variants) && variants.length > 0 ? variants[0] : body.result?.original_url ?? body.result?.uploadURL ?? null;
+            if (!avatarUrl) throw new InternalServerErrorException('Cloudflare no devolvió una URL válida.');
+
+            const updated = await this.prisma.usuarios.update({
+                where: { id_usuario: id },
+                data: { avatar_url: avatarUrl },
+                select: {
+                    id_usuario: true,
+                    nombre: true,
+                    correo_electronico: true,
+                    numero_telefono: true,
+                    id_rol: true,
+                    numero_cuenta: true,
+                    edad: true,
+                    avatar_url: true,
+                    credential_url: true,
+                    correo_verificado: true,
+                    correo_verificado_en: true,
+                    sms_verificado: true,
+                    sms_verificado_en: true,
+                    credencial_verificada: true,
+                    credencial_verificada_en: true,
+                },
+            });
+            return this.serializeUser(updated);
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                const body = error.response.data;
+                const msg = body?.errors?.[0]?.message || error.message;
+                throw new InternalServerErrorException(`Error al subir imagen: ${msg}`);
+            }
+            throw error;
+        }
     }
 }

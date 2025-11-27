@@ -90,4 +90,17 @@ MAIL_PRIVACY_FROM=privacidad@tudominio.com
 # 4. El ZOHO_REFRESH_TOKEN es la clave para evitar reautorizaciones manuales
 # 5. Si el refresh token se invalida, tendrás que repetir el flujo OAuth
 #
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ CLOUDFLARE IMAGES (AVATAR)                                              │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# Para subir avatares al CDN de Cloudflare desde el backend, define estas variables
+# en tu entorno del servidor (no las publiques en el cliente):
+#
+# CLOUDFLARE_ACCOUNT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+# CLOUDFLARE_API_TOKEN=xxxxxx (token con permisos de "Images:Edit" o similares)
+#
+# Si prefieres subir desde el cliente, deberás exponer un mecanismo seguro (signed URL)
+# o usar Cloudinary/otro servicio con upload_preset unsigned.
+#
 # ════════════════════════════════════════════════════════════════════════════

@@ -6,6 +6,8 @@ Endpoints:
 - `PUT /api/users/:id` — Solicita una verificación para los cambios. Recibe el mismo `UpdateUserDto` que antes. Devuelve: `{ message, delivery, expiresAt, session }`.
 - `POST /api/users/confirm-update` — Confirma la actualización del perfil. Recibe `{ session, code }` (mismo formato que `VerifyRegisterDto`). Si es correcto, aplica los cambios y devuelve el usuario actualizado.
 
+- `POST /api/users/:id/avatar` — Subir un avatar. Envía un FormData con el archivo bajo la clave `file`. Requiere autenticación y ser propietario del perfil. No requiere verificación por correo.
+
 Comportamiento importante:
 - Si la actualización incluye `email`, el código se enviará al `email` nuevo (siempre se verifica el correo al que se envía el código).
 - Cada sesión expira en 10 minutos (coincide con TTL del sistema de verificación existente).
@@ -40,6 +42,7 @@ Respuesta (ejemplo): Usuario actualizado en formato `serializeUser`.
 
 Notas:
 - Por simplicidad se reutiliza el servicio `EmailVerificationService.sendVerificationCodeEmail` para enviar el código al correo, por lo que el email tiene el mismo diseño que el de registro.
+- No es posible modificar `numero_telefono` ni `credentialUrl` por medio del endpoint de perfil o del flujo de verificación; estos campos son de sólo lectura desde el perfil (la credencial se debe subir desde `/verification/credencial`).
 - Se conservan las protecciones de permisos: sólo el propietario del perfil puede solicitar y confirmar la actualización.
 
 Recomendación: Actualizar el frontend para que en el flujo de edición de perfil solicite el código después de guardar y para que muestre el formulario de verificación con `session` y `code`.
