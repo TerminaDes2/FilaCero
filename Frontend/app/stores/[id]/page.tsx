@@ -66,7 +66,7 @@ export default function StorePage() {
         setLoading(true);
         const data = await api.getBusinessById(storeId);
         if (!data.productos) {
-          const productos = await api.getProducts({ id_negocio: storeId });
+          const productos = await api.getProducts({ id_negocio: storeId, status: 'activo' });
           data.productos = productos;
         }
         setStore(data);

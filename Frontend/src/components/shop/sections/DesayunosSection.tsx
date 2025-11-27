@@ -16,7 +16,7 @@ export default function DesayunosSection() {
         console.log('🔄 Cargando productos de desayuno...');
         
         // Usa la función getProducts de tu API con el parámetro de categoría
-        const data = await api.getProducts({ categoria: 'ALimentos' });
+        const data = await api.getProducts({ categoria: 'ALimentos', status: 'activo' });
         
         if (data && data.length > 0) {
           console.log(`✅ ${data.length} productos de desayuno cargados desde API`);
