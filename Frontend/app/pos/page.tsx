@@ -33,13 +33,20 @@ export default function POSPage() {
   const posView = usePOSView((state) => state.view);
   const setPosView = usePOSView((state) => state.setView);
   const hydrateFromAPI = useKitchenBoard((state) => state.hydrateFromAPI);
-  const { user } = useUserStore();
+  const { user, isAuthenticated, loading } = useUserStore();
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const viewParam = searchParams?.get('view');
   const [needBusiness, setNeedBusiness] = useState(false);
   const [bizList, setBizList] = useState<Business[]>([]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/auth/login?redirect=/pos');
+    }
+  }, [isAuthenticated, loading, router]);
 
   // Fetch categories (store handles normalization & business scoping)
   useEffect(() => {
