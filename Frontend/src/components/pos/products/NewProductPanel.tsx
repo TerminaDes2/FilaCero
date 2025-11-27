@@ -461,6 +461,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
             {/* Vista previa de la imagen */}
             {imagePreview && (
               <div className='relative group'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={imagePreview} 
                   alt="Vista previa del producto" 

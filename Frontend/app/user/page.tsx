@@ -205,7 +205,7 @@ export default function UserProfilePage() {
       avatarUrl: avatarUrl ?? "",
       credentialUrl: credentialUrl ?? "",
     }),
-    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, userPhone],
+    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, user?.correo_electronico, userPhone],
   );
 
   useEffect(() => {
@@ -592,7 +592,6 @@ export default function UserProfilePage() {
                   </label>
                   <input
                     id="credential-url"
-                    placeholder="https://"
                     value={formState.phoneNumber}
                     onChange={(event) => handleFormChange("phoneNumber", event.target.value)}
                     disabled

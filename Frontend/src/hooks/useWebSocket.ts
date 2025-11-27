@@ -6,8 +6,8 @@ let getWebSocketClient: (() => any) | null = null;
 
 const loadWebSocketClient = async () => {
   if (!getWebSocketClient) {
-    const module = await import('@/lib/websocket');
-    getWebSocketClient = module.getWebSocketClient;
+    const wsModule = await import('@/lib/websocket');
+    getWebSocketClient = wsModule.getWebSocketClient;
   }
   return getWebSocketClient!();
 };
@@ -125,14 +125,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     }
 
     return () => {
-      // Limpiar callbacks al desmontar
-      callbacksRef.current.forEach((callback, eventType) => {
-        if (clientRef.current) {
-          clientRef.current.off(eventType, callback);
-        }
-      });
-      callbacksRef.current.clear();
-
       // Limpiar interval de stats
       if (cleanup) {
         cleanup();
@@ -141,7 +133,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       // NO desconectar aquí para mantener la conexión compartida
       // El cliente es singleton y se reutiliza entre componentes
     };
-  }, [autoConnect, connect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoConnect]);
 
   return {
     isConnected,

@@ -1968,6 +1968,7 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 						<div className="flex items-center gap-3">
 							<input id="pos-avatar-file" type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0] ?? null; setAvatarFile(f); try{setPreviewUrl(f?URL.createObjectURL(f):null)}catch{setPreviewUrl(null)}}} />
 							<label htmlFor="pos-avatar-file" className="px-3 py-2 rounded-lg border">Seleccionar</label>
+							{/* eslint-disable-next-line @next/next/no-img-element */}
 							{previewUrl && <img src={previewUrl} className="h-10 w-10 rounded-full object-cover" alt="preview" />}
 							<button type="button" className="px-3 py-2 rounded-lg bg-[var(--pos-accent-green)] text-white" onClick={async()=>{
 								if(!avatarFile||!user?.id_usuario) return; 

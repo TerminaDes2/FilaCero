@@ -81,7 +81,7 @@ export default function StorePage() {
     fetchStore();
   }, [storeId]);
 
-  const productos = store?.productos ?? [];
+  const productos = useMemo(() => store?.productos ?? [], [store?.productos]);
 
   const categories = useMemo(() => {
     if (!productos.length) {

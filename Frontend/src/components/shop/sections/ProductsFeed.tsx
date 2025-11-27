@@ -135,7 +135,7 @@ export default function ProductsFeed() {
     );
     ob.observe(el);
     return () => ob.disconnect();
-  }, [sentinelRef.current]);
+  }, []);
 
   const cards = useMemo(() => {
     const offers = params.get("offers") === "1";
@@ -285,7 +285,7 @@ export default function ProductsFeed() {
                   <button
                     type="button"
                     disabled={isOutOfStock}
-                    aria-disabled={isOutOfStock}
+                    aria-disabled={isOutOfStock ? "true" : "false"}
                     onClick={() => handleAdd(c)}
                     className={`inline-flex items-center justify-center rounded-full px-4 py-1.5 text-[12px] font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
                       isOutOfStock
