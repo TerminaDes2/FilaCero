@@ -25,21 +25,17 @@ import { PaymentsService } from './payments.service';
 import { StripeService } from './stripe.service';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
-import { SavePaymentMethodDto } from './dto/save-payment-method.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { FeatureFlagGuard } from '../common/guards/feature-flag.guard';
-import { RequireFeature } from '../common/decorators/require-feature.decorator';
 
 @ApiTags('payments')
 @Controller('api/payments')
-@UseGuards(FeatureFlagGuard) // Aplicar guard a nivel de controlador
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);
 
   constructor(
     private readonly paymentsService: PaymentsService,
     private readonly stripeService: StripeService,
-  ) {}
+  ) { }
 
   /**
    * GET /api/payments/metrics
@@ -76,7 +72,6 @@ export class PaymentsController {
    */
   @Post('create-intent')
   @UseGuards(AuthGuard('jwt'))
-  @RequireFeature('PAYMENTS_ENABLED')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Crear PaymentIntent de Stripe',
@@ -203,90 +198,5 @@ export class PaymentsController {
     return { received: true };
   }
 
-  /**
-   * GET /api/payments/methods
-   * Retorna los métodos de pago guardados del usuario actual.
-   */
-  @Get('methods')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({
-    summary: 'Listar métodos de pago guardados',
-    description:
-      'Obtiene tarjetas y métodos de pago guardados del usuario autenticado. Incluye marca, últimos 4 dígitos, expiración, y si es método por defecto.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de métodos de pago',
-    schema: {
-      example: [
-        {
-          id: '1',
-          tipo: 'tarjeta',
-          marca: 'visa',
-          last4: '4242',
-          expMonth: 12,
-          expYear: 2025,
-          isDefault: true,
-        },
-      ],
-    },
-  })
-  @ApiResponse({ status: 429, description: 'Demasiadas solicitudes (rate limit)' })
-  @ApiResponse({ status: 503, description: 'Funcionalidad temporalmente deshabilitada' })
-  async getPaymentMethods(@Req() req: any) {
-    const userIdRaw = req?.user?.id_usuario ?? req?.user?.id ?? req?.user?.userId;
-    if (userIdRaw === undefined || userIdRaw === null) {
-      throw new UnauthorizedException('Usuario no autenticado');
-    }
-    let userId: bigint;
-    try {
-      userId = typeof userIdRaw === 'bigint' ? userIdRaw : BigInt(String(userIdRaw));
-    } catch (err) {
-      this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
-      throw new BadRequestException('Identificador de usuario inválido');
-    }
-    return await this.paymentsService.getPaymentMethods(userId);
-  }
 
-  /**
-   * POST /api/payments/methods
-   * Guarda un nuevo método de pago tokenizado.
-   */
-  @Post('methods')
-  @UseGuards(AuthGuard('jwt'))
-  @RequireFeature('SAVED_CARDS_ENABLED')
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({
-    summary: 'Guardar método de pago',
-    description:
-      'Guarda un nuevo método de pago (tarjeta tokenizada por Stripe Elements). Requiere paymentMethodId generado en frontend. Puede marcarse como método por defecto.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Método de pago guardado exitosamente',
-    schema: {
-      example: { id: '5', tipo: 'tarjeta', marca: 'mastercard', last4: '5555' },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'PaymentMethodId inválido' })
-  @ApiResponse({ status: 429, description: 'Demasiadas solicitudes (rate limit)' })
-  @ApiResponse({ status: 503, description: 'Funcionalidad temporalmente deshabilitada' })
-  async savePaymentMethod(
-    @Req() req: any,
-    @Body() dto: SavePaymentMethodDto,
-  ) {
-    const userIdRaw = req?.user?.id_usuario ?? req?.user?.id ?? req?.user?.userId;
-    if (userIdRaw === undefined || userIdRaw === null) {
-      throw new UnauthorizedException('Usuario no autenticado');
-    }
-    let userId: bigint;
-    try {
-      userId = typeof userIdRaw === 'bigint' ? userIdRaw : BigInt(String(userIdRaw));
-    } catch (err) {
-      this.logger.error(`Invalid userId in request: ${String(userIdRaw)}`);
-      throw new BadRequestException('Identificador de usuario inválido');
-    }
-    return await this.paymentsService.savePaymentMethod(userId, dto);
-  }
 }
