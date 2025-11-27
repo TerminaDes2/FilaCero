@@ -11,7 +11,7 @@ interface Props {
   onCancel?: (id: string) => void | Promise<void>;
 }
 
-export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove }) => {
+export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove, onCancel }) => {
   const [over, setOver] = React.useState(false);
   return (
     <div

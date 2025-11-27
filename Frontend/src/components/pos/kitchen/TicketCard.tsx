@@ -41,7 +41,14 @@ interface Props {
 }
 
 export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
-  const confirm = useConfirm();
+  let confirm = async (opts: any) => window.confirm(opts?.description ?? opts?.title ?? '¿Confirmar?');
+  try {
+    const h = useConfirm();
+    if (typeof h === 'function') confirm = h;
+  } catch (e) {
+    // Provider missing; fallback to window.confirm
+    // No-op, confirm already set to fallback above
+  }
   const meta = statusMeta[ticket.status];
   const action = actions[ticket.status];
   const draggable = ticket.status !== 'served';
