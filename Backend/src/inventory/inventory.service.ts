@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PedidosService } from '../pedidos/pedidos.service';
 import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 
 @Injectable()
 export class InventoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private pedidosService: PedidosService) {}
 
   async create(data: CreateInventoryDto) {
     const prisma = this.prisma as any;
@@ -50,8 +51,10 @@ export class InventoryService {
 
   async update(id: string, data: UpdateInventoryDto) {
     const prisma = this.prisma as any;
+    // leer inventario actual antes de actualizar
+    const existing = await prisma.inventario.findUnique({ where: { id_inventario: BigInt(id) } });
     try {
-      return await prisma.inventario.update({
+      const updated = await prisma.inventario.update({
         where: { id_inventario: BigInt(id) },
         data: {
           id_negocio: data.id_negocio ? BigInt(data.id_negocio) : undefined,
@@ -61,6 +64,18 @@ export class InventoryService {
           fecha_actualizacion: data.fecha_actualizacion ? new Date(data.fecha_actualizacion) : undefined,
         },
       });
+      // Si la cantidad actual pasa de >0 a <=0, cancelar pedidos que dependen del producto
+      try {
+        const oldQty = Number(existing?.cantidad_actual ?? 0);
+        const newQty = Number(updated?.cantidad_actual ?? 0);
+        if (oldQty > 0 && newQty <= 0 && updated.id_producto) {
+          await this.pedidosService.cancelPedidosContainingProduct(BigInt(updated.id_producto), 'stock_insuficiente');
+        }
+      } catch (e) {
+        // registrar pero no bloquear la respuesta
+        console.error('Error procesando auto-cancelación por stock:', e);
+      }
+      return updated;
     } catch (e: any) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2003') {

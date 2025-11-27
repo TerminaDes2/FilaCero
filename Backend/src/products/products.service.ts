@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PedidosService } from '../pedidos/pedidos.service';
 import { ConfigService } from '@nestjs/config';
 // Prisma import intentionally omitted; we use runtime code checks rather than type-only checks
 
@@ -11,7 +12,7 @@ const productInclude = {
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService, private configService: ConfigService) {}
+  constructor(private prisma: PrismaService, private configService: ConfigService, private pedidosService: PedidosService) {}
 
   private mapProduct(product: any, stock: number | null = null) {
     const baseUrl = this.configService.get('API_BASE_URL') || 'http://localhost:3000';
@@ -218,12 +219,22 @@ export class ProductsService {
     const resolvedCategory = await this.resolveCategoryId(id_categoria);
     const sanitizedMedia = media ? this.sanitizeMediaPayload(media) : undefined;
     const prisma = this.prisma as any;
+    // leer producto actual antes de actualizar
+    const before = await prisma.producto.findUnique({ where: { id_producto: productId } });
     const product = await prisma.producto.update({ where: { id_producto: productId }, data: { ...rest, ...(resolvedCategory !== undefined && { id_categoria: resolvedCategory }) }, include: productInclude as any });
     if (sanitizedMedia) {
       await this.replaceProductMedia(productId, sanitizedMedia);
       const refreshed = await this.fetchProductWithRelations(productId);
       if (!refreshed) throw new NotFoundException(`Producto con ID #${id} no encontrado luego de actualizar media.`);
       return this.mapProduct(refreshed);
+    }
+    // Si el estado cambia a inactivo -> cancelar pedidos que incluyen este producto
+    try {
+      if (before && before.estado !== 'inactivo' && product.estado === 'inactivo') {
+        await this.pedidosService.cancelPedidosContainingProduct(productId, 'producto_desactivado');
+      }
+    } catch (e) {
+      console.error('Error al cancelar pedidos por desactivación del producto:', e);
     }
     return this.mapProduct(product);
   }

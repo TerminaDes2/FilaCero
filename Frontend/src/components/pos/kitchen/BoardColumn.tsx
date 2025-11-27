@@ -8,6 +8,7 @@ interface Props {
   status: KitchenStatus;
   tickets: Ticket[];
   onMove: (id: string, to: KitchenStatus) => void | Promise<void>;
+  onCancel?: (id: string) => void | Promise<void>;
 }
 
 export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove }) => {
@@ -28,7 +29,7 @@ export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove })
       <h3 className="text-sm font-semibold px-1" style={{ color: 'var(--pos-text-heading)' }}>{title} ({tickets.length})</h3>
       <div className="flex flex-col gap-3">
         {tickets.map(t => (
-          <TicketCard key={t.id} ticket={t} onMove={(to) => onMove(t.id, to)} />
+          <TicketCard key={t.id} ticket={t} onMove={(to) => onMove(t.id, to)} onCancel={() => onCancel && onCancel(t.id)} />
         ))}
         {tickets.length === 0 && (
           <div className="text-xs px-1 py-6 text-center" style={{ color: 'var(--pos-text-muted)' }}>Nada por aquí…</div>
