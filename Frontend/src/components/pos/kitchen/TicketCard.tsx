@@ -114,35 +114,31 @@ export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
       </div>
 
       {action && (
-        <div className="flex gap-1 flex-wrap mt-2">
+        <div className="flex gap-2 flex-wrap mt-2 items-center">
           <button
             onClick={() => void onMove(action.to)}
             className="text-xs px-3 py-1.5 rounded border bg-white font-medium text-gray-700 hover:bg-gray-100 active:scale-[.97] transition"
           >
             {action.label}
           </button>
-          </div>
           {onCancel && (ticket.status === 'pending' || ticket.status === 'prepping') && (
-            <div className="mt-2">
-              <button
-                onClick={() => {
-                  // Preguntar confirmación
-                  void (async () => {
-                    try {
-                      const ok = await confirm({ title: 'Cancelar pedido', description: '¿Deseas cancelar este pedido? Se enviará un correo al cliente.', confirmText: 'Cancelar', cancelText: 'Mantener', tone: 'danger' });
-                      if (ok) await onCancel();
-                    } catch (e) {
-                      console.error('Confirm modal failed', e);
-                      const ok = window.confirm('¿Cancelar pedido? Esta acción enviará un correo al cliente.');
-                      if (ok) await onCancel();
-                    }
-                  })();
-                }}
-                className="text-xs px-3 py-1.5 rounded border bg-white text-rose-600 hover:bg-rose-50 active:scale-[.97] transition"
-              >
-                Cancelar
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                void (async () => {
+                  try {
+                    const ok = await confirm({ title: 'Cancelar pedido', description: '¿Deseas cancelar este pedido? Se enviará un correo al cliente.', confirmText: 'Cancelar', cancelText: 'Mantener', tone: 'danger' });
+                    if (ok) await onCancel();
+                  } catch (e) {
+                    console.error('Confirm modal failed', e);
+                    const ok = window.confirm('¿Cancelar pedido? Esta acción enviará un correo al cliente.');
+                    if (ok) await onCancel();
+                  }
+                })();
+              }}
+              className="text-xs px-3 py-1.5 rounded border bg-white text-rose-600 hover:bg-rose-50 active:scale-[.97] transition"
+            >
+              Cancelar
+            </button>
           )}
         </div>
       )}
