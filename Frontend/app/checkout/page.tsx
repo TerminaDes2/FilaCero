@@ -11,7 +11,6 @@ import { useCart } from "../../src/components/shop/CartContext";
 import { useUserStore } from "../../src/state/userStore";
 import { useThemeStore } from "../../src/state/themeStore";
 import DeliveryTime from "../../src/components/checkout/deliveryTime";
-import PaymentMethod from "../../src/components/checkout/paymentMethod";
 import { api, activeBusiness } from "../../src/lib/api";
 
 // Stripe init
@@ -22,7 +21,7 @@ const stripePk =
   '';
 const stripePromise = stripePk ? loadStripe(stripePk) : null;
 
-function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCartAndRedirect, onReady }: any) {
+function CardPaymentForm({ pedidoId, onSuccess, onError, user, clearCartAndRedirect, onReady }: any) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -91,12 +90,6 @@ function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCa
 
       const pi = result.paymentIntent;
       if (pi && pi.status === 'succeeded') {
-        // Si el usuario pidió guardar la tarjeta, intentamos guardar el método
-        if (saveCard && (pi as any).payment_method) {
-          try {
-            await api.savePaymentMethod({ paymentMethodId: String((pi as any).payment_method), makeDefault: true });
-          } catch (err) { console.warn('No se pudo guardar el método de pago', err); }
-        }
         onSuccess?.();
         // Limpiar carrito y redirigir
         clearCartAndRedirect?.();
@@ -130,16 +123,7 @@ function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCa
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-        <input
-          id="saveCard"
-          type="checkbox"
-          checked={Boolean(saveCard)}
-          readOnly
-          className="h-4 w-4 rounded border border-slate-300 text-[var(--fc-brand-600)] focus:ring-[var(--fc-brand-500)] dark:border-white/20 dark:bg-transparent"
-        />
-        <label htmlFor="saveCard" className="text-sm">Guardar tarjeta para futuros pagos</label>
-      </div>
+
 
       {error && <div className="text-sm text-rose-600 dark:text-rose-300">{error}</div>}
 
@@ -179,8 +163,7 @@ function formatCurrency(amount: number) {
 
 const steps = [
   { id: 1, title: "Ventana de retiro", caption: "Coordina tu horario" },
-  { id: 2, title: "Método de pago", caption: "Define cómo cobramos" },
-  { id: 3, title: "Confirmación", caption: "Envía a cocina" },
+  { id: 2, title: "Confirmación", caption: "Envía a cocina" },
 ];
 
 export default function CheckoutPage() {
@@ -190,7 +173,6 @@ export default function CheckoutPage() {
 
   const [activeStep, setActiveStep] = useState(1);
   const [deliveryTime, setDeliveryTime] = useState<string>("asap");
-  const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "tarjeta" | "">("tarjeta");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -199,9 +181,6 @@ export default function CheckoutPage() {
   const [bizLoading, setBizLoading] = useState(true);
   const [pendingPedidoId, setPendingPedidoId] = useState<string | null>(null);
   const [cardFormRef, setCardFormRef] = useState<{ handlePay: () => Promise<void> } | null>(null);
-  const [hasCard, setHasCard] = useState(false);
-  const [saveCard, setSaveCard] = useState(false);
-  const cardOnlyMethods = useMemo(() => ["tarjeta"] as Array<"efectivo" | "tarjeta">, []);
 
   useEffect(() => {
     // Redirect to login if not authenticated (and not still loading auth)
@@ -258,34 +237,26 @@ export default function CheckoutPage() {
   }, [total]);
 
   const deliverySummary = deliveryTime === "asap" ? "Lo antes posible" : `Retiro ${deliveryTime} h`;
-  const paymentSummary =
-    paymentMethod === "efectivo"
-      ? "Efectivo en barra"
-      : paymentMethod === "tarjeta"
-      ? "Tarjeta / QR"
-      : "Selecciona un método";
+  const paymentSummary = "Tarjeta / QR";
 
   const canAdvanceFromStep = (stepId: number) => {
     if (stepId === 1) return Boolean(deliveryTime);
-    if (stepId === 2) return Boolean(paymentMethod);
     return true;
   };
 
   // Cambiar el label del botón si hay un pedido pendiente con tarjeta
   const confirmDisabled =
-    !items.length || !paymentMethod || !deliveryTime || isSubmitting || !verificationsOk;
+    !items.length || !deliveryTime || isSubmitting || !verificationsOk;
   const primaryDisabled =
     activeStep === steps.length ? confirmDisabled : isSubmitting || !canAdvanceFromStep(activeStep);
   const primaryLabel =
     activeStep === steps.length
       ? isSubmitting
         ? "Procesando…"
-        : pendingPedidoId && paymentMethod === "tarjeta"
-        ? "Pagar ahora"
-        : "Enviar a cocina"
-      : activeStep === steps.length - 1
-      ? "Ir a confirmación"
-      : "Continuar";
+        : pendingPedidoId
+          ? "Pagar ahora"
+          : "Enviar a cocina"
+      : "Ir a confirmación";
 
   const handleNext = () => {
     setActiveStep((prev) => Math.min(prev + 1, steps.length));
@@ -303,8 +274,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Si ya existe un pedido pendiente con tarjeta, ejecutar el pago
-    if (pendingPedidoId && paymentMethod === 'tarjeta' && cardFormRef) {
+    // Si ya existe un pedido pendiente, ejecutar el pago con tarjeta
+    if (pendingPedidoId && cardFormRef) {
       await cardFormRef.handlePay();
       return;
     }
@@ -321,7 +292,7 @@ export default function CheckoutPage() {
 
       const payload = {
         id_negocio: String(negocioId),
-        id_tipo_pago: paymentMethod === "efectivo" ? "1" : "2",
+        id_tipo_pago: "2", // Siempre tarjeta
         items: items.map((item) => ({
           id_producto: String(item.id),
           cantidad: item.cantidad,
@@ -333,33 +304,13 @@ export default function CheckoutPage() {
       // 1) Crear la venta/pedido
       const sale = await api.createSale(payload);
 
-      // Si el pago es con tarjeta, creamos un PaymentIntent y dejamos que el cliente lo confirme
-      if (paymentMethod === 'tarjeta') {
-        const pedido = sale?.pedido;
-        if (!pedido || !pedido.id_pedido) {
-          throw new Error('No se pudo obtener el pedido para procesar el pago');
-        }
-        // Guardamos el pedido pendiente para que el formulario de tarjeta cree el PaymentIntent
-        setPendingPedidoId(String(pedido.id_pedido));
-      } else {
-        // Efectivo: confirmamos y finalizamos
-        window.dispatchEvent(
-          new CustomEvent("shop:order-confirmed", {
-            detail: {
-              negocioId: String(negocioId),
-              total: grandTotal,
-              paymentMethod,
-              deliveryTime,
-            },
-          }),
-        );
-
-        clearCart();
-        setSuccessMessage("Pedido enviado a cocina. Estamos preparando tu orden.");
-        setTimeout(() => {
-          router.push("/shop?order=confirmed");
-        }, 900);
+      // Siempre es con tarjeta en este checkout
+      const pedido = sale?.pedido;
+      if (!pedido || !pedido.id_pedido) {
+        throw new Error('No se pudo obtener el pedido para procesar el pago');
       }
+      // Guardamos el pedido pendiente para que el formulario de tarjeta cree el PaymentIntent
+      setPendingPedidoId(String(pedido.id_pedido));
     } catch (error: any) {
       console.error("[checkout] Error al confirmar pedido", error);
       setSubmitError(error?.message ?? "No pudimos confirmar tu pedido. Inténtalo nuevamente.");
@@ -383,32 +334,13 @@ export default function CheckoutPage() {
       );
     }
 
-    if (activeStep === 2) {
-      return (
-        <div className="space-y-6">
-          <PaymentMethod
-            paymentMethod={paymentMethod}
-            setPaymentMethod={setPaymentMethod}
-            displayMode="embedded"
-            allowedMethods={cardOnlyMethods}
-          />
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-500 transition-colors dark:border-white/10 dark:bg-[color:rgba(9,14,28,0.86)] dark:text-slate-300">
-            Este checkout admite únicamente cobros con tarjeta o QR para garantizar la confirmación inmediata del pedido.
-          </div>
-        </div>
-      );
-    }
+
 
     return (
       <div className="space-y-5">
         {!verificationsOk && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-700 transition-colors dark:border-amber-500/50 dark:bg-[color:rgba(120,53,15,0.28)] dark:text-amber-200">
             Necesitas verificar tu <strong>correo</strong> y tu <strong>credencial</strong> para completar pagos digitales. Por favor completa las verificaciones en tu perfil.
-          </div>
-        )}
-        {!hasCard && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 transition-colors dark:border-rose-500/60 dark:bg-[color:rgba(136,19,55,0.28)] dark:text-rose-200">
-            No se encontró una tarjeta guardada. Agrega una tarjeta en <a className="underline" href="/payment">Métodos de pago</a> para poder pagar con tarjeta.
           </div>
         )}
         {submitError && (
@@ -450,50 +382,36 @@ export default function CheckoutPage() {
             </div>
           </dl>
         </div>
-        {paymentMethod === 'tarjeta' && (
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <input
-                id="saveCardOpt"
-                type="checkbox"
-                checked={saveCard}
-                onChange={() => setSaveCard((s) => !s)}
-                className="h-4 w-4 rounded border border-slate-300 text-[var(--fc-brand-600)] focus:ring-[var(--fc-brand-500)] dark:border-white/20 dark:bg-transparent"
-              />
-              <label htmlFor="saveCardOpt" className="text-sm text-slate-600 dark:text-slate-300">Guardar tarjeta para futuros pagos</label>
+        <div className="mt-4 space-y-3">
+          {!pendingPedidoId ? (
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600 transition-colors dark:border-white/12 dark:bg-[color:rgba(9,14,28,0.75)] dark:text-slate-300">
+              Al confirmar el pedido se solicitará el pago con tarjeta en esta pantalla.
             </div>
-
-            {!pendingPedidoId ? (
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600 transition-colors dark:border-white/12 dark:bg-[color:rgba(9,14,28,0.75)] dark:text-slate-300">
-                Al confirmar el pedido se solicitará el pago con tarjeta en esta pantalla.
-              </div>
-            ) : (
-              <div>
-                {stripePromise ? (
-                  <Elements stripe={stripePromise as any}>
-                    <CardPaymentForm
-                      pedidoId={pendingPedidoId}
-                      saveCard={saveCard}
-                      user={user}
-                      onSuccess={() => setPendingPedidoId(null)}
-                      onError={(err: any) => setSubmitError(err?.message ?? String(err))}
-                      clearCartAndRedirect={() => {
-                        clearCart();
-                        setSuccessMessage('Pago procesado. Pedido enviado a cocina.');
-                        setTimeout(() => router.push('/shop?order=confirmed'), 900);
-                      }}
-                      onReady={(ref: any) => setCardFormRef(ref)}
-                    />
-                  </Elements>
-                ) : (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 transition-colors dark:border-rose-500/60 dark:bg-[color:rgba(136,19,55,0.28)] dark:text-rose-200">
-                    Stripe no está configurado en el frontend (falta NEXT_PUBLIC_STRIPE_PK).
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+          ) : (
+            <div>
+              {stripePromise ? (
+                <Elements stripe={stripePromise as any}>
+                  <CardPaymentForm
+                    pedidoId={pendingPedidoId}
+                    user={user}
+                    onSuccess={() => setPendingPedidoId(null)}
+                    onError={(err: any) => setSubmitError(err?.message ?? String(err))}
+                    clearCartAndRedirect={() => {
+                      clearCart();
+                      setSuccessMessage('Pago procesado. Pedido enviado a cocina.');
+                      setTimeout(() => router.push('/shop?order=confirmed'), 900);
+                    }}
+                    onReady={(ref: any) => setCardFormRef(ref)}
+                  />
+                </Elements>
+              ) : (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 transition-colors dark:border-rose-500/60 dark:bg-[color:rgba(136,19,55,0.28)] dark:text-rose-200">
+                  Stripe no está configurado en el frontend (falta NEXT_PUBLIC_STRIPE_PK).
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -558,14 +476,14 @@ export default function CheckoutPage() {
                         status === "active"
                           ? "border-slate-900 bg-slate-900 text-white shadow-sm dark:border-white/20 dark:bg-[color:rgba(15,23,42,0.75)]"
                           : status === "done"
-                          ? "border-[var(--fc-brand-500)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)] dark:border-[color:rgba(56,189,248,0.35)] dark:bg-[color:rgba(8,47,73,0.45)] dark:text-[color:rgba(186,230,253,0.95)]"
-                          : "border-slate-200/80 bg-white text-slate-500 dark:border-white/10 dark:bg-[color:rgba(9,14,28,0.86)] dark:text-slate-400";
+                            ? "border-[var(--fc-brand-500)] bg-[var(--fc-brand-50)] text-[var(--fc-brand-700)] dark:border-[color:rgba(56,189,248,0.35)] dark:bg-[color:rgba(8,47,73,0.45)] dark:text-[color:rgba(186,230,253,0.95)]"
+                            : "border-slate-200/80 bg-white text-slate-500 dark:border-white/10 dark:bg-[color:rgba(9,14,28,0.86)] dark:text-slate-400";
                       const pillClasses =
                         status === "active"
                           ? "bg-white text-slate-900 dark:bg-white/80 dark:text-slate-900"
                           : status === "done"
-                          ? "bg-[var(--fc-brand-600)] text-white dark:bg-[var(--fc-brand-500)]"
-                          : "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-400";
+                            ? "bg-[var(--fc-brand-600)] text-white dark:bg-[var(--fc-brand-500)]"
+                            : "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-400";
                       return (
                         <button
                           key={step.id}
@@ -617,13 +535,12 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={activeStep === steps.length ? handleConfirm : handleNext}
                     disabled={primaryDisabled}
-                    className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[color:rgba(8,12,24,0.96)] ${
-                      primaryDisabled
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fc-brand-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[color:rgba(8,12,24,0.96)] ${primaryDisabled
                         ? "cursor-not-allowed border border-slate-200 bg-slate-200 text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-500"
                         : activeStep === steps.length
-                        ? "bg-[var(--fc-brand-600)] text-white shadow-lg shadow-[rgba(222,53,95,0.25)] hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
-                        : "border border-[var(--fc-brand-500)] bg-[var(--fc-brand-500)]/10 text-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)]/20 dark:border-[var(--fc-brand-400)] dark:bg-[color:rgba(9,14,28,0.6)] dark:text-[color:rgba(186,230,253,0.95)] dark:hover:bg-[color:rgba(12,19,38,0.9)]"
-                    }`}
+                          ? "bg-[var(--fc-brand-600)] text-white shadow-lg shadow-[rgba(222,53,95,0.25)] hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
+                          : "border border-[var(--fc-brand-500)] bg-[var(--fc-brand-500)]/10 text-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)]/20 dark:border-[var(--fc-brand-400)] dark:bg-[color:rgba(9,14,28,0.6)] dark:text-[color:rgba(186,230,253,0.95)] dark:hover:bg-[color:rgba(12,19,38,0.9)]"
+                      }`}
                   >
                     {primaryLabel}
                     {!primaryDisabled && activeStep !== steps.length && <ChevronRight className="h-4 w-4" />}
