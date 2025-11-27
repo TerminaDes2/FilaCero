@@ -36,8 +36,11 @@ export function WebSocketConnector() {
     useEffect(() => {
         const businessId = activeBusiness.get();
         if (isConnected && businessId) {
-            joinRoom('business', businessId);
-            console.log(`[WebSocketConnector] Joined business room ${businessId}`);
+            const businessIdNum = parseInt(businessId, 10);
+            if (!isNaN(businessIdNum)) {
+                joinRoom('business', businessIdNum);
+                console.log(`[WebSocketConnector] Joined business room ${businessId}`);
+            }
         }
     }, [isConnected, joinRoom]);
 
