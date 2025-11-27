@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, uploadFileToCloudinary } from '../../../lib/api';
 import { useCategoriesStore } from '../../../pos/categoriesStore';
 
 export interface EditProductData {
@@ -31,6 +31,11 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const isMounted = useRef(true);
 
+  // --- Imagen states ---
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageSaving, setImageSaving] = useState(false);
+
   const categories = useCategoriesStore(state => state.categories);
   const fetchCategories = useCategoriesStore(state => state.fetchCategories);
 
@@ -59,6 +64,12 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
       isMounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    // Preload preview from initial (media/imagen_url)
+    const preferred = (initial as any).imagen_url || null;
+    if (preferred) setImagePreview(preferred);
+  }, [initial]);
 
   useEffect(() => {
     updateCategories().catch(() => {
@@ -125,6 +136,34 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
       setSaving(false);
     }
   }, [nombre, precio, active, sku, category, categories, initial.id, onSaved]);
+
+  // Image handlers
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      try { setImagePreview(URL.createObjectURL(file)); } catch { setImagePreview(null); }
+    }
+  }, []);
+
+  const handleSaveImage = useCallback(async () => {
+    if (!imageFile) return;
+    setImageSaving(true);
+    try {
+      // Upload to Cloudinary using the frontend helper
+      const cloudUrl = await uploadFileToCloudinary(imageFile);
+      // Call backend to set product image URL
+      await api.setProductImageByUrl(initial.id, cloudUrl);
+      setImageFile(null);
+      setImagePreview(cloudUrl);
+      onSaved();
+    } catch (err: any) {
+      console.error('Error guardando imagen:', err);
+      // We could show an error toast here
+    } finally {
+      setImageSaving(false);
+    }
+  }, [imageFile, initial.id, onSaved]);
 
   useEffect(() => {
     const t = setTimeout(() => nameInputRef.current?.focus(), 60);
@@ -227,6 +266,32 @@ export const EditProductPanel: React.FC<EditProductPanelProps> = ({ initial, onC
                 )}
               </div>
             </div>
+          </section>
+          <section className='rounded-2xl p-4 space-y-3' style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}>
+            <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Imagen del producto</h3>
+            {imagePreview && (
+              <div className='relative group'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagePreview} alt='Vista previa del producto' className='w-full h-48 object-cover rounded-lg border' style={{ borderColor: 'var(--pos-card-border)' }} />
+                <button type='button' onClick={() => { setImageFile(null); setImagePreview(null); }} className='absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none' aria-label='Quitar imagen'>✕</button>
+              </div>
+            )}
+            {!imagePreview && (
+              <label className='w-full h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-colors hover:bg-black/5' style={{ borderColor: 'var(--pos-card-border)', color: 'var(--pos-text-muted)' }}>
+                <svg className='w-8 h-8' fill='none' stroke='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' /></svg>
+                <span className='mt-2 text-sm font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Subir una imagen</span>
+                <span className='text-xs'>Click para seleccionar</span>
+                <input type='file' className='hidden' accept='image/png, image/jpeg' onChange={handleImageChange} />
+              </label>
+            )}
+            {imageFile && (
+              <div className='flex gap-2'>
+                <button type='button' onClick={handleSaveImage} disabled={imageSaving} className='px-4 py-2 rounded-md bg-emerald-600 text-white'>
+                  {imageSaving ? 'Guardando...' : 'Guardar imagen'}
+                </button>
+                <button type='button' onClick={() => { setImageFile(null); setImagePreview(null); }} className='px-4 py-2 rounded-md bg-gray-200'>Cancelar</button>
+              </div>
+            )}
           </section>
           <section className='rounded-2xl p-4 space-y-3' style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}>
             <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Precio y estado</h3>

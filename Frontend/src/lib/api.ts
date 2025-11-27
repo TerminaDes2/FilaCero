@@ -261,6 +261,27 @@ function buildProductFormData(productData: any, imageFile?: File | null) {
   return fd;
 }
 
+export async function uploadFileToCloudinary(file: File) {
+  if (!file) throw new Error('No file provided to uploadFileToCloudinary');
+  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    throw new Error('Falta la configuración de Cloudinary (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME o NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET)');
+  }
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', UPLOAD_PRESET);
+  const res = await fetch(url, { method: 'POST', body: fd });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Error subiendo a Cloudinary: ${res.status} ${txt}`);
+  }
+  const data = await res.json();
+  if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
+  return data.secure_url as string;
+}
+
 
 // --- Interfaces actualizadas ---
 export interface AuthUser {
@@ -540,12 +561,19 @@ export const api = {
       body: buildProductFormData(productData, imageFile),
     }),
 
-  // Nueva versión: siempre multipart/form-data.
-  // Campo JSON: 'data'; Campo de archivo (opcional): 'file'
-  createProductWithImage: (productData: any, imageFile?: File | null) => {
+  // Nueva versión: sube imagen a Cloudinary desde el cliente (si aplica),
+  // luego crea el producto enviando solo JSON dentro del campo `data` del form-data.
+  createProductWithImage: async (productData: any, imageFile?: File | null) => {
+    const clone = { ...(productData || {}) } as any;
+    if (imageFile) {
+      const cloudUrl = await uploadFileToCloudinary(imageFile);
+      clone.media = clone.media || [];
+      clone.media.unshift({ url: cloudUrl, principal: true, tipo: imageFile.type });
+    }
+    // The backend create endpoint expects a FormData with 'data' string field.
     return apiFetch<any>("products", {
       method: "POST",
-      body: buildProductFormData(productData, imageFile),
+      body: buildProductFormData(clone, null),
     });
   },
 
@@ -558,6 +586,11 @@ export const api = {
   deleteProduct: (id: string) =>
     apiFetch<any>(`products/${id}`, {
       method: "DELETE",
+    }),
+  setProductImageByUrl: (id: string | number, imageUrl: string) =>
+    apiFetch<any>(`products/${id}/image-url`, {
+      method: 'POST',
+      body: JSON.stringify({ imageUrl }),
     }),
 
   // --- Categorías (CORREGIDO: Duplicados eliminados) ---
