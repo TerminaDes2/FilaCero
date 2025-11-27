@@ -451,3 +451,39 @@ model negocio_categoria {
   @@unique([id_negocio, id_categoria])
   @@map("negocio_categoria")
 }
+
+// Per-business product overrides (price + active state) and history
+model negocio_producto {
+  id_negocio_producto BigInt  @id @default(autoincrement())
+  id_negocio          BigInt
+  id_producto         BigInt
+  precio              Decimal  @db.Decimal(12, 2)
+  activo              Boolean  @default(true)
+  creado_en           DateTime @default(now()) @db.Timestamptz(6)
+  negocio             negocio  @relation(fields: [id_negocio], references: [id_negocio], onDelete: Cascade)
+  producto            producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade)
+  precio_historial    negocio_producto_historial_precio[]
+
+  @@unique([id_negocio, id_producto])
+  @@index([id_negocio], map: "idx_negocio_producto_negocio")
+  @@index([id_producto], map: "idx_negocio_producto_producto")
+  @@map("negocio_producto")
+}
+
+model negocio_producto_historial_precio {
+  id_historial            BigInt  @id @default(autoincrement())
+  id_negocio_producto     BigInt
+  precio                  Decimal @db.Decimal(12, 2)
+  fecha_inicio            DateTime @default(now()) @db.Timestamptz(6)
+  fecha_fin               DateTime? @db.Timestamptz(6)
+  vigente                 Boolean @default(true)
+  motivo                  String? @db.VarChar(200)
+  id_usuario              BigInt?
+  creado_en               DateTime @default(now()) @db.Timestamptz(6)
+
+  negocio_producto        negocio_producto @relation(fields: [id_negocio_producto], references: [id_negocio_producto], onDelete: Cascade)
+  usuario                 usuarios? @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
+
+  @@index([id_negocio_producto, vigente])
+  @@map("negocio_producto_historial_precio")
+}

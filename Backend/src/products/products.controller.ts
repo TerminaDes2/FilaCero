@@ -2,8 +2,10 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Uploaded
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { ProductsService } from './products.service';
+import { BusinessesService } from '../businesses/businesses.service';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateProductPriceDto } from './dto/update-product-price.dto';
+import { GlobalProductActionDto } from './dto/global-product-action.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ProductPriceHistoryService } from './product-price-history.service';
@@ -13,7 +15,7 @@ import { extname } from 'path';
 
 @Controller('api/products')
 export class ProductsController {
-  constructor(private readonly service: ProductsService, private readonly priceHistoryService: ProductPriceHistoryService) {}
+  constructor(private readonly service: ProductsService, private readonly priceHistoryService: ProductPriceHistoryService, private readonly businessesService: BusinessesService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -64,8 +66,27 @@ export class ProductsController {
   }
 
   @Get(':id/price/current')
-  async getCurrentPrice(@Param('id') id: string) {
+  async getCurrentPrice(@Param('id') id: string, @Query('id_negocio') id_negocio?: string) {
     const idProducto = BigInt(id);
+    if (id_negocio) {
+      // if business id provided, try to fetch the negocio_producto current price
+      try {
+        const negocioId = BigInt(id_negocio);
+        const current = await (this.service as any).prisma.negocio_producto_historial_precio.findFirst({ where: { negocio_producto: { id_negocio: negocioId, id_producto: idProducto }, vigente: true }, include: { usuario: { select: { nombre: true, correo_electronico: true } } } });
+        if (current) {
+          return {
+            id_historial: current.id_historial.toString(),
+            precio: Number(current.precio),
+            fecha_inicio: current.fecha_inicio.toISOString(),
+            vigente: current.vigente,
+            motivo: current.motivo || null,
+            usuario: current.usuario ? { nombre: current.usuario.nombre, correo: current.usuario.correo_electronico } : null,
+          };
+        }
+      } catch (e) {
+        // fallback to global price
+      }
+    }
     const precioActual = await this.priceHistoryService.obtenerPrecioActual(idProducto);
     if (!precioActual) {
       return { message: 'No hay precio registrado en el historial', id_producto: id };
@@ -89,9 +110,17 @@ export class ProductsController {
     return { message: 'Precio actualizado exitosamente', id_producto: id, nuevo_precio: dto.precio, motivo: dto.motivo || null };
   }
 
+  @Post('apply/global')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin')
+  async applyGlobal(@Body() dto: GlobalProductActionDto, @Request() req: any) {
+    const userId = BigInt(req.user.id_usuario);
+    return this.service.applyGlobalToOwnerBusinesses(userId, dto);
+  }
+
   @Get(':id')
-  get(@Param('id') id: string | number) {
-    return this.service.findOne(id);
+  get(@Param('id') id: string | number, @Query('id_negocio') id_negocio?: string) {
+    return this.service.findOne(id, id_negocio);
   }
 
   @Patch(':id')

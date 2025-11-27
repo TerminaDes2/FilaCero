@@ -5,6 +5,8 @@ import { Roles } from '../auth/roles.decorator';
 import { BusinessesService } from './businesses.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
+import { CreateBusinessProductDto } from '../products/dto/create-business-product.dto';
+import { UpdateBusinessProductPriceDto } from '../products/dto/update-business-product-price.dto';
 
 @Controller('api/businesses')
 export class BusinessesController {
@@ -45,6 +47,30 @@ export class BusinessesController {
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.service.getBusinessById(id);
+  }
+
+  @Post(':id/products')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado')
+  createProductForBusiness(@Req() req: any, @Param('id') id: string, @Body() dto: CreateBusinessProductDto) {
+    const userId = this.extractUserId(req);
+    return this.service.createProductForBusiness(userId, id, dto);
+  }
+
+  @Put(':id/products/:productId/price')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado')
+  updateProductPriceForBusiness(@Req() req: any, @Param('id') id: string, @Param('productId') productId: string, @Body() dto: UpdateBusinessProductPriceDto) {
+    const userId = this.extractUserId(req);
+    return this.service.updateProductPriceForBusiness(userId, id, productId, dto);
+  }
+
+  @Get(':id/products/:productId/price/history')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'superadmin', 'empleado', 'usuario')
+  getProductPriceHistoryForBusiness(@Req() req: any, @Param('id') id: string, @Param('productId') productId: string) {
+    const userId = this.extractUserId(req);
+    return this.service.getProductPriceHistoryForBusiness(userId, id, productId);
   }
 
   private extractUserId(req: any): string {
