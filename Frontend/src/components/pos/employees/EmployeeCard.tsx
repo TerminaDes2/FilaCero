@@ -169,8 +169,8 @@ export function EmployeeCard({ employee, view, onUpdate }: EmployeeCardProps) {
           className='w-14 h-14 rounded-full flex items-center justify-center font-bold text-white text-lg'
           style={{ background: isActive ? 'var(--fc-brand-600)' : '#999' }}
         >
-          {employee.usuario.avatar_url ? (
-            <Image src={employee.usuario.avatar_url} alt={employee.usuario.nombre} width={56} height={56} className='w-full h-full rounded-full object-cover' />
+          {user.avatar_url ? (
+            <Image src={user.avatar_url} alt={user.nombre} width={56} height={56} className='w-full h-full rounded-full object-cover' />
           ) : (
             initials
           )}
