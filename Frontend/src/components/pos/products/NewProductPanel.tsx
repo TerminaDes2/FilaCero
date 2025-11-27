@@ -335,20 +335,20 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* SKU */}
-              <div>
+                <div>
                 <label
                   className="block text-xs mb-1 font-semibold"
                   style={{ color: "var(--pos-text-heading)" }}
                 >
                   SKU
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center flex-nowrap">
                   <input
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
-                    className="flex-1 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2"
+                    className="flex-1 min-w-0 rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2"
                     style={{
                       height: "var(--pos-control-h)",
                       borderRadius: "var(--pos-control-radius)",
@@ -360,7 +360,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                   <button
                     type="button"
                     onClick={generateSku}
-                    className="px-3 rounded-lg text-xs font-semibold transition-colors"
+                    className="px-3 rounded-lg text-xs font-semibold transition-colors flex-shrink-0"
                     style={{
                       height: "var(--pos-control-h)",
                       borderRadius: "var(--pos-control-radius)",

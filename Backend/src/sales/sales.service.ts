@@ -472,7 +472,7 @@ export class SalesService {
   
     const ids = items.map((item) => item.idProducto);
   
-    const [productos, inventarios] = await Promise.all([
+    const [productos, inventarios, negocioOverrides] = await Promise.all([
       tx.producto.findMany({
         where: { id_producto: { in: ids } },
         select: { id_producto: true, nombre: true, precio: true, estado: true },
@@ -484,6 +484,7 @@ export class SalesService {
         },
         select: { id_producto: true, cantidad_actual: true },
       }),
+      tx.negocio_producto.findMany({ where: { id_negocio: negocioId, id_producto: { in: ids } }, select: { id_producto: true, precio: true, activo: true } }),
     ]);
   
     const productosMap = new Map(productos.map((p) => [p.id_producto, p]));
@@ -498,6 +499,14 @@ export class SalesService {
       if (producto.estado && producto.estado !== 'activo') {
         throw new BadRequestException(`El producto ${producto.nombre} no está disponible para la venta`);
       }
+
+      // Check negocio override
+      const override = negocioOverrides.find((o: any) => o.id_producto === item.idProducto);
+      if (override) {
+        if (override.activo === false) {
+          throw new BadRequestException(`El producto ${producto.nombre} está desactivado en este negocio`);
+        }
+      }
   
       const inventario = inventarioMap.get(item.idProducto);
       if (inventario) {
@@ -509,7 +518,7 @@ export class SalesService {
       
       // --- MODIFICADO ---
       // Usamos SIEMPRE el precio de la base de datos
-      const precioBase = Number(producto.precio); 
+      const precioBase = override && override.precio !== undefined ? Number(override.precio) : Number(producto.precio);
       if (Number.isNaN(precioBase)) {
         throw new BadRequestException(`Precio inválido para el producto ${producto.nombre}`);
       }

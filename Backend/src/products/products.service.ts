@@ -14,7 +14,7 @@ const productInclude = {
 export class ProductsService {
   constructor(private prisma: PrismaService, private configService: ConfigService, private pedidosService: PedidosService) {}
 
-  private mapProduct(product: any, stock: number | null = null) {
+  private mapProduct(product: any, stock: number | null = null, precioOverride?: number) {
     const baseUrl = this.configService.get('API_BASE_URL') || 'http://localhost:3000';
     const { categoria, producto_media: mediaRecords, producto_metricas_semanales: metricRecords, id_producto, id_categoria, precio, ...rest } = product;
     const mediaList = (mediaRecords ?? []).map((item: any) => {
@@ -45,7 +45,7 @@ export class ProductsService {
       ...rest,
       id_producto: id_producto.toString(),
       id_categoria: id_categoria ? id_categoria.toString() : null,
-      precio: Number(precio),
+      precio: precioOverride !== undefined ? Number(precioOverride) : Number(precio),
       category: categoria?.nombre ?? null,
       stock: stock ?? null,
       media: mediaList,
@@ -143,8 +143,15 @@ export class ProductsService {
     if (negocioIdFilter !== undefined) {
       const negocioId = negocioIdFilter;
       const prisma = this.prisma as any;
-      inventoryRows = await prisma.inventario.findMany({ where: { id_negocio: negocioId }, select: { id_producto: true, cantidad_actual: true } });
-      const productIds = Array.from(new Set(inventoryRows.map((row) => row.id_producto).filter((value) => value != null)));
+      // fetch product IDs from inventory and from negocio_producto associations
+      const [inventoryRowsLocal, businessProductRows] = await Promise.all([
+        prisma.inventario.findMany({ where: { id_negocio: negocioId }, select: { id_producto: true, cantidad_actual: true } }),
+        prisma.negocio_producto.findMany({ where: { id_negocio: negocioId }, select: { id_producto: true } }),
+      ]);
+      inventoryRows = inventoryRowsLocal || [];
+      const invIds = inventoryRows.map((row) => row.id_producto).filter((v) => v != null);
+      const bpIds = businessProductRows.map((row) => row.id_producto).filter((v) => v != null);
+      const productIds = Array.from(new Set([...invIds, ...bpIds]));
       if (productIds.length === 0) return [];
       where.id_producto = { in: productIds } as any;
     }
@@ -160,12 +167,33 @@ export class ProductsService {
       const amount = Number(row.cantidad_actual ?? 0);
       stockMap.set(id, (stockMap.get(id) ?? 0) + amount);
     }
-    return products.map((product) => {
+    // If a negocio filter was provided, fetch per-business product overrides
+    const overrideMap = new Map<string, any>();
+    if (negocioIdFilter !== undefined) {
+      const productIds = products.map((p: any) => p.id_producto).filter(Boolean);
+      if (productIds.length > 0) {
+        const overrides = await prisma.negocio_producto.findMany({ where: { id_negocio: negocioIdFilter, id_producto: { in: productIds } }, select: { id_producto: true, precio: true, activo: true } });
+        for (const ov of overrides) {
+          overrideMap.set(String(ov.id_producto), ov);
+        }
+      }
+    }
+
+    return products
+      .filter((product) => {
+        if (negocioIdFilter === undefined) return true;
+        const ov = overrideMap.get(String(product.id_producto));
+        if (ov && ov.activo === false) return false; // If overridden as inactive for this business, skip
+        return true;
+      })
+      .map((product) => {
       const id = product.id_producto.toString();
       const hasStockInfo = stockMap.has(id);
       const stockValue = stockMap.get(id);
       const normalizedStock = hasStockInfo ? Number(stockValue ?? 0) : null;
-      return this.mapProduct(product, normalizedStock);
+      const ov = overrideMap.get(String(product.id_producto));
+      const precioOverride = ov ? Number(ov.precio) : undefined;
+      return this.mapProduct(product, normalizedStock, precioOverride);
     });
   }
 
@@ -203,14 +231,26 @@ export class ProductsService {
     return ordered.map((cat) => ({ id: cat.id, nombre: cat.nombre, totalProductos: cat.total, value: cat.id ?? '__none__' }));
   }
 
-  async findOne(id: string | number) {
+  async findOne(id: string | number, id_negocio?: string) {
     const productId = BigInt(String(id));
     const product = await this.fetchProductWithRelations(productId);
     if (!product) throw new NotFoundException(`Producto con ID #${id} no encontrado`);
     const stockAgg = await this.prisma.inventario.aggregate({ _sum: { cantidad_actual: true }, where: { id_producto: productId } });
     const stockValue = (stockAgg as any)._sum.cantidad_actual;
     const normalizedStock = stockValue == null ? null : Number(stockValue);
-    return this.mapProduct(product, normalizedStock);
+    let precioOverride: number | undefined = undefined;
+    if (id_negocio) {
+      try { const negocioId = BigInt(String(id_negocio));
+        const ov = await this.prisma.negocio_producto.findUnique({ where: { id_negocio_id_producto: { id_negocio: negocioId, id_producto: productId } }, select: { precio: true, activo: true } });
+        if (ov) {
+          if (ov.activo === false) {
+            throw new NotFoundException('Producto no disponible en este negocio');
+          }
+          precioOverride = Number(ov.precio);
+        }
+      } catch (e) { /* ignore invalid negocio id, fallback to default */ }
+    }
+    return this.mapProduct(product, normalizedStock, precioOverride);
   }
 
   async update(id: string | number, updateProductDto: any) {
@@ -266,5 +306,50 @@ export class ProductsService {
       throw e;
     }
     return { message: `Producto con ID #${id} eliminado correctamente.`, deleted: true };
+  }
+
+  // Apply an action to all businesses owned by a given admin user
+  async applyGlobalToOwnerBusinesses(userId: bigint, dto: any) {
+    const { action, id_producto, precio, initial_stock, motivo } = dto;
+    const productId = BigInt(String(id_producto));
+    const prisma = this.prisma as any;
+
+    // Get businesses owned by user
+    const negocios = await prisma.negocio.findMany({ where: { owner_id: userId } });
+    if (!negocios || negocios.length === 0) throw new BadRequestException('No business found for this owner');
+
+    // Perform actions in a transaction
+    await prisma.$transaction(async (tx: any) => {
+      for (const n of negocios) {
+        const negocioId = n.id_negocio;
+        if (action === 'add') {
+          // create or update negocio_producto, set activo true and precio
+          const baseProduct = await tx.producto.findUnique({ where: { id_producto: productId }, select: { precio: true } });
+          if (!baseProduct) throw new BadRequestException(`Producto ${productId} no existe`);
+          const targetPrecio = precio !== undefined ? Number(precio) : Number(baseProduct.precio);
+          await tx.negocio_producto.upsert({
+            where: { id_negocio_id_producto: { id_negocio: negocioId, id_producto: productId } },
+            create: { id_negocio: negocioId, id_producto: productId, precio: targetPrecio, activo: true },
+            update: { precio: targetPrecio, activo: true },
+          });
+          // optionally create inventory record
+          if (initial_stock !== undefined) {
+            await tx.inventario.upsert({ where: { id_negocio_id_producto: { id_negocio: negocioId, id_producto: productId } }, create: { id_negocio: negocioId, id_producto: productId, cantidad_actual: Number(initial_stock), stock_minimo: 0 }, update: { cantidad_actual: Number(initial_stock) } });
+          }
+        } else if (action === 'deactivate') {
+          await tx.negocio_producto.updateMany({ where: { id_negocio: negocioId, id_producto: productId }, data: { activo: false } });
+        } else if (action === 'update_price') {
+          if (precio === undefined) throw new BadRequestException('Precio requerido para update_price');
+          // Upsert negocio_producto + historize
+          const now = new Date();
+          // for each negocio: upsert and insert precio historial
+          const up = await tx.negocio_producto.upsert({ where: { id_negocio_id_producto: { id_negocio: negocioId, id_producto: productId } }, create: { id_negocio: negocioId, id_producto: productId, precio: Number(precio), activo: true }, update: { precio: Number(precio) } });
+          // Close previous hist
+          await tx.negocio_producto_historial_precio.updateMany({ where: { id_negocio_producto: up.id_negocio_producto, vigente: true }, data: { vigente: false, fecha_fin: now } });
+          await tx.negocio_producto_historial_precio.create({ data: { id_negocio_producto: up.id_negocio_producto, precio: Number(precio), fecha_inicio: now, vigente: true, motivo: motivo || null, id_usuario: userId } });
+        }
+      }
+    });
+    return { message: `Action ${action} applied to ${negocios.length} businesses for user ${String(userId)}` };
   }
 }

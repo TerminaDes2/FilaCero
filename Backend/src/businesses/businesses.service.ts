@@ -430,6 +430,98 @@ export class BusinessesService {
     }
   }
 
+  // Crear o asociar un producto a un negocio con precio y stock específico
+  async createProductForBusiness(userId: string, businessId: string, dto: any) {
+    const uid = this.parseBigInt(userId, 'Usuario inválido');
+    const nid = this.parseBigInt(businessId, 'Negocio inválido');
+
+    const negocio = await (this.prisma as any).negocio.findUnique({ where: { id_negocio: nid } });
+    if (!negocio) throw new NotFoundException('Negocio no encontrado');
+
+    // Solo el owner o un empleado asignado puede crear/gestionar productos
+    const isOwner = negocio.owner_id !== null && BigInt(negocio.owner_id) === uid;
+    if (!isOwner) {
+      const assign = await (this.prisma as any).empleados.findFirst({ where: { negocio_id: nid, usuario_id: uid } });
+      if (!assign) throw new ForbiddenException('No tienes permiso para gestionar productos en este negocio');
+    }
+
+    const productId = this.parseBigInt(String(dto.id_producto), 'Producto inválido');
+    const baseProduct = await (this.prisma as any).producto.findUnique({ where: { id_producto: productId } });
+    if (!baseProduct) throw new NotFoundException('Producto no encontrado');
+
+    const precio = dto.precio !== undefined ? Number(dto.precio) : Number(baseProduct.precio);
+    const initialStock = dto.initial_stock !== undefined ? Number(dto.initial_stock) : undefined;
+
+    try {
+      const result = await (this.prisma as any).$transaction(async (tx: any) => {
+        const np = await tx.negocio_producto.upsert({ where: { id_negocio_id_producto: { id_negocio: nid, id_producto: productId } }, create: { id_negocio: nid, id_producto: productId, precio, activo: true }, update: { precio, activo: true } });
+        if (initialStock !== undefined) {
+          await tx.inventario.upsert({ where: { id_negocio_id_producto: { id_negocio: nid, id_producto: productId } }, create: { id_negocio: nid, id_producto: productId, cantidad_actual: initialStock, stock_minimo: 0 }, update: { cantidad_actual: initialStock } });
+        }
+        return np;
+      });
+      return { message: 'Producto asociado al negocio', negocioProducto: result };
+    } catch (err: any) {
+      throw new InternalServerErrorException('Error al asociar producto al negocio');
+    }
+  }
+
+  async updateProductPriceForBusiness(userId: string, businessId: string, productIdRaw: string, dto: any) {
+    const uid = this.parseBigInt(userId, 'Usuario inválido');
+    const nid = this.parseBigInt(businessId, 'Negocio inválido');
+    const productId = this.parseBigInt(productIdRaw, 'Producto inválido');
+
+    const negocio = await (this.prisma as any).negocio.findUnique({ where: { id_negocio: nid } });
+    if (!negocio) throw new NotFoundException('Negocio no encontrado');
+    const isOwner = negocio.owner_id !== null && BigInt(negocio.owner_id) === uid;
+    if (!isOwner) {
+      const assign = await (this.prisma as any).empleados.findFirst({ where: { negocio_id: nid, usuario_id: uid } });
+      if (!assign) throw new ForbiddenException('No tienes permiso para gestionar productos en este negocio');
+    }
+
+    const precio = Number(dto.precio);
+    if (!Number.isFinite(precio) || precio <= 0) throw new BadRequestException('Precio inválido');
+    const motivo = dto.motivo ?? null;
+
+    try {
+      const now = new Date();
+      const result = await (this.prisma as any).$transaction(async (tx: any) => {
+        const up = await tx.negocio_producto.upsert({ where: { id_negocio_id_producto: { id_negocio: nid, id_producto: productId } }, create: { id_negocio: nid, id_producto: productId, precio, activo: true }, update: { precio } });
+        // Close existing hist records
+        await tx.negocio_producto_historial_precio.updateMany({ where: { id_negocio_producto: up.id_negocio_producto, vigente: true }, data: { vigente: false, fecha_fin: now } });
+        await tx.negocio_producto_historial_precio.create({ data: { id_negocio_producto: up.id_negocio_producto, precio, fecha_inicio: now, vigente: true, motivo, id_usuario: uid } });
+        return up;
+      });
+      return { message: 'Precio de producto actualizado para el negocio', result };
+    } catch (err: any) {
+      console.error(err);
+      throw new InternalServerErrorException('Error al actualizar el precio del producto para el negocio');
+    }
+  }
+
+  async getProductPriceHistoryForBusiness(userId: string, businessId: string, productIdRaw: string) {
+    const uid = this.parseBigInt(userId, 'Usuario inválido');
+    const nid = this.parseBigInt(businessId, 'Negocio inválido');
+    const pid = this.parseBigInt(productIdRaw, 'Producto inválido');
+
+    const negocio = await (this.prisma as any).negocio.findUnique({ where: { id_negocio: nid } });
+    if (!negocio) throw new NotFoundException('Negocio no encontrado');
+
+    // check permission: user is owner or empleado (or read-only user)
+    const isOwner = negocio.owner_id !== null && BigInt(negocio.owner_id) === uid;
+    if (!isOwner) {
+      const assignment = await (this.prisma as any).usuarios_negocio.findFirst({ where: { id_usuario: uid, id_negocio: nid } });
+      if (!assignment) {
+        // allow read access for normal users? If not assigned, forbid
+        throw new ForbiddenException('No tienes permiso para ver el historial de este negocio');
+      }
+    }
+
+    const history = await (this.prisma as any).negocio_producto_historial_precio.findMany({ where: { negocio_producto: { id_negocio: nid, id_producto: pid } }, include: { usuario: { select: { id_usuario: true, nombre: true, correo_electronico: true } } }, orderBy: { fecha_inicio: 'desc' } });
+
+    return history.map((h: any) => ({ id: h.id_historial.toString(), precio: Number(h.precio), fecha_inicio: h.fecha_inicio?.toISOString() ?? null, fecha_fin: h.fecha_fin?.toISOString() ?? null, vigente: h.vigente, motivo: h.motivo, usuario: h.usuario ? { id: h.usuario.id_usuario.toString(), nombre: h.usuario.nombre, correo: h.usuario.correo_electronico } : null }));
+  }
+
   private hydrateBusinessResponse(raw: any) {
     if (!raw) return raw;
     return {
