@@ -389,12 +389,20 @@ export class PedidosService {
         },
       });
 
-      // Enviar email de confirmación cuando el pedido es confirmado (llegó al POS)
-      // SOLO si viene de 'pendiente' (es decir, no viene del sistema de pagos)
-      if (nuevoEstado === 'confirmado' && estadoAnterior === 'pendiente') {
+      // Enviar email de confirmación cuando el pedido es aceptado
+      // CONDICIONES para enviar email:
+      // 1. Viene de 'pendiente' (primera vez que se acepta)
+      // 2. Va a 'confirmado' o 'en_preparacion' (estados de aceptación)
+      // 3. NO tiene fecha_confirmacion previa (evita duplicado con PaymentsService)
+      const yaFueConfirmadoPorPago = pedidoActual.data.fecha_confirmacion != null;
+      const esAceptacionInicial = estadoAnterior === 'pendiente' && 
+        (nuevoEstado === 'confirmado' || nuevoEstado === 'en_preparacion');
+      const debeEnviarEmail = esAceptacionInicial && !yaFueConfirmadoPorPago;
+      
+      if (debeEnviarEmail) {
         try {
           await this.notificationsService.notifyNewOrder(pedidoActualizado);
-          console.log(`✅ Email de confirmación enviado para pedido ${pedidoId}`);
+          console.log(`✅ Email de confirmación enviado para pedido ${pedidoId} (${estadoAnterior} → ${nuevoEstado})`);
         } catch (emailError) {
           console.error('⚠️ Error enviando email de confirmación:', emailError);
           // No lanzar error para no afectar el flujo
@@ -402,14 +410,16 @@ export class PedidosService {
       }
 
       // Notificar cambio de estado al cliente (WebSocket y notificaciones BD)
-      try {
-        await this.notificationsService.notifyOrderStatusChange(
-          pedidoActualizado,
-          nuevoEstado,
-        );
-      } catch (notifError) {
-        // No lanzar error si falla la notificación
-        console.error('Error enviando notificación de cambio de estado:', notifError);
+      // SOLO si NO acabamos de enviar el email de confirmación inicial
+      if (!debeEnviarEmail) {
+        try {
+          await this.notificationsService.notifyOrderStatusChange(
+            pedidoActualizado,
+            nuevoEstado,
+          );
+        } catch (notifError) {
+          console.error('Error enviando notificación de cambio de estado:', notifError);
+        }
       }
 
       // Si el pedido llega a estado final, cerrar sala WebSocket
