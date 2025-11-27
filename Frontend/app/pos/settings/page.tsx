@@ -1832,6 +1832,10 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 		newPassword: '',
 	});
 	const [saving, setSaving] = useState(false);
+	const [pendingSession, setPendingSession] = useState<{ session: string; expiresAt?: string; delivery?: string } | null>(null);
+	const [verificationCode, setVerificationCode] = useState('');
+	const [verifying, setVerifying] = useState(false);
+	const [verifyError, setVerifyError] = useState<string | null>(null);
 	const verificationBadges = useMemo(
 		() => {
 			const verifications = user?.verifications ?? {
@@ -1879,7 +1883,13 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 				phoneNumber: form.phone.trim() ? form.phone.trim() : null,
 			};
 			if (form.newPassword.trim()) payload.newPassword = form.newPassword.trim();
-			await api.updateUserProfile(targetId, payload);
+			const result = await api.updateUserProfile(targetId, payload);
+			// If verification required, show panel instead of applying immediately
+			if (result && result.session) {
+				setPendingSession({ session: result.session, expiresAt: result.expiresAt, delivery: result.delivery });
+				setSaving(false);
+				return;
+			}
 			setName(form.name.trim() || null);
 			await checkAuth();
 			setForm((prev) => ({ ...prev, newPassword: '' }));
@@ -1890,6 +1900,27 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 			setSaving(false);
 		}
 	}, [checkAuth, form, saving, setName, user, userId]);
+
+	const handleConfirmUpdate = useCallback(async () => {
+		if (!pendingSession) return;
+		if (!verificationCode || verificationCode.trim().length !== 6) {
+			setVerifyError('Ingresa un código de 6 dígitos');
+			return;
+		}
+		setVerifying(true);
+		setVerifyError(null);
+		try {
+			await api.confirmProfileUpdate(pendingSession.session, verificationCode.trim());
+			await checkAuth();
+			setPendingSession(null);
+			setVerificationCode('');
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Error al confirmar el código';
+			setVerifyError(message);
+		} finally {
+			setVerifying(false);
+		}
+	}, [checkAuth, pendingSession, verificationCode]);
 
 	const discard = useCallback(() => {
 		setForm({
@@ -1934,6 +1965,35 @@ function AccountSection({ register, onLogout, userId, userEmail, userName }: Acc
 					<Row label="Nueva contraseña" hint="Deja en blanco para mantener la actual.">
 						<Input value={form.newPassword} onChange={(event) => handleChange('newPassword', event.target.value)} type="password" placeholder="••••••" disabled={saving} />
 					</Row>
+
+					{pendingSession && (
+						<div className="mt-3 rounded-lg border px-4 py-3" style={{ background: 'rgba(255,255,255,0.9)' }}>
+							<div className="mb-2 text-[13px] font-medium">Confirma cambios con código</div>
+							<div className="flex items-center gap-3">
+								<input
+									placeholder="Código de 6 dígitos"
+									value={verificationCode}
+									onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+									className="w-40 rounded-lg px-3 py-2 text-[13px] outline-none"
+								/>
+								<button
+									onClick={handleConfirmUpdate}
+									disabled={verifying}
+									className="px-3 py-2 rounded-lg font-semibold"
+									style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
+								>
+									{verifying ? 'Confirmando...' : 'Confirmar'}
+								</button>
+								<button
+									onClick={() => { setPendingSession(null); setVerificationCode(''); setVerifyError(null); }}
+									className="px-2 py-1 rounded-lg font-semibold"
+								>
+									Cancelar
+								</button>
+							</div>
+							{verifyError && <div className="mt-2 text-sm text-red-600">{verifyError}</div>}
+						</div>
+					)}
 				</div>
 			</Card>
 			<Card title="Sesiones" desc="Cierra la sesión actual en este dispositivo.">

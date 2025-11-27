@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MinLength, IsInt } from 'class-validator';
+import { IsString, IsOptional, MinLength, IsInt, IsEmail } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -20,6 +20,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString({ message: 'La URL de credencial debe ser una cadena de texto' })
   credentialUrl?: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'El correo debe tener un formato válido' })
+  email?: string;
 
   @IsOptional()
   @IsString({ message: 'El número de cuenta debe ser una cadena de texto' })

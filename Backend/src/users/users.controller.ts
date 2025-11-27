@@ -1,7 +1,8 @@
-import { Controller, Put, Delete, Param, Body, UseGuards, Req, Get, UnauthorizedException } from '@nestjs/common';
+import { Controller, Put, Delete, Param, Body, UseGuards, Req, Get, UnauthorizedException, Post } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { VerifyRegisterDto } from '../auth/dto/verify-register.dto';
 
 // Proteger todas las rutas del controlador de usuarios
 @UseGuards(AuthGuard('jwt')) 
@@ -32,8 +33,20 @@ export class UsersController {
       throw new UnauthorizedException('No tienes permiso para modificar este perfil.');
     }
     
-    // 2. Llamada al servicio
-    return this.usersService.update(BigInt(id), updateUserDto);
+    // 2. Llamada al servicio: crear una sesión que requiere verificación por correo
+    return this.usersService.requestProfileUpdate(BigInt(id), updateUserDto);
+  }
+
+  // Confirmar la actualización del perfil con código
+  @Post('confirm-update')
+  async confirmProfileUpdate(@Body() dto: VerifyRegisterDto, @Req() req) {
+    const user = req.user;
+    const id = user?.id_usuario ?? user?.id;
+    if (!id) {
+      throw new UnauthorizedException('Token inválido.');
+    }
+    // La verificación se hace contra la sesión incluida en el body
+    return this.usersService.verifyProfileUpdate({ session: dto.session, code: dto.code }, BigInt(id));
   }
 
   // Ruta D: Eliminar Cuenta

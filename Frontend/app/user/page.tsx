@@ -50,6 +50,7 @@ type ProfileFormState = {
   age: string;
   avatarUrl: string;
   credentialUrl: string;
+  email?: string;
 };
 
 const ORDER_SECTION_ID = "orders-section";
@@ -131,10 +132,15 @@ export default function UserProfilePage() {
     age: "",
     avatarUrl: "",
     credentialUrl: "",
+    email: "",
   });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [saveFeedback, setSaveFeedback] = useState<"success" | "error" | null>(null);
+  const [pendingSession, setPendingSession] = useState<{ session: string; expiresAt?: string; delivery?: string } | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push("/auth/login");
@@ -190,6 +196,7 @@ export default function UserProfilePage() {
   const initialSnapshot = useMemo<ProfileFormState>(
     () => ({
       name: user?.nombre ?? "",
+      email: user?.correo_electronico ?? "",
       phoneNumber: userPhone ?? "",
       accountNumber: accountNumberValue ?? "",
       age: ageValue !== null && ageValue !== undefined ? String(ageValue) : "",
@@ -298,14 +305,23 @@ export default function UserProfilePage() {
       setFormError(null);
 
       try {
-        await api.updateUserProfile(user?.id_usuario ?? 0, {
+        const result = await api.updateUserProfile(user?.id_usuario ?? 0, {
           name: trimmedName,
+          email: formState.email?.trim() || null,
           phoneNumber: trimmedPhone || null,
           accountNumber: trimmedAccount || null,
           age: ageNumber,
           avatarUrl: trimmedAvatar || null,
           credentialUrl: trimmedCredential || null,
         });
+        // If the backend returns a 'session', then the update requires verification.
+        if (result && result.session) {
+          setPendingSession({ session: result.session, expiresAt: result.expiresAt, delivery: result.delivery });
+          setSaveFeedback(null);
+          setFormError(null);
+          setSaving(false);
+          return;
+        }
         await checkAuth();
         setSaveFeedback("success");
         setTimeout(() => setSaveFeedback(null), 4000);
@@ -320,6 +336,29 @@ export default function UserProfilePage() {
     },
     [checkAuth, formState, user],
   );
+
+  const handleConfirmUpdate = useCallback(async () => {
+    if (!pendingSession) return;
+    if (!verificationCode || verificationCode.trim().length !== 6) {
+      setVerifyError('Ingresa un código de 6 dígitos');
+      return;
+    }
+    setVerifying(true);
+    setVerifyError(null);
+    try {
+      await api.confirmProfileUpdate(pendingSession.session, verificationCode.trim());
+      await checkAuth();
+      setPendingSession(null);
+      setVerificationCode("");
+      setSaveFeedback('success');
+      setTimeout(() => setSaveFeedback(null), 3000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al confirmar el código';
+      setVerifyError(message);
+    } finally {
+      setVerifying(false);
+    }
+  }, [checkAuth, pendingSession, verificationCode]);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -593,6 +632,18 @@ export default function UserProfilePage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
+                    Correo electrónico
+                  </label>
+                  <input
+                    value={formState.email}
+                    onChange={(event) => handleFormChange('email', event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-[var(--fc-border-soft)] bg-white px-4 py-2.5 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white dark:focus:border-[var(--fc-brand-400)] dark:focus:ring-[var(--fc-brand-400)]"
+                    placeholder="correo@ejemplo.com"
+                    type="email"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs uppercase tracking-[0.3em] text-[var(--fc-text-tertiary)] dark:text-white/60">
                     Credential (URL)
                   </label>
                   <input
@@ -631,6 +682,43 @@ export default function UserProfilePage() {
                   Restaurar valores
                 </button>
               </div>
+              {/* Verification UI shown when backend requires confirmation */}
+              {pendingSession && (
+                <div className="mt-6 rounded-2xl border border-[var(--fc-border-soft)] bg-white/90 p-4 shadow-sm dark:border-white/12 dark:bg-[color:rgba(9,13,24,0.92)]">
+                  <p className="text-sm font-semibold text-[var(--fc-text-primary)] dark:text-white">Confirma cambios con código</p>
+                  <p className="text-sm text-[var(--fc-text-secondary)] dark:text-white/70">Hemos enviado un código a tu correo. Ingresa a continuación para aplicar los cambios.</p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <label htmlFor="profile-code" className="sr-only">Código de verificación</label>
+                    <input
+                      id="profile-code"
+                      aria-label="Código de verificación"
+                      placeholder="Código de 6 dígitos"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(event) => setVerificationCode(event.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                      className="w-40 rounded-xl border border-[var(--fc-border-soft)] bg-white px-3 py-2 text-sm text-[var(--fc-text-primary)] shadow-sm transition focus:border-[var(--fc-brand-400)] focus:outline-none focus:ring-2 focus:ring-[var(--fc-brand-100)] dark:border-white/12 dark:bg-[color:rgba(12,16,30,0.85)] dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleConfirmUpdate}
+                      disabled={verifying}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPendingSession(null); setVerificationCode(''); setVerifyError(null); }}
+                      className="inline-flex items-center gap-1 rounded-full border border-[var(--fc-border-soft)] px-3 py-2 text-sm font-semibold text-[var(--fc-brand-600)]"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                  {verifyError && (
+                    <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{verifyError}</p>
+                  )}
+                </div>
+              )}
             </form>
 
             <aside className="grid gap-4">

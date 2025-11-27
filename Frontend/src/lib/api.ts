@@ -900,6 +900,7 @@ export const api = {
     payload: Partial<{
       name: string | null;
       phoneNumber: string | null;
+      email: string | null;
       newPassword: string | null;
       avatarUrl: string | null;
       credentialUrl: string | null;
@@ -910,6 +911,11 @@ export const api = {
     apiFetch<any>(`users/${id}`, {
       method: "PUT",
       body: JSON.stringify(payload),
+    }),
+  confirmProfileUpdate: (session: string, code: string) =>
+    apiFetch<any>(`users/confirm-update`, {
+      method: "POST",
+      body: JSON.stringify({ session, code }),
     }),
 };
 

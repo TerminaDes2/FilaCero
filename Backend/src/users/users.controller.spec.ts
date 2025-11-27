@@ -43,6 +43,8 @@ describe('UsersController endpoints', () => {
   const mockUsersService = {
     findOne: jest.fn<Promise<SerializedUser>, [bigint]>(),
     update: jest.fn<Promise<SerializedUser>, [bigint, UpdateUserDto]>(),
+    requestProfileUpdate: jest.fn<any, [bigint, UpdateUserDto]>(),
+    verifyProfileUpdate: jest.fn<any, [{ session: string; code: string }]>(),
     delete: jest.fn<Promise<{ message: string }>, [bigint]>(),
   };
 
@@ -97,7 +99,7 @@ describe('UsersController endpoints', () => {
     expect(mockUsersService.findOne).not.toHaveBeenCalled();
   });
 
-  it('PUT /api/users/:id updates the current user when IDs match', async () => {
+  it('PUT /api/users/:id requests verification for profile update (returns session) when IDs match', async () => {
     const payload: UpdateUserDto = {
       name: 'Nuevo Nombre',
       phoneNumber: '5550009999',
@@ -117,7 +119,13 @@ describe('UsersController endpoints', () => {
       verified: true,
       verifiedAt: null,
     };
-    mockUsersService.update.mockResolvedValueOnce(updated);
+    const mockSession = {
+      message: 'Código enviado a correo electrónico. Ingresa el código para confirmar los cambios.',
+      delivery: 'email',
+      expiresAt: new Date().toISOString(),
+      session: 'signedSessionToken',
+    };
+    mockUsersService.requestProfileUpdate.mockResolvedValueOnce(mockSession);
 
     const res = await request(app.getHttpServer())
       .put('/api/users/1')
@@ -125,8 +133,8 @@ describe('UsersController endpoints', () => {
       .send(payload)
       .expect(200);
 
-    expect(res.body).toEqual(updated);
-    expect(mockUsersService.update).toHaveBeenCalledWith(1n, payload);
+    expect(res.body).toEqual(mockSession);
+    expect(mockUsersService.requestProfileUpdate).toHaveBeenCalledWith(1n, payload);
   });
 
   it('PUT /api/users/:id returns 401 when path ID differs from token user', async () => {
@@ -158,5 +166,32 @@ describe('UsersController endpoints', () => {
       .expect(401);
 
     expect(mockUsersService.delete).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/users/confirm-update applies update after code verification', async () => {
+    const dto = { session: 'signedSessionToken', code: '123456' };
+    const updatedUser: SerializedUser = {
+      id: '1',
+      name: 'Nuevo Nombre',
+      email: 'test@example.com',
+      phoneNumber: '5550009999',
+      roleId: null,
+      accountNumber: '20259999',
+      age: 22,
+      avatarUrl: null,
+      credentialUrl: null,
+      verified: true,
+      verifiedAt: null,
+    };
+    mockUsersService.verifyProfileUpdate.mockResolvedValueOnce(updatedUser);
+
+    const res = await request(app.getHttpServer())
+      .post('/api/users/confirm-update')
+      .set('x-test-user-id', '1')
+      .send(dto)
+      .expect(200);
+
+    expect(res.body).toEqual(updatedUser);
+    expect(mockUsersService.verifyProfileUpdate).toHaveBeenCalledWith(dto, 1n);
   });
 });
