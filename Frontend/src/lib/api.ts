@@ -504,11 +504,12 @@ export const api = {
     ),
 
   // --- Productos ---
-  getProducts: (params?: {
+  getProducts: async (params?: {
     search?: string;
     status?: string;
     id_negocio?: string;
     categoria?: string; 
+    includeDisabled?: boolean;
   }) => {
     const merged = { ...(params || {}) } as {
       [key: string]: string | undefined;
@@ -541,6 +542,23 @@ export const api = {
       }
     }
     const query = queryParams.toString();
+    // If includeDisabled is requested, and we are querying for a specific business,
+    // fetch both active and inactive products with two parallel calls and merge results.
+    if ((params as any)?.includeDisabled && merged.id_negocio) {
+      const qActive = new URLSearchParams({ ...(Object.fromEntries(new URLSearchParams(queryParams).entries()) as any), status: 'activo' }).toString();
+      const qInactive = new URLSearchParams({ ...(Object.fromEntries(new URLSearchParams(queryParams).entries()) as any), status: 'inactivo' }).toString();
+      const [a, b] = await Promise.all([apiFetch<any[]>(`products?${qActive}`), apiFetch<any[]>(`products?${qInactive}`)]);
+      const combinedRaw = Array.isArray(a) && Array.isArray(b) ? [...a, ...b] : (Array.isArray(a) ? a : []);
+      // dedupe by id_producto
+      const seen = new Set<string>();
+      const combined: any[] = [];
+      for (const item of combinedRaw) {
+        const id = String((item as any)?.id_producto ?? (item as any)?.id ?? '');
+        if (!id) continue;
+        if (!seen.has(id)) { seen.add(id); combined.push(item); }
+      }
+      return combined;
+    }
     const path = query ? `products?${query}` : "products";
     return apiFetch<any[]>(path);
   },

@@ -20,6 +20,7 @@ export interface POSProduct {
     url: string;
     principal: boolean;
   }> | null;
+  estado?: string | null; // 'activo', 'inactivo'
 }
 // --- FIN DE LA CORRECCIÓN ---
 
