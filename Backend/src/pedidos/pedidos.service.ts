@@ -116,13 +116,9 @@ export class PedidosService {
         });
       });
 
-      // Notificar nuevo pedido al POS
-      try {
-        await this.notificationsService.notifyNewOrder(pedido);
-      } catch (notifError) {
-        // No lanzar error si falla la notificación para no bloquear la creación del pedido
-        console.error('Error enviando notificación de nuevo pedido:', notifError);
-      }
+      // NOTA: El email de confirmación se envía desde PaymentsService cuando el pago es exitoso
+      // Aquí NO enviamos notificación para evitar duplicados
+      // Solo se notifica al POS mediante WebSocket cuando el pedido es confirmado (pagado)
 
       return {
         success: true,

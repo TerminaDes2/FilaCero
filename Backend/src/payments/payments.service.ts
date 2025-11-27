@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService } from './stripe.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { SavePaymentMethodDto } from './dto/save-payment-method.dto';
@@ -28,6 +29,7 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -189,11 +191,38 @@ export class PaymentsService {
     });
 
     // Actualizar pedido a estado 'pagado' / 'confirmado'
-    await this.prisma.pedido.update({
+    const pedidoActualizado = await this.prisma.pedido.update({
       where: { id_pedido: transaccion.id_pedido },
       data: {
         estado: 'confirmado',
         fecha_confirmacion: new Date(),
+      },
+      include: {
+        detalle_pedido: {
+          include: {
+            producto: {
+              select: {
+                id_producto: true,
+                nombre: true,
+                precio: true,
+              },
+            },
+          },
+        },
+        negocio: {
+          select: {
+            id_negocio: true,
+            nombre: true,
+            direccion: true,
+          },
+        },
+        usuario: {
+          select: {
+            id_usuario: true,
+            nombre: true,
+            correo_electronico: true,
+          },
+        },
       },
     });
 
@@ -214,7 +243,18 @@ export class PaymentsService {
       }),
     );
 
-    // TODO: Enviar notificaciones (email/SMS), emitir evento Kitchen Board
+    // Enviar email de confirmación al cliente
+    try {
+      await this.notificationsService.notifyNewOrder(pedidoActualizado);
+      this.logger.log(`✅ Email de confirmación enviado para pedido ${transaccion.id_pedido}`);
+    } catch (emailError) {
+      this.logger.error(
+        `⚠️ Error enviando email de confirmación para pedido ${transaccion.id_pedido}:`,
+        emailError,
+      );
+      // No lanzar error para no afectar el flujo de pago
+    }
+
     return { success: true, pedidoId: transaccion.id_pedido.toString() };
   }
 
@@ -286,9 +326,36 @@ export class PaymentsService {
         },
       });
 
-      await this.prisma.pedido.update({
+      const pedidoActualizado = await this.prisma.pedido.update({
         where: { id_pedido: transaccion.id_pedido },
         data: { estado: 'confirmado', fecha_confirmacion: new Date() },
+        include: {
+          detalle_pedido: {
+            include: {
+              producto: {
+                select: {
+                  id_producto: true,
+                  nombre: true,
+                  precio: true,
+                },
+              },
+            },
+          },
+          negocio: {
+            select: {
+              id_negocio: true,
+              nombre: true,
+              direccion: true,
+            },
+          },
+          usuario: {
+            select: {
+              id_usuario: true,
+              nombre: true,
+              correo_electronico: true,
+            },
+          },
+        },
       });
 
       // Incrementar contador de pagos exitosos (webhook)
@@ -306,6 +373,18 @@ export class PaymentsService {
           metrics: this.getMetrics(),
         }),
       );
+
+      // Enviar email de confirmación al cliente vía webhook
+      try {
+        await this.notificationsService.notifyNewOrder(pedidoActualizado);
+        this.logger.log(`✅ Email de confirmación enviado para pedido ${transaccion.id_pedido} (webhook)`);
+      } catch (emailError) {
+        this.logger.error(
+          `⚠️ Error enviando email de confirmación para pedido ${transaccion.id_pedido} (webhook):`,
+          emailError,
+        );
+        // No lanzar error para no afectar el procesamiento del webhook
+      }
     } catch (error) {
       this.logger.error(
         `❌ Error procesando payment_intent.succeeded | paymentIntentId=${paymentIntent.id} | error=${error.message}`,
