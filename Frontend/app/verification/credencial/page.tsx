@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BrandLogo } from "../../../src/components/BrandLogo";
 import { useUserStore } from "../../../src/state/userStore";
+import { api } from "../../../src/lib/api";
 
 export default function VerificacionCredencial() {
   const router = useRouter();
@@ -48,95 +49,15 @@ export default function VerificacionCredencial() {
     setMessageType('');
 
     try {
-      // Subir imagen a Cloudinary usando variables de entorno públicas
-      const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-      if (!CLOUD_NAME || !UPLOAD_PRESET) {
-        throw new Error(
-          "Configuración faltante: define NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME y NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET en .env.local"
-        );
-      }
-
-      const formData = new FormData();
-      formData.append("file", image);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-      const cloudinaryResponse = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!cloudinaryResponse.ok) {
-        const txt = await cloudinaryResponse.text();
-        throw new Error(`Falló la subida a Cloudinary (${cloudinaryResponse.status}): ${txt}`);
-      }
-
-      const cloudinaryData = await cloudinaryResponse.json();
-
-      if (!cloudinaryData.secure_url) {
-        throw new Error("Cloudinary no devolvió `secure_url`. Revisa el upload_preset y permisos.");
-      }
-
-      // Preparar endpoint del backend (respeta variable de entorno para dev vs Docker)
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
-      let resolvedApiBase = API_BASE.replace(/\/$/, '');
-      if (typeof window !== 'undefined' && API_BASE) {
-        try {
-          const parsed = new URL(API_BASE);
-          if (parsed.hostname === 'backend' || parsed.hostname === 'filacero-backend') {
-            parsed.hostname = window.location.hostname;
-            resolvedApiBase = parsed.toString().replace(/\/$/, '');
-          }
-        } catch (e) {
-          // Si no es una URL válida, mantén el valor tal cual
-        }
-      }
-
-      const endpoint = resolvedApiBase ? `${resolvedApiBase}/verificacion_credencial` : '/api/verificacion_credencial';
-
-      // Recuperar token almacenado
-      const token = typeof window !== 'undefined' ? window.localStorage.getItem('auth_token') : null;
-      if (!token) {
-        throw new Error('No autenticado. Por favor inicia sesión antes de verificar tu credencial.');
-      }
-
-      // Enviar URL al backend incluyendo Authorization
-      const backendResponse = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ imageUrl: cloudinaryData.secure_url }),
-      });
-
-      const backendData = await backendResponse.json();
-
-      if (backendResponse.ok) {
-        // Verificar si el backend devolvió un resultado exitoso (ok: true en details)
-        // o si el mensaje indica que fue exitosa
-        const isVerified = backendData.message?.includes('completada') || 
-                          backendData.message?.includes('exitosa');
-        
-        if (isVerified) {
-          setMessageType('success');
-          setMessage('¡Verificación exitosa! Redirigiéndote...');
-          await checkAuth();
-        } else {
-          // La respuesta fue 200 pero la verificación falló (OCR no validó)
-          setMessageType('error');
-          setMessage(backendData.message || 'Favor intente nuevamente con una credencial válida.');
-        }
-      } else if (backendResponse.status === 401) {
-        if (typeof window !== 'undefined') {
-          window.localStorage.removeItem('auth_token');
-          window.localStorage.removeItem('auth_user');
-        }
-        throw new Error('No autorizado. Tu sesión puede haber expirado. Por favor inicia sesión de nuevo.');
+      const res = await api.verifyCredentialUpload(image);
+      const isVerified = res.message?.includes('completada') || res.message?.includes('exitosa');
+      if (isVerified) {
+        setMessageType('success');
+        setMessage('¡Verificación exitosa! Redirigiéndote...');
+        await checkAuth();
       } else {
-        throw new Error(backendData.error || 'Error en la verificación.');
+        setMessageType('error');
+        setMessage(res.message || 'Favor intente nuevamente con una credencial válida.');
       }
     } catch (error: any) {
       setMessageType('error');

@@ -161,42 +161,16 @@ export default function VerificationPage() {
     setCredentialError(null);
 
     try {
-      // Reuse logic from credencial/page.tsx or simulate for now since this is a redesign
-      // For the sake of this task, we'll simulate a successful upload after a delay
-      // In a real refactor, we would extract the upload logic to a hook or utility
-
-      const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-      if (!CLOUD_NAME || !UPLOAD_PRESET) {
-        // Fallback simulation if env vars are missing
-        await new Promise(r => setTimeout(r, 2000));
-        setCredentialSuccess("Credencial subida correctamente (Simulación)");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", credentialFile);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-      const cloudinaryResponse = await fetch(url, { method: "POST", body: formData });
-
-      if (!cloudinaryResponse.ok) throw new Error("Error al subir imagen");
-
-      const cloudinaryData = await cloudinaryResponse.json();
-
-      // Call backend
-      const res = await api.verifyCredential(cloudinaryData.secure_url);
-      if (res.message?.includes('exitosa') || res.message?.includes('completada')) {
+      const res = await api.verifyCredentialUpload(credentialFile);
+      const isVerified = res.message?.includes('completada') || res.message?.includes('exitosa');
+      if (isVerified) {
         setCredentialSuccess("Credencial verificada exitosamente.");
         await userStoreCheckAuth();
       } else {
-        throw new Error(res.message || "No se pudo verificar la credencial");
+        setCredentialError(res?.message || "No se pudo verificar la credencial");
       }
-
     } catch (err: any) {
-      setCredentialError(err.message || "Error al subir la credencial");
+      setCredentialError(err?.message || "Error al subir la credencial");
     } finally {
       setIsSubmitting(false);
     }

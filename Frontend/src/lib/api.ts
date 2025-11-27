@@ -952,6 +952,24 @@ export const api = {
       }
     ),
 
+  // --- Verificación de credencial (OCR) ---
+  // Sube la imagen a Cloudinary y hace la petición al endpoint de verificación
+  verifyCredentialUpload: async (file: File) => {
+    if (!file) throw new Error('No file provided');
+    // Primero subimos a Cloudinary usando la utilidad existente
+    const imageUrl = await uploadFileToCloudinary(file);
+    // Enviar al backend para procesar la verificación
+    return apiFetch<any>(`verificacion_credencial`, {
+      method: 'POST',
+      body: JSON.stringify({ imageUrl }),
+    });
+  },
+  verifyCredential: (imageUrl: string) =>
+    apiFetch<any>(`verificacion_credencial`, {
+      method: 'POST',
+      body: JSON.stringify({ imageUrl }),
+    }),
+
   updateUserProfile: (
     id: string | number,
     payload: Partial<{
