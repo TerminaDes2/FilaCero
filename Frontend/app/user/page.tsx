@@ -183,7 +183,7 @@ export default function UserProfilePage() {
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
   const lastOrderDate = lastOrder ? formatDateTime(lastOrder.fecha) : null;
-    const orderCount = (user as any).ordersCount ?? (user as any)._count?.venta ?? 0;
+    const orderCount = (user as any)?.ordersCount ?? (user as any)?._count?.venta ?? 0;
 
   const initials = getInitials(user?.nombre ?? user?.correo_electronico ?? null);
 

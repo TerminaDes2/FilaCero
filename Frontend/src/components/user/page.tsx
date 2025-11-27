@@ -63,7 +63,7 @@ export default function UserProfilePage() {
     .join("") || "FC";
 
   const joinedAt = formatDate(user.fecha_registro);
-  const orderCount = (user as any).ordersCount ?? (user as any)._count?.venta ?? 0;
+  const orderCount = (user as any)?.ordersCount ?? (user as any)?._count?.venta ?? 0;
   const roleName = user.role?.nombre_rol ?? user.role_name ?? (user.id_rol === 2 ? "Administrador" : "Cliente");
   const accountState = normalizeText(user.estado) ?? "Activo";
 

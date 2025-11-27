@@ -104,7 +104,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 				name.trim(),
 				normalizedEmail,
 				password,
-				roleName
+				roleName,
+				accountNumberClean || undefined,
+				ageValue
 			);
 			if (res.requiresVerification) {
 				setPendingEmail(normalizedEmail);
