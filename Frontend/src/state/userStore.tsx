@@ -53,8 +53,19 @@ const clearStoredAuth = () => {
 
 const persistUserSnapshot = (userData: UserInfo) => {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem('auth_user', JSON.stringify(userData));
-  window.localStorage.removeItem('auth_user_fallback_reason');
+  try {
+    const normalizedPhone = (userData as any).numero_telefono ?? (userData as any).telefono ?? (userData as any).phoneNumber ?? null;
+    const normalizedOrdersCount = (userData as any).ordersCount ?? (userData as any)._count?.venta ?? null;
+    const normalizedUser = { ...(userData as any), numero_telefono: normalizedPhone, ordersCount: normalizedOrdersCount } as UserInfo;
+    window.localStorage.setItem('auth_user', JSON.stringify(normalizedUser));
+    window.localStorage.removeItem('auth_user_fallback_reason');
+  } catch (err) {
+    // If serialization fails, fallback to raw userData
+    try {
+      window.localStorage.setItem('auth_user', JSON.stringify(userData));
+    } catch {}
+    window.localStorage.removeItem('auth_user_fallback_reason');
+  }
 };
 
 const loadStoredUser = (): UserInfo | null => {
@@ -100,6 +111,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [tempData, setTemp] = useState<TempData>({});
 
   const applyUserSnapshot = useCallback((nextUser: UserInfo | null) => {
+    // Normalize phone key variants so UI components can rely on `numero_telefono`
+    if (nextUser) {
+      const normalizedPhone = (nextUser as any).numero_telefono ?? (nextUser as any).telefono ?? (nextUser as any).phoneNumber ?? null;
+      const normalizedOrdersCount = (nextUser as any).ordersCount ?? (nextUser as any)._count?.venta ?? null;
+      const normalizedUser = { ...(nextUser as any), numero_telefono: normalizedPhone, ordersCount: normalizedOrdersCount } as UserInfo;
+      setUser(normalizedUser);
+      setRoleState(deriveAppRole(normalizedUser));
+      setBackendRoleState(deriveBackendRole(normalizedUser));
+      setNameState(deriveDisplayName(normalizedUser));
+      return;
+    }
     setUser(nextUser);
     setRoleState(deriveAppRole(nextUser));
     setBackendRoleState(deriveBackendRole(nextUser));
@@ -171,6 +193,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       try {
         const userData = await api.me();
+        console.log('[userStore] api.me() response:', userData);
         persistUserSnapshot(userData);
         applyUserSnapshot(userData);
         return;

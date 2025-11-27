@@ -320,6 +320,7 @@ export interface UserInfo {
   accountNumber?: string | null;
   edad?: number | null;
   age?: number | null;
+  ordersCount?: number;
   verificado?: boolean;
   verified?: boolean;
   correo_verificado?: boolean;

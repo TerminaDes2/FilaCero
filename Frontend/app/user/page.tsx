@@ -145,6 +145,7 @@ export default function UserProfilePage() {
   const credentialUrl = pickFirst(user?.credential_url, user?.credentialUrl);
   const accountNumberValue = pickFirst(user?.numero_cuenta, user?.accountNumber);
   const ageValue = pickFirst(user?.edad, user?.age);
+  const userPhone = pickFirst(user?.numero_telefono, (user as any)?.telefono, (user as any)?.phoneNumber);
   const accountState = capitalize(stripDiacritics(user?.estado ?? "")) || "Activo";
 
   const normalizedRole = (user?.role?.nombre_rol ?? user?.role_name ?? "").toLowerCase();
@@ -162,7 +163,6 @@ export default function UserProfilePage() {
   const roleLabel = isOwner ? "Dueno de negocio" : capitalize(stripDiacritics(user?.role?.nombre_rol ?? user?.role_name ?? "Cliente"));
 
   const joinedAt = formatDate(user?.fecha_registro, { day: "2-digit", month: "long", year: "numeric" });
-  const birthDate = formatDate(user?.fecha_nacimiento, { day: "2-digit", month: "long", year: "numeric" });
 
   const emailVerified = Boolean(user?.verifications?.email ?? user?.correo_verificado ?? user?.verified ?? user?.verificado ?? false);
   const smsVerified = Boolean(user?.verifications?.sms ?? user?.sms_verificado ?? false);
@@ -183,19 +183,20 @@ export default function UserProfilePage() {
   const totalOrders = userOrders.length;
   const lastOrder = userOrders[0];
   const lastOrderDate = lastOrder ? formatDateTime(lastOrder.fecha) : null;
+    const orderCount = (user as any).ordersCount ?? (user as any)._count?.venta ?? 0;
 
   const initials = getInitials(user?.nombre ?? user?.correo_electronico ?? null);
 
   const initialSnapshot = useMemo<ProfileFormState>(
     () => ({
       name: user?.nombre ?? "",
-      phoneNumber: user?.numero_telefono ?? "",
+      phoneNumber: userPhone ?? "",
       accountNumber: accountNumberValue ?? "",
       age: ageValue !== null && ageValue !== undefined ? String(ageValue) : "",
       avatarUrl: avatarUrl ?? "",
       credentialUrl: credentialUrl ?? "",
     }),
-    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, user?.numero_telefono],
+    [accountNumberValue, ageValue, avatarUrl, credentialUrl, user?.nombre, userPhone],
   );
 
   useEffect(() => {
@@ -346,8 +347,8 @@ export default function UserProfilePage() {
           }
         : {
             label: "Pedidos registrados",
-            value: String(totalOrders),
-            hint: totalOrders > 0 ? lastOrderDate ?? "Actividad reciente" : "Aun sin pedidos",
+            value: String(orderCount),
+            hint: orderCount > 0 ? lastOrderDate ?? "Actividad reciente" : "Aun sin pedidos",
             tone: "teal",
           },
       {
@@ -358,7 +359,7 @@ export default function UserProfilePage() {
       },
     ];
     return metrics;
-  }, [accountState, businessLoading, businesses.length, isOwner, joinedAt, lastOrderDate, totalOrders, verificationCount]);
+  }, [accountState, businessLoading, businesses.length, isOwner, joinedAt, lastOrderDate, orderCount, verificationCount]);
 
   const verificationItems = [
     {
@@ -372,7 +373,7 @@ export default function UserProfilePage() {
     {
       id: "sms",
       label: "Telefono movil",
-      value: user?.numero_telefono ?? "Sin registrar",
+      value: userPhone ?? "Sin registrar",
       verified: smsVerified,
       timestamp: verificationTimestamps.sms,
       description: smsVerified ? "SMS verificado" : "Registra y confirma tu numero para alertas",
@@ -436,16 +437,20 @@ export default function UserProfilePage() {
                         <Mail className="h-4 w-4" />
                         {user?.correo_electronico}
                       </span>
-                      {user?.numero_telefono && (
+                      {userPhone && (
                         <span className="inline-flex items-center gap-1.5">
                           <Phone className="h-4 w-4" />
-                          {user?.numero_telefono}
+                          {userPhone}
                         </span>
                       )}
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarDays className="h-4 w-4" />
                         {joinedAt ?? "Registro pendiente"}
                       </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Sparkles className="h-4 w-4" />
+                          {String(orderCount ?? 0)}
+                        </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
                       <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/8 px-3 py-1">
@@ -641,16 +646,30 @@ export default function UserProfilePage() {
                 </div>
                 <dl className="mt-6 space-y-4 text-sm">
                   <div>
+                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Nombre completo</dt>
+                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">
+                      {user?.nombre ?? <span className="italic">Sin registrar</span>}
+                    </dd>
+                  </div>
+                  <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Correo</dt>
                     <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{user?.correo_electronico}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Fecha de nacimiento</dt>
-                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">{birthDate ?? <span className="italic">Sin registrar</span>}</dd>
+                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Pedidos registrados</dt>
+                    <dd className="mt-1 font-semibold text-[var(--fc-text-primary)] dark:text-white">{String(orderCount ?? 0)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Teléfono</dt>
+                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">
+                      {userPhone ?? <span className="italic">Sin registrar</span>}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Edad</dt>
-                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">{ageValue ?? <span className="italic">Sin registrar</span>}</dd>
+                    <dd className="mt-1 text-[var(--fc-text-secondary)] dark:text-white/70">
+                      {ageValue !== null && ageValue !== undefined ? `${ageValue} años` : <span className="italic">Sin registrar</span>}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-[0.28em] text-[var(--fc-text-tertiary)] dark:text-white/60">Numero de cuenta</dt>
