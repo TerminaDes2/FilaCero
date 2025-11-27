@@ -142,7 +142,7 @@ export default function StorePage() {
         <StoreHeader store={store} metrics={metrics} />
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-4">
           <StoreSidebar store={store} />
-          <StoreProductList productos={productos} />
+          <StoreProductList productos={productos} storeId={storeId} storeName={store.nombre} />
         </div>
       </div>
     </>
