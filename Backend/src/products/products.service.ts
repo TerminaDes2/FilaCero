@@ -422,20 +422,57 @@ export class ProductsService {
           ) AS exists
         `;
 
+        // If the product is referenced by sales/order details (detalle_venta or detalle_pedido)
+        // we should avoid a destructive delete that would violate FK constraints.
+        const referencedVenta = (await tx.$queryRaw<Array<{ exists: boolean }>>`
+          SELECT EXISTS (
+            SELECT 1 FROM detalle_venta WHERE id_producto = ${productId} LIMIT 1
+          ) AS exists
+        `)?.[0]?.exists;
+        const referencedPedido = (await tx.$queryRaw<Array<{ exists: boolean }>>`
+          SELECT EXISTS (
+            SELECT 1 FROM detalle_pedido WHERE id_producto = ${productId} LIMIT 1
+          ) AS exists
+        `)?.[0]?.exists;
+
+        if (referencedVenta || referencedPedido) {
+          // Soft delete: no physical delete, mark as inactivo
+          await tx.producto.update({ where: { id_producto: productId }, data: { estado: 'inactivo' } });
+          return;
+        }
+
         if (movimientoTable?.[0]?.exists) {
           await tx.$executeRaw`DELETE FROM movimientos_inventario WHERE id_producto = ${productId}`;
         }
 
+        // Clean-up related artifacts: Inventario, media and metricas antes de borrar el producto
+        await tx.producto_media.deleteMany({ where: { id_producto: productId } });
+        await tx.producto_metricas_semanales.deleteMany({ where: { id_producto: productId } });
         await tx.inventario.deleteMany({ where: { id_producto: productId } });
         await tx.producto.delete({ where: { id_producto: productId } });
       });
     } catch (e: any) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
-        throw new ConflictException('No se puede eliminar el producto porque tiene dependencias activas (ventas u otros registros).');
+        // Prisma client error code P2003: foreign key violation — as a safe fallback,
+        // mark the product as inactivo instead of failing.
+        try {
+          await this.prisma.producto.update({ where: { id_producto: productId }, data: { estado: 'inactivo' } });
+          return { message: `Producto con ID #${id} marcado como inactivo debido a dependencias.`, deleted: false };
+        } catch (err) {
+          throw new ConflictException('No se puede eliminar el producto porque tiene dependencias activas (ventas u otros registros).');
+        }
       }
       throw e;
     }
 
+    // Refresh the product to detect whether we performed a soft-delete
+    const refreshed = await this.prisma.producto.findUnique({ where: { id_producto: productId } });
+    if (!refreshed) {
+      return { message: `Producto con ID #${id} eliminado correctamente.`, deleted: true };
+    }
+    if (refreshed.estado === 'inactivo') {
+      return { message: `Producto con ID #${id} marcado como inactivo.`, deleted: false };
+    }
     return { message: `Producto con ID #${id} eliminado correctamente.`, deleted: true };
   }
 

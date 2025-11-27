@@ -507,7 +507,13 @@ export const api = {
       }
       if (negocioId) merged.id_negocio = negocioId;
     }
-    const queryParams = new URLSearchParams();
+      // Default behavior: if we are requesting products for a specific business (id_negocio)
+      // and the caller did not specify a status explicitly, default to only show active products.
+      if (merged.id_negocio && !('status' in (params || {}))) {
+        merged.status = 'activo';
+      }
+
+      const queryParams = new URLSearchParams();
     for (const [key, value] of Object.entries(merged)) {
       if (value != null && value !== "") {
         queryParams.append(key, String(value));
