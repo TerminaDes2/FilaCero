@@ -243,7 +243,7 @@ export class PaymentsService {
       }),
     );
 
-    // Enviar email de confirmación al cliente
+    // Enviar email de confirmación al cliente cuando el pago es exitoso
     try {
       await this.notificationsService.notifyNewOrder(pedidoActualizado);
       this.logger.log(`✅ Email de confirmación enviado para pedido ${transaccion.id_pedido}`);
@@ -374,7 +374,7 @@ export class PaymentsService {
         }),
       );
 
-      // Enviar email de confirmación al cliente vía webhook
+      // Enviar email de confirmación al cliente cuando el pago es exitoso (webhook)
       try {
         await this.notificationsService.notifyNewOrder(pedidoActualizado);
         this.logger.log(`✅ Email de confirmación enviado para pedido ${transaccion.id_pedido} (webhook)`);

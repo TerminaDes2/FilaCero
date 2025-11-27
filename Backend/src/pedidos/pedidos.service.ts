@@ -389,7 +389,19 @@ export class PedidosService {
         },
       });
 
-      // Notificar cambio de estado al cliente
+      // Enviar email de confirmación cuando el pedido es confirmado (llegó al POS)
+      // SOLO si viene de 'pendiente' (es decir, no viene del sistema de pagos)
+      if (nuevoEstado === 'confirmado' && estadoAnterior === 'pendiente') {
+        try {
+          await this.notificationsService.notifyNewOrder(pedidoActualizado);
+          console.log(`✅ Email de confirmación enviado para pedido ${pedidoId}`);
+        } catch (emailError) {
+          console.error('⚠️ Error enviando email de confirmación:', emailError);
+          // No lanzar error para no afectar el flujo
+        }
+      }
+
+      // Notificar cambio de estado al cliente (WebSocket y notificaciones BD)
       try {
         await this.notificationsService.notifyOrderStatusChange(
           pedidoActualizado,
