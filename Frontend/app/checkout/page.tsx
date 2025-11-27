@@ -21,7 +21,7 @@ const stripePk =
   '';
 const stripePromise = stripePk ? loadStripe(stripePk) : null;
 
-function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCartAndRedirect }: any) {
+function CardPaymentForm({ pedidoId, onSuccess, onError, user, clearCartAndRedirect, onReady }: any) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -58,14 +58,6 @@ function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCa
 
       const pi = result.paymentIntent;
       if (pi && pi.status === 'succeeded') {
-        // Si el usuario pidió guardar la tarjeta, intentamos guardar el método
-        if (saveCard && pi.payment_method) {
-          try {
-            await api.savePaymentMethod({ paymentMethodId: String(pi.payment_method), makeDefault: true });
-          } catch (err) {
-            console.warn('No se pudo guardar el método de pago', err);
-          }
-        }
         onSuccess?.();
         // Limpiar carrito y redirigir
         clearCartAndRedirect?.();
@@ -80,6 +72,14 @@ function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCa
     }
   };
 
+  // Exponer handlePay al componente padre
+  useEffect(() => {
+    if (onReady) {
+      onReady({ handlePay });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onReady]);
+
   return (
     <div className="space-y-3">
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -91,23 +91,7 @@ function CardPaymentForm({ pedidoId, onSuccess, onError, saveCard, user, clearCa
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input id="saveCard" type="checkbox" checked={Boolean(saveCard)} readOnly className="h-4 w-4" />
-        <label htmlFor="saveCard" className="text-sm text-slate-600">Guardar tarjeta para futuros pagos</label>
-      </div>
-
       {error && <div className="text-sm text-rose-600">{error}</div>}
-
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handlePay}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-4 py-2 text-sm font-semibold text-white"
-        >
-          {loading ? 'Procesando…' : 'Pagar ahora'}
-        </button>
-      </div>
     </div>
   );
 }
@@ -149,12 +133,11 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [hasCard, setHasCard] = useState(false);
-  const [saveCard, setSaveCard] = useState(false);
   const [verificationsOk, setVerificationsOk] = useState(false);
   const [business, setBusiness] = useState<BusinessSummary | null>(null);
   const [bizLoading, setBizLoading] = useState(true);
   const [pendingPedidoId, setPendingPedidoId] = useState<string | null>(null);
+  const [cardFormRef, setCardFormRef] = useState<{ handlePay: () => Promise<void> } | null>(null);
   const cardOnlyMethods = useMemo(() => ["tarjeta"] as Array<"efectivo" | "tarjeta">, []);
 
   useEffect(() => {
@@ -191,13 +174,12 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [userLoading, isAuthenticated, router]);
 
-  // Recompute verifications and load payment methods when user or auth state changes
+  // Recompute verifications when user or auth state changes
   useEffect(() => {
     if (!isAuthenticated) {
       setVerificationsOk(false);
-      setHasCard(false);
       return;
     }
 
@@ -206,24 +188,6 @@ export default function CheckoutPage() {
       const credentialVerified = user.verifications?.credential ?? Boolean((user as any).credencial_verificada);
       setVerificationsOk(Boolean(emailVerified && credentialVerified));
     }
-
-    let activeLocal = true;
-    const loadMethods = async () => {
-      try {
-        const methods = await api.getPaymentMethods();
-        if (!activeLocal) return;
-        setHasCard(Array.isArray(methods) && methods.length > 0);
-      } catch (err) {
-        console.warn("[checkout] No se pudieron cargar métodos de pago", err);
-        if (activeLocal) setHasCard(false);
-      }
-    };
-
-    void loadMethods();
-
-    return () => {
-      activeLocal = false;
-    };
   }, [isAuthenticated, user]);
 
   const grandTotal = useMemo(() => {
@@ -244,7 +208,7 @@ export default function CheckoutPage() {
     return true;
   };
 
-  // Permitimos pago sin tarjeta guardada: el usuario puede ingresar una tarjeta en el checkout
+  // Cambiar el label del botón si hay un pedido pendiente con tarjeta
   const confirmDisabled =
     !items.length || !paymentMethod || !deliveryTime || isSubmitting || !verificationsOk;
   const primaryDisabled =
@@ -252,7 +216,9 @@ export default function CheckoutPage() {
   const primaryLabel =
     activeStep === steps.length
       ? isSubmitting
-        ? "Enviando pedido…"
+        ? "Procesando…"
+        : pendingPedidoId && paymentMethod === "tarjeta"
+        ? "Pagar ahora"
         : "Enviar a cocina"
       : activeStep === steps.length - 1
       ? "Ir a confirmación"
@@ -271,6 +237,12 @@ export default function CheckoutPage() {
     if (!isAuthenticated) {
       setSubmitError("Inicia sesión para confirmar tu pedido.");
       router.push("/auth/login?redirect=/checkout");
+      return;
+    }
+
+    // Si ya existe un pedido pendiente con tarjeta, ejecutar el pago
+    if (pendingPedidoId && paymentMethod === 'tarjeta' && cardFormRef) {
+      await cardFormRef.handlePay();
       return;
     }
 
@@ -371,11 +343,6 @@ export default function CheckoutPage() {
             Necesitas verificar tu <strong>correo</strong> y tu <strong>credencial</strong> para completar pagos digitales. Por favor completa las verificaciones en tu perfil.
           </div>
         )}
-        {!hasCard && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700">
-            No se encontró una tarjeta guardada. Agrega una tarjeta en <a className="underline" href="/payment">Métodos de pago</a> para poder pagar con tarjeta.
-          </div>
-        )}
         {submitError && (
           <div className="rounded-2xl border border-red-200 bg-red-50/70 px-4 py-3 text-sm text-red-700">{submitError}</div>
         )}
@@ -415,45 +382,31 @@ export default function CheckoutPage() {
             </div>
           </dl>
         </div>
-        {paymentMethod === 'tarjeta' && (
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <input
-                id="saveCardOpt"
-                type="checkbox"
-                checked={saveCard}
-                onChange={() => setSaveCard((s) => !s)}
-                className="h-4 w-4"
-              />
-              <label htmlFor="saveCardOpt" className="text-sm text-slate-600">Guardar tarjeta para futuros pagos</label>
-            </div>
-
-            {!pendingPedidoId ? (
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                Al confirmar el pedido se solicitará el pago con tarjeta en esta pantalla.
-              </div>
+        {paymentMethod === 'tarjeta' && !pendingPedidoId && (
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            Al confirmar el pedido se solicitará el pago con tarjeta en esta pantalla.
+          </div>
+        )}
+        {paymentMethod === 'tarjeta' && pendingPedidoId && (
+          <div>
+            {stripePromise ? (
+              <Elements stripe={stripePromise as any}>
+                <CardPaymentForm
+                  pedidoId={pendingPedidoId}
+                  user={user}
+                  onSuccess={() => setPendingPedidoId(null)}
+                  onError={(err: any) => setSubmitError(err?.message ?? String(err))}
+                  clearCartAndRedirect={() => {
+                    clearCart();
+                    setSuccessMessage('Pago procesado. Pedido enviado a cocina.');
+                    setTimeout(() => router.push('/shop?order=confirmed'), 900);
+                  }}
+                  onReady={(ref: any) => setCardFormRef(ref)}
+                />
+              </Elements>
             ) : (
-              <div>
-                {stripePromise ? (
-                  <Elements stripe={stripePromise as any}>
-                    <CardPaymentForm
-                      pedidoId={pendingPedidoId}
-                      saveCard={saveCard}
-                      user={user}
-                      onSuccess={() => setPendingPedidoId(null)}
-                      onError={(err: any) => setSubmitError(err?.message ?? String(err))}
-                      clearCartAndRedirect={() => {
-                        clearCart();
-                        setSuccessMessage('Pago procesado. Pedido enviado a cocina.');
-                        setTimeout(() => router.push('/shop?order=confirmed'), 900);
-                      }}
-                    />
-                  </Elements>
-                ) : (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700">
-                    Stripe no está configurado en el frontend (falta NEXT_PUBLIC_STRIPE_PK).
-                  </div>
-                )}
+              <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700">
+                Stripe no está configurado en el frontend (falta NEXT_PUBLIC_STRIPE_PK).
               </div>
             )}
           </div>
