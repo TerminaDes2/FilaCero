@@ -51,15 +51,15 @@ export const FancyInput: React.FC<FancyInputProps> = ({
         className={`relative rounded-xl border bg-white/85 backdrop-blur transition
         ${hasError
           ? 'border-rose-300 bg-rose-50/90 shadow-sm dark:border-rose-400/60 dark:bg-rose-500/15'
-          : 'border-gray-200/80 hover:border-gray-300 dark:border-slate-700/70 dark:hover:border-slate-500/70'}
-        focus-within:ring-2 focus-within:ring-brand-400/30 shadow-sm focus-within:shadow-md dark:bg-slate-900/70`}
+          : 'border-gray-200/80 hover:border-gray-300 dark:border-slate-800/70 dark:bg-slate-950/70 dark:hover:border-slate-600/70'}
+        focus-within:ring-2 focus-within:ring-brand-400/30 shadow-sm focus-within:shadow-md dark:focus-within:ring-brand-400/25`}
       >
         {/* Floating label */}
         <label
           htmlFor={id}
           className={`absolute ${leftIcon ? 'left-10' : 'left-3'} transition-[top,transform,color,background-color] px-1 rounded-md text-[11px] tracking-wide font-medium
             ${(focused || hasContent)
-              ? '-top-2.5 scale-90 bg-white/95 text-brand-600 shadow-sm dark:bg-slate-900 dark:text-brand-300'
+              ? '-top-2.5 scale-90 bg-white/95 text-brand-600 shadow-sm dark:bg-slate-950 dark:text-brand-300'
               : 'top-3 text-gray-500 dark:text-slate-400'}
             pointer-events-none origin-left duration-200`}
         >
