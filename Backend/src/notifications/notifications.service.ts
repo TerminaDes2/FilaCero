@@ -198,7 +198,7 @@ export class NotificationsService {
     to: string,
     userName: string,
     pedido: any,
-    type: 'received' | 'preparing' | 'ready',
+    type: 'received' | 'preparing' | 'ready' | 'cancelled',
     lang: 'es' | 'en',
   ): Promise<void> {
     const retry = this.emailRetryQueue.get(`${pedido.id_pedido}-${type}`) || {
@@ -272,7 +272,7 @@ export class NotificationsService {
    * Obtiene el template de email según el tipo y lenguaje
    */
   private getEmailTemplate(
-    type: 'received' | 'preparing' | 'ready',
+    type: 'received' | 'preparing' | 'ready' | 'cancelled',
     language: 'es' | 'en',
     userName: string,
     pedido: any,
@@ -302,6 +302,19 @@ export class NotificationsService {
                 </div>
               </div>
             `,
+            ctaText: 'Ver pedido',
+            ctaLink: `${process.env.FRONTEND_URL || 'https://filacero.com'}/user/orders/${pedido.id_pedido}`,
+          }),
+        },
+        cancelled: {
+          subject: `Pedido #${pedido.id_pedido} Cancelado - FilaCero`,
+          html: this.buildEmailHtml({
+            userName,
+            title: 'Pedido cancelado',
+            subtitle: `Pedido #${pedido.id_pedido}`,
+            mainMessage: 'Lamentamos informarte que tu pedido ha sido cancelado. Esto puede deberse a falta de stock o a la desactivación de uno de los productos. Si ya realizaste el pago, nos pondremos en contacto para procesar el reembolso.',
+            productsHtml: this.buildProductsHtml(pedido.detalle_pedido || [], 'received', 'es'),
+            footerInfo: ``,
             ctaText: 'Ver pedido',
             ctaLink: `${process.env.FRONTEND_URL || 'https://filacero.com'}/user/orders/${pedido.id_pedido}`,
           }),
@@ -371,6 +384,19 @@ export class NotificationsService {
             ctaLink: `${process.env.FRONTEND_URL || 'https://filacero.com'}/user/orders/${pedido.id_pedido}`,
           }),
         },
+        cancelled: {
+          subject: `Order #${pedido.id_pedido} Cancelled - FilaCero`,
+          html: this.buildEmailHtml({
+            userName,
+            title: 'Order cancelled',
+            subtitle: `Order #${pedido.id_pedido}`,
+            mainMessage: 'We are sorry to inform you that your order has been cancelled. This may be due to stock shortage or because a product was deactivated. If you already paid, we will contact you to process a refund.',
+            productsHtml: this.buildProductsHtml(pedido.detalle_pedido || [], 'received', 'en'),
+            footerInfo: ``,
+            ctaText: 'View order',
+            ctaLink: `${process.env.FRONTEND_URL || 'https://filacero.com'}/user/orders/${pedido.id_pedido}`,
+          }),
+        },
         preparing: {
           subject: `Order #${pedido.id_pedido} Being Prepared - FilaCero`,
           html: this.buildEmailHtml({
@@ -422,7 +448,7 @@ export class NotificationsService {
    */
   private buildProductsHtml(
     productos: any[],
-    type: 'received' | 'preparing' | 'ready',
+    type: 'received' | 'preparing' | 'ready' | 'cancelled',
     language: 'es' | 'en',
   ): string {
     if (!productos || productos.length === 0) {
@@ -590,7 +616,7 @@ export class NotificationsService {
   /**
    * Mapea estado del pedido a tipo de email
    */
-  private getEmailTypeForStatus(estado: string): 'received' | 'preparing' | 'ready' | null {
+  private getEmailTypeForStatus(estado: string): 'received' | 'preparing' | 'ready' | 'cancelled' | null {
     switch (estado) {
       case 'confirmado':
         return 'received';
@@ -598,6 +624,8 @@ export class NotificationsService {
         return 'preparing';
       case 'listo':
         return 'ready';
+      case 'cancelado':
+        return 'cancelled';
       default:
         return null;
     }

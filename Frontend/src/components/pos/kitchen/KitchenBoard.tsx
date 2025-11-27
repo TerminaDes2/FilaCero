@@ -5,7 +5,7 @@ import { BoardColumn } from './BoardColumn';
 import { FiltersBar } from './FiltersBar';
 
 export const KitchenBoard: React.FC = () => {
-  const { hydrateFromAPI, tickets, move, filters, loading, lastSyncAt, error } = useKitchenBoard();
+  const { hydrateFromAPI, tickets, move, cancel, filters, loading, lastSyncAt, error } = useKitchenBoard();
 
   useEffect(() => { hydrateFromAPI(); }, [hydrateFromAPI]);
 
@@ -61,7 +61,7 @@ export const KitchenBoard: React.FC = () => {
       <div className="flex-1 min-h-0 overflow-auto custom-scroll-area">
         <div className="flex gap-4 pr-1 pb-2 min-w-max">
           {columns.map(({ title, status }) => (
-            <BoardColumn key={status} title={title} status={status} tickets={byStatus[status]} onMove={move} />
+            <BoardColumn key={status} title={title} status={status} tickets={byStatus[status]} onMove={move} onCancel={cancel} />
           ))}
         </div>
       </div>

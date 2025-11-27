@@ -52,7 +52,7 @@ export const AdminProductGrid: React.FC<AdminProductGridProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const apiProducts: ApiProduct[] = await api.getProducts({ search });
+      const apiProducts: ApiProduct[] = await api.getProducts({ search, includeDisabled: true });
       // Inventario opcional (se mantiene para panel de edición)
       const negocioId =
         activeBusiness.get() || process.env.NEXT_PUBLIC_NEGOCIO_ID || "";

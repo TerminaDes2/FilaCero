@@ -2,6 +2,7 @@
 import React from 'react';
 import { KitchenStatus, Ticket } from '../../../state/kitchenBoardStore';
 import { Clock, Loader2, CheckCircle2, UtensilsCrossed, User, StickyNote } from 'lucide-react';
+import { useConfirm } from '../../system/ConfirmProvider';
 
 const statusMeta: Record<KitchenStatus, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Pendiente', color: 'border-sky-400 bg-sky-50', icon: <Clock className="w-4 h-4 text-sky-500" /> },
@@ -36,9 +37,18 @@ function formatSince(iso?: string) {
 interface Props {
   ticket: Ticket;
   onMove: (to: KitchenStatus) => void | Promise<void>;
+  onCancel?: () => void | Promise<void>;
 }
 
-export const TicketCard: React.FC<Props> = ({ ticket, onMove }) => {
+export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
+  let confirm = async (opts: any) => window.confirm(opts?.description ?? opts?.title ?? '¿Confirmar?');
+  try {
+    const h = useConfirm();
+    if (typeof h === 'function') confirm = h;
+  } catch (e) {
+    // Provider missing; fallback to window.confirm
+    // No-op, confirm already set to fallback above
+  }
   const meta = statusMeta[ticket.status];
   const action = actions[ticket.status];
   const draggable = ticket.status !== 'served';
@@ -111,13 +121,32 @@ export const TicketCard: React.FC<Props> = ({ ticket, onMove }) => {
       </div>
 
       {action && (
-        <div className="flex gap-1 flex-wrap mt-2">
+        <div className="flex gap-2 flex-wrap mt-2 items-center">
           <button
             onClick={() => void onMove(action.to)}
             className="text-xs px-3 py-1.5 rounded border bg-white font-medium text-gray-700 hover:bg-gray-100 active:scale-[.97] transition"
           >
             {action.label}
           </button>
+          {onCancel && (ticket.status === 'pending' || ticket.status === 'prepping') && (
+            <button
+              onClick={() => {
+                void (async () => {
+                  try {
+                    const ok = await confirm({ title: 'Cancelar pedido', description: '¿Deseas cancelar este pedido? Se enviará un correo al cliente.', confirmText: 'Cancelar', cancelText: 'Mantener', tone: 'danger' });
+                    if (ok) await onCancel();
+                  } catch (e) {
+                    console.error('Confirm modal failed', e);
+                    const ok = window.confirm('¿Cancelar pedido? Esta acción enviará un correo al cliente.');
+                    if (ok) await onCancel();
+                  }
+                })();
+              }}
+              className="text-xs px-3 py-1.5 rounded border bg-white text-rose-600 hover:bg-rose-50 active:scale-[.97] transition"
+            >
+              Cancelar
+            </button>
+          )}
         </div>
       )}
     </div>

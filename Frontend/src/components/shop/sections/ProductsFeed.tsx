@@ -87,7 +87,8 @@ export default function ProductsFeed() {
   useEffect(() => {
     let active = true;
     const search = params.get("search") ?? undefined;
-    const status = params.get("status") ?? undefined;
+    // Force public shop to only request active products. Ignore status query param.
+    const status = 'activo';
     const categoria = params.get("categoria") ?? undefined;
     setLoading(true);
     setVisible(12);

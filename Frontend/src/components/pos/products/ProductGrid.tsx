@@ -34,7 +34,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
     const fetchAndAdaptProducts = async () => {
       setLoading(true);
       try {
-        const apiProducts: ApiProduct[] = await api.getProducts({ search });
+        const apiProducts: ApiProduct[] = await api.getProducts({ search, includeDisabled: true });
         const adaptedProducts: POSProduct[] = apiProducts.map(p => {
           const idStr = String(p.id_producto);
           const priceNum = typeof p.precio === 'number' ? p.precio : parseFloat(String(p.precio ?? 0));
@@ -78,9 +78,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
             media: normalizedMedia,
             stock: stockValue ?? 0,
             category: categoryLabel || 'Sin categoría',
+            estado: (p.estado ?? 'activo'),
           };
         });
 
+        // Preserve all products (mix of active/inactive), the UI will split them into sections
         setAllProducts(adaptedProducts);
       } catch (err) {
         setError('No se pudieron cargar los productos.');
@@ -107,6 +109,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
     return allProducts.filter(p => p.category && p.category.trim().toLowerCase() === normalized);
   }, [allProducts, category]);
 
+  const activeProducts = useMemo(() => filtered.filter(p => (p.estado ?? 'activo') === 'activo'), [filtered]);
+  const inactiveProducts = useMemo(() => filtered.filter(p => (p.estado ?? 'activo') !== 'activo'), [filtered]);
+
   if (loading) {
     return <div className='text-center py-10 text-[var(--pos-text-muted)] text-sm'>Cargando productos…</div>;
   }
@@ -126,9 +131,20 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
 
   return (
     <div className={view === 'grid' ? 'grid gap-4 lg:gap-5 grid-cols-2 md:grid-cols-3 xl:grid-cols-4' : 'space-y-3'}>
-      {filtered.map(p => (
+      {activeProducts.map(p => (
         <ProductCard key={p.id} product={p} view={view} />
       ))}
+      {/* Inactivos: sección separada */}
+      {inactiveProducts.length > 0 && (
+        <div className='col-span-full mt-4'>
+          <h4 className='text-sm font-semibold text-[var(--pos-text-muted)] mb-2'>Desactivados</h4>
+          <div className={view === 'grid' ? 'grid gap-4 lg:gap-5 grid-cols-2 md:grid-cols-3 xl:grid-cols-4' : 'space-y-3'}>
+            {inactiveProducts.map(p => (
+              <ProductCard key={`inactive-${p.id}`} product={p} view={view} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

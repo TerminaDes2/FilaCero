@@ -55,6 +55,7 @@ interface KitchenBoardState {
   
   hydrateFromAPI: () => Promise<void>;
   move: (id: string, to: KitchenStatus) => Promise<void>;
+  cancel: (id: string, reason?: string) => Promise<void>;
   addMockTicket: () => void;
   setFilters: (partial: Partial<KitchenFilters>) => void;
   clear: () => void;
@@ -238,6 +239,25 @@ export const useKitchenBoard = create<KitchenBoardState>()(
           });
         }
       },
+        async cancel(id, reason) {
+          const state = get();
+          const ticket = state.tickets.find((t) => t.id === id);
+          if (!ticket) return;
+          const requestId = /^\d+$/.test(id) ? id.trim() : null; // detect numeric id
+          // We use the API to update estado to cancelado
+          try {
+            if (!requestId) {
+              // Remove locally
+              set({ tickets: state.tickets.filter((t) => t.id !== id) });
+              return;
+            }
+            await api.updateKitchenOrderStatus(requestId, 'cancelado', reason);
+            // remove it from the board
+            set({ tickets: get().tickets.filter((t) => t.id !== id), lastSyncAt: new Date().toISOString() });
+          } catch (err) {
+            console.error('Error cancelling ticket', err);
+          }
+        },
       async move(id, to) {
         const state = get();
         const ticket = state.tickets.find((t) => t.id === id);

@@ -501,6 +501,34 @@ export class PedidosService {
   }
 
   /**
+   * Cancela pedidos que contengan el producto especificado y que se encuentren en
+   * estados pendientes que pueden ser cancelados (pendiente, confirmado, en_preparacion).
+   * Se envían notificaciones/email de cancelación utilizando updateEstado.
+   */
+  async cancelPedidosContainingProduct(productId: bigint | string | number, reason?: string) {
+    const pid = typeof productId === 'bigint' ? productId : BigInt(String(productId));
+    const pedidos = await this.prisma.pedido.findMany({
+      where: {
+        estado: { in: ['pendiente', 'confirmado', 'en_preparacion'] },
+        detalle_pedido: { some: { id_producto: pid } },
+      },
+    });
+    const results: any[] = [];
+    for (const p of pedidos) {
+      try {
+        const dto = { estado: 'cancelado' as any, notas: reason } as any;
+        const res = await this.updateEstado(p.id_pedido, dto);
+        results.push({ pedido: p.id_pedido, result: res });
+      } catch (e: any) {
+        // registrar y continuar
+        console.error(`Error cancelling pedido ${p.id_pedido}:`, e?.message || e);
+        results.push({ pedido: p.id_pedido, error: e?.message || String(e) });
+      }
+    }
+    return { cancelled: results.length, details: results };
+  }
+
+  /**
    * Validar transiciones de estado permitidas
    */
   private validarTransicionEstado(estadoActual: string, nuevoEstado: string) {

@@ -19,6 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
   const { showStock, locale, currency } = useSettingsStore();
   const [showPanel, setShowPanel] = useState(false);
   const outOfStock = product.stock <= 0;
+  const isInactive = (product as any).estado && (product as any).estado !== 'activo';
   const base = 'group relative rounded-2xl border transition overflow-hidden shadow-sm hover:shadow-md';
   type BadgeVariant = 'category' | 'price' | 'stock';
 
@@ -62,7 +63,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
       style={{
         background: 'var(--pos-card-bg)',
         borderColor: 'var(--pos-card-border)'
-      }}>
+      , opacity: isInactive ? 0.7 : 1 }}>
       
       {/* Usamos la variable 'imageUrl' en el 'src' */}
       <div className={view === 'grid' ? 'relative w-full h-36 overflow-hidden' : 'relative w-24 h-20 rounded-lg overflow-hidden flex-shrink-0'} style={{ background: '#f2e2c5' }}>
@@ -76,13 +77,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
         {outOfStock && (
           <span className='absolute inset-0 bg-[rgba(255,255,255,0.78)] backdrop-blur-sm flex items-center justify-center text-[11px] font-semibold tracking-wide' style={{ color: 'var(--pos-danger-text)' }}>Sin stock</span>
         )}
+        {isInactive && (
+          <span className='absolute inset-0 bg-[rgba(255,255,255,0.86)] backdrop-blur-sm flex items-center justify-center text-[11px] font-semibold tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>
+            Inactivo
+          </span>
+        )}
       </div>
 
       <div className={`${view === 'grid' ? 'p-3' : 'flex-1 min-w-0'} relative z-0`}>
-        <div className='flex items-start justify-between gap-2'>
+          <div className='flex items-start justify-between gap-2'>
           <h3 className='text-sm font-semibold leading-tight line-clamp-2' style={{ color: 'var(--pos-text-heading)' }}>{product.name}</h3>
           {view === 'grid' && (
-            <CandyBadge size='sm' variant='category'>{product.category || 'General'}</CandyBadge>
+            <div className='flex items-center gap-2'>
+              <CandyBadge size='sm' variant='category'>{product.category || 'General'}</CandyBadge>
+              {isInactive && <CandyBadge size='sm' variant='stock' danger>Inactivo</CandyBadge>}
+            </div>
           )}
         </div>
         {view === 'list' && (
@@ -91,7 +100,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
         {product.description && view === 'grid' && (
           <p className='mt-1 text-[11px] line-clamp-2' style={{ color: 'var(--pos-text-muted)' }}>{product.description}</p>
         )}
-        <div className='mt-2 flex items-center justify-between'>
+          <div className='mt-2 flex items-center justify-between'>
           <div className='flex flex-col'>
             
             {/* --- CORRECCIÓN DEL TYPO --- */}
@@ -107,7 +116,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, view = 'grid'
             )}
           </div>
           <button
-            disabled={outOfStock}
+            disabled={outOfStock || isInactive}
             onClick={() => setShowPanel(true)}
             aria-label={`Agregar ${product.name}`}
             className='relative inline-flex items-center justify-center w-9 h-9 rounded-full disabled:opacity-40 disabled:cursor-not-allowed shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'

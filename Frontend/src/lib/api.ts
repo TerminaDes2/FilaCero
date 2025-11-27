@@ -261,6 +261,27 @@ function buildProductFormData(productData: any, imageFile?: File | null) {
   return fd;
 }
 
+export async function uploadFileToCloudinary(file: File) {
+  if (!file) throw new Error('No file provided to uploadFileToCloudinary');
+  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    throw new Error('Falta la configuración de Cloudinary (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME o NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET)');
+  }
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', UPLOAD_PRESET);
+  const res = await fetch(url, { method: 'POST', body: fd });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Error subiendo a Cloudinary: ${res.status} ${txt}`);
+  }
+  const data = await res.json();
+  if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
+  return data.secure_url as string;
+}
+
 
 // --- Interfaces actualizadas ---
 export interface AuthUser {
@@ -483,11 +504,12 @@ export const api = {
     ),
 
   // --- Productos ---
-  getProducts: (params?: {
+  getProducts: async (params?: {
     search?: string;
     status?: string;
     id_negocio?: string;
     categoria?: string; 
+    includeDisabled?: boolean;
   }) => {
     const merged = { ...(params || {}) } as {
       [key: string]: string | undefined;
@@ -507,13 +529,36 @@ export const api = {
       }
       if (negocioId) merged.id_negocio = negocioId;
     }
-    const queryParams = new URLSearchParams();
+      // Default behavior: if we are requesting products for a specific business (id_negocio)
+      // and the caller did not specify a status explicitly, default to only show active products.
+      if (merged.id_negocio && !('status' in (params || {}))) {
+        merged.status = 'activo';
+      }
+
+      const queryParams = new URLSearchParams();
     for (const [key, value] of Object.entries(merged)) {
       if (value != null && value !== "") {
         queryParams.append(key, String(value));
       }
     }
     const query = queryParams.toString();
+    // If includeDisabled is requested, and we are querying for a specific business,
+    // fetch both active and inactive products with two parallel calls and merge results.
+    if ((params as any)?.includeDisabled && merged.id_negocio) {
+      const qActive = new URLSearchParams({ ...(Object.fromEntries(new URLSearchParams(queryParams).entries()) as any), status: 'activo' }).toString();
+      const qInactive = new URLSearchParams({ ...(Object.fromEntries(new URLSearchParams(queryParams).entries()) as any), status: 'inactivo' }).toString();
+      const [a, b] = await Promise.all([apiFetch<any[]>(`products?${qActive}`), apiFetch<any[]>(`products?${qInactive}`)]);
+      const combinedRaw = Array.isArray(a) && Array.isArray(b) ? [...a, ...b] : (Array.isArray(a) ? a : []);
+      // dedupe by id_producto
+      const seen = new Set<string>();
+      const combined: any[] = [];
+      for (const item of combinedRaw) {
+        const id = String((item as any)?.id_producto ?? (item as any)?.id ?? '');
+        if (!id) continue;
+        if (!seen.has(id)) { seen.add(id); combined.push(item); }
+      }
+      return combined;
+    }
     const path = query ? `products?${query}` : "products";
     return apiFetch<any[]>(path);
   },
@@ -534,12 +579,19 @@ export const api = {
       body: buildProductFormData(productData, imageFile),
     }),
 
-  // Nueva versión: siempre multipart/form-data.
-  // Campo JSON: 'data'; Campo de archivo (opcional): 'file'
-  createProductWithImage: (productData: any, imageFile?: File | null) => {
+  // Nueva versión: sube imagen a Cloudinary desde el cliente (si aplica),
+  // luego crea el producto enviando solo JSON dentro del campo `data` del form-data.
+  createProductWithImage: async (productData: any, imageFile?: File | null) => {
+    const clone = { ...(productData || {}) } as any;
+    if (imageFile) {
+      const cloudUrl = await uploadFileToCloudinary(imageFile);
+      clone.media = clone.media || [];
+      clone.media.unshift({ url: cloudUrl, principal: true, tipo: imageFile.type });
+    }
+    // The backend create endpoint expects a FormData with 'data' string field.
     return apiFetch<any>("products", {
       method: "POST",
-      body: buildProductFormData(productData, imageFile),
+      body: buildProductFormData(clone, null),
     });
   },
 
@@ -552,6 +604,11 @@ export const api = {
   deleteProduct: (id: string) =>
     apiFetch<any>(`products/${id}`, {
       method: "DELETE",
+    }),
+  setProductImageByUrl: (id: string | number, imageUrl: string) =>
+    apiFetch<any>(`products/${id}/image-url`, {
+      method: 'POST',
+      body: JSON.stringify({ imageUrl }),
     }),
 
   // --- Categorías (CORREGIDO: Duplicados eliminados) ---
@@ -894,6 +951,24 @@ export const api = {
         body: JSON.stringify({ telefono, codigo }),
       }
     ),
+
+  // --- Verificación de credencial (OCR) ---
+  // Sube la imagen a Cloudinary y hace la petición al endpoint de verificación
+  verifyCredentialUpload: async (file: File) => {
+    if (!file) throw new Error('No file provided');
+    // Primero subimos a Cloudinary usando la utilidad existente
+    const imageUrl = await uploadFileToCloudinary(file);
+    // Enviar al backend para procesar la verificación
+    return apiFetch<any>(`verificacion_credencial`, {
+      method: 'POST',
+      body: JSON.stringify({ imageUrl }),
+    });
+  },
+  verifyCredential: (imageUrl: string) =>
+    apiFetch<any>(`verificacion_credencial`, {
+      method: 'POST',
+      body: JSON.stringify({ imageUrl }),
+    }),
 
   updateUserProfile: (
     id: string | number,
