@@ -159,20 +159,17 @@ export default function VerificationPage() {
     if (!credentialFile) return;
     setIsSubmitting(true);
     setCredentialError(null);
+    setCredentialSuccess(null);
 
     try {
-      // Reuse logic from credencial/page.tsx or simulate for now since this is a redesign
-      // For the sake of this task, we'll simulate a successful upload after a delay
-      // In a real refactor, we would extract the upload logic to a hook or utility
-
+      // Subir imagen a Cloudinary usando variables de entorno públicas
       const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
       const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
       if (!CLOUD_NAME || !UPLOAD_PRESET) {
-        // Fallback simulation if env vars are missing
-        await new Promise(r => setTimeout(r, 2000));
-        setCredentialSuccess("Credencial subida correctamente (Simulación)");
-        return;
+        throw new Error(
+          "Configuración faltante: define NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME y NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET en .env.local"
+        );
       }
 
       const formData = new FormData();
@@ -180,23 +177,82 @@ export default function VerificationPage() {
       formData.append("upload_preset", UPLOAD_PRESET);
 
       const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-      const cloudinaryResponse = await fetch(url, { method: "POST", body: formData });
+      const cloudinaryResponse = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
 
-      if (!cloudinaryResponse.ok) throw new Error("Error al subir imagen");
+      if (!cloudinaryResponse.ok) {
+        const txt = await cloudinaryResponse.text();
+        throw new Error(`Falló la subida a Cloudinary (${cloudinaryResponse.status}): ${txt}`);
+      }
 
       const cloudinaryData = await cloudinaryResponse.json();
 
-      // Call backend
-      const res = await api.verifyCredential(cloudinaryData.secure_url);
-      if (res.message?.includes('exitosa') || res.message?.includes('completada')) {
-        setCredentialSuccess("Credencial verificada exitosamente.");
-        await userStoreCheckAuth();
-      } else {
-        throw new Error(res.message || "No se pudo verificar la credencial");
+      if (!cloudinaryData.secure_url) {
+        throw new Error("Cloudinary no devolvió `secure_url`. Revisa el upload_preset y permisos.");
       }
 
-    } catch (err: any) {
-      setCredentialError(err.message || "Error al subir la credencial");
+      // Preparar endpoint del backend (respeta variable de entorno para dev vs Docker)
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
+      let resolvedApiBase = API_BASE.replace(/\/$/, '');
+      if (typeof window !== 'undefined' && API_BASE) {
+        try {
+          const parsed = new URL(API_BASE);
+          if (parsed.hostname === 'backend' || parsed.hostname === 'filacero-backend') {
+            parsed.hostname = window.location.hostname;
+            resolvedApiBase = parsed.toString().replace(/\/$/, '');
+          }
+        } catch (e) {
+          // Si no es una URL válida, mantén el valor tal cual
+        }
+      }
+
+      const endpoint = resolvedApiBase ? `${resolvedApiBase}/verificacion_credencial` : '/api/verificacion_credencial';
+
+      // Recuperar token almacenado
+      const token = typeof window !== 'undefined' ? window.localStorage.getItem('auth_token') : null;
+      if (!token) {
+        throw new Error('No autenticado. Por favor inicia sesión antes de verificar tu credencial.');
+      }
+
+      // Enviar URL al backend incluyendo Authorization
+      const backendResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageUrl: cloudinaryData.secure_url }),
+      });
+
+      const backendData = await backendResponse.json();
+
+      if (backendResponse.ok) {
+        // Verificar si el backend devolvió un resultado exitoso (ok: true en details)
+        // o si el mensaje indica que fue exitosa
+        const isVerified = backendData.message?.includes('completada') || 
+                          backendData.message?.includes('exitosa');
+        
+        if (isVerified) {
+          setCredentialSuccess('Credencial verificada exitosamente.');
+          setCredentialError(null);
+          await userStoreCheckAuth();
+        } else {
+          // La respuesta fue 200 pero la verificación falló (OCR no validó)
+          setCredentialError(backendData.message || 'Favor intente nuevamente con una credencial válida.');
+        }
+      } else if (backendResponse.status === 401) {
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('auth_token');
+          window.localStorage.removeItem('auth_user');
+        }
+        throw new Error('No autorizado. Tu sesión puede haber expirado. Por favor inicia sesión de nuevo.');
+      } else {
+        throw new Error(backendData.error || 'Error en la verificación.');
+      }
+    } catch (error: any) {
+      setCredentialError(error.message || 'Error al subir la credencial');
     } finally {
       setIsSubmitting(false);
     }
