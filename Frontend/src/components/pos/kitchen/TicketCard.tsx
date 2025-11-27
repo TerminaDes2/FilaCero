@@ -40,9 +40,8 @@ interface Props {
   onCancel?: () => void | Promise<void>;
 }
 
-export const TicketCard: React.FC<Props> = ({ ticket, onMove }) => {
-  export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
-    const confirm = useConfirm();
+export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
+  const confirm = useConfirm();
   const meta = statusMeta[ticket.status];
   const action = actions[ticket.status];
   const draggable = ticket.status !== 'served';
