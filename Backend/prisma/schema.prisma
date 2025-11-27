@@ -50,6 +50,7 @@ model usuarios {
   pedidos                    pedido[]
   notificaciones             notificacion[]
   producto_historial_precios producto_historial_precio[]
+  negocio_producto_historial_precios negocio_producto_historial_precio[]
   usuarios_negocio           usuarios_negocio[]
   metodos_pago               metodo_pago_guardado[]
 
@@ -179,6 +180,7 @@ model negocio {
   notificaciones              notificacion[]
   usuarios_negocio            usuarios_negocio[]
   categorias_link             negocio_categoria[]
+  negocio_producto            negocio_producto[]
 }
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
@@ -200,6 +202,7 @@ model producto {
   producto_metricas_semanales producto_metricas_semanales[]
   historial_precios           producto_historial_precio[]
   detalle_pedido              detalle_pedido[]
+  negocio_producto            negocio_producto[]
 }
 
 model producto_historial_precio {
