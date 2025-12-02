@@ -257,7 +257,7 @@ export default function VerificacionCredencial() {
           <div className="mt-6 text-center text-sm text-gray-600">
             <p>
               ¿Tienes problemas? {' '}
-              <Link href="/soporte" className="text-brand-600 hover:text-brand-700 font-semibold">
+              <Link href="/legal/privacidad" className="text-brand-600 hover:text-brand-700 font-semibold">
                 Contacta con soporte
               </Link>
             </p>

@@ -48,7 +48,7 @@ export class ProductPriceHistoryService {
     // Ejecutar actualización en transacción
     await this.prisma.$transaction(async (tx) => {
       // 1. Cerrar el precio anterior (marcar como no vigente)
-      await tx.producto_historial_precio.updateMany({
+      await tx.productoHistorialPrecio.updateMany({
         where: {
           id_producto: idProducto,
           vigente: true,
@@ -60,7 +60,7 @@ export class ProductPriceHistoryService {
       });
 
       // 2. Crear nuevo registro histórico
-      await tx.producto_historial_precio.create({
+      await tx.productoHistorialPrecio.create({
         data: {
           id_producto: idProducto,
           precio: new Prisma.Decimal(nuevoPrecio),
@@ -85,7 +85,7 @@ export class ProductPriceHistoryService {
    * @returns Array de registros históricos ordenados por fecha descendente
    */
   async obtenerHistorial(idProducto: bigint) {
-    const historial = await this.prisma.producto_historial_precio.findMany({
+    const historial = await this.prisma.productoHistorialPrecio.findMany({
       where: { id_producto: idProducto },
       include: {
         usuario: {
@@ -123,7 +123,7 @@ export class ProductPriceHistoryService {
    * @returns Registro de precio actual o null si no existe
    */
   async obtenerPrecioActual(idProducto: bigint) {
-    const precioActual = await this.prisma.producto_historial_precio.findFirst({
+    const precioActual = await this.prisma.productoHistorialPrecio.findFirst({
       where: {
         id_producto: idProducto,
         vigente: true,
@@ -165,7 +165,7 @@ export class ProductPriceHistoryService {
    * @returns Precio vigente en esa fecha o null
    */
   async obtenerPrecioEnFecha(idProducto: bigint, fecha: Date) {
-    const precioEnFecha = await this.prisma.producto_historial_precio.findFirst({
+    const precioEnFecha = await this.prisma.productoHistorialPrecio.findFirst({
       where: {
         id_producto: idProducto,
         fecha_inicio: { lte: fecha },
@@ -192,7 +192,7 @@ export class ProductPriceHistoryService {
    * @returns Estadísticas de cambios
    */
   async obtenerEstadisticas(idProducto: bigint) {
-    const historial = await this.prisma.producto_historial_precio.findMany({
+    const historial = await this.prisma.productoHistorialPrecio.findMany({
       where: { id_producto: idProducto },
       orderBy: { fecha_inicio: 'asc' },
       select: {

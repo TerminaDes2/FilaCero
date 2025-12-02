@@ -265,14 +265,14 @@ export default function Navbar() {
                   {!isAuthenticated && (
                     <div className="grid grid-cols-1 gap-2">
                       <Link
-                        href="/login"
+                        href="/auth/login"
                         className="w-full rounded-2xl border border-brand-200 px-4 py-3 text-sm font-semibold text-brand-600 text-center transition hover:border-brand-300 hover:bg-brand-50 dark:border-brand-400/35 dark:text-brand-100 dark:hover:border-brand-300 dark:hover:bg-[color:rgba(15,23,42,0.85)]"
                         onClick={closeMenu}
                       >
                         {t("navbar.login")}
                       </Link>
                       <Link
-                        href="/register"
+                        href="/auth/register"
                         className="w-full rounded-2xl bg-brand-600 text-white px-4 py-3 text-sm font-semibold text-center shadow-lg shadow-[rgba(233,74,111,0.35)] transition hover:bg-brand-500"
                         onClick={closeMenu}
                       >

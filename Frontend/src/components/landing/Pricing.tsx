@@ -73,7 +73,7 @@ function PlanDetailModal({
         </ul>
 
         <Link
-          href="/register"
+          href="/auth/register"
           className={`w-full block text-center font-semibold py-3 rounded-xl transition relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${
             plan.highlight
               ? "bg-brand-600 text-white hover:bg-brand-500"

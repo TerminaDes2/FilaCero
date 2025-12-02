@@ -529,5 +529,55 @@
         "createFailed": "No se pudo crear el negocio"
       }
     }
+  },
+  "common": {
+    "edit": "Editar",
+    "remove": "Quitar",
+    "cancel": "Cancelar"
+  },
+  "pos": {
+    "sidebar": {
+      "title": "Punto de Venta",
+      "home": "Inicio",
+      "history": "Historial",
+      "cashout": "Corte de caja",
+      "kitchen": "Cocina",
+      "categories": "Categorías",
+      "products": "Productos",
+      "analytics": "Métricas",
+      "staff": "Empleados",
+      "settings": "Configuración"
+    },
+    "cart": {
+      "title": "Carrito",
+      "subtitle": "Gestiona la orden actual",
+      "emptyTitle": "Tu carrito está vacío",
+      "emptySubtitle": "Agrega productos para comenzar la orden.",
+      "noteLabel": "Nota",
+      "subtotal": "Subtotal",
+      "items": "Productos",
+      "total": "Total",
+      "pay": "Pagar",
+      "payAriaLabel": "Continuar con el pago",
+      "clear": "Limpiar",
+      "clearTitle": "Limpiar carrito",
+      "clearDescription": "Vas a eliminar todos los productos del carrito. ¿Continuar?",
+      "clearConfirm": "Limpiar",
+      "removeTitle": "Quitar del carrito",
+      "removeDescription": "¿Seguro que quieres quitar este producto? Esta acción no se puede deshacer."
+    },
+    "kitchen": {
+      "pending": "Pendientes",
+      "prepping": "En preparación",
+      "ready": "Listos",
+      "served": "Entregados",
+      "syncedSecondsAgo": "actualizado hace segundos",
+      "syncedOneMinuteAgo": "actualizado hace 1 minuto",
+      "syncedMinutesAgo": "actualizado hace {{minutes}} minutos",
+      "syncedOneHourAgo": "actualizado hace 1 hora",
+      "syncedHoursAgo": "actualizado hace {{hours}} horas",
+      "syncing": "Sincronizando cocina…",
+      "waitingData": "Esperando datos de cocina"
+    }
   }
 }

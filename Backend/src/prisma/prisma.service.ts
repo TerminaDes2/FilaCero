@@ -19,4 +19,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   get empleados(): any {
     return (this as any).empleados;
   }
+
+  get negocio_producto(): any {
+    return (this as any).negocio_producto;
+  }
 }

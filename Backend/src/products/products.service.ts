@@ -179,7 +179,7 @@ export class ProductsService {
       }
     }
 
-    return products
+      return products
       .filter((product) => {
         if (negocioIdFilter === undefined) return true;
         const ov = overrideMap.get(String(product.id_producto));

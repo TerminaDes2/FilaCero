@@ -299,7 +299,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					<p className="text-xs text-gray-600 dark:text-slate-300">
 						{t('auth.login.newAccount')}&nbsp;
 						<a
-							href="/register"
+							href="/auth/register"
 							className="font-medium text-brand-600 hover:underline dark:text-brand-300"
 						>
 							{t('auth.login.createAccount')}

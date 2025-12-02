@@ -51,7 +51,7 @@ export function Hero() {
               ))}
             </ul>
             <div className="flex flex-wrap gap-4 items-center">
-              <Link href="/register" className="group relative inline-flex items-center gap-2 bg-brand-600 text-white px-7 py-3 rounded-full font-semibold shadow-glow hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
+              <Link href="/auth/register" className="group relative inline-flex items-center gap-2 bg-brand-600 text-white px-7 py-3 rounded-full font-semibold shadow-glow hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
                 <span>{t("landing.hero.ctaPrimary")}</span>
                 <span className="translate-x-0 group-hover:translate-x-1 transition" aria-hidden="true">→</span>
               </Link>
@@ -74,7 +74,7 @@ export function Hero() {
             </div>
             <p className="text-sm text-gray-600 pt-1">
               {/* Mantener la pregunta en español por ahora; solo el link traducido */}
-              ¿Ya tienes cuenta? <Link href="/login" className="font-medium text-brand-600 hover:underline">{t("navbar.login")}</Link>
+              ¿Ya tienes cuenta? <Link href="/auth/login" className="font-medium text-brand-600 hover:underline">{t("navbar.login")}</Link>
             </p>
           </Reveal>
           <Reveal delay={120} className="relative hidden sm:block">

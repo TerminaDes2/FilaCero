@@ -119,11 +119,11 @@ export default function LanguageSelector({ variant = "compact" }: LanguageSelect
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 bottom-12 z-50 mb-2 w-48 overflow-hidden rounded-2xl border border-brand-100/70 bg-white/95 p-2 shadow-xl shadow-brand-100/40 backdrop-blur-sm dark:border-white/12 dark:bg-slate-950/95 dark:shadow-slate-950/50">
-          <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.38em] text-brand-500/70 dark:text-brand-200/80">
+        <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-[rgba(255,255,255,0.35)] bg-[rgba(3,7,18,0.96)] px-3 py-3 shadow-xl shadow-[rgba(15,23,42,0.85)] backdrop-blur-md">
+          <div className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-[0.38em] text-[rgba(248,250,252,0.7)]">
             {locale?.startsWith("en") ? "Language" : "Idioma"}
           </div>
-          <div className="grid gap-1.5" role="listbox">
+          <div className="space-y-1.5" role="listbox">
             {languages.map((lang) => {
               const isActive = lang.code === locale;
               return (
@@ -131,19 +131,28 @@ export default function LanguageSelector({ variant = "compact" }: LanguageSelect
                   key={lang.code}
                   type="button"
                   onClick={() => handleSelect(lang.code)}
-                  className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(244,114,182,0.8)] ${
                     isActive
-                      ? "bg-brand-50/85 text-brand-700 shadow-sm dark:bg-brand-500/25 dark:text-brand-50"
-                      : "text-[var(--fc-text-primary)] hover:bg-brand-50/60 dark:text-[var(--fc-text-primary)] dark:hover:bg-[rgba(15,23,42,0.9)]"
+                      ? "bg-[rgba(136,19,55,0.92)] text-[rgba(252,231,243,0.98)] shadow-sm"
+                      : "text-slate-100 hover:bg-[rgba(15,23,42,0.9)] hover:text-white"
                   }`}
                   role="option"
                   aria-selected={isActive}
                 >
-                  <span className="flex items-center gap-2">
-                    <span className="text-base">{lang.flag}</span>
-                    <span className="font-medium">{lang.label}</span>
+                  <span className="flex items-center gap-3">
+                    <span className={`inline-flex items-center justify-center rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide ${
+                      isActive
+                        ? "bg-[rgba(30,64,175,0.9)] text-[rgba(219,234,254,0.98)]"
+                        : "bg-[rgba(15,23,42,0.9)] text-[rgba(148,163,184,0.95)]"
+                    }`}>
+                      {lang.code === "es-MX" ? "MX" : "US"}
+                    </span>
+                    <span className="flex flex-col items-start">
+                      <span className="font-medium leading-snug">{lang.label}</span>
+                      <span className="text-[11px] text-[rgba(148,163,184,0.9)]">{lang.helper}</span>
+                    </span>
                   </span>
-                  {isActive ? <Check className="h-4 w-4 text-brand-500" aria-hidden /> : null}
+                  {isActive ? <Check className="h-4 w-4 text-[rgba(248,187,208,0.95)]" aria-hidden /> : null}
                 </button>
               );
             })}

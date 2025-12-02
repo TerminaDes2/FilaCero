@@ -7,6 +7,7 @@ import { Settings as GearIcon } from 'lucide-react';
 import { useKitchenBoard } from '../../state/kitchenBoardStore';
 import { usePOSView } from '../../state/posViewStore';
 import { useUserStore } from '../../state/userStore';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface NavItem {
 	key: string;
@@ -21,7 +22,7 @@ const baseIconClass = 'w-5 h-5 stroke-current';
 const items: NavItem[] = [
 	{
 		key: 'logo',
-		label: 'Inicio',
+		label: 'pos.sidebar.home',
 		href: '/pos',
 		accent: 'from-amber-50 to-amber-100',
 		icon: (
@@ -33,7 +34,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'home',
-		label: 'Inicio',
+		label: 'pos.sidebar.home',
 		href: '/pos',
 		accent: 'from-amber-50 to-amber-100',
 		icon: (
@@ -44,7 +45,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'history',
-		label: 'Historial',
+		label: 'pos.sidebar.history',
 		href: '/pos/history',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
@@ -55,7 +56,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'cashout',
-		label: 'Corte de caja',
+		label: 'pos.sidebar.cashout',
 		href: '/pos/cashout',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
@@ -68,7 +69,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'kitchen',
-		label: 'Cocina',
+		label: 'pos.sidebar.kitchen',
 		href: '/pos/kitchen',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
@@ -79,7 +80,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'categories',
-		label: 'Categorías',
+		label: 'pos.sidebar.categories',
 		href: '/pos/categories',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
@@ -89,7 +90,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'products',
-		label: 'Productos',
+		label: 'pos.sidebar.products',
 		href: '/pos/products',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
@@ -100,7 +101,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'analytics',
-		label: 'Métricas',
+		label: 'pos.sidebar.analytics',
 		href: '/pos/analytics',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
@@ -110,7 +111,7 @@ const items: NavItem[] = [
 	},
 	{
 		key: 'staff',
-		label: 'Empleados',
+		label: 'pos.sidebar.staff',
 		href: '/pos/staff',
 		icon: (
 			<svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className={baseIconClass}>
@@ -122,7 +123,7 @@ const items: NavItem[] = [
 
 const settingsItem: NavItem = {
 	key: 'settings',
-	label: 'Configuración',
+	label: 'pos.sidebar.settings',
 	href: '/pos/settings',
 	icon: (
 		<GearIcon className={baseIconClass} />
@@ -130,6 +131,7 @@ const settingsItem: NavItem = {
 };
 
 export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = true }) => {
+	const { t } = useTranslation();
   const pathname = usePathname();
 	const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -158,7 +160,7 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 			</div>
 			{!collapsed && (
 						<span className="font-semibold tracking-tight text-[13px] leading-none whitespace-nowrap truncate" style={{ color: 'var(--pos-text-heading)' }}>
-							Punto de Venta
+						{t('pos.sidebar.title')}
 						</span>
 			)}
 		</div>
@@ -204,7 +206,7 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 								</span>
 								{!collapsed && (
 									<span className="truncate flex items-center gap-2">
-										{item.label}
+										{t(item.label)}
 										{pending > 0 && (
 											<span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold text-white" style={{ background: 'var(--pos-accent-green)' }}>
 												{pending}
@@ -228,17 +230,17 @@ export const PosSidebar: React.FC<{ collapsible?: boolean }> = ({ collapsible = 
 								{item.icon}
 							</span>
 							{!collapsed && (
-								<span className="truncate flex items-center gap-2">{item.label}</span>
+								<span className="truncate flex items-center gap-2">{t(item.label)}</span>
 							)}
 						</Link>
 					);
 				})}
       </div>
 	  {/* Footer action */}
-	<div className="px-2 pb-3 pt-2 border-t border-white/30/80 relative z-10">
-				<Link href={settingsItem.href} aria-label={settingsItem.label} className="flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.3)] focus:outline-none focus-visible:ring-2 ring-white/60">
+		<div className="px-2 pb-3 pt-2 border-t border-white/30/80 relative z-10">
+				<Link href={settingsItem.href} aria-label={t(settingsItem.label)} className="flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors text-[rgba(255,255,255,0.95)] hover:bg-[rgba(255,255,255,0.3)] focus:outline-none focus-visible:ring-2 ring-white/60">
 					<span className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/60 group-hover:bg-white/75 shadow-inner shadow-white/30" style={{ color: 'var(--pos-text-heading)' }}>{settingsItem.icon}</span>
-          {!collapsed && <span className="truncate">{settingsItem.label}</span>}
+		  {!collapsed && <span className="truncate">{t(settingsItem.label)}</span>}
         </Link>
       </div>
       <style jsx>{` .custom-scrollbar::-webkit-scrollbar { width: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 3px; } @keyframes shine { 0% { transform: translateX(-60%); } 100% { transform: translateX(120%);} }`}</style>

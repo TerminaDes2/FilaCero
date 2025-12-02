@@ -37,6 +37,7 @@ const featureCache: FeatureFlags = {
   PAYMENTS_ENABLED: parseBoolean(process.env.FEATURE_PAYMENTS_ENABLED, defaults.PAYMENTS_ENABLED),
   KITCHEN_BOARD_ENABLED: parseBoolean(process.env.FEATURE_KITCHEN_BOARD_ENABLED, defaults.KITCHEN_BOARD_ENABLED),
   AUTH_ENABLED: parseBoolean(process.env.FEATURE_AUTH_ENABLED, defaults.AUTH_ENABLED),
+  SAVED_CARDS_ENABLED: parseBoolean(process.env.FEATURE_SAVED_CARDS_ENABLED, defaults.SAVED_CARDS_ENABLED),
 };
 
 export function isFeatureEnabled(feature: keyof FeatureFlags): boolean {

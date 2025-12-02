@@ -9,8 +9,17 @@ interface LanguageState {
   toggleLocale: () => void;
 }
 
+function getInitialLocale(): LocaleCode {
+  if (typeof window === 'undefined') {
+    return 'es-MX';
+  }
+  const stored = window.localStorage.getItem('language-locale') as LocaleCode | null;
+  if (stored === 'es-MX' || stored === 'en-US') return stored;
+  return 'es-MX';
+}
+
 export const useLanguageStore = create<LanguageState>((set) => ({
-  locale: 'es-MX',
+  locale: getInitialLocale(),
   setLocale: (locale) => {
     set({ locale });
     if (typeof window !== 'undefined') {
@@ -19,7 +28,7 @@ export const useLanguageStore = create<LanguageState>((set) => ({
   },
   toggleLocale: () => {
     set((state) => {
-      const next = state.locale === 'es-MX' ? 'en-US' : 'es-MX';
+      const next: LocaleCode = state.locale === 'es-MX' ? 'en-US' : 'es-MX';
       if (typeof window !== 'undefined') {
         localStorage.setItem('language-locale', next);
       }

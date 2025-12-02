@@ -529,5 +529,55 @@
         "createFailed": "Failed to create business"
       }
     }
+  },
+  "common": {
+    "edit": "Edit",
+    "remove": "Remove",
+    "cancel": "Cancel"
+  },
+  "pos": {
+    "sidebar": {
+      "title": "Point of Sale",
+      "home": "Home",
+      "history": "History",
+      "cashout": "Cash-out",
+      "kitchen": "Kitchen",
+      "categories": "Categories",
+      "products": "Products",
+      "analytics": "Analytics",
+      "staff": "Staff",
+      "settings": "Settings"
+    },
+    "cart": {
+      "title": "Cart",
+      "subtitle": "Manage the current order",
+      "emptyTitle": "Your cart is empty",
+      "emptySubtitle": "Add products to start the order.",
+      "noteLabel": "Note",
+      "subtotal": "Subtotal",
+      "items": "Items",
+      "total": "Total",
+      "pay": "Pay",
+      "payAriaLabel": "Continue to payment",
+      "clear": "Clear",
+      "clearTitle": "Clear cart",
+      "clearDescription": "You are about to remove all products from the cart. Continue?",
+      "clearConfirm": "Clear",
+      "removeTitle": "Remove from cart",
+      "removeDescription": "Are you sure you want to remove this product? This action cannot be undone."
+    },
+    "kitchen": {
+      "pending": "Pending",
+      "prepping": "In preparation",
+      "ready": "Ready",
+      "served": "Delivered",
+      "syncedSecondsAgo": "updated seconds ago",
+      "syncedOneMinuteAgo": "updated 1 minute ago",
+      "syncedMinutesAgo": "updated {{minutes}} minutes ago",
+      "syncedOneHourAgo": "updated 1 hour ago",
+      "syncedHoursAgo": "updated {{hours}} hours ago",
+      "syncing": "Syncing kitchen…",
+      "waitingData": "Waiting for kitchen data"
+    }
   }
 }

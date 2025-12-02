@@ -28,8 +28,8 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4 text-sm tracking-wide">{t("landing.footer.resources.title")}</h4>
             <ul className="space-y-2 text-sm">
               <li><a href="#testimonials" className="hover:text-brand-300">{t("landing.footer.resources.testimonials")}</a></li>
-              <li><Link href="/login" className="hover:text-brand-300">{t("landing.footer.resources.login")}</Link></li>
-                <li><Link href="/register" className="hover:text-brand-300">{t("landing.footer.resources.register")}</Link></li>
+              <li><Link href="/auth/login" className="hover:text-brand-300">{t("landing.footer.resources.login")}</Link></li>
+                <li><Link href="/auth/register" className="hover:text-brand-300">{t("landing.footer.resources.register")}</Link></li>
             </ul>
           </div>
           <div>

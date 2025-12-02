@@ -22,7 +22,7 @@ export class EmailSenderExample {
     async sendWelcomeEmail(userEmail: string, userName: string) {
         try {
             // 🔑 Obtener access token (se refresca automáticamente si es necesario)
-            const accessToken = await this.zohoAuth.getAccessToken();
+            const accessToken = await this.zohoAuth['getAccessToken']();
             const apiDomain = this.zohoAuth.getApiDomain();
 
             // 📧 Construir el mensaje
@@ -81,7 +81,7 @@ export class EmailServiceWithValidation {
         }
 
         // Si llegamos aquí, podemos obtener el access token
-        const accessToken = await this.zohoAuth.getAccessToken();
+        const accessToken = await this.zohoAuth['getAccessToken']();
         
         // ... proceder con el envío del email
     }
@@ -102,7 +102,7 @@ export class RobustEmailService {
             try {
                 this.logger.log(`Intento ${attempt} de ${maxRetries}`);
                 
-                const accessToken = await this.zohoAuth.getAccessToken();
+                const accessToken = await this.zohoAuth['getAccessToken']();
                 const apiDomain = this.zohoAuth.getApiDomain();
 
                 const response = await fetch(
