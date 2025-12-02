@@ -579,5 +579,153 @@
       "syncing": "Syncing kitchen…",
       "waitingData": "Waiting for kitchen data"
     }
+  },
+  "shop": {
+    "guest": {
+      "badge": "Digital store",
+      "title": "Place your order before arriving and pick up with no wait",
+      "subtitle": "We designed the buying experience for your customers: they see the menu, add items to the cart and confirm the order before arriving so they can pick up without lines.",
+      "steps": {
+        "explore": {
+          "title": "Explore the published menu",
+          "body": "Browse real products from the business without creating an account first."
+        },
+        "build": {
+          "title": "Build and confirm your order",
+          "body": "Add items to the cart, leave notes and confirm when you are ready."
+        },
+        "track": {
+          "title": "Track status in the kitchen",
+          "body": "The team marks each stage (pending, preparing, ready) and you only arrive when it is time to pick up."
+        }
+      },
+      "chip": {
+        "noSignup": "Order without signing up",
+        "menuUpdated": "Menu updated by the business",
+        "syncedPos": "Statuses synced with POS",
+        "recessReady": "Ready for school breaks"
+      },
+      "cta": {
+        "loading": "Opening store…",
+        "primary": "Try the store now",
+        "registerBusiness": "Register my business",
+        "login": "Sign in to my account"
+      },
+      "preview": {
+        "title": "Preview of the real flow",
+        "synced": "Synced",
+        "menu": {
+          "title": "Published menu",
+          "live": "Live",
+          "itemAvailable": "Available product",
+          "published": "Published",
+          "featuredCategory": "Featured category",
+          "updatedToday": "Updated today",
+          "visibleAvailability": "Visible availability",
+          "byStock": "Based on stock"
+        },
+        "order": {
+          "title": "Order in progress",
+          "status": "Status: preparing",
+          "point1": "2 items confirmed from the store.",
+          "point2": "Internal notes recorded along with the order."
+        }
+      },
+      "footer": {
+        "title": "Quick resources",
+        "subtitle": "Keep discovering published businesses or write to the team to enable your store.",
+        "explore": "View published businesses",
+        "support": "Write to support"
+      }
+    },
+    "hero": {
+      "badge": "FilaCero Shop",
+      "title": "Your order glows in color before it arrives",
+      "subtitle": "We design the digital journey so menu, payment and pickup flow without friction.",
+      "cta": {
+        "categories": "Browse categories",
+        "businesses": "Discover businesses"
+      },
+      "chips": {
+        "menuLive": "Menu always live",
+        "cashless": "Cashless payments",
+        "timedPickup": "Timed pickup",
+        "instantAlerts": "Instant alerts"
+      },
+      "journey": {
+        "discover": {
+          "title": "Discover",
+          "body": "Visual stories, seasonal playlists and staff picks."
+        },
+        "build": {
+          "title": "Build",
+          "body": "Dynamic cart with combos, notes and extras that appear right on time."
+        },
+        "pickup": {
+          "title": "Pick up",
+          "body": "Notifications on your phone when your order switches to ready."
+        }
+      },
+      "floating": {
+        "explore": {
+          "title": "Explore and crave",
+          "detail": "Swipe through categories and freshly published promos."
+        },
+        "confirm": {
+          "title": "Confirm without lines",
+          "detail": "Everything is set before you leave home."
+        },
+        "pickup": {
+          "title": "Arrive and grab",
+          "detail": "The team marks it ready and you just say hi."
+        }
+      }
+    },
+    "storyRail": {
+      "ariaLabel": "Quick access",
+      "badge": "Categories",
+      "title": "See what people are ordering",
+      "subtitle": "Filter the catalog by product type and find what you need in seconds.",
+      "viewAll": "View all categories",
+      "navLabel": "Featured categories",
+      "allShort": "All",
+      "allLabel": "Everything",
+      "empty": "There are no categories with products yet."
+    },
+    "curations": {
+      "fullCatalog": {
+        "title": "Full catalog",
+        "subtitle": "Browse products without filters"
+      },
+      "offers": {
+        "title": "Visible offers",
+        "subtitle": "We detect promo-like titles"
+      },
+      "openNow": {
+        "title": "Open now",
+        "subtitle": "Products with active status"
+      },
+      "noCategory": {
+        "title": "No category",
+        "subtitle": "List to be classified"
+      }
+    },
+    "business": {
+      "badge": "Businesses",
+      "title": "Partners already selling with FilaCero",
+      "subtitle": "Meet the merchants that sync their catalog and prepare orders without lines. Their logos guide you so you can spot them in seconds.",
+      "viewAll": "View all businesses",
+      "error": "We couldn't load available businesses.",
+      "empty": {
+        "title": "There are no published businesses yet",
+        "subtitle": "Once they activate their catalog, they will appear here."
+      },
+      "stats": {
+        "products": "Products {{count}}",
+        "orders": "Orders {{count}}"
+      },
+      "since": "Since {{date}}",
+      "visit": "Visit store"
+    }
   }
 }

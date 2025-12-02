@@ -21,6 +21,23 @@ services:
       - REQUEST_BODY_LIMIT=50mb
       - MAX_HTTP_HEADER_SIZE=32768
       - NODE_OPTIONS=--max-http-header-size=32768
+      # Configuración de correo (SMTP)
+      - MAIL_HOST=smtp.zoho.com
+      - MAIL_PORT=587
+      - MAIL_SECURE=false
+      - MAIL_USE_HTTP=false
+      # Credenciales NOREPLY (usadas para verificación)
+      - MAIL_NOREPLY_USER=no-reply@filacero.store
+      - MAIL_NOREPLY_PASS=mdEp34tJEF1z
+      - MAIL_NOREPLY_FROM=FilaCero Notificaciones <no-reply@filacero.store>
+      # Credenciales CONTACT
+      - MAIL_CONTACT_USER=contacto@filacero.store
+      - MAIL_CONTACT_PASS=v7nziyrwjTv6
+      - MAIL_CONTACT_FROM=FilaCero Contacto <contacto@filacero.store>
+      # Credenciales PRIVACY
+      - MAIL_PRIVACY_USER=privacy@filacero.store
+      - MAIL_PRIVACY_PASS=vf0imjs37J3y
+      - MAIL_PRIVACY_FROM=FilaCero Privacidad <privacy@filacero.store>
     restart: unless-stopped
     depends_on:
       - postgres

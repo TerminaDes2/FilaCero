@@ -1,30 +1,31 @@
 "use client";
 import Link from "next/link";
 import React from "react";
+import { useTranslation } from "../../../hooks/useTranslation";
 
-const featureChips = [
-  "Menú siempre vivo",
-  "Pagos cashless",
-  "Retiro cronometrado",
-  "Alertas instantáneas",
+const featureChipKeys = [
+  "shop.hero.chips.menuLive",
+  "shop.hero.chips.cashless",
+  "shop.hero.chips.timedPickup",
+  "shop.hero.chips.instantAlerts",
 ];
 
 const floatingPanels = [
   {
-    title: "Explora y antoja",
-    detail: "Swipe entre categorías y promos recién publicadas.",
+    titleKey: "shop.hero.floating.explore.title",
+    detailKey: "shop.hero.floating.explore.detail",
     gradient: "from-[var(--fc-brand-500)] to-[var(--fc-teal-500)]",
     position: "-top-6 right-5",
   },
   {
-    title: "Confirma sin filas",
-    detail: "Todo queda listo antes de salir de casa.",
+    titleKey: "shop.hero.floating.confirm.title",
+    detailKey: "shop.hero.floating.confirm.detail",
     gradient: "from-fuchsia-500 to-violet-500",
     position: "top-32 -left-10",
   },
   {
-    title: "Llegas y recoges",
-    detail: "El equipo marca listo y tú solo dices hola.",
+    titleKey: "shop.hero.floating.pickup.title",
+    detailKey: "shop.hero.floating.pickup.detail",
     gradient: "from-amber-500 to-orange-500",
     position: "bottom-4 right-6",
   },
@@ -33,25 +34,26 @@ const floatingPanels = [
 const journeyCards = [
   {
     label: "01",
-    title: "Descubre",
-    body: "Historias visuales, playlists de temporada y favoritos del staff.",
+    titleKey: "shop.hero.journey.discover.title",
+    bodyKey: "shop.hero.journey.discover.body",
     accent: "from-rose-500/80 to-orange-400/80",
   },
   {
     label: "02",
-    title: "Construye",
-    body: "Carrito dinámico con combos, notas y extras que aparecen al momento.",
+    titleKey: "shop.hero.journey.build.title",
+    bodyKey: "shop.hero.journey.build.body",
     accent: "from-cyan-500/80 to-sky-400/80",
   },
   {
     label: "03",
-    title: "Retira",
-    body: "Notificaciones en tu móvil cuando tu pedido pasa a listo.",
+    titleKey: "shop.hero.journey.pickup.title",
+    bodyKey: "shop.hero.journey.pickup.body",
     accent: "from-emerald-500/80 to-teal-400/80",
   },
 ];
 
 export default function ShopHero() {
+  const { t } = useTranslation();
   return (
     <section className="relative mt-2 overflow-hidden rounded-[56px] border border-[var(--fc-border-soft)] bg-[radial-gradient(1400px_480px_at_-18%_-60%,rgba(222,53,95,0.23),transparent_70%),radial-gradient(1200px_460px_at_120%_-40%,rgba(33,197,176,0.25),transparent_70%),linear-gradient(120deg,rgba(255,255,255,0.82),rgba(255,255,255,0.92))] shadow-[0_42px_120px_-62px_rgba(15,23,42,0.58)] dark:border-white/12 dark:bg-[radial-gradient(1400px_480px_at_-18%_-60%,rgba(233,74,111,0.34),transparent_72%),radial-gradient(1200px_460px_at_120%_-40%,rgba(20,184,166,0.32),transparent_72%),linear-gradient(120deg,rgba(2,6,23,0.94),rgba(4,10,28,0.86))] dark:shadow-[0_48px_140px_-72px_rgba(2,6,23,0.92)]">
       <div className="absolute inset-0 pointer-events-none">
@@ -67,13 +69,13 @@ export default function ShopHero() {
       <div className="relative grid gap-14 px-6 py-14 sm:px-10 lg:grid-cols-[0.9fr,1.1fr] lg:items-center">
         <div className="space-y-8">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-brand-600)] dark:border-white/15 dark:bg-[color:rgba(15,23,42,0.82)]">
-            FilaCero Shop
+            {t("shop.hero.badge")}
           </span>
           <h1 className="max-w-xl text-4xl font-black leading-tight tracking-tight text-[var(--fc-text-primary)] sm:text-[3.2rem]">
-            Tu pedido vibra en colores antes de llegar
+            {t("shop.hero.title")}
           </h1>
           <p className="max-w-sm text-base font-medium text-[var(--fc-text-secondary)]">
-            Diseñamos la experiencia digital para que el menú, el pago y el retiro sucedan sin fricciones.
+            {t("shop.hero.subtitle")}
           </p>
 
           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
@@ -81,24 +83,24 @@ export default function ShopHero() {
               href="#categorias"
               className="inline-flex items-center justify-center rounded-full bg-[var(--fc-brand-600)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)]"
             >
-              Ver categorías
+              {t("shop.hero.cta.categories")}
             </Link>
             <Link
               href="#negocios"
               className="inline-flex items-center justify-center rounded-full border border-[var(--fc-border-soft)] bg-white/90 px-6 py-3 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-200)] dark:border-white/15 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)] dark:hover:border-[var(--fc-brand-400)]"
             >
-              Conocer negocios
+              {t("shop.hero.cta.businesses")}
             </Link>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {featureChips.map((chip) => (
+            {featureChipKeys.map((key) => (
               <span
-                key={chip}
+                key={key}
                 className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-1.5 text-xs font-semibold text-[var(--fc-text-primary)] shadow-[0_18px_35px_-28px_rgba(15,23,42,0.55)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.78)] dark:text-[var(--fc-text-primary)] dark:shadow-[0_20px_48px_-30px_rgba(2,6,23,0.88)]"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--fc-brand-600)]" />
-                {chip}
+                {t(key)}
               </span>
             ))}
           </div>
@@ -128,8 +130,8 @@ export default function ShopHero() {
                       {card.label}
                     </span>
                     <div className="space-y-2">
-                      <p className="text-base font-semibold text-[var(--fc-text-primary)]">{card.title}</p>
-                      <p className="text-xs leading-relaxed text-[var(--fc-text-secondary)]">{card.body}</p>
+                      <p className="text-base font-semibold text-[var(--fc-text-primary)]">{t(card.titleKey)}</p>
+                      <p className="text-xs leading-relaxed text-[var(--fc-text-secondary)]">{t(card.bodyKey)}</p>
                     </div>
                   </div>
                 </div>
@@ -139,12 +141,12 @@ export default function ShopHero() {
 
           {floatingPanels.map((panel) => (
             <div
-              key={panel.title}
+              key={panel.titleKey}
               className={`hidden sm:block absolute ${panel.position} w-52 rounded-[28px] border border-white/60 bg-white/92 p-4 shadow-[0_28px_80px_-58px_rgba(15,23,42,0.75)] backdrop-blur dark:border-white/12 dark:bg-[color:rgba(10,15,30,0.9)] dark:shadow-[0_32px_90px_-62px_rgba(2,6,23,0.92)]`}
             >
               <span className={`inline-flex items-center justify-center rounded-full bg-gradient-to-r ${panel.gradient} px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-white`}>FilaCero</span>
-              <p className="mt-2 text-sm font-semibold text-[var(--fc-text-primary)]">{panel.title}</p>
-              <p className="text-xs text-[var(--fc-text-secondary)]">{panel.detail}</p>
+              <p className="mt-2 text-sm font-semibold text-[var(--fc-text-primary)]">{t(panel.titleKey)}</p>
+              <p className="text-xs text-[var(--fc-text-secondary)]">{t(panel.detailKey)}</p>
             </div>
           ))}
         </div>

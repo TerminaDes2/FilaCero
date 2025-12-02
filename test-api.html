@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test API Connection - FilaCero</h1>
+        <p>Esta página prueba la conectividad con el backend.</p>
+        
+        <h3>URL del Backend:</h3>
+        <p id="apiUrl">http://localhost:3000/api</p>
+        
+        <div>
+            <button onclick="testHealth()">Test /api/health</button>
+            <button onclick="testRegister()">Test /api/auth/register</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function displayResult(message, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = isError ? 'error' : 'success';
+        }
+
+        async function testHealth() {
+            displayResult('Probando conexión al endpoint de salud...');
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                });
+                
+                const data = await response.json();
+                const message = `✅ ÉXITO!
+Estado: ${response.status}
+Respuesta: ${JSON.stringify(data, null, 2)}`;
+                displayResult(message, false);
+            } catch (error) {
+                const message = `❌ ERROR!
+Tipo: ${error.name}
+Mensaje: ${error.message}
+Detalles: ${error.stack}`;
+                displayResult(message, true);
+            }
+        }
+
+        async function testRegister() {
+            displayResult('Probando endpoint de registro...');
+            try {
+                const payload = {
+                    name: 'Test User',
+                    email: `test${Date.now()}@example.com`,
+                    password: 'Test123!',
+                    role: 'usuario',
+                    age: 25
+                };
+                
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                const message = `✅ ÉXITO!
+Estado: ${response.status}
+Payload enviado: ${JSON.stringify(payload, null, 2)}
+Respuesta: ${JSON.stringify(data, null, 2)}`;
+                displayResult(message, false);
+            } catch (error) {
+                const message = `❌ ERROR!
+Tipo: ${error.name}
+Mensaje: ${error.message}
+Detalles completos: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}
+
+Este error indica que el navegador no puede conectarse al backend.
+Causas posibles:
+1. El backend no está corriendo en localhost:3000
+2. CORS está bloqueando la petición
+3. El navegador tiene configurado un proxy o firewall
+4. Windows Firewall está bloqueando la conexión`;
+                displayResult(message, true);
+            }
+        }
+        
+        // Prueba automática al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => testHealth(), 500);
+        });
+    </script>
+</body>
+</html>

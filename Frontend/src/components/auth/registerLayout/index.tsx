@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrandLogo } from '../../BrandLogo';
+import LanguageSelector from '../../LanguageSelector';
 import StepSignup from '../StepSignup';
 import { BenefitsSection } from './BenefitsSection';
 import { AuthFormSection } from './AuthFormSection';
@@ -33,8 +34,17 @@ export function RegisterLayout({
         </div>
       </div>
 
-      {/* Botón Volver - Solo en paso form */}
-      {step === 'form' && <BackButton onBackToSelection={onBackToSelection} />}
+      {/* Selector a la izquierda y botón Volver a la derecha, con separación limpia */}
+      <div className="absolute top-4 right-16 z-30 flex items-center gap-8">
+        <div className="mr-8 mt-4">
+          <LanguageSelector />
+        </div>
+        {step === 'form' && (
+          <div className="ml-20">
+            <BackButton onBackToSelection={onBackToSelection} />
+          </div>
+        )}
+      </div>
 
       {/* Paso 1: Selección de tipo de cuenta */}
       {step === 'role_selection' && (

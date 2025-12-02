@@ -580,4 +580,154 @@
       "waitingData": "Esperando datos de cocina"
     }
   }
+  ,
+  "shop": {
+    "guest": {
+      "badge": "Tienda digital",
+      "title": "Haz tu pedido antes de llegar y retira sin esperar",
+      "subtitle": "Diseñamos la experiencia de compra para tus clientes: visualizan el menú, añaden artículos al carrito y confirman el pedido antes de llegar para recoger sin esperas.",
+      "steps": {
+        "explore": {
+          "title": "Explora el menú publicado",
+          "body": "Consulta productos reales del negocio sin necesidad de crear una cuenta antes."
+        },
+        "build": {
+          "title": "Arma y confirma tu pedido",
+          "body": "Añade artículos al carrito, deja notas y confirma cuando estés listo."
+        },
+        "track": {
+          "title": "Sigue el estado en cocina",
+          "body": "El equipo marca cada etapa (pendiente, en preparación, listo) y llegas solo cuando toca retirar."
+        }
+      },
+      "chip": {
+        "noSignup": "Ordena sin registro previo",
+        "menuUpdated": "Menú actualizado por el negocio",
+        "syncedPos": "Estados sincronizados con el POS",
+        "recessReady": "Listo para operar en recreos"
+      },
+      "cta": {
+        "loading": "Abriendo tienda…",
+        "primary": "Probar la tienda ahora",
+        "registerBusiness": "Registrar mi negocio",
+        "login": "Ingresar con mi cuenta"
+      },
+      "preview": {
+        "title": "Vista previa del flujo real",
+        "synced": "Sincronizado",
+        "menu": {
+          "title": "Menú publicado",
+          "live": "En vivo",
+          "itemAvailable": "Producto disponible",
+          "published": "Publicado",
+          "featuredCategory": "Categoría destacada",
+          "updatedToday": "Actualizada hoy",
+          "visibleAvailability": "Disponibilidad visible",
+          "byStock": "Según stock"
+        },
+        "order": {
+          "title": "Pedido en curso",
+          "status": "Estado: en preparación",
+          "point1": "2 artículos confirmados desde la tienda.",
+          "point2": "Notas internas registradas junto al pedido.",
+          "point3": "El equipo marca \"Listo\" y el cliente pasa a recoger."
+        }
+      },
+      "footer": {
+        "title": "Recursos rápidos",
+        "subtitle": "Sigue descubriendo negocios publicados o escribe al equipo para habilitar tu tienda.",
+        "explore": "Ver negocios publicados",
+        "support": "Escribir a soporte"
+      }
+    },
+    "hero": {
+      "badge": "FilaCero Shop",
+      "title": "Tu pedido vibra en colores antes de llegar",
+      "subtitle": "Diseñamos la experiencia digital para que el menú, el pago y el retiro sucedan sin fricciones.",
+      "cta": {
+        "categories": "Ver categorías",
+        "businesses": "Conocer negocios"
+      },
+      "chips": {
+        "menuLive": "Menú siempre vivo",
+        "cashless": "Pagos cashless",
+        "timedPickup": "Retiro cronometrado",
+        "instantAlerts": "Alertas instantáneas"
+      },
+      "journey": {
+        "discover": {
+          "title": "Descubre",
+          "body": "Historias visuales, playlists de temporada y favoritos del staff."
+        },
+        "build": {
+          "title": "Construye",
+          "body": "Carrito dinámico con combos, notas y extras que aparecen al momento."
+        },
+        "pickup": {
+          "title": "Retira",
+          "body": "Notificaciones en tu móvil cuando tu pedido pasa a listo."
+        }
+      },
+      "floating": {
+        "explore": {
+          "title": "Explora y antoja",
+          "detail": "Swipe entre categorías y promos recién publicadas."
+        },
+        "confirm": {
+          "title": "Confirma sin filas",
+          "detail": "Todo queda listo antes de salir de casa."
+        },
+        "pickup": {
+          "title": "Llegas y recoges",
+          "detail": "El equipo marca listo y tú solo dices hola."
+        }
+      }
+    },
+    "storyRail": {
+      "ariaLabel": "Accesos rápidos",
+      "badge": "Categorías",
+      "title": "Descubre qué se está pidiendo",
+      "subtitle": "Filtra el catálogo por tipo de producto y encuentra lo que necesitas en segundos.",
+      "viewAll": "Ver todas las categorías",
+      "navLabel": "Categorías destacadas",
+      "allShort": "All",
+      "allLabel": "Todo",
+      "empty": "Aún no hay categorías con productos."
+    },
+    "curations": {
+      "fullCatalog": {
+        "title": "Catálogo completo",
+        "subtitle": "Ver productos sin filtros"
+      },
+      "offers": {
+        "title": "Ofertas visibles",
+        "subtitle": "Detectamos títulos con promo"
+      },
+      "openNow": {
+        "title": "Abiertos ahora",
+        "subtitle": "Productos con estado activo"
+      },
+      "noCategory": {
+        "title": "Sin categoría",
+        "subtitle": "Listado para clasificar"
+      }
+    },
+    "business": {
+      "badge": "Negocios",
+      "title": "Aliados que ya venden con FilaCero",
+      "subtitle": "Conoce a los comercios que sincronizan su catálogo y preparan pedidos sin filas. Sus logos te guían para que los identifiques en segundos.",
+      "viewAll": "Ver todos los negocios",
+      "error": "No pudimos cargar los negocios disponibles.",
+      "empty": {
+        "title": "Aún no hay negocios publicados",
+        "subtitle": "Cuando activen su catálogo aparecerán aquí."
+      },
+      "stats": {
+        "products": "Productos {{count}}",
+        "orders": "Pedidos {{count}}"
+      },
+      "since": "Desde {{date}}",
+      "visit": "Visitar tienda"
+    }
+  }
 }

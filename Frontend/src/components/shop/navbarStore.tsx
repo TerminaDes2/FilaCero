@@ -8,6 +8,7 @@ import { useUserStore } from "../../state/userStore";
 import UserDropdown from "../UserDropdown";
 import { useCart } from "./CartContext";
 import ThemeToggle from "../ThemeToggle";
+import LanguageSelector from "../LanguageSelector";
 
 interface NavbarStoreProps {
   onToggleCart?: (open: boolean) => void;
@@ -274,8 +275,12 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
           </div>
         )}
 
-        {/* Right: actions */}
+        {/* Right: language + actions */}
         <div className="ml-auto flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageSelector variant="compact" />
+            {!showControls && <ThemeToggle variant="icon" />}
+          </div>
           {showControls && (
             <>
               <button aria-label="Notifications" className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/12 dark:text-[var(--fc-text-secondary)] dark:hover:bg-[color:rgba(15,23,42,0.8)]">
@@ -307,7 +312,8 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:hidden">
+              <LanguageSelector variant="compact" />
               <ThemeToggle variant="icon" />
               <Link
                 href="/auth/login"
