@@ -477,51 +477,73 @@ export class SalesService {
     const overrideMap = new Map<string, (typeof overrideRecords)[number]>(
       overrideRecords.map((ov) => [ov.id_producto?.toString() ?? '', ov]),
     );
-  
-    return items.map((item) => {
+
+    const prepared: NormalizedItem[] = [];
+
+    for (const item of items) {
       const key = item.idProducto.toString();
       const producto = productosMap.get(key);
       if (!producto) {
         throw new NotFoundException(`Producto ${item.idProducto.toString()} no encontrado`);
       }
-  
+
       if (producto.estado && producto.estado !== 'activo') {
         throw new BadRequestException(`El producto ${producto.nombre} no está disponible para la venta`);
       }
 
       const override = overrideMap.get(key);
-      if (override) {
-        if (override.activo === false) {
-          throw new BadRequestException(`El producto ${producto.nombre} está desactivado en este negocio`);
+      if (override?.activo === false) {
+        throw new BadRequestException(`El producto ${producto.nombre} está desactivado en este negocio`);
+      }
+
+      let inventario = inventarioMap.get(key);
+
+      // Si Prisma no trajo el inventario, intentamos un fallback con query cruda (evita desfaces entre esquemas)
+      if (!inventario) {
+        const fallback = await tx.$queryRaw<
+          { id_producto: bigint; cantidad_actual: Prisma.Decimal | number | null }[]
+        >(Prisma.sql`
+          SELECT id_producto, cantidad_actual
+          FROM "inventario"
+          WHERE id_negocio = ${negocioId}::bigint AND id_producto = ${item.idProducto}::bigint
+          LIMIT 1
+        `);
+
+        if (fallback.length > 0) {
+          inventario = fallback[0];
+          inventarioMap.set(key, inventario as any);
         }
       }
-  
-      const inventario = inventarioMap.get(key);
+
       if (!inventario) {
         throw new BadRequestException(
           `No existe inventario registrado para ${producto.nombre} en el negocio ${negocioId.toString()}. Configura stock antes de vender este producto.`,
         );
       }
 
-      const disponible = Number(inventario.cantidad_actual ?? 0);
+      const disponibleRaw = inventario.cantidad_actual ?? 0;
+      const disponible = Number(disponibleRaw);
+      if (Number.isNaN(disponible)) {
+        throw new BadRequestException(`Stock inválido para ${producto.nombre}. Verifica el inventario antes de continuar.`);
+      }
       if (disponible < item.cantidad) {
         throw new BadRequestException(`Stock insuficiente para ${producto.nombre}. Disponible: ${disponible}`);
       }
-      
-      // --- MODIFICADO ---
-      // Usamos SIEMPRE el precio de la base de datos
-      const precioBase = override && override.precio !== undefined ? Number(override.precio) : Number(producto.precio);
-      if (Number.isNaN(precioBase)) {
+
+      const precioFuente = override?.precio ?? producto.precio;
+      if (precioFuente === null || precioFuente === undefined) {
         throw new BadRequestException(`Precio inválido para el producto ${producto.nombre}`);
       }
-  
-      return {
+      const precioDecimal = new Prisma.Decimal(precioFuente);
+
+      prepared.push({
         idProducto: item.idProducto,
         cantidad: item.cantidad,
-        precioUnitario: new Prisma.Decimal(precioBase), // <-- Devolvemos el precio
-      };
-      // --- FIN MODIFICACIÓN ---
-    });
+        precioUnitario: precioDecimal,
+      });
+    }
+
+    return prepared;
   }
   
   // --- MODIFICADO ---
