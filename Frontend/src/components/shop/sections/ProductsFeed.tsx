@@ -202,6 +202,7 @@ export default function ProductsFeed() {
           nombre: card.name,
           precio: card.price,
           imagen: card.cover,
+          id_negocio: (card as any).id_negocio,
         },
         1,
       );

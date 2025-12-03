@@ -287,32 +287,46 @@ export default function CheckoutPage() {
     setSuccessMessage(null);
 
     try {
-      let negocioId = activeBusiness.get() ?? business?.id_negocio ?? "1";
-      if (!negocioId || String(negocioId).trim() === "") {
-        negocioId = "1";
+      // Agrupar items por negocio
+      const itemsByBusiness = new Map<string, typeof items>();
+      
+      for (const item of items) {
+        const bizId = item.id_negocio ? String(item.id_negocio) : (activeBusiness.get() ?? business?.id_negocio ?? "1");
+        const existing = itemsByBusiness.get(bizId) || [];
+        itemsByBusiness.set(bizId, [...existing, item]);
       }
 
-      const payload = {
-        id_negocio: String(negocioId),
-        id_tipo_pago: "2", // Siempre tarjeta
-        items: items.map((item) => ({
-          id_producto: String(item.id),
-          cantidad: item.cantidad,
-          precio_unitario: item.precio,
-        })),
-        cerrar: true,
-      };
+      // Crear una venta por cada negocio
+      const allPedidos: any[] = [];
+      
+      for (const [negocioId, bizItems] of itemsByBusiness.entries()) {
+        const payload = {
+          id_negocio: String(negocioId),
+          id_tipo_pago: "2", // Siempre tarjeta
+          items: bizItems.map((item) => ({
+            id_producto: String(item.id),
+            cantidad: item.cantidad,
+            precio_unitario: item.precio,
+          })),
+          cerrar: true,
+        };
 
-      // 1) Crear la venta/pedido
-      const sale = await api.createSale(payload);
-
-      // Siempre es con tarjeta en este checkout
-      const pedido = sale?.pedido;
-      if (!pedido || !pedido.id_pedido) {
-        throw new Error('No se pudo obtener el pedido para procesar el pago');
+        const sale = await api.createSale(payload);
+        const pedido = sale?.pedido;
+        
+        if (!pedido || !pedido.id_pedido) {
+          throw new Error(`No se pudo crear el pedido para el negocio ${negocioId}`);
+        }
+        
+        allPedidos.push(pedido);
       }
-      // Guardamos el pedido pendiente para que el formulario de tarjeta cree el PaymentIntent
-      setPendingPedidoId(String(pedido.id_pedido));
+
+      // Usar el primer pedido como referencia para el pago (o crear lógica de pago múltiple)
+      if (allPedidos.length > 0) {
+        setPendingPedidoId(String(allPedidos[0].id_pedido));
+      } else {
+        throw new Error('No se pudo obtener ningún pedido para procesar el pago');
+      }
     } catch (error: any) {
       console.error("[checkout] Error al confirmar pedido", error);
       setSubmitError(error?.message ?? "No pudimos confirmar tu pedido. Inténtalo nuevamente.");

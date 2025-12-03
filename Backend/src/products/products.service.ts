@@ -14,7 +14,7 @@ const productInclude = {
 export class ProductsService {
   constructor(private prisma: PrismaService, private configService: ConfigService, private pedidosService: PedidosService) {}
 
-  private mapProduct(product: any, stock: number | null = null, precioOverride?: number) {
+  private mapProduct(product: any, stock: number | null = null, precioOverride?: number, id_negocio?: bigint) {
     const baseUrl = this.configService.get('API_BASE_URL') || 'http://localhost:3000';
     const { categoria, producto_media: mediaRecords, producto_metricas_semanales: metricRecords, id_producto, id_categoria, precio, ...rest } = product;
     const mediaList = (mediaRecords ?? []).map((item: any) => {
@@ -51,6 +51,7 @@ export class ProductsService {
       media: mediaList,
       metricas: metricList,
       popularity,
+      ...(id_negocio && { id_negocio: id_negocio.toString() }),
     };
   }
 
@@ -193,7 +194,7 @@ export class ProductsService {
       const normalizedStock = hasStockInfo ? Number(stockValue ?? 0) : null;
       const ov = overrideMap.get(String(product.id_producto));
       const precioOverride = ov ? Number(ov.precio) : undefined;
-      return this.mapProduct(product, normalizedStock, precioOverride);
+      return this.mapProduct(product, normalizedStock, precioOverride, negocioIdFilter);
     });
   }
 
