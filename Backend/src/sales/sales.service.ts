@@ -97,7 +97,7 @@ export class SalesService {
 
       // 5. Procesar cada item (Stock y Detalle)
       for (const item of itemsListos) {
-        const detalleVenta = await tx.detalle_venta.create({
+        await tx.detalle_venta.create({
           data: {
             id_venta: venta.id_venta,
             id_producto: item.idProducto,
@@ -105,32 +105,8 @@ export class SalesService {
             precio_unitario: item.precioUnitario,
           },
         });
-
-        // Descontar el stock
-        await tx.inventario.updateMany({
-          where: {
-            id_negocio: negocioId,
-            id_producto: item.idProducto,
-          },
-          data: {
-            cantidad_actual: {
-              decrement: item.cantidad,
-            },
-          },
-        });
-
-        // Registrar el movimiento
-        await tx.movimientos_inventario.create({
-          data: {
-            id_negocio: negocioId,
-            id_producto: item.idProducto,
-            delta: -item.cantidad,
-            motivo: 'venta',
-            id_venta: venta.id_venta,
-            id_detalle: detalleVenta.id_detalle,
-            id_usuario: usuarioId,
-          },
-        });
+        // El ajuste de inventario y los movimientos se manejan desde los triggers
+        // fn_trg_detalle_venta_inventario / fn_trg_detalle_venta_total definidos en db_filacero.sql
       }
 
       // 6. Lógica de 'abierta'
@@ -509,11 +485,15 @@ export class SalesService {
       }
   
       const inventario = inventarioMap.get(item.idProducto);
-      if (inventario) {
-        const disponible = Number(inventario.cantidad_actual ?? 0);
-        if (disponible < item.cantidad) {
-          throw new BadRequestException(`Stock insuficiente para ${producto.nombre}. Disponible: ${disponible}`);
-        }
+      if (!inventario) {
+        throw new BadRequestException(
+          `No existe inventario registrado para ${producto.nombre} en el negocio ${negocioId.toString()}. Configura stock antes de vender este producto.`,
+        );
+      }
+
+      const disponible = Number(inventario.cantidad_actual ?? 0);
+      if (disponible < item.cantidad) {
+        throw new BadRequestException(`Stock insuficiente para ${producto.nombre}. Disponible: ${disponible}`);
       }
       
       // --- MODIFICADO ---
