@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { api, BusinessSummary } from "../../../lib/api";
 import { resolveMediaUrl } from "../../../lib/media";
+import { useTranslation } from "../../../hooks/useTranslation";
 
 const formatNumber = (value: number) =>
   new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 }).format(value ?? 0);
@@ -27,6 +28,7 @@ const BusinessShowcase: React.FC = () => {
   const [businesses, setBusinesses] = useState<BusinessSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let active = true;
@@ -40,7 +42,7 @@ const BusinessShowcase: React.FC = () => {
       } catch (err) {
         console.error("[BusinessShowcase]", err);
         if (!active) return;
-        setError("No pudimos cargar los negocios disponibles.");
+        setError(t("shop.business.error"));
       } finally {
         if (active) setLoading(false);
       }
@@ -81,8 +83,8 @@ const BusinessShowcase: React.FC = () => {
     content = (
       <div className="mt-4 rounded-3xl border border-dashed border-[var(--fc-border-soft)] bg-white/70 px-6 py-10 text-center text-sm text-[var(--fc-text-secondary)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-secondary)]">
         <div className="text-4xl">🏪</div>
-        <p className="mt-3 font-semibold text-[var(--fc-text-primary)]">Aún no hay negocios publicados</p>
-        <p className="mt-2">Cuando activen su catálogo aparecerán aquí.</p>
+        <p className="mt-3 font-semibold text-[var(--fc-text-primary)]">{t("shop.business.empty.title")}</p>
+        <p className="mt-2">{t("shop.business.empty.subtitle")}</p>
       </div>
     );
   } else {
@@ -145,12 +147,12 @@ const BusinessShowcase: React.FC = () => {
                     <p className="text-xs text-[var(--fc-text-secondary)] line-clamp-2">{business.direccion}</p>
                   )}
 
-                  <div className="flex flex-wrap gap-2 text-[11px] text-[var(--fc-text-secondary)]">
+                    <div className="flex flex-wrap gap-2 text-[11px] text-[var(--fc-text-secondary)]">
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold dark:bg-[color:rgba(148,163,184,0.18)]">
-                      Productos {formatNumber(business.resumen.totalProductos)}
+                      {t("shop.business.stats.products", { count: String(formatNumber(business.resumen.totalProductos)) })}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold dark:bg-[color:rgba(148,163,184,0.18)]">
-                      Pedidos {formatNumber(business.resumen.totalPedidos)}
+                      {t("shop.business.stats.orders", { count: String(formatNumber(business.resumen.totalPedidos)) })}
                     </span>
                   </div>
 
@@ -179,8 +181,8 @@ const BusinessShowcase: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-[11px] text-[var(--fc-text-secondary)]">
-                    <span>Desde {formatDate(business.fecha_registro)}</span>
+                    <div className="flex items-center justify-between text-[11px] text-[var(--fc-text-secondary)]">
+                    <span>{t("shop.business.since", { date: formatDate(business.fecha_registro) })}</span>
                     <span>{formatCurrency(business.resumen.ingresosAcumulados)}</span>
                   </div>
 
@@ -188,7 +190,7 @@ const BusinessShowcase: React.FC = () => {
                     href={`/stores/${business.id_negocio}`}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--fc-brand-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)]"
                   >
-                    Visitar tienda
+                    {t("shop.business.visit")}
                   </Link>
                 </div>
               </article>
@@ -204,18 +206,18 @@ const BusinessShowcase: React.FC = () => {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-[var(--fc-border-soft)] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-brand-600)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)]">
-            Negocios
+            {t("shop.business.badge")}
           </span>
-          <h2 className="text-2xl font-bold text-[var(--fc-text-primary)]">Aliados que ya venden con FilaCero</h2>
+          <h2 className="text-2xl font-bold text-[var(--fc-text-primary)]">{t("shop.business.title")}</h2>
           <p className="max-w-xl text-sm text-[var(--fc-text-secondary)]">
-            Conoce a los comercios que sincronizan su catálogo y preparan pedidos sin filas. Sus logos te guían para que los identifiques en segundos.
+            {t("shop.business.subtitle")}
           </p>
         </div>
         <Link
           href="/stores"
           className="inline-flex items-center justify-center rounded-full border border-[var(--fc-border-soft)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--fc-brand-600)] transition hover:border-[var(--fc-brand-200)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.82)] dark:text-[var(--fc-text-primary)] dark:hover:border-[var(--fc-brand-300)]"
         >
-          Ver todos los negocios
+          {t("shop.business.viewAll")}
         </Link>
       </header>
       {content}

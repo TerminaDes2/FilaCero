@@ -251,7 +251,7 @@ async function main() {
     const precioActual = Number(producto.precio);
     
     // Crear 3 registros históricos por producto
-    await prisma.producto_historial_precio.createMany({
+    await prisma.productoHistorialPrecio.createMany({
       data: [
         {
           id_producto: producto.id_producto,

@@ -4,9 +4,11 @@ import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'rea
 import { DollarSign, ReceiptText, Wallet, ArrowDownCircle, RefreshCcw, AlertTriangle, History as HistoryIcon, CalendarDays } from 'lucide-react';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
+import LanguageSelector from '../../../src/components/LanguageSelector';
 import { api } from '../../../src/lib/api';
 import { useUserStore } from '../../../src/state/userStore';
 import { useBusinessStore } from '../../../src/state/businessStore';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
 interface BusinessOption {
   id: string;
@@ -144,6 +146,7 @@ const emptySummary: CashoutSummary = {
 };
 
 export default function CashoutPage() {
+  const { t } = useTranslation();
   const { activeBusiness, setActiveBusiness } = useBusinessStore();
   const { user, backendRole } = useUserStore();
   const isEmployee = Boolean(user && (Number(user.id_rol) === 3 || (backendRole === 'empleado')));
@@ -168,7 +171,7 @@ export default function CashoutPage() {
         if (cancelled) return;
         const mapped: BusinessOption[] = (list || []).map((item: any) => ({
           id: String(item.id_negocio ?? item.id ?? item.uuid ?? ''),
-          name: item.nombre || 'Negocio sin nombre',
+          name: item.nombre || t('pos.cashout.business.unnamed'),
         })).filter((item) => !!item.id);
         setBusinesses(mapped);
         if (!mapped.length) {
@@ -188,7 +191,7 @@ export default function CashoutPage() {
         }
       })
       .catch(() => {
-        if (!cancelled) setSummaryError('No se pudieron cargar los negocios');
+        if (!cancelled) setSummaryError(t('pos.cashout.errors.businessLoad'));
       });
     return () => {
       cancelled = true;
@@ -216,7 +219,7 @@ export default function CashoutPage() {
       });
     } catch (error: any) {
       setSummary(emptySummary);
-      setSummaryError(error?.message || 'No se pudo obtener el resumen');
+      setSummaryError(error?.message || t('pos.cashout.errors.summary'));
     } finally {
       if (!opts.silent) setLoadingSummary(false);
     }
@@ -237,7 +240,7 @@ export default function CashoutPage() {
       setHistory(data?.items ?? []);
     } catch (error: any) {
       setHistory([]);
-      setHistoryError(error?.message || 'No se pudo obtener el historial');
+      setHistoryError(error?.message || t('pos.cashout.errors.history'));
     } finally {
       if (!opts.silent) setLoadingHistory(false);
     }
@@ -339,7 +342,9 @@ export default function CashoutPage() {
     return `${from} → ${to}`;
   }, [summary.range]);
 
-  const coverageLabel = fullDayMode ? 'Cobertura: día completo' : 'Cobertura: desde último corte';
+  const coverageLabel = fullDayMode
+    ? t('pos.cashout.coverage.fullDay')
+    : t('pos.cashout.coverage.sinceLast');
 
   return (
     <div className="h-screen flex pos-pattern overflow-hidden">
@@ -347,18 +352,19 @@ export default function CashoutPage() {
         <PosSidebar />
       </aside>
       <main className="flex-1 flex flex-col px-5 md:px-6 pt-6 gap-4 overflow-hidden h-full min-h-0 box-border">
-        <div className="px-5 relative z-20 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="px-5 relative z-20 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <h1 className="font-extrabold tracking-tight text-3xl md:text-4xl leading-tight select-none">
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
             <p className="text-sm mt-1" style={{ color: 'var(--pos-text-muted)' }}>
-              Corte de caja · {coverageLabel}
+              {t('pos.cashout.title')} · {coverageLabel}
             </p>
             <p className="text-xs" style={{ color: 'var(--pos-text-muted)' }}>{rangeLabel}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <LanguageSelector variant="compact" theme="light" />
             <BusinessSelect
               value={selectedBusinessId}
               options={businesses}
@@ -372,7 +378,9 @@ export default function CashoutPage() {
               style={{ background: fullDayMode ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.85)', color: 'var(--pos-text-heading)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)' }}
             >
               <CalendarDays className="w-4 h-4" />
-              {fullDayMode ? 'Todo el día' : 'Último corte'}
+              {fullDayMode
+                ? t('pos.cashout.controls.fullDay')
+                : t('pos.cashout.controls.lastCut')}
             </button>
             <button
               type="button"
@@ -382,7 +390,9 @@ export default function CashoutPage() {
               disabled={loadingSummary || loadingHistory}
             >
               <RefreshCcw className="w-4 h-4" />
-              Actualizar
+              {loadingSummary || loadingHistory
+                ? t('pos.cashout.controls.refreshing')
+                : t('pos.cashout.controls.refresh')}
             </button>
             <TopRightInfo showLogout />
           </div>
@@ -402,22 +412,22 @@ export default function CashoutPage() {
               )}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <SummaryCard
-                  title="Ventas registradas"
+                  title={t('pos.cashout.cards.salesCount.title')}
                   value={loadingSummary ? '…' : summary.totals.salesCount.toString()}
                   icon={<ReceiptText className="w-5 h-5" />}
                 />
                 <SummaryCard
-                  title="Monto vendido"
+                  title={t('pos.cashout.cards.salesAmount.title')}
                   value={loadingSummary ? '…' : formatMoney(summary.totals.salesAmount)}
                   icon={<DollarSign className="w-5 h-5" />}
                 />
                 <SummaryCard
-                  title="Efectivo esperado"
+                  title={t('pos.cashout.cards.expectedCash.title')}
                   value={loadingSummary ? '…' : formatMoney(summary.totals.expectedCash)}
                   icon={<Wallet className="w-5 h-5" />}
                 />
                 <SummaryCard
-                  title="Diferencia"
+                  title={t('pos.cashout.cards.difference.title')}
                   value={loadingSummary ? '…' : formatMoney(liveDifference ?? summary.totals.difference)}
                   icon={<ArrowDownCircle className={`w-5 h-5 ${((liveDifference ?? summary.totals.difference) ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-500'}`} />}
                   emphasis
@@ -431,8 +441,10 @@ export default function CashoutPage() {
                 style={panelSurfaceStyle}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[14px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>Ventas recientes</h2>
-                  <span className="text-[11px]" style={{ color: 'var(--pos-text-muted)' }}>{summary.totals.salesCount} tickets</span>
+                  <h2 className="text-[14px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>{t('pos.cashout.recentSales.title')}</h2>
+                  <span className="text-[11px]" style={{ color: 'var(--pos-text-muted)' }}>
+                    {t('pos.cashout.recentSales.count', { count: summary.totals.salesCount })}
+                  </span>
                 </div>
                 <RecentSales loading={loadingSummary} sales={summary.recentSales} />
               </div>
@@ -443,7 +455,7 @@ export default function CashoutPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <HistoryIcon className="w-4 h-4" style={{ color: 'var(--pos-text-muted)' }} />
-                    <h2 className="text-[14px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>Historial de cortes</h2>
+                    <h2 className="text-[14px] font-semibold" style={{ color: 'var(--pos-text-heading)' }}>{t('pos.cashout.history.title')}</h2>
                   </div>
                   <button
                     type="button"
@@ -452,7 +464,9 @@ export default function CashoutPage() {
                     style={{ color: 'var(--pos-text-muted)' }}
                     disabled={loadingHistory}
                   >
-                    {loadingHistory ? 'Actualizando…' : 'Actualizar' }
+                    {loadingHistory
+                      ? t('pos.cashout.controls.refreshing')
+                      : t('pos.cashout.controls.refresh')}
                   </button>
                 </div>
                 {historyError && (
@@ -471,14 +485,14 @@ export default function CashoutPage() {
               style={panelStrongSurfaceStyle}
             >
               <div>
-                <h2 className="text-lg font-semibold" style={{ color: 'var(--pos-text-heading)' }}>Registrar corte</h2>
+                <h2 className="text-lg font-semibold" style={{ color: 'var(--pos-text-heading)' }}>{t('pos.cashout.form.title')}</h2>
                 <p className="text-[12px] mt-1" style={{ color: 'var(--pos-text-muted)' }}>
-                  Verifica montos y confirma el cierre del turno.
+                  {t('pos.cashout.form.subtitle')}
                 </p>
               </div>
               {summary.opening.suggested != null && (
                 <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'rgba(245,240,235,0.9)', color: 'var(--pos-text-muted)' }}>
-                  Sugerido para el siguiente turno: <strong style={{ color: 'var(--pos-text-heading)' }}>{formatMoney(summary.opening.suggested)}</strong>
+                  {t('pos.cashout.form.nextShift')} <strong style={{ color: 'var(--pos-text-heading)' }}>{formatMoney(summary.opening.suggested)}</strong>
                 </div>
               )}
               {feedback && (
@@ -494,7 +508,7 @@ export default function CashoutPage() {
               )}
               <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                 <label className="flex flex-col gap-1 text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-                  Monto inicial
+                  {t('pos.cashout.form.fields.openAmount')}
                   <input
                     type="number"
                     inputMode="decimal"
@@ -508,7 +522,7 @@ export default function CashoutPage() {
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-[12px]" style={{ color: 'var(--pos-text-muted)' }}>
-                  Monto final contado
+                  {t('pos.cashout.form.fields.closeAmount')}
                   <input
                     type="number"
                     inputMode="decimal"
@@ -522,7 +536,10 @@ export default function CashoutPage() {
                   />
                 </label>
                 <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'rgba(244,244,245,0.85)', color: 'var(--pos-text-muted)' }}>
-                  Diferencia actual: <strong style={{ color: (liveDifference ?? summary.totals.difference ?? 0) >= 0 ? 'var(--pos-accent-green)' : '#b91c1c' }}>{formatMoney(liveDifference ?? summary.totals.difference)}</strong>
+                  {t('pos.cashout.form.currentDiff')}{' '}
+                  <strong style={{ color: (liveDifference ?? summary.totals.difference ?? 0) >= 0 ? 'var(--pos-accent-green)' : '#b91c1c' }}>
+                    {formatMoney(liveDifference ?? summary.totals.difference)}
+                  </strong>
                 </div>
                 <button
                   type="submit"
@@ -530,12 +547,17 @@ export default function CashoutPage() {
                   className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold"
                   style={{ background: 'var(--pos-accent-green)', color: '#fff', boxShadow: '0 8px 18px -10px rgba(16,185,129,0.8)' }}
                 >
-                  {submitting ? 'Guardando…' : 'Confirmar corte'}
+                  {submitting
+                    ? t('pos.cashout.form.actions.saving')
+                    : t('pos.cashout.form.actions.confirm')}
                 </button>
               </form>
               {summary.lastCashout && (
                 <div className="mt-1 rounded-lg px-3 py-2 text-[12px]" style={{ background: 'rgba(237,244,243,0.9)', color: 'var(--pos-text-muted)' }}>
-                  Último corte: {formatDate(summary.lastCashout.finishedAt)} · {formatMoney(summary.lastCashout.finalAmount)}
+                  {t('pos.cashout.lastCashout.label', {
+                    date: formatDate(summary.lastCashout.finishedAt),
+                    amount: formatMoney(summary.lastCashout.finalAmount),
+                  })}
                 </div>
               )}
             </div>
@@ -546,22 +568,25 @@ export default function CashoutPage() {
   );
 }
 
-const BusinessSelect: React.FC<{ value: string; options: BusinessOption[]; onChange: (value: string) => void; disabled?: boolean }> = ({ value, options, onChange, disabled }) => (
-  <select
-    value={value}
-    onChange={(event) => onChange(event.target.value)}
-    disabled={disabled || !options.length}
-    className="rounded-md px-3 py-2 text-[12px]"
-    style={{ background: 'rgba(255,255,255,0.95)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)', color: 'var(--pos-text-heading)' }}
-  >
-    {options.length === 0 && <option value="">Sin negocios</option>}
-    {options.map((option) => (
-      <option key={option.id} value={option.id}>
-        {option.name}
-      </option>
-    ))}
-  </select>
-);
+const BusinessSelect: React.FC<{ value: string; options: BusinessOption[]; onChange: (value: string) => void; disabled?: boolean }> = ({ value, options, onChange, disabled }) => {
+  const { t } = useTranslation();
+  return (
+    <select
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      disabled={disabled || !options.length}
+      className="rounded-md px-3 py-2 text-[12px]"
+      style={{ background: 'rgba(255,255,255,0.95)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)', color: 'var(--pos-text-heading)' }}
+    >
+      {options.length === 0 && <option value="">{t('pos.cashout.business.none')}</option>}
+      {options.map((option) => (
+        <option key={option.id} value={option.id}>
+          {option.name}
+        </option>
+      ))}
+    </select>
+  );
+};
 
 const SummaryCard: React.FC<{ title: string; value: string; icon: React.ReactNode; emphasis?: boolean }> = ({ title, value, icon, emphasis }) => (
   <div

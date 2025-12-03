@@ -15,22 +15,24 @@ import BusinessShowcase from "../../src/components/shop/sections/BusinessShowcas
 import SortBar from "../../src/components/shop/sections/SortBar";
 import ProductsFeed from "../../src/components/shop/sections/ProductsFeed";
 import { api, activeBusiness } from "../../src/lib/api";
+import { useTranslation } from "../../src/hooks/useTranslation";
 
 const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({ onGuest, loading = false }) => {
+  const { t } = useTranslation();
   const capsule =
     "inline-flex items-center gap-2 rounded-full border border-brand-200/70 bg-white/90 px-3 py-1 text-xs font-semibold text-brand-600 dark:border-white/15 dark:bg-white/5 dark:text-[var(--fc-brand-200)]";
   const steps = [
     {
-      title: "Explora el menú publicado",
-      body: "Consulta productos reales del negocio sin necesidad de crear una cuenta antes."
+      title: t("shop.guest.steps.explore.title"),
+      body: t("shop.guest.steps.explore.body")
     },
     {
-      title: "Arma y confirma tu pedido",
-      body: "Añade artículos al carrito, deja notas y confirma cuando estés listo."
+      title: t("shop.guest.steps.build.title"),
+      body: t("shop.guest.steps.build.body")
     },
     {
-      title: "Sigue el estado en cocina",
-      body: "El equipo marca cada etapa (pendiente, en preparación, listo) y llegas solo cuando toca retirar."
+      title: t("shop.guest.steps.track.title"),
+      body: t("shop.guest.steps.track.body")
     }
   ];
 
@@ -45,13 +47,13 @@ const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({
           <div className="space-y-8">
             <div className="space-y-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-brand-600 dark:border-white/20 dark:bg-white/10 dark:text-[var(--fc-brand-200)]">
-                Tienda digital
+                {t("shop.guest.badge")}
               </span>
               <h1 className="text-4xl font-black tracking-tight text-gray-900 sm:text-[2.9rem] dark:text-white">
-                Haz tu pedido antes de llegar y retira sin esperar
+                {t("shop.guest.title")}
               </h1>
               <p className="text-lg leading-relaxed text-gray-600 dark:text-white/70">
-                Diseñamos la experiencia de compra para tus clientes: visualizan el menú, añaden artículos al carrito y confirman el pedido antes de llegar para recoger sin esperas.
+                {t("shop.guest.subtitle")}
               </p>
             </div>
 
@@ -68,10 +70,10 @@ const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({
                 ))}
               </div>
               <div className="mt-6 flex flex-wrap items-center gap-3 text-xs font-medium text-brand-600 dark:text-[var(--fc-brand-200)]">
-                <span className={capsule}>Ordena sin registro previo</span>
-                <span className={capsule}>Menú actualizado por el negocio</span>
-                <span className={capsule}>Estados sincronizados con el POS</span>
-                <span className={capsule}>Listo para operar en recreos</span>
+                <span className={capsule}>{t("shop.guest.chip.noSignup")}</span>
+                <span className={capsule}>{t("shop.guest.chip.menuUpdated")}</span>
+                <span className={capsule}>{t("shop.guest.chip.syncedPos")}</span>
+                <span className={capsule}>{t("shop.guest.chip.recessReady")}</span>
               </div>
             </div>
 
@@ -84,19 +86,19 @@ const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({
                     : "bg-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
                   }`}
               >
-                {loading ? "Abriendo tienda…" : "Probar la tienda ahora"}
+                {loading ? t("shop.guest.cta.loading") : t("shop.guest.cta.primary")}
               </button>
               <Link
                 href="/auth/register"
                 className="inline-flex items-center justify-center rounded-xl border border-brand-200/70 bg-white px-5 py-3 text-sm font-semibold text-brand-700 transition hover:border-brand-300/80 dark:border-white/15 dark:bg-[color:rgba(9,13,22,0.92)] dark:text-white dark:hover:border-[var(--fc-brand-200)]/60"
               >
-                Registrar mi negocio
+                {t("shop.guest.cta.registerBusiness")}
               </Link>
               <Link
                 href="/auth/login"
                 className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-brand-600 underline decoration-brand-400 underline-offset-4 hover:text-brand-700 dark:text-[var(--fc-brand-200)] dark:hover:text-[var(--fc-brand-100)]"
               >
-                Ingresar con mi cuenta
+                {t("shop.guest.cta.login")}
               </Link>
             </div>
           </div>
@@ -107,47 +109,47 @@ const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({
 
             <div className="relative mx-auto max-w-md rounded-[42px] border border-white/70 bg-white/90 p-6 shadow-[0_50px_90px_-45px_rgba(222,53,95,0.45)] backdrop-blur dark:border-white/15 dark:bg-[color:rgba(8,12,24,0.92)] dark:shadow-[0_60px_120px_-60px_rgba(2,6,23,0.82)]">
               <div className="mb-5 flex items-center justify-between text-xs text-gray-500 dark:text-white/60">
-                <span className="font-semibold text-gray-700 dark:text-white">Vista previa del flujo real</span>
+                <span className="font-semibold text-gray-700 dark:text-white">{t("shop.guest.preview.title")}</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-white/10 dark:text-white/70">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Sincronizado
+                  {t("shop.guest.preview.synced")}
                 </span>
               </div>
 
               <div className="space-y-4">
                 <div className="rounded-2xl border border-brand-100 bg-gradient-to-r from-white via-white to-brand-50/70 p-4 shadow-sm dark:border-white/12 dark:from-[color:rgba(35,25,64,0.45)] dark:via-[color:rgba(16,23,42,0.7)] dark:to-[color:rgba(14,20,35,0.85)]">
                   <header className="flex items-center justify-between text-xs font-semibold text-brand-700 dark:text-[var(--fc-brand-200)]">
-                    <span>Menú publicado</span>
+                    <span>{t("shop.guest.preview.menu.title")}</span>
                     <span className="inline-flex items-center gap-1 text-[11px] text-brand-600 dark:text-[var(--fc-brand-200)]">
                       <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
-                      En vivo
+                      {t("shop.guest.preview.menu.live")}
                     </span>
                   </header>
                   <ul className="mt-3 space-y-2 text-[12px] text-gray-600 dark:text-white/70">
                     <li className="flex items-center justify-between gap-2">
-                      <span className="truncate">Producto disponible</span>
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-brand-600 dark:bg-white/10 dark:text-[var(--fc-brand-200)]">Publicado</span>
+                      <span className="truncate">{t("shop.guest.preview.menu.itemAvailable")}</span>
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-brand-600 dark:bg-white/10 dark:text-[var(--fc-brand-200)]">{t("shop.guest.preview.menu.published")}</span>
                     </li>
                     <li className="flex items-center justify-between gap-2">
-                      <span className="truncate">Categoría destacada</span>
-                      <span className="text-[11px] text-gray-500 dark:text-white/60">Actualizada hoy</span>
+                      <span className="truncate">{t("shop.guest.preview.menu.featuredCategory")}</span>
+                      <span className="text-[11px] text-gray-500 dark:text-white/60">{t("shop.guest.preview.menu.updatedToday")}</span>
                     </li>
                     <li className="flex items-center justify-between gap-2">
-                      <span className="truncate">Disponibilidad visible</span>
-                      <span className="text-[11px] text-gray-500 dark:text-white/60">Según stock</span>
+                      <span className="truncate">{t("shop.guest.preview.menu.visibleAvailability")}</span>
+                      <span className="text-[11px] text-gray-500 dark:text-white/60">{t("shop.guest.preview.menu.byStock")}</span>
                     </li>
                   </ul>
                 </div>
 
                 <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4 text-xs text-brand-700 dark:border-white/12 dark:bg-[color:rgba(16,26,44,0.82)] dark:text-[var(--fc-brand-200)]">
                   <header className="flex items-center justify-between text-[11px] font-semibold text-brand-700 dark:text-[var(--fc-brand-200)]">
-                    <span>Pedido en curso</span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-brand-600 dark:bg-white/10 dark:text-[var(--fc-brand-200)]">Estado: en preparación</span>
+                    <span>{t("shop.guest.preview.order.title")}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-brand-600 dark:bg-white/10 dark:text-[var(--fc-brand-200)]">{t("shop.guest.preview.order.status")}</span>
                   </header>
                   <div className="mt-3 space-y-1 text-[12px] text-gray-600 dark:text-white/70">
-                    <p>• 2 artículos confirmados desde la tienda.</p>
-                    <p>• Notas internas registradas junto al pedido.</p>
-                    <p>• El equipo marca &quot;Listo&quot; y el cliente pasa a recoger.</p>
+                    <p>• {t("shop.guest.preview.order.point1")}</p>
+                    <p>• {t("shop.guest.preview.order.point2")}</p>
+                    <p>• {t("shop.guest.preview.order.point3")}</p>
                   </div>
                 </div>
               </div>
@@ -158,21 +160,21 @@ const GuestExperience: React.FC<{ onGuest: () => void; loading?: boolean }> = ({
         <footer className="relative mt-16 overflow-hidden rounded-3xl border border-white/70 bg-white/85 px-6 py-6 shadow-sm backdrop-blur dark:border-white/12 dark:bg-[color:rgba(8,12,22,0.9)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 dark:text-white/70">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-brand-600 dark:text-[var(--fc-brand-200)]">Recursos rapidos</p>
-              <p className="mt-1">Sigue descubriendo negocios publicados o escribe al equipo para habilitar tu tienda.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-brand-600 dark:text-[var(--fc-brand-200)]">{t("shop.guest.footer.title")}</p>
+              <p className="mt-1">{t("shop.guest.footer.subtitle")}</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/shop"
                 className="inline-flex items-center gap-2 rounded-full border border-brand-200/70 px-4 py-2 text-sm font-semibold text-brand-700 transition hover:border-brand-300 hover:text-brand-800 dark:border-white/15 dark:text-[var(--fc-brand-200)] dark:hover:border-[var(--fc-brand-200)]/60"
               >
-                Ver negocios publicados
+                {t("shop.guest.footer.explore")}
               </Link>
               <a
                 href="mailto:contacto@filacero.app"
                 className="inline-flex items-center gap-2 rounded-full border border-white/60 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-white/15 dark:text-white/80 dark:hover:text-[var(--fc-brand-100)]"
               >
-                Escribir a soporte
+                {t("shop.guest.footer.support")}
               </a>
             </div>
           </div>

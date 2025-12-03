@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef } from 'react';
 import { useShortcuts } from '../../system/ShortcutProvider';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface SearchBoxProps {
   value: string;
@@ -9,6 +10,7 @@ interface SearchBoxProps {
 }
 
 export const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, onClear }) => {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { registerSearchInput } = useShortcuts({ optional: true });
 
@@ -22,7 +24,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, onClear }
         ref={inputRef}
         value={value}
         onChange={e=> onChange(e.target.value)}
-        placeholder='Buscar productos...'
+        placeholder={t('pos.search.placeholder')}
         className='w-full h-10 pl-9 pr-9 rounded-xl text-sm placeholder-[var(--pos-text-muted)] focus:outline-none focus:ring-2 transition'
         style={{
           background:'var(--pos-card-bg)',
@@ -36,7 +38,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, onClear }
       {value && (
         <button type='button' onClick={()=> { onChange(''); onClear?.(); }} className='absolute right-2 top-1/2 -translate-y-1/2 focus:outline-none' style={{color:'var(--pos-text-muted)'}}>
           <svg viewBox='0 0 20 20' fill='none' stroke='currentColor' strokeWidth='1.6' className='w-4 h-4'><path d='m6 6 8 8M6 14 14 6' strokeLinecap='round' strokeLinejoin='round'/></svg>
-          <span className='sr-only'>Limpiar</span>
+          <span className='sr-only'>{t('pos.search.clear')}</span>
         </button>
       )}
     </div>

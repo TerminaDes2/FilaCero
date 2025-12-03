@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
+import LanguageSelector from '../../../src/components/LanguageSelector';
 import { CategoriesAdminPanel } from '../../../src/components/pos/categories/CategoriesAdminPanel';
 import { useCategoriesStore } from '../../../src/pos/categoriesStore';
 import { NewCategoryPanel } from '../../../src/components/pos/categories/NewCategoryPanel';
@@ -24,7 +25,10 @@ export default function POSCategoriesPage() {
             <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
             <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </h1>
-          <TopRightInfo showLogout />
+          <div className='flex items-center gap-4'>
+            <LanguageSelector variant="compact" theme="light" />
+            <TopRightInfo showLogout />
+          </div>
         </div>
 
         <div className='flex-1 min-h-0 overflow-hidden rounded-t-2xl px-5 pt-8 pb-3 flex flex-col' style={{ background: 'var(--pos-bg-sand)', boxShadow: '0 2px 4px rgba(0,0,0,0.04), inset 0 0 0 1px var(--pos-border-soft)' }}>

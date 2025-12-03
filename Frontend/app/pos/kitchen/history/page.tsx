@@ -1,8 +1,10 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import { api, activeBusiness } from '../../../../src/lib/api';
+import { useTranslation } from '../../../../src/hooks/useTranslation';
 
 export default function KitchenHistoryPage() {
+  const { t, formatDate } = useTranslation();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
@@ -42,11 +44,11 @@ export default function KitchenHistoryPage() {
     <div className="p-4 md:p-6 flex flex-col gap-4">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold">Historial de comandas</h1>
-          <p className="text-sm text-gray-600">Pedidos entregados y cerrados.</p>
+          <h1 className="text-2xl font-semibold">{t('pos.history.title')}</h1>
+          <p className="text-sm text-gray-600">{t('pos.history.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar código/mesa" className="px-3 py-2 rounded-lg border bg-white text-sm" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('pos.history.searchPlaceholder') || 'Buscar código/mesa'} className="px-3 py-2 rounded-lg border bg-white text-sm" />
           <input type="date" value={range.from || ''} onChange={(e) => setRange((s) => ({ ...s, from: e.target.value }))} className="px-3 py-2 rounded-lg border bg-white text-sm" />
           <input type="date" value={range.to || ''} onChange={(e) => setRange((s) => ({ ...s, to: e.target.value }))} className="px-3 py-2 rounded-lg border bg-white text-sm" />
         </div>
@@ -56,11 +58,11 @@ export default function KitchenHistoryPage() {
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-600">
-              <th className="p-3 border-b">Fecha</th>
-              <th className="p-3 border-b">Código</th>
-              <th className="p-3 border-b">Mesa</th>
-              <th className="p-3 border-b">Total items</th>
-              <th className="p-3 border-b">Notas</th>
+              <th className="p-3 border-b">{t('pos.history.table.date') || 'Fecha'}</th>
+              <th className="p-3 border-b">{t('pos.history.table.code') || 'Código'}</th>
+              <th className="p-3 border-b">{t('pos.history.table.table') || 'Mesa'}</th>
+              <th className="p-3 border-b">{t('pos.history.table.totalItems') || 'Productos'}</th>
+              <th className="p-3 border-b">{t('pos.history.table.notes') || 'Notas'}</th>
             </tr>
           </thead>
           <tbody>
@@ -70,7 +72,7 @@ export default function KitchenHistoryPage() {
               const total = items.reduce((sum: number, it: any) => sum + Number(it.qty || it.cantidad || 1), 0);
               return (
                 <tr key={idx} className="odd:bg-gray-50/50">
-                  <td className="p-3 border-b">{date.toLocaleString()}</td>
+                  <td className="p-3 border-b">{formatDate(date)}</td>
                   <td className="p-3 border-b">{r.codigo || r.code || r.folio || '-'}</td>
                   <td className="p-3 border-b">{r.mesa || r.table || '-'}</td>
                   <td className="p-3 border-b">{total}</td>
@@ -79,10 +81,10 @@ export default function KitchenHistoryPage() {
               );
             })}
             {!loading && filtered.length === 0 && (
-              <tr><td className="p-6 text-center text-gray-400" colSpan={5}>Sin resultados</td></tr>
+              <tr><td className="p-6 text-center text-gray-400" colSpan={5}>{t('pos.history.empty.title')}</td></tr>
             )}
             {loading && (
-              <tr><td className="p-6 text-center text-gray-400" colSpan={5}>Cargando…</td></tr>
+              <tr><td className="p-6 text-center text-gray-400" colSpan={5}>{t('common.loading')}</td></tr>
             )}
           </tbody>
         </table>

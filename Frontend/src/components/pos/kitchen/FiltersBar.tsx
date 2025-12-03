@@ -4,10 +4,12 @@ import { useKitchenBoard } from '../../../state/kitchenBoardStore';
 import { RefreshCcw, Volume2, VolumeX, Plus, History } from 'lucide-react';
 import { usePOSView } from '../../../state/posViewStore';
 import Link from 'next/link';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const FiltersBar: React.FC = () => {
   const { filters, setFilters, hydrateFromAPI } = useKitchenBoard();
   const { view: posView, setView } = usePOSView();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (filters.autoRefresh && posView === 'kitchen') {
@@ -28,23 +30,23 @@ export const FiltersBar: React.FC = () => {
       <div className="flex items-center gap-2">
         <input
           type="text"
-          placeholder="Buscar código, mesa o cliente…"
+          placeholder={t('pos.kitchen.filters.searchPlaceholder')}
           value={filters.search}
           onChange={(e) => setFilters({ search: e.target.value })}
           className="px-3 py-2 rounded-lg border bg-white text-sm"
         />
-        <button onClick={() => hydrateFromAPI()} className="icon-btn" title="Actualizar">
+        <button onClick={() => hydrateFromAPI()} className="icon-btn" title={t('pos.kitchen.filters.refresh')}>
           <RefreshCcw className="w-4 h-4" />
         </button>
         <Link
           href="/pos"
           onClick={() => setView('sell')}
           className="icon-btn"
-          title="Ir al inicio / nueva venta"
+          title={t('pos.kitchen.filters.goToSell')}
         >
           <Plus className="w-4 h-4" />
         </Link>
-        <Link href="/pos/history" className="icon-btn" title="Historial">
+        <Link href="/pos/history" className="icon-btn" title={t('pos.kitchen.filters.history')}>
           <History className="w-4 h-4" />
         </Link>
       </div>
@@ -55,12 +57,12 @@ export const FiltersBar: React.FC = () => {
             checked={filters.autoRefresh}
             onChange={(e) => setFilters({ autoRefresh: e.target.checked })}
           />
-          Auto-actualizar
+          {t('pos.kitchen.filters.autoRefresh')}
         </label>
         <button
           onClick={() => setFilters({ soundOn: !filters.soundOn })}
           className="icon-btn"
-          title={filters.soundOn ? 'Silenciar' : 'Activar sonido'}
+          title={filters.soundOn ? t('pos.kitchen.filters.mute') : t('pos.kitchen.filters.unmute')}
         >
           {filters.soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </button>

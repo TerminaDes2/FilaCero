@@ -14,7 +14,7 @@ export function CTA() {
           {t("landing.cta.subtitle")}
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Link href="/register" className="bg-white text-brand-700 font-semibold px-8 py-3 rounded-full shadow-sm hover:shadow-md transition">
+          <Link href="/auth/register" className="bg-white text-brand-700 font-semibold px-8 py-3 rounded-full shadow-sm hover:shadow-md transition">
             {t("landing.cta.primary")}
           </Link>
           <Link href="/shop" className="bg-white/10 border border-white/30 backdrop-blur px-8 py-3 rounded-full font-semibold hover:bg-white/15 transition">

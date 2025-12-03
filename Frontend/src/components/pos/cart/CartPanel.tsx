@@ -9,6 +9,7 @@ import { useConfirm } from '../../system/ConfirmProvider';
 import { api, activeBusiness } from '../../../lib/api';
 import { useBusinessStore } from '../../../state/businessStore';
 import { useUserStore } from '../../../state/userStore';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 type TicketLine = {
   name: string;
@@ -19,6 +20,7 @@ type TicketLine = {
   sku?: string;
 };
 export const CartPanel: React.FC = () => {
+  const { t } = useTranslation();
   const { items, subtotal, total, discount, remove, inc, dec, clear } = useCart();
   const confirm = useConfirm();
   const hasItems = items.length > 0;
@@ -48,8 +50,8 @@ export const CartPanel: React.FC = () => {
   return (
     <div className='flex flex-col h-full overflow-hidden' style={{color:'var(--pos-text-heading)'}}>
   <header className='pb-2 border-b mb-2 flex-none' style={{borderColor:'var(--pos-summary-border)'}}>
-  <h2 className='text-base font-semibold' style={{color:'var(--pos-text-heading)'}}>Carrito</h2>
-        <p className='text-xs mt-0.5' style={{color:'var(--pos-text-muted)'}}>Gestiona la orden actual</p>
+	<h2 className='text-base font-semibold' style={{color:'var(--pos-text-heading)'}}>{t('pos.cart.title')}</h2>
+		<p className='text-xs mt-0.5' style={{color:'var(--pos-text-muted)'}}>{t('pos.cart.subtitle')}</p>
       </header>
   <div className='flex-1 overflow-y-auto pr-1 space-y-2 pb-1 custom-scroll-area'>
         {!hasItems && (
@@ -59,8 +61,8 @@ export const CartPanel: React.FC = () => {
               <circle cx='9' cy='19' r='1'/>
               <circle cx='16' cy='19' r='1'/>
             </svg>
-            <p className='text-sm font-medium text-slate-600 mt-3'>Tu carrito está vacío</p>
-            <p className='text-[12px] text-slate-500 mt-1'>Agrega productos para comenzar la orden.</p>
+            <p className='text-sm font-medium text-slate-600 mt-3'>{t('pos.cart.emptyTitle')}</p>
+            <p className='text-[12px] text-slate-500 mt-1'>{t('pos.cart.emptySubtitle')}</p>
           </div>
         )}
 
@@ -71,7 +73,7 @@ export const CartPanel: React.FC = () => {
                 <p className='text-[13px] font-medium' style={{color:'var(--pos-text-heading)'}}>{item.product.name}</p>
                 <p className='text-[11px] mt-0.5' style={{color:'var(--pos-text-muted)'}}>${item.product.price.toFixed(2)}</p>
                 {item.note && (
-                  <p className='text-[11px] mt-0.5 italic' style={{ color: 'var(--pos-text-muted)' }}>Nota: {item.note}</p>
+                  <p className='text-[11px] mt-0.5 italic' style={{ color: 'var(--pos-text-muted)' }}>{t('pos.cart.noteLabel')}: {item.note}</p>
                 )}
                 <div className='flex items-center gap-1.5 mt-2'>
                   <button onClick={()=> dec(item.lineId)} className='w-6 h-6 rounded flex items-center justify-center text-[15px] leading-none focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>−</button>
@@ -86,14 +88,14 @@ export const CartPanel: React.FC = () => {
                     <svg viewBox='0 0 24 24' className='w-3.5 h-3.5' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
                       <path d='M12 20h9' /><path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z' />
                     </svg>
-                    Editar
+                    {t('common.edit')}
                   </button>
                   <button onClick={async ()=> {
                     const ok = await confirm({
-                      title: 'Quitar del carrito',
-                      description: '¿Seguro que quieres quitar este producto? Esta acción no se puede deshacer.',
-                      confirmText: 'Quitar',
-                      cancelText: 'Cancelar',
+                      title: t('pos.cart.removeTitle'),
+                      description: t('pos.cart.removeDescription'),
+                      confirmText: t('common.remove'),
+                      cancelText: t('common.cancel'),
                       tone: 'danger'
                     });
                     if (ok) remove(item.lineId);
@@ -103,7 +105,7 @@ export const CartPanel: React.FC = () => {
                     <path d='M8 6V4h8v2' />
                     <path d='M19 6l-1 14H6L5 6' />
                   </svg>
-                  Quitar
+                  {t('common.remove')}
                   </button>
                 </div>
               </div>
@@ -124,17 +126,17 @@ export const CartPanel: React.FC = () => {
           >
             <dl className='space-y-1.5'>
               <div className='flex justify-between'>
-                <dt>Subtotal</dt>
+                <dt>{t('pos.cart.subtotal')}</dt>
                 <dd className='tabular-nums font-medium' style={{color:'var(--pos-text-heading)'}}>
                   {`$${subtotal.toFixed(2)}`}
                 </dd>
               </div>
               <div className='flex justify-between'>
-                <dt>Productos</dt>
+                <dt>{t('pos.cart.items')}</dt>
                 <dd className='tabular-nums font-medium' style={{color:'var(--pos-text-heading)'}}>{items.length}</dd>
               </div>
               <div className='pt-2 mt-1 flex justify-between items-baseline'>
-                <dt className='text-[11px] uppercase tracking-wide font-medium' style={{color:'var(--pos-text-muted)'}}>Total</dt>
+                <dt className='text-[11px] uppercase tracking-wide font-medium' style={{color:'var(--pos-text-muted)'}}>{t('pos.cart.total')}</dt>
                 <dd
                   className='tabular-nums text-[15px] font-semibold'
                   style={{color:'var(--pos-text-heading)'}}
@@ -153,7 +155,7 @@ export const CartPanel: React.FC = () => {
           <button
             type='button'
             disabled={!hasItems}
-            aria-label='Continuar con el pago'
+            aria-label={t('pos.cart.payAriaLabel')}
             className='
               group relative overflow-hidden flex-1
               h-12 px-6 rounded-full
@@ -198,20 +200,20 @@ export const CartPanel: React.FC = () => {
                 group-hover:text-white
               '
             >
-              Pagar
+              {t('pos.cart.pay')}
             </span>
           </button>
           
           <button disabled={!hasItems} onClick={async ()=>{
             const ok = await confirm({
-              title: 'Limpiar carrito',
-              description: 'Vas a eliminar todos los productos del carrito. ¿Continuar?',
-              confirmText: 'Limpiar',
-              cancelText: 'Cancelar',
+              title: t('pos.cart.clearTitle'),
+              description: t('pos.cart.clearDescription'),
+              confirmText: t('pos.cart.clearConfirm'),
+              cancelText: t('common.cancel'),
               tone: 'danger'
             });
             if (ok) clear();
-          }} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>Limpiar</button>
+          }} className='h-10 px-3 rounded-lg text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2' style={{background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)'}}>{t('pos.cart.clear')}</button>
         </div>
         {showPayment && (
           <PaymentPanel

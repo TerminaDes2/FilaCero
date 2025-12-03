@@ -34,24 +34,24 @@ export function Hero() {
                 <span className="w-6 h-6 rounded-full bg-amber-400 border border-white" aria-hidden="true" />
                 <span className="w-6 h-6 rounded-full bg-teal-500 border border-white" aria-hidden="true" />
               </span>
-              <span className="text-xs sm:text-sm">Escuelas piloto ya operando sin filas</span>
+              <span className="text-xs sm:text-sm">{t("landing.hero.socialProof")}</span>
             </p>
             {/* Metrics semantic list */}
             <ul className="flex flex-wrap gap-2 pt-1" aria-label="Indicadores clave">
               {[
-                { label: "< 5s orden", desc: "flujo optimizado" },
-                { label: "100% responsive", desc: "móvil primero" },
-                { label: "Sin descargas", desc: "solo escanear" }
+                { id: '0', labelKey: "landing.hero.quickChips.0.label", descKey: "landing.hero.quickChips.0.desc" },
+                { id: '1', labelKey: "landing.hero.quickChips.1.label", descKey: "landing.hero.quickChips.1.desc" },
+                { id: '2', labelKey: "landing.hero.quickChips.2.label", descKey: "landing.hero.quickChips.2.desc" }
               ].map(item => (
-                <li key={item.label} className="group relative rounded-full px-4 py-1.5 bg-white/70 backdrop-blur border border-white/60 text-[11px] font-medium text-gray-700 flex items-center gap-2 shadow-sm dark:bg-slate-900/70 dark:border-white/10 dark:text-slate-200">
+                <li key={item.id} className="group relative rounded-full px-4 py-1.5 bg-white/70 backdrop-blur border border-white/60 text-[11px] font-medium text-gray-700 flex items-center gap-2 shadow-sm dark:bg-slate-900/70 dark:border-white/10 dark:text-slate-200">
                   <span className="text-brand-600 dark:text-brand-300" aria-hidden="true">●</span>
-                  <span>{item.label}</span>
-                  <span className="sr-only">{item.desc}</span>
+                  <span>{t(item.labelKey)}</span>
+                  <span className="sr-only">{t(item.descKey)}</span>
                 </li>
               ))}
             </ul>
             <div className="flex flex-wrap gap-4 items-center">
-              <Link href="/register" className="group relative inline-flex items-center gap-2 bg-brand-600 text-white px-7 py-3 rounded-full font-semibold shadow-glow hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
+              <Link href="/auth/register" className="group relative inline-flex items-center gap-2 bg-brand-600 text-white px-7 py-3 rounded-full font-semibold shadow-glow hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition">
                 <span>{t("landing.hero.ctaPrimary")}</span>
                 <span className="translate-x-0 group-hover:translate-x-1 transition" aria-hidden="true">→</span>
               </Link>
@@ -64,17 +64,16 @@ export function Hero() {
             </div>
             <div className="flex flex-col sm:flex-row gap-6 pt-2">
               <ul className="text-sm text-gray-600 dark:text-slate-300 space-y-1" aria-label="Ventajas principales">
-                <li className="flex items-start gap-2"><span className="text-brand-600 dark:text-brand-300" aria-hidden="true">✔</span><span>Implementación sin fricción</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand-600 dark:text-brand-300" aria-hidden="true">✔</span><span>Funciona en cualquier dispositivo</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand-600 dark:text-brand-300" aria-hidden="true">✔</span><span>Optimizado para recreos cortos</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand-600 dark:text-brand-300" aria-hidden="true">✔</span><span>{t("landing.hero.advantages.0")}</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand-600 dark:text-brand-300" aria-hidden="true">✔</span><span>{t("landing.hero.advantages.1")}</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand-600 dark:text-brand-300" aria-hidden="true">✔</span><span>{t("landing.hero.advantages.2")}</span></li>
               </ul>
               <p className="text-xs text-gray-500 max-w-xs dark:text-slate-400">
-                <strong className="font-semibold text-gray-700 dark:text-slate-200">Sin tarjeta</strong> ni compromisos. Accede a todo el núcleo operativo gratis y agrega servicios opcionales cuando los necesites.
+                <strong className="font-semibold text-gray-700 dark:text-slate-200">{t("landing.hero.disclaimer.highlight")}</strong> {t("landing.hero.disclaimer.rest")}
               </p>
             </div>
             <p className="text-sm text-gray-600 pt-1">
-              {/* Mantener la pregunta en español por ahora; solo el link traducido */}
-              ¿Ya tienes cuenta? <Link href="/login" className="font-medium text-brand-600 hover:underline">{t("navbar.login")}</Link>
+              {t("landing.hero.alreadyAccount.prefix")} <Link href="/auth/login" className="font-medium text-brand-600 hover:underline">{t("navbar.login")}</Link>
             </p>
           </Reveal>
           <Reveal delay={120} className="relative hidden sm:block">

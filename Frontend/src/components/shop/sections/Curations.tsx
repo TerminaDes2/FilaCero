@@ -1,10 +1,11 @@
 "use client";
 import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "../../../hooks/useTranslation";
 
 type CurationCard = {
-  title: string;
-  subtitle?: string;
+  titleKey: string;
+  subtitleKey?: string;
   colorFrom: string;
   colorTo: string;
   action?: Record<string, string>;
@@ -13,29 +14,29 @@ type CurationCard = {
 
 const curations: CurationCard[] = [
   {
-    title: "Catálogo completo",
-    subtitle: "Ver productos sin filtros",
+    titleKey: "shop.curations.fullCatalog.title",
+    subtitleKey: "shop.curations.fullCatalog.subtitle",
     colorFrom: "from-[var(--fc-brand-500)]",
     colorTo: "to-[var(--fc-teal-500)]",
     clearKeys: ["offers", "sort", "status", "categoria"],
   },
   {
-    title: "Ofertas visibles",
-    subtitle: "Detectamos títulos con promo",
+    titleKey: "shop.curations.offers.title",
+    subtitleKey: "shop.curations.offers.subtitle",
     colorFrom: "from-rose-500",
     colorTo: "to-orange-500",
     action: { offers: "1" },
   },
   {
-    title: "Abiertos ahora",
-    subtitle: "Productos con estado activo",
+    titleKey: "shop.curations.openNow.title",
+    subtitleKey: "shop.curations.openNow.subtitle",
     colorFrom: "from-emerald-500",
     colorTo: "to-teal-500",
     action: { status: "activo" },
   },
   {
-    title: "Sin categoría",
-    subtitle: "Listado para clasificar",
+    titleKey: "shop.curations.noCategory.title",
+    subtitleKey: "shop.curations.noCategory.subtitle",
     colorFrom: "from-indigo-500",
     colorTo: "to-fuchsia-500",
     action: { categoria: "__none__" },
@@ -55,6 +56,7 @@ function buildQuery(params: URLSearchParams, updates: Record<string, string | nu
 export default function Curations() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation();
 
   const activeMap = useMemo(() => {
     const entries = Array.from(params.entries());
@@ -113,8 +115,8 @@ export default function Curations() {
               <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-white/15 blur-2xl" />
               <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-black/10 blur-2xl" />
               <div className="relative space-y-2">
-                <div className="text-lg font-extrabold leading-tight sm:text-xl">{card.title}</div>
-                {card.subtitle && <div className="text-sm font-medium text-white/90">{card.subtitle}</div>}
+                <div className="text-lg font-extrabold leading-tight sm:text-xl">{t(card.titleKey)}</div>
+                {card.subtitleKey && <div className="text-sm font-medium text-white/90">{t(card.subtitleKey)}</div>}
               </div>
             </button>
           );

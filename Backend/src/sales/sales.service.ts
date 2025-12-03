@@ -484,7 +484,7 @@ export class SalesService {
         },
         select: { id_producto: true, cantidad_actual: true },
       }),
-      tx.negocio_producto.findMany({ where: { id_negocio: negocioId, id_producto: { in: ids } }, select: { id_producto: true, precio: true, activo: true } }),
+      (tx as any).negocio_producto.findMany({ where: { id_negocio: negocioId, id_producto: { in: ids } }, select: { id_producto: true, precio: true, activo: true } }),
     ]);
   
     const productosMap = new Map(productos.map((p) => [p.id_producto, p]));

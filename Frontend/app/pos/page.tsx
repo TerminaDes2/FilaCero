@@ -15,6 +15,7 @@ import { usePOSView } from '../../src/state/posViewStore';
 // Categories CRUD lives on its own page
 import { CartPanel } from '../../src/components/pos/cart/CartPanel';
 import { TopRightInfo } from '../../src/components/pos/header/TopRightInfo';
+import LanguageSelector from '../../src/components/LanguageSelector';
 import { useSettingsStore } from '../../src/state/settingsStore';
 import { useCategoriesStore } from '../../src/pos/categoriesStore';
 import { useUserStore } from '../../src/state/userStore';
@@ -123,7 +124,10 @@ export default function POSPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo showLogout />
+            <div className='flex items-center gap-4'>
+              <LanguageSelector variant="compact" theme="light" />
+              <TopRightInfo showLogout />
+            </div>
           </div>
           {/* Dynamic content wrapper */}
           {posView === 'kitchen' ? (

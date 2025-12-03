@@ -19,7 +19,25 @@
       "titleHighlight": "school cafeterias",
       "subtitle": "Reduce lines and serve more orders during breaks. No native apps, no proprietary hardware, ready in minutes.",
       "ctaPrimary": "Create free account",
-      "ctaSecondary": "Shop now"
+      "ctaSecondary": "Shop now",
+      "socialProof": "Pilot schools already running line-free",
+      "quickChips": {
+        "0": { "label": "< 5s order", "desc": "optimized flow" },
+        "1": { "label": "100% responsive", "desc": "mobile first" },
+        "2": { "label": "No downloads", "desc": "just scan" }
+      },
+      "advantages": {
+        "0": "Frictionless rollout",
+        "1": "Works on any device",
+        "2": "Optimized for short breaks"
+      },
+      "disclaimer": {
+        "highlight": "No card required",
+        "rest": ". Access the full operational core for free and add optional services when you need them."
+      },
+      "alreadyAccount": {
+        "prefix": "Already have an account?"
+      }
     },
     "cards": {
       "card1": { "badge": "Morning break", "title": "Ready orders", "metric": "12" },
@@ -400,7 +418,62 @@
         "nameTip": "Use a name that's easy to remember.",
         "hide": "Hide tips"
       },
+      "validation": {
+        "name": "Enter a name with at least 2 characters.",
+        "email": "Invalid email.",
+        "phone": "Phone number is too short.",
+        "logoUrl": "Provide a valid URL.",
+        "heroImageUrl": "Provide a valid URL."
+      },
+      "errors": {
+        "invalidForm": "Check the highlighted fields before continuing.",
+        "sessionExpired": "Your session expired. Sign in again to create a business.",
+        "logoTooBig": "Logo image is too large. Use a lighter image.",
+        "createFailed": "We couldn't create your business. Please try again later."
+      },
+      "branding": {
+        "badge": "Brand image",
+        "title": "Customize your presence",
+        "description": "Use public URLs (Cloudinary, Drive with public access, etc.)."
+      },
+      "form": {
+        "name": {
+          "label": "Business name",
+          "placeholder": "E.g. Aurora Café"
+        },
+        "email": {
+          "label": "Contact email",
+          "placeholder": "contact@your-business.com",
+          "hint": "We'll use this email for administrative communications."
+        },
+        "phone": {
+          "label": "Phone",
+          "placeholder": "E.g. +1 555 123 4567"
+        },
+        "address": {
+          "label": "Address",
+          "placeholder": "Street, number and city",
+          "hint": "Optional"
+        },
+        "footerNote": "You can edit any of these details from Settings."
+      },
+      "card": {
+        "title": "Complete your business setup",
+        "subtitle": "Add the basic details to get started"
+      },
+      "success": {
+        "inlineTitle": "Your business is ready!",
+        "inlineSubtitle": "You can now create products and start charging.",
+        "title": "Your business is ready",
+        "subtitle": "Set up your POS and start operating.",
+        "goHome": "Back to home",
+        "goPOS": "Go to POS",
+        "note": "You can edit your business details at any time."
+      },
       "identity": {
+        "badge": "Business profile",
+        "title": "Identify your business",
+        "description": "Basic information so your customers can recognize you.",
         "name": {
           "label": "Business name",
           "placeholder": "E.g. Aurora Café"
@@ -528,6 +601,505 @@
         "logoTooBig": "Logo file is too large. Use a lighter image or upload it later.",
         "createFailed": "Failed to create business"
       }
+    }
+  },
+  "common": {
+    "edit": "Edit",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "actions": {
+      "cancel": "Cancel",
+      "retry": "Retry"
+    }
+  },
+  "pos": {
+    "sidebar": {
+      "title": "Point of Sale",
+      "home": "Home",
+      "history": "History",
+      "cashout": "Cash-out",
+      "kitchen": "Kitchen",
+      "categories": "Categories",
+      "products": "Products",
+      "analytics": "Analytics",
+      "staff": "Staff",
+      "settings": "Settings"
+    },
+    "cart": {
+      "title": "Cart",
+      "subtitle": "Manage the current order",
+      "emptyTitle": "Your cart is empty",
+      "emptySubtitle": "Add products to start the order.",
+      "noteLabel": "Note",
+      "subtotal": "Subtotal",
+      "items": "Items",
+      "total": "Total",
+      "pay": "Pay",
+      "payAriaLabel": "Continue to payment",
+      "clear": "Clear",
+      "clearTitle": "Clear cart",
+      "clearDescription": "You are about to remove all products from the cart. Continue?",
+      "clearConfirm": "Clear",
+      "removeTitle": "Remove from cart",
+      "removeDescription": "Are you sure you want to remove this product? This action cannot be undone."
+    },
+    "kitchen": {
+      "pending": "Pending",
+      "prepping": "In preparation",
+      "ready": "Ready",
+      "served": "Delivered",
+      "syncedSecondsAgo": "updated seconds ago",
+      "syncedOneMinuteAgo": "updated 1 minute ago",
+      "syncedMinutesAgo": "updated {{minutes}} minutes ago",
+      "syncedOneHourAgo": "updated 1 hour ago",
+      "syncedHoursAgo": "updated {{hours}} hours ago",
+      "syncing": "Syncing kitchen…",
+      "waitingData": "Waiting for kitchen data"
+    },
+    "history": {
+      "error": "Could not load sales history.",
+      "loading": "Loading history…",
+      "filters": {
+        "status": {
+          "all": "All",
+          "paid": "Paid",
+          "open": "Open",
+          "cancelled": "Cancelled"
+        }
+      },
+      "empty": {
+        "title": "No sales in this range",
+        "subtitle": "Adjust filters or date range."
+      },
+      "saleId": "Receipt #{{id}}",
+      "noDate": "No date",
+      "itemFallback": "Product",
+      "noCustomer": "No customer",
+      "noPaymentType": "No method"
+    },
+    "cashout": {
+      "title": "Cash-out",
+      "coverage": {
+        "fullDay": "Coverage: full day",
+        "sinceLast": "Coverage: since last cut"
+      },
+      "controls": {
+        "fullDay": "Full day",
+        "lastCut": "Last cut",
+        "refresh": "Refresh",
+        "refreshing": "Refreshing…"
+      },
+      "cards": {
+        "salesCount": { "title": "Registered sales" },
+        "salesAmount": { "title": "Amount sold" },
+        "expectedCash": { "title": "Expected cash" },
+        "difference": { "title": "Difference" }
+      },
+      "recentSales": {
+        "title": "Recent sales",
+        "count": "{{count}} tickets"
+      },
+      "history": {
+        "title": "Cash-out history"
+      },
+      "form": {
+        "title": "Register cash-out",
+        "subtitle": "Verify amounts and confirm the end of the shift.",
+        "nextShift": "Suggested for next shift:",
+        "fields": {
+          "openAmount": "Opening amount",
+          "closeAmount": "Counted closing amount"
+        },
+        "currentDiff": "Current difference:",
+        "actions": {
+          "saving": "Saving…",
+          "confirm": "Confirm cash-out"
+        }
+      },
+      "lastCashout": {
+        "label": "Last cash-out: {{date}} · {{amount}}"
+      },
+      "business": {
+        "unnamed": "Unnamed business",
+        "none": "No businesses"
+      },
+      "errors": {
+        "businessLoad": "Could not load businesses",
+        "summary": "Could not fetch summary",
+        "history": "Could not fetch history"
+      }
+    },
+    "products": {
+      "actions": {
+        "new": "New product",
+        "generateSku": "Generate",
+        "refreshCategories": "Refresh",
+        "closeEditor": "Close editor",
+        "creating": "Creating…",
+        "create": "Create →"
+      },
+      "form": {
+        "required": "Name and price are required."
+      },
+      "errors": {
+        "generic": "An error occurred while saving the product.",
+        "unauthorized": "Not authenticated. Log in to create products.",
+        "forbidden": "You don't have permission to create products (admin role required).",
+        "badRequest": "Invalid data (JSON) or invalid file."
+      },
+      "header": {
+        "badge": "New"
+      },
+      "sections": {
+        "basicInfo": "Basic information",
+        "image": "Product image",
+        "priceStock": "Price and stock",
+        "preview": "Preview"
+      },
+      "labels": {
+        "name": "Name",
+        "sku": "SKU",
+        "category": "Category",
+        "price": "Price",
+        "stock": "Stock",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "categories": {
+        "error": "Categories could not be loaded. Please try again.",
+        "none": "No category",
+        "loading": "Loading categories…"
+      },
+      "image": {
+        "previewAlt": "Product preview",
+        "remove": "Remove image",
+        "uploadTitle": "Upload an image",
+        "uploadSubtitle": "Click to select"
+      },
+      "fallbackName": "Product",
+      "hints": {
+        "escapeToClose": "Esc to close"
+      }
+    },
+    "employees": {
+    },
+    "employees": {
+      "error": "Error loading employees",
+      "empty": {
+        "title": "No employees yet",
+        "subtitle": "Start by adding your first team member"
+      },
+      "actions": {
+        "addFirst": "Add first employee",
+        "new": "New employee"
+      },
+      "keyboard": {
+        "newEmployee": "New employee",
+        "changeView": "Change view"
+      },
+      "noResults": {
+        "title": "No employees found",
+        "subtitle": "Try another search term or filter"
+      },
+      "stats": {
+        "total": "Total",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "form": {
+        "errors": {
+          "emailRequired": "Email is required",
+          "emailInvalid": "Please enter a valid email address",
+          "generic": "Error adding employee"
+        },
+        "aria": {
+          "closeEditor": "Close employee editor"
+        },
+        "badge": {
+          "new": "New"
+        },
+        "fallbackName": "Employee",
+        "sections": {
+          "basicInfo": "Basic information",
+          "initialStatus": "Initial status"
+        },
+        "fields": {
+          "email": "Email",
+          "fullName": "Full name (optional)"
+        },
+        "helper": {
+          "nameFromEmail": "If left empty, we'll use the part before @ from the email.",
+          "initialStatus": "If you choose inactive, it will be disabled right after the relation is created."
+        },
+        "status": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "actions": {
+          "creating": "Creating…",
+          "add": "Add →"
+        }
+      }
+    },
+    "categories": {
+      "actions": {
+        "new": "New category"
+      },
+      "form": {
+        "errors": {
+          "nameRequired": "Name is required.",
+          "nameDuplicate": "A category with that name already exists.",
+          "emojiLength": "Emoji must be at most 2 characters.",
+          "branchOrAll": "Select a branch or mark \"Apply to all\".",
+          "generic": "An unexpected error occurred."
+        },
+        "badge": {
+          "new": "New"
+        },
+        "fallbackName": "Category",
+        "sections": {
+          "basicInfo": "Basic information"
+        },
+        "fields": {
+          "name": "Name",
+          "color": "Color",
+          "emoji": "Emoji (optional)",
+          "branch": "Branch",
+          "applyAll": "Apply to all"
+        },
+        "business": {
+          "none": "No businesses",
+          "select": "Select…",
+          "requiredIfNotAll": "Required if not applying to all."
+        },
+        "preview": {
+          "title": "Preview"
+        },
+        "actions": {
+          "creating": "Creating…",
+          "create": "Create →"
+        }
+      }
+    },
+    "common": {
+      "hints": {
+        "escToClose": "Esc to close"
+      }
+    },
+    "analytics": {
+      "error": "Could not load analytics.",
+      "kpis": {
+        "revenue": "Revenue",
+        "tickets": "Tickets",
+        "avgTicket": "Average ticket",
+        "itemsSold": "Items sold"
+      },
+      "cards": {
+        "trafficToday": "Traffic by hour (today)",
+        "salesByCategory": "Sales by category",
+        "ranking14d": "Quick ranking (14 days)",
+        "heatmap": "Heatmap (hour × day)"
+      },
+      "labels": {
+        "today": "Today"
+      },
+      "insights": {
+        "peakHour": {
+          "title": "Peak hour",
+          "hint": "Highest ticket volume"
+        },
+        "topCategory": {
+          "title": "Top category",
+          "value": "Drinks (42%)",
+          "hint": "Cappuccino and Latte lead"
+        },
+        "avgTicket": {
+          "title": "Avg. per ticket",
+          "hint": "Effective upsell strategy"
+        }
+      }
+    },
+    "search": {
+      "placeholder": "Search products...",
+      "clear": "Clear"
+    },
+    "settings": {
+      "search": {
+        "placeholder": "Search in settings..."
+      },
+      "sections": {
+        "label": "Settings sections"
+      }
+    }
+  },
+  "shop": {
+    "nav": {
+      "storeBadge": "Store",
+      "searchPlaceholder": "Search in store...",
+      "searchClearAria": "Clear search",
+      "searchMobileAria": "Open search",
+      "cart": {
+        "badge": "Cart",
+        "emptyTitle": "Your cart is empty",
+        "emptySubtitle": "Add products to start your order.",
+        "itemsTitle": "{{count}} items in cart",
+        "readyToPay": "Ready to confirm.",
+        "openAria": "Open cart"
+      }
+    },
+    "guest": {
+      "badge": "Digital store",
+      "title": "Place your order before arriving and pick up with no wait",
+      "subtitle": "We designed the buying experience for your customers: they see the menu, add items to the cart and confirm the order before arriving so they can pick up without lines.",
+      "steps": {
+        "explore": {
+          "title": "Explore the published menu",
+          "body": "Browse real products from the business without creating an account first."
+        },
+        "build": {
+          "title": "Build and confirm your order",
+          "body": "Add items to the cart, leave notes and confirm when you are ready."
+        },
+        "track": {
+          "title": "Track status in the kitchen",
+          "body": "The team marks each stage (pending, preparing, ready) and you only arrive when it is time to pick up."
+        }
+      },
+      "chip": {
+        "noSignup": "Order without signing up",
+        "menuUpdated": "Menu updated by the business",
+        "syncedPos": "Statuses synced with POS",
+        "recessReady": "Ready for school breaks"
+      },
+      "cta": {
+        "loading": "Opening store…",
+        "primary": "Try the store now",
+        "registerBusiness": "Register my business",
+        "login": "Sign in to my account"
+      },
+      "preview": {
+        "title": "Preview of the real flow",
+        "synced": "Synced",
+        "menu": {
+          "title": "Published menu",
+          "live": "Live",
+          "itemAvailable": "Available product",
+          "published": "Published",
+          "featuredCategory": "Featured category",
+          "updatedToday": "Updated today",
+          "visibleAvailability": "Visible availability",
+          "byStock": "Based on stock"
+        },
+        "order": {
+          "title": "Order in progress",
+          "status": "Status: preparing",
+          "point1": "2 items confirmed from the store.",
+          "point2": "Internal notes recorded along with the order."
+        }
+      },
+      "footer": {
+        "title": "Quick resources",
+        "subtitle": "Keep discovering published businesses or write to the team to enable your store.",
+        "explore": "View published businesses",
+        "support": "Write to support"
+      }
+    },
+    "hero": {
+      "badge": "FilaCero Shop",
+      "title": "Your order glows in color before it arrives",
+      "subtitle": "We design the digital journey so menu, payment and pickup flow without friction.",
+      "cta": {
+        "categories": "Browse categories",
+        "businesses": "Discover businesses"
+      },
+      "chips": {
+        "menuLive": "Menu always live",
+        "cashless": "Cashless payments",
+        "timedPickup": "Timed pickup",
+        "instantAlerts": "Instant alerts"
+      },
+      "journey": {
+        "discover": {
+          "title": "Discover",
+          "body": "Visual stories, seasonal playlists and staff picks."
+        },
+        "build": {
+          "title": "Build",
+          "body": "Dynamic cart with combos, notes and extras that appear right on time."
+        },
+        "pickup": {
+          "title": "Pick up",
+          "body": "Notifications on your phone when your order switches to ready."
+        }
+      },
+      "floating": {
+        "explore": {
+          "title": "Explore and crave",
+          "detail": "Swipe through categories and freshly published promos."
+        },
+        "confirm": {
+          "title": "Confirm without lines",
+          "detail": "Everything is set before you leave home."
+        },
+        "pickup": {
+          "title": "Arrive and grab",
+          "detail": "The team marks it ready and you just say hi."
+        }
+      }
+    },
+    "storyRail": {
+      "ariaLabel": "Quick access",
+      "badge": "Categories",
+      "title": "See what people are ordering",
+      "subtitle": "Filter the catalog by product type and find what you need in seconds.",
+      "viewAll": "View all categories",
+      "navLabel": "Featured categories",
+      "allShort": "All",
+      "allLabel": "Everything",
+      "empty": "There are no categories with products yet."
+    },
+    "curations": {
+      "fullCatalog": {
+        "title": "Full catalog",
+        "subtitle": "Browse products without filters"
+      },
+      "offers": {
+        "title": "Visible offers",
+        "subtitle": "We detect promo-like titles"
+      },
+      "openNow": {
+        "title": "Open now",
+        "subtitle": "Products with active status"
+      },
+      "noCategory": {
+        "title": "No category",
+        "subtitle": "List to be classified"
+      }
+    },
+    "business": {
+      "badge": "Businesses",
+      "title": "Partners already selling with FilaCero",
+      "subtitle": "Meet the merchants that sync their catalog and prepare orders without lines. Their logos guide you so you can spot them in seconds.",
+      "viewAll": "View all businesses",
+      "error": "We couldn't load available businesses.",
+      "empty": {
+        "title": "There are no published businesses yet",
+        "subtitle": "Once they activate their catalog, they will appear here."
+      },
+      "stats": {
+        "products": "Products {{count}}",
+        "orders": "Orders {{count}}"
+      },
+      "since": "Since {{date}}",
+      "visit": "Visit store"
     }
   }
 }

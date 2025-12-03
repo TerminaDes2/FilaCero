@@ -9,8 +9,19 @@ interface LanguageState {
   toggleLocale: () => void;
 }
 
+function getInitialLocale(): LocaleCode {
+  // Always return 'es-MX' for SSR to match the client initial render
+  // Client-side hydration will preserve this until useEffect runs
+  if (typeof window === 'undefined') {
+    return 'es-MX';
+  }
+  // On client, also start with 'es-MX' to avoid hydration mismatch
+  // The actual stored value will be applied after mount
+  return 'es-MX';
+}
+
 export const useLanguageStore = create<LanguageState>((set) => ({
-  locale: 'es-MX',
+  locale: getInitialLocale(),
   setLocale: (locale) => {
     set({ locale });
     if (typeof window !== 'undefined') {
@@ -19,7 +30,7 @@ export const useLanguageStore = create<LanguageState>((set) => ({
   },
   toggleLocale: () => {
     set((state) => {
-      const next = state.locale === 'es-MX' ? 'en-US' : 'es-MX';
+      const next: LocaleCode = state.locale === 'es-MX' ? 'en-US' : 'es-MX';
       if (typeof window !== 'undefined') {
         localStorage.setItem('language-locale', next);
       }

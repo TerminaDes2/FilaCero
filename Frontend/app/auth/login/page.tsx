@@ -15,8 +15,11 @@ export default function LoginPage() {
       <AuthDynamicBackground />
 
       <div className="relative z-10 flex min-h-screen flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-12 lg:py-12">
-        <header className="inline-flex w-fit items-center rounded-full border border-white/60 bg-white/75 px-4 py-2 backdrop-blur-md shadow-sm transition dark:border-slate-800/80 dark:bg-slate-950/80 dark:text-slate-100 dark:shadow-[0_18px_42px_-28px_rgba(2,6,23,0.75)]">
-          <BrandLogo withWordmark size={42} asLink={true} />
+        <header className="flex w-full items-center justify-between">
+          <div className="inline-flex w-fit items-center rounded-full border border-white/60 bg-white/75 px-4 py-2 backdrop-blur-md shadow-sm transition dark:border-slate-800/80 dark:bg-slate-950/80 dark:text-slate-100 dark:shadow-[0_18px_42px_-28px_rgba(2,6,23,0.75)]">
+            <BrandLogo withWordmark size={42} asLink={true} />
+          </div>
+          <LanguageSelector />
         </header>
 
         <div className="mt-10 flex flex-1 items-center justify-center pb-10">
@@ -69,9 +72,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-6 right-6 z-50">
-        <LanguageSelector />
-      </div>
     </div>
   );
 }

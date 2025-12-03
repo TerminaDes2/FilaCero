@@ -2,8 +2,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
+import LanguageSelector from '../../../src/components/LanguageSelector';
 import { useSettingsStore } from '../../../src/state/settingsStore';
 import { api, activeBusiness } from '../../../src/lib/api';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
 type RangeKey = 'today'|'7d'|'14d'|'30d';
 type AnalyticsData = {
@@ -172,10 +174,12 @@ function useAnalytics(range: RangeKey, negocioId?: string) {
   return { loading, error, data };
 }
 
-function num(n: number) { return n.toLocaleString('es-MX'); }
+function num(n: number, locale: string) { return n.toLocaleString(locale || 'es-MX'); }
 
 export default function AnalyticsPage() {
   const { defaultView } = useSettingsStore(); // store presence
+  const { locale } = useSettingsStore();
+  const { t } = useTranslation();
   const [range, setRange] = useState<RangeKey>('today');
   const [negocioId, setNegocioId] = useState<string | null>(null);
   useEffect(() => {
@@ -201,6 +205,7 @@ export default function AnalyticsPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>           </h1>
           <div className='flex items-center gap-3'>
+            <LanguageSelector variant="compact" theme="light" />
             <RangeSelector value={range} onChange={setRange} />
             <BusinessSelector value={negocioId || ''} onChange={handleBusinessChange} />
             <TopRightInfo showLogout />
@@ -217,9 +222,9 @@ export default function AnalyticsPage() {
               </div>
             )}
             {error && (
-              <div className='text-sm text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2'>No se pudieron cargar las métricas.</div>
+              <div className='text-sm text-rose-700 bg-rose-50/80 border border-rose-200/70 rounded-md px-3 py-2'>{t('pos.analytics.error')}</div>
             )}
-            {!loading && !error && data && (<Dashboard data={data} />)}
+            {!loading && !error && data && (<Dashboard data={data} locale={locale || 'es-MX'} />)}
           </div>
         </section>
       </main>
@@ -227,7 +232,8 @@ export default function AnalyticsPage() {
   );
 }
 
-function Dashboard({ data }: { data: AnalyticsData }) {
+function Dashboard({ data, locale }: { data: AnalyticsData; locale: string }) {
+  const { t } = useTranslation();
   const totalDonut = data.donut.reduce((a,b)=> a + b.value, 0);
   const donutAngles = data.donut.reduce<{ label:string; start:number; end:number; value:number }[]>((acc, seg, idx) => {
     const start = acc[idx-1]?.end ?? 0;
@@ -240,35 +246,35 @@ function Dashboard({ data }: { data: AnalyticsData }) {
     <div className='flex flex-col gap-5'>
       {/* KPI cards */}
       <section className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-        <KPI title='Ingresos' value={`$ ${num(data.kpis.revenueToday)}`} delta={+8} spark={[12,16,14,18,22,24,28,26]} />
-        <KPI title='Tickets' value={num(data.kpis.ticketsToday)} delta={+4} spark={[6,7,8,7,9,10,11,12]} />
-        <KPI title='Ticket promedio' value={`$ ${num(data.kpis.avgTicket)}`} delta={-2} spark={[70,68,69,71,67,66,67,67]} />
-        <KPI title='Artículos vendidos' value={num(data.kpis.itemsSold)} delta={+5} spark={[80,82,84,86,88,90,92,94]} />
+        <KPI title={t('pos.analytics.kpis.revenue')} value={`$ ${num(data.kpis.revenueToday, locale)}`} delta={+8} spark={[12,16,14,18,22,24,28,26]} />
+        <KPI title={t('pos.analytics.kpis.tickets')} value={num(data.kpis.ticketsToday, locale)} delta={+4} spark={[6,7,8,7,9,10,11,12]} />
+        <KPI title={t('pos.analytics.kpis.avgTicket')} value={`$ ${num(data.kpis.avgTicket, locale)}`} delta={-2} spark={[70,68,69,71,67,66,67,67]} />
+        <KPI title={t('pos.analytics.kpis.itemsSold')} value={num(data.kpis.itemsSold, locale)} delta={+5} spark={[80,82,84,86,88,90,92,94]} />
       </section>
 
       {/* Row: sparkline + donut */}
       <section className='grid grid-cols-1 xl:grid-cols-3 gap-3'>
-        <Card title='Tráfico por hora (hoy)' right={<span className='kbd-hint'>Hoy</span>}>
+        <Card title={t('pos.analytics.cards.trafficToday')} right={<span className='kbd-hint'>{t('pos.analytics.labels.today')}</span>}>
           <Sparkline data={data.sparkline} />
         </Card>
-        <Card title='Ventas por categoría' right={<span className='kbd-hint'>7d</span>}>
+        <Card title={t('pos.analytics.cards.salesByCategory')} right={<span className='kbd-hint'>7d</span>}>
           <DonutChart segments={donutAngles} />
         </Card>
-        <Card title='Ranking rápido (14 días)'>
+        <Card title={t('pos.analytics.cards.ranking14d')}>
           <BarChart data={data.barDaily} />
         </Card>
       </section>
 
       {/* Insights strip */}
       <section className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-        <InsightCard icon='⚡' title='Hora pico' value='14:00 - 16:00' hint='Mayor flujo de tickets' />
-        <InsightCard icon='🥤' title='Top categoría' value='Bebidas (42%)' hint='Capuccino y Latte dominan' />
-        <InsightCard icon='🧍' title='Prom. por ticket' value={`$ ${num(data.kpis.avgTicket)}`} hint='Estrategia de upsell efectiva' />
+        <InsightCard icon='⚡' title={t('pos.analytics.insights.peakHour.title')} value='14:00 - 16:00' hint={t('pos.analytics.insights.peakHour.hint')} />
+        <InsightCard icon='🥤' title={t('pos.analytics.insights.topCategory.title')} value={t('pos.analytics.insights.topCategory.value')} hint={t('pos.analytics.insights.topCategory.hint')} />
+        <InsightCard icon='🧍' title={t('pos.analytics.insights.avgTicket.title')} value={`$ ${num(data.kpis.avgTicket, locale)}`} hint={t('pos.analytics.insights.avgTicket.hint')} />
       </section>
 
       {/* Heatmap */}
       <section>
-        <Card title='Heatmap (hora × día)'>
+        <Card title={t('pos.analytics.cards.heatmap')}>
           <Heatmap data={data.heatmap} />
         </Card>
       </section>
@@ -320,7 +326,7 @@ const Sparkline: React.FC<{ data: { h:number; v:number }[] }>=({ data })=> {
   const pts = data.map((d,i) => `${(i/(data.length-1))*100},${100 - (d.v/max)*100}`).join(' ');
   const [hover, setHover] = useState<{i:number;x:number;y:number;v:number}|null>(null);
   return (
-    <svg viewBox='0 0 100 40' role='img' aria-label='Sparkline de tráfico por hora' className='w-full h-24' onMouseLeave={()=>setHover(null)}>
+    <svg viewBox='0 0 100 40' role='img' aria-label='Sparkline' className='w-full h-24' onMouseLeave={()=>setHover(null)}>
       <polyline points={pts} fill='none' stroke='var(--pos-accent-green)' strokeWidth='2' vectorEffect='non-scaling-stroke' />
       <linearGradient id='grad' x1='0' y1='0' x2='0' y2='1'>
         <stop offset='0%' stopColor='var(--pos-accent-green)' stopOpacity='0.22' />
@@ -354,7 +360,7 @@ const BarChart: React.FC<{ data: { d:string; v:number }[] }>=({ data })=> {
         const h = Math.max(6, Math.round((b.v/max)*100));
         return (
           <div key={i} className='flex flex-col items-center gap-1'>
-            <div className='w-3 rounded-sm transition-transform hover:scale-y-105' title={`$ ${num(b.v)}`} style={{height:`${h}%`, background:'var(--pos-accent-green)'}} aria-label={`${b.d}: $${num(b.v)}`} />
+            <div className='w-3 rounded-sm transition-transform hover:scale-y-105' title={`$ ${b.v.toLocaleString()}`} style={{height:`${h}%`, background:'var(--pos-accent-green)'}} aria-label={`${b.d}: $${b.v.toLocaleString()}`} />
             <div className='text-[10px]' style={{color:'var(--pos-text-muted)'}}>{b.d}</div>
           </div>
         );

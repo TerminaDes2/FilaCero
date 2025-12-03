@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { SignupForm } from '../../auth/SignupForm';
 import { useUserStore } from '../../../state/userStore';
@@ -118,7 +119,7 @@ export function AuthFormSection({ onBackToSelection }: AuthFormSectionProps) {
                 {t('auth.register.alreadyAccount.prefix')}
               </p>
               <a 
-                href="/login"
+                href="/auth/login"
                 className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-600 hover:text-brand-700 transition-colors group"
               > 
                 {t('auth.register.alreadyAccount.action')}

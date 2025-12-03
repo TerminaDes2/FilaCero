@@ -4,7 +4,8 @@ import Stripe from 'stripe';
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
-  private stripe: Stripe | null = null;
+  // Usamos `any` explícito para evitar intersecciones privadas problemáticas
+  private stripe: any = null;
 
   constructor() {
     const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -12,8 +13,9 @@ export class StripeService {
       this.logger.warn('Stripe deshabilitado: STRIPE_SECRET_KEY no configurada. Los flujos de pago usarán modo mock.');
       return;
     }
-    this.stripe = new Stripe(secretKey, {
-      apiVersion: '2025-10-29.clover',
+    // Cast a any para que TS no intente inferir intersecciones con `this`
+    this.stripe = new (Stripe as any)(secretKey, {
+      apiVersion: '2025-11-17.clover',
     });
     this.logger.log('✅ Stripe SDK inicializado');
   }

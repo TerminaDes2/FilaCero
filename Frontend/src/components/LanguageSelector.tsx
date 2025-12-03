@@ -3,10 +3,19 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Check, Globe2 } from "lucide-react";
 import { useLanguageStore } from "../state/languageStore";
 
+function useHasMounted() {
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  return hasMounted;
+}
+
 type LanguageCode = "es-MX" | "en-US";
 
 interface LanguageSelectorProps {
   variant?: "compact" | "panel";
+  theme?: "light" | "dark";
 }
 
 interface LanguageOption {
@@ -21,14 +30,17 @@ const languages: LanguageOption[] = [
   { code: "en-US", label: "English", flag: "🇺🇸", helper: "North America" }
 ];
 
-export default function LanguageSelector({ variant = "compact" }: LanguageSelectorProps) {
+export default function LanguageSelector({ variant = "compact", theme }: LanguageSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { locale, setLocale } = useLanguageStore();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const hasMounted = useHasMounted();
 
   const currentLanguage = useMemo(() => {
+    // Always use Spanish as default until mounted to match SSR
+    if (!hasMounted) return languages[0]; // es-MX
     return languages.find((lang) => lang.code === locale) ?? languages[0];
-  }, [locale]);
+  }, [locale, hasMounted]);
 
   useEffect(() => {
     if (variant !== "compact") return;
@@ -53,6 +65,9 @@ export default function LanguageSelector({ variant = "compact" }: LanguageSelect
   };
 
   const ariaLabel = locale?.startsWith("en") ? "Change language" : "Cambiar idioma";
+
+  // Forzar tema claro en POS
+  const forceLight = theme === "light";
 
   if (variant === "panel") {
     return (
@@ -105,7 +120,11 @@ export default function LanguageSelector({ variant = "compact" }: LanguageSelect
         onClick={() => setIsOpen((value) => !value)}
         className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${
           isOpen
-            ? "border-brand-300 bg-white text-brand-600 shadow-md dark:border-brand-400/60 dark:bg-slate-950/70 dark:text-brand-200"
+            ? forceLight
+              ? "border-brand-300 bg-white text-brand-600 shadow-md"
+              : "border-brand-300 bg-white text-brand-600 shadow-md dark:border-brand-400/60 dark:bg-slate-950/70 dark:text-brand-200"
+            : forceLight
+            ? "border-brand-200/70 bg-white/85 text-brand-600 shadow-sm hover:border-brand-300 hover:bg-white"
             : "border-brand-200/70 bg-white/85 text-brand-600 shadow-sm hover:border-brand-300 hover:bg-white dark:border-white/15 dark:bg-slate-950/70 dark:text-brand-200 dark:hover:border-brand-400/50"
         }`}
         aria-label={ariaLabel}
@@ -113,17 +132,25 @@ export default function LanguageSelector({ variant = "compact" }: LanguageSelect
         aria-haspopup="listbox"
       >
         <span className="sr-only">{currentLanguage.label}</span>
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-lg shadow-inner dark:bg-slate-900/80">
+        <span className={`grid h-8 w-8 place-items-center rounded-full text-lg shadow-inner ${
+          forceLight ? "bg-white/90" : "bg-white/90 dark:bg-slate-900/80"
+        }`}>
           {isOpen ? <Globe2 className="h-4 w-4" aria-hidden /> : currentLanguage.flag}
         </span>
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 bottom-12 z-50 mb-2 w-48 overflow-hidden rounded-2xl border border-brand-100/70 bg-white/95 p-2 shadow-xl shadow-brand-100/40 backdrop-blur-sm dark:border-white/12 dark:bg-slate-950/95 dark:shadow-slate-950/50">
-          <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.38em] text-brand-500/70 dark:text-brand-200/80">
+        <div className={`absolute right-0 top-11 z-50 w-52 rounded-2xl border px-3 py-3 shadow-xl backdrop-blur-md ${
+          forceLight
+            ? "border-slate-200 bg-white shadow-slate-200"
+            : "border-[rgba(255,255,255,0.35)] bg-[rgba(3,7,18,0.96)] shadow-[rgba(15,23,42,0.85)]"
+        }`}>
+          <div className={`px-1 pb-2 text-[11px] font-semibold uppercase tracking-[0.38em] ${
+            forceLight ? "text-slate-600" : "text-[rgba(248,250,252,0.7)]"
+          }`}>
             {locale?.startsWith("en") ? "Language" : "Idioma"}
           </div>
-          <div className="grid gap-1.5" role="listbox">
+          <div className="space-y-1.5" role="listbox">
             {languages.map((lang) => {
               const isActive = lang.code === locale;
               return (
@@ -131,19 +158,40 @@ export default function LanguageSelector({ variant = "compact" }: LanguageSelect
                   key={lang.code}
                   type="button"
                   onClick={() => handleSelect(lang.code)}
-                  className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${
-                    isActive
-                      ? "bg-brand-50/85 text-brand-700 shadow-sm dark:bg-brand-500/25 dark:text-brand-50"
-                      : "text-[var(--fc-text-primary)] hover:bg-brand-50/60 dark:text-[var(--fc-text-primary)] dark:hover:bg-[rgba(15,23,42,0.9)]"
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 ${
+                    forceLight
+                      ? isActive
+                        ? "bg-brand-100 text-brand-700 shadow-sm focus-visible:ring-brand-400"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-brand-400"
+                      : isActive
+                      ? "bg-[rgba(136,19,55,0.92)] text-[rgba(252,231,243,0.98)] shadow-sm focus-visible:ring-[rgba(244,114,182,0.8)]"
+                      : "text-slate-100 hover:bg-[rgba(15,23,42,0.9)] hover:text-white focus-visible:ring-[rgba(244,114,182,0.8)]"
                   }`}
                   role="option"
                   aria-selected={isActive}
                 >
-                  <span className="flex items-center gap-2">
-                    <span className="text-base">{lang.flag}</span>
-                    <span className="font-medium">{lang.label}</span>
+                  <span className="flex items-center gap-3">
+                    <span className={`inline-flex items-center justify-center rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide ${
+                      forceLight
+                        ? isActive
+                          ? "bg-brand-200 text-brand-800"
+                          : "bg-slate-200 text-slate-600"
+                        : isActive
+                        ? "bg-[rgba(30,64,175,0.9)] text-[rgba(219,234,254,0.98)]"
+                        : "bg-[rgba(15,23,42,0.9)] text-[rgba(148,163,184,0.95)]"
+                    }`}>
+                      {lang.code === "es-MX" ? "MX" : "US"}
+                    </span>
+                    <span className="flex flex-col items-start">
+                      <span className="font-medium leading-snug">{lang.label}</span>
+                      <span className={`text-[11px] ${
+                        forceLight ? "text-slate-500" : "text-[rgba(148,163,184,0.9)]"
+                      }`}>{lang.helper}</span>
+                    </span>
                   </span>
-                  {isActive ? <Check className="h-4 w-4 text-brand-500" aria-hidden /> : null}
+                  {isActive ? <Check className={`h-4 w-4 ${
+                    forceLight ? "text-brand-600" : "text-[rgba(248,187,208,0.95)]"
+                  }`} aria-hidden /> : null}
                 </button>
               );
             })}

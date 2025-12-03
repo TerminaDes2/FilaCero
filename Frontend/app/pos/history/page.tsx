@@ -4,6 +4,7 @@ import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { SalesHistoryList } from '../../../src/components/pos/history/SalesHistoryList';
 import { CartProvider } from '../../../src/pos/cartContext';
+import LanguageSelector from '../../../src/components/LanguageSelector';
 
 export default function SalesHistoryPage() {
   return (
@@ -22,7 +23,10 @@ export default function SalesHistoryPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo showLogout />
+            <div className='flex items-center gap-4'>
+              <LanguageSelector variant="compact" theme="light" />
+              <TopRightInfo showLogout />
+            </div>
           </div>
 
           {/* Panel area */}

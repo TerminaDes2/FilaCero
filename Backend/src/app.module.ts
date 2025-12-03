@@ -25,6 +25,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TranslationModule } from './translation/translation.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -55,7 +56,7 @@ import { TranslationModule } from './translation/translation.module';
     PaymentsModule,
     NotificationsModule, // módulo de notificaciones WebSocket y email
     ScheduleModule.forRoot(), // para cron jobs de limpieza
-    TranslationModule, // módulo de traducción (Azure Cognitive Services)
+    TranslationModule, CloudinaryModule, // módulo de traducción (Azure Cognitive Services)
   ],
   controllers: [HealthController, RecoverController],
   providers: [],

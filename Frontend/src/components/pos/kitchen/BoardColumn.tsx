@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { KitchenStatus, Ticket } from '../../../state/kitchenBoardStore';
 import { TicketCard } from './TicketCard';
 
@@ -13,6 +14,7 @@ interface Props {
 
 export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove, onCancel }) => {
   const [over, setOver] = React.useState(false);
+  const { t } = useTranslation();
   return (
     <div
       className={`flex-1 min-w-[260px] rounded-2xl border shadow-sm p-3 flex flex-col gap-3 bg-white transition ${over ? 'ring-2 ring-[var(--pos-accent-green)]' : ''}`}
@@ -32,7 +34,7 @@ export const BoardColumn: React.FC<Props> = ({ title, status, tickets, onMove, o
           <TicketCard key={t.id} ticket={t} onMove={(to) => onMove(t.id, to)} onCancel={() => onCancel && onCancel(t.id)} />
         ))}
         {tickets.length === 0 && (
-          <div className="text-xs px-1 py-6 text-center" style={{ color: 'var(--pos-text-muted)' }}>Nada por aquí…</div>
+          <div className="text-xs px-1 py-6 text-center" style={{ color: 'var(--pos-text-muted)' }}>{t('pos.kitchen.board.emptyColumn')}</div>
         )}
       </div>
     </div>

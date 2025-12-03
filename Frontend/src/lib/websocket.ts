@@ -115,7 +115,7 @@ class WebSocketClient {
       this.clearReconnectionTimer();
     });
 
-    this.socket.on('disconnect', (reason) => {
+    this.socket.on('disconnect', (reason: Socket.DisconnectReason) => {
       console.log('[WebSocket] Disconnected:', reason);
       this.stopHeartbeat();
 
@@ -124,7 +124,7 @@ class WebSocketClient {
       }
     });
 
-    this.socket.on('connect_error', async (error) => {
+    this.socket.on('connect_error', async (error: Error) => {
       console.error('[WebSocket] Connection error:', error);
       
       // Si el error es de autenticación, intentar renovar token
@@ -136,7 +136,7 @@ class WebSocketClient {
       }
     });
 
-    this.socket.on('error', (error) => {
+    this.socket.on('error', (error: Error) => {
       console.error('[WebSocket] Socket error:', error);
     });
 
@@ -145,11 +145,11 @@ class WebSocketClient {
       this.handleMaxReconnections();
     });
 
-    this.socket.on('connected', (data) => {
+    this.socket.on('connected', (data: any) => {
       console.log('[WebSocket] Server confirmed connection:', data);
     });
 
-    this.socket.on('joined-room', (data) => {
+    this.socket.on('joined-room', (data: any) => {
       console.log('[WebSocket] Joined room:', data);
     });
 
