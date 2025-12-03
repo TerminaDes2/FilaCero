@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from 'react';
 import ProductCard, { Product } from '../ProductCard';
 import { api } from '../../../lib/api';

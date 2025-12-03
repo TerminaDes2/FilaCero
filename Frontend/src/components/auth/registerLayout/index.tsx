@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { BrandLogo } from '../../BrandLogo';
 import LanguageSelector from '../../LanguageSelector';
@@ -35,14 +36,10 @@ export function RegisterLayout({
       </div>
 
       {/* Selector a la izquierda y botón Volver a la derecha, con separación limpia */}
-      <div className="absolute top-4 right-16 z-30 flex items-center gap-8">
-        <div className="mr-8 mt-4">
-          <LanguageSelector />
-        </div>
+      <div className="absolute top-4 right-4 z-30 flex items-center gap-6">
+        <LanguageSelector />
         {step === 'form' && (
-          <div className="ml-20">
-            <BackButton onBackToSelection={onBackToSelection} />
-          </div>
+          <BackButton onBackToSelection={onBackToSelection} />
         )}
       </div>
 

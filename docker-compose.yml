@@ -56,6 +56,8 @@ services:
       - NEXT_PUBLIC_NEGOCIO_ID=1
       - NODE_ENV=development
       - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dlu0fmucb
+      - NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=filacero_products
     volumes:
       - ./Frontend:/app
       - /app/node_modules

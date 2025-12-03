@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { ProductGrid } from './ProductGrid';
 import { NewProductPanel } from './NewProductPanel'; // Asegúrate que este es el nombre de tu formulario
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const ProductsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,14 +27,14 @@ export const ProductsPage: React.FC = () => {
           onClick={() => setIsPanelOpen(true)}
           className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
         >
-          Nuevo producto
+          {t('pos.products.actions.new')}
         </button>
       </div>
       
       <div className="controls-bar mb-4">
         <input
           type="text"
-          placeholder="Buscar productos..."
+          placeholder={t('pos.search.placeholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="p-2 border rounded w-full md:w-1/3"

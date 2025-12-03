@@ -4,12 +4,15 @@ import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { SearchBox } from '../../../src/components/pos/controls/SearchBox';
 import { ViewToggle } from '../../../src/components/pos/controls/ViewToggle';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
+import LanguageSelector from '../../../src/components/LanguageSelector';
 import { AdminProductGrid } from '../../../src/components/pos/products/AdminProductGrid';
 import { NewProductPanel } from '../../../src/components/pos/products/NewProductPanel';
 import { CartProvider } from '../../../src/pos/cartContext';
 import { useSettingsStore } from '../../../src/state/settingsStore';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
 export default function ProductsAdminPage() {
+  const { t } = useTranslation();
   const settings = useSettingsStore();
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'grid' | 'list'>(settings.defaultView);
@@ -73,7 +76,10 @@ export default function ProductsAdminPage() {
               <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
               <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
             </h1>
-            <TopRightInfo showLogout />
+            <div className='flex items-center gap-4'>
+              <LanguageSelector variant="compact" theme="light" />
+              <TopRightInfo showLogout />
+            </div>
           </div>
 
           {/* Panel area */}
@@ -86,7 +92,7 @@ export default function ProductsAdminPage() {
                 <div className='flex items-center flex-wrap gap-2'>
                   <ViewToggle value={view} onChange={setView} />
                   <div className='ml-0 md:ml-2 flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start'>
-                    <button onClick={() => setIsPanelOpen(true)} className='h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-accent-green)', color: '#fff' }}>Nuevo producto</button>
+                    <button onClick={() => setIsPanelOpen(true)} className='h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2' style={{ background: 'var(--pos-accent-green)', color: '#fff' }}>{t('pos.products.actions.new')}</button>
                   </div>
                 </div>
               </div>

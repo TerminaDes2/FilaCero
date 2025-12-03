@@ -19,7 +19,25 @@
       "titleHighlight": "cafeterías escolares",
       "subtitle": "Reduce filas y atiende más pedidos en cada receso. Sin apps nativas, sin hardware propietario, listo en minutos.",
       "ctaPrimary": "Crear cuenta gratis",
-      "ctaSecondary": "Compra ahora"
+      "ctaSecondary": "Compra ahora",
+      "socialProof": "Escuelas piloto ya operando sin filas",
+      "quickChips": {
+        "0": { "label": "< 5s orden", "desc": "flujo optimizado" },
+        "1": { "label": "100% responsive", "desc": "móvil primero" },
+        "2": { "label": "Sin descargas", "desc": "solo escanear" }
+      },
+      "advantages": {
+        "0": "Implementación sin fricción",
+        "1": "Funciona en cualquier dispositivo",
+        "2": "Optimizado para recreos cortos"
+      },
+      "disclaimer": {
+        "highlight": "Sin tarjeta",
+        "rest": " ni compromisos. Accede a todo el núcleo operativo gratis y agrega servicios opcionales cuando los necesites."
+      },
+      "alreadyAccount": {
+        "prefix": "¿Ya tienes cuenta?"
+      }
     },
     "cards": {
       "card1": { "badge": "Recreo matutino", "title": "Pedidos listos", "metric": "12" },
@@ -400,7 +418,62 @@
         "nameTip": "Usa un nombre fácil de recordar.",
         "hide": "Ocultar tips"
       },
+      "validation": {
+        "name": "Ingresa un nombre con al menos 2 caracteres.",
+        "email": "Correo inválido.",
+        "phone": "Teléfono demasiado corto.",
+        "logoUrl": "Proporciona una URL válida.",
+        "heroImageUrl": "Proporciona una URL válida."
+      },
+      "errors": {
+        "invalidForm": "Revisa los campos resaltados antes de continuar.",
+        "sessionExpired": "Tu sesión expiró. Inicia sesión nuevamente para crear un negocio.",
+        "logoTooBig": "El logo es demasiado pesado. Usa una imagen más ligera.",
+        "createFailed": "No pudimos crear tu negocio. Inténtalo de nuevo más tarde."
+      },
+      "branding": {
+        "badge": "Imagen de marca",
+        "title": "Personaliza tu presencia",
+        "description": "Usa URLs públicas (Cloudinary, Drive con acceso público, etc.)."
+      },
+      "form": {
+        "name": {
+          "label": "Nombre comercial",
+          "placeholder": "Ej. Café Aurora"
+        },
+        "email": {
+          "label": "Correo de contacto",
+          "placeholder": "contacto@tu-negocio.com",
+          "hint": "Usaremos este correo para comunicaciones administrativas."
+        },
+        "phone": {
+          "label": "Teléfono",
+          "placeholder": "Ej. +52 55 1234 5678"
+        },
+        "address": {
+          "label": "Dirección",
+          "placeholder": "Calle, número y ciudad",
+          "hint": "Opcional"
+        },
+        "footerNote": "Podrás editar cualquiera de estos datos desde Configuración."
+      },
+      "card": {
+        "title": "Completa tu negocio",
+        "subtitle": "Añade los datos básicos para comenzar"
+      },
+      "success": {
+        "inlineTitle": "¡Tu negocio está listo!",
+        "inlineSubtitle": "Ya puedes crear productos y comenzar a cobrar.",
+        "title": "Tu negocio está listo",
+        "subtitle": "Configura tu POS y comienza a operar.",
+        "goHome": "Volver al inicio",
+        "goPOS": "Ir al POS",
+        "note": "Podrás editar los datos del negocio en cualquier momento."
+      },
       "identity": {
+        "badge": "Perfil del negocio",
+        "title": "Identifica tu negocio",
+        "description": "Información básica para que tus clientes te reconozcan.",
         "name": {
           "label": "Nombre comercial",
           "placeholder": "Ej. Café Aurora"
@@ -533,7 +606,41 @@
   "common": {
     "edit": "Editar",
     "remove": "Quitar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "actions": {
+      "cancel": "Cancelar",
+      "retry": "Reintentar"
+    }
+  },
+  "checkout": {
+    "header": {
+      "backToShop": "Volver a la tienda",
+      "title": "Checkout guiado",
+      "subtitle": "Resuelve en tres pasos y envía la venta directo al POS.",
+      "badge": "Sin filas, sin terminal compartida"
+    },
+    "empty": {
+      "title": "Tu carrito está vacío",
+      "subtitle": "Explora la tienda para elegir productos antes de confirmar el pedido."
+    },
+    "flow": {
+      "badge": "Flujo",
+      "title": "Paso {{current}} de {{total}}",
+      "prev": "Paso anterior"
+    },
+    "payment": {
+      "success": "Pago procesado. Pedido enviado a cocina.",
+      "stripeNotConfigured": "Stripe no está configurado en el frontend (falta NEXT_PUBLIC_STRIPE_PK)."
+    },
+    "delivery": {
+      "stepBadge": "Paso 1",
+      "title": "Define la ventana de retiro",
+      "subtitle": "Elige entre los horarios sugeridos o marca la hora exacta en la que pasarás por tu pedido.",
+      "manualTitle": "¿Prefieres un horario exacto?",
+      "manualSubtitle": "Ingresa la hora para que cocina lo sincronice con su kanban.",
+      "reset": "Resetear",
+      "note": "Cocina recibirá este horario junto con la venta para organizar la producción."
+    }
   },
   "pos": {
     "sidebar": {
@@ -578,9 +685,289 @@
       "syncedHoursAgo": "actualizado hace {{hours}} horas",
       "syncing": "Sincronizando cocina…",
       "waitingData": "Esperando datos de cocina"
+    },
+    "history": {
+      "error": "No se pudo cargar el historial.",
+      "loading": "Cargando historial…",
+      "filters": {
+        "status": {
+          "all": "Todas",
+          "paid": "Pagadas",
+          "open": "Abiertas",
+          "cancelled": "Canceladas"
+        }
+      },
+      "empty": {
+        "title": "Sin ventas en el rango",
+        "subtitle": "Ajusta filtros o periodo."
+      },
+      "saleId": "Folio #{{id}}",
+      "noDate": "Sin fecha",
+      "itemFallback": "Producto",
+      "noCustomer": "Sin cliente",
+      "noPaymentType": "Sin método"
+    },
+    "cashout": {
+      "title": "Corte de caja",
+      "coverage": {
+        "fullDay": "Cobertura: día completo",
+        "sinceLast": "Cobertura: desde último corte"
+      },
+      "controls": {
+        "fullDay": "Todo el día",
+        "lastCut": "Último corte",
+        "refresh": "Actualizar",
+        "refreshing": "Actualizando…"
+      },
+      "cards": {
+        "salesCount": { "title": "Ventas registradas" },
+        "salesAmount": { "title": "Monto vendido" },
+        "expectedCash": { "title": "Efectivo esperado" },
+        "difference": { "title": "Diferencia" }
+      },
+      "recentSales": {
+        "title": "Ventas recientes",
+        "count": "{{count}} tickets"
+      },
+      "history": {
+        "title": "Historial de cortes"
+      },
+      "form": {
+        "title": "Registrar corte",
+        "subtitle": "Verifica montos y confirma el cierre del turno.",
+        "nextShift": "Sugerido para el siguiente turno:",
+        "fields": {
+          "openAmount": "Monto inicial",
+          "closeAmount": "Monto final contado"
+        },
+        "currentDiff": "Diferencia actual:",
+        "actions": {
+          "saving": "Guardando…",
+          "confirm": "Confirmar corte"
+        }
+      },
+      "lastCashout": {
+        "label": "Último corte: {{date}} · {{amount}}"
+      },
+      "business": {
+        "unnamed": "Negocio sin nombre",
+        "none": "Sin negocios"
+      },
+      "errors": {
+        "businessLoad": "No se pudieron cargar los negocios",
+        "summary": "No se pudo obtener el resumen",
+        "history": "No se pudo obtener el historial"
+      }
+    },
+    "products": {
+      "actions": {
+        "new": "Nuevo producto",
+        "generateSku": "Generar",
+        "refreshCategories": "Actualizar",
+        "closeEditor": "Cerrar editor",
+        "creating": "Creando…",
+        "create": "Crear →"
+      },
+      "form": {
+        "required": "El nombre y el precio son obligatorios."
+      },
+      "errors": {
+        "generic": "Ocurrió un error al guardar el producto.",
+        "unauthorized": "No autenticado. Inicia sesión para crear productos.",
+        "forbidden": "No tienes permisos para crear productos (requiere rol admin).",
+        "badRequest": "Datos inválidos (JSON) o archivo no válido."
+      },
+      "header": {
+        "badge": "Nuevo"
+      },
+      "sections": {
+        "basicInfo": "Información básica",
+        "image": "Imagen del producto",
+        "priceStock": "Precio y stock",
+        "preview": "Vista previa"
+      },
+      "labels": {
+        "name": "Nombre",
+        "sku": "SKU",
+        "category": "Categoría",
+        "price": "Precio",
+        "stock": "Stock",
+        "status": "Estado"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "categories": {
+        "error": "No se pudieron cargar las categorías. Intenta nuevamente.",
+        "none": "Sin categoría",
+        "loading": "Cargando categorías…"
+      },
+      "image": {
+        "previewAlt": "Vista previa del producto",
+        "remove": "Quitar imagen",
+        "uploadTitle": "Subir una imagen",
+        "uploadSubtitle": "Click para seleccionar"
+      },
+      "fallbackName": "Producto",
+      "hints": {
+        "escapeToClose": "Esc para cerrar"
+      }
+    },
+    "employees": {
+      "error": "Error al cargar empleados",
+      "empty": {
+        "title": "No hay empleados registrados",
+        "subtitle": "Comienza agregando tu primer empleado al equipo"
+      },
+      "actions": {
+        "addFirst": "Agregar primer empleado",
+        "new": "Nuevo empleado"
+      },
+      "keyboard": {
+        "newEmployee": "Nuevo empleado",
+        "changeView": "Cambiar vista"
+      },
+      "noResults": {
+        "title": "No se encontraron empleados",
+        "subtitle": "Intenta con otro término de búsqueda o filtro"
+      },
+      "stats": {
+        "total": "Total",
+        "active": "Activos",
+        "inactive": "Inactivos"
+      },
+      "filters": {
+        "all": "Todos",
+        "active": "Activos",
+        "inactive": "Inactivos"
+      },
+      "form": {
+        "errors": {
+          "emailRequired": "El correo electrónico es requerido",
+          "emailInvalid": "Por favor ingresa un correo electrónico válido",
+          "generic": "Error al agregar el empleado"
+        },
+        "aria": {
+          "closeEditor": "Cerrar editor de empleado"
+        },
+        "badge": {
+          "new": "Nuevo"
+        },
+        "fallbackName": "Empleado",
+        "sections": {
+          "basicInfo": "Información básica",
+          "initialStatus": "Estado inicial"
+        },
+        "fields": {
+          "email": "Correo electrónico",
+          "fullName": "Nombre completo (opcional)"
+        },
+        "helper": {
+          "nameFromEmail": "Si no se especifica, usaremos la parte antes de @ del correo.",
+          "initialStatus": "Si eliges inactivo, se desactivará justo después de crear la relación."
+        },
+        "status": {
+          "active": "Activo",
+          "inactive": "Inactivo"
+        },
+        "actions": {
+          "creating": "Creando…",
+          "add": "Agregar →"
+        }
+      }
+    },
+    "categories": {
+      "actions": {
+        "new": "Nueva categoría"
+      },
+      "form": {
+        "errors": {
+          "nameRequired": "El nombre es obligatorio.",
+          "nameDuplicate": "Ya existe una categoría con este nombre.",
+          "emojiLength": "El emoji debe tener máximo 2 caracteres.",
+          "branchOrAll": "Selecciona una sucursal o marca \"Aplicar a todos\".",
+          "generic": "Ocurrió un error inesperado."
+        },
+        "badge": {
+          "new": "Nueva"
+        },
+        "fallbackName": "Categoría",
+        "sections": {
+          "basicInfo": "Información básica"
+        },
+        "fields": {
+          "name": "Nombre",
+          "color": "Color",
+          "emoji": "Emoji (opcional)",
+          "branch": "Sucursal",
+          "applyAll": "Aplicar a todos"
+        },
+        "business": {
+          "none": "Sin negocios",
+          "select": "Selecciona…",
+          "requiredIfNotAll": "Requerido si no aplicas a todos."
+        },
+        "preview": {
+          "title": "Vista previa"
+        },
+        "actions": {
+          "creating": "Creando…",
+          "create": "Crear →"
+        }
+      }
+    },
+    "common": {
+      "hints": {
+        "escToClose": "Esc para cerrar"
+      }
+    },
+    "analytics": {
+      "error": "No se pudieron cargar las métricas.",
+      "kpis": {
+        "revenue": "Ingresos",
+        "tickets": "Tickets",
+        "avgTicket": "Ticket promedio",
+        "itemsSold": "Artículos vendidos"
+      },
+      "cards": {
+        "trafficToday": "Tráfico por hora (hoy)",
+        "salesByCategory": "Ventas por categoría",
+        "ranking14d": "Ranking rápido (14 días)",
+        "heatmap": "Heatmap (hora × día)"
+      },
+      "labels": {
+        "today": "Hoy"
+      },
+      "insights": {
+        "peakHour": {
+          "title": "Hora pico",
+          "hint": "Mayor flujo de tickets"
+        },
+        "topCategory": {
+          "title": "Top categoría",
+          "value": "Bebidas (42%)",
+          "hint": "Capuccino y Latte dominan"
+        },
+        "avgTicket": {
+          "title": "Prom. por ticket",
+          "hint": "Estrategia de upsell efectiva"
+        }
+      }
+    },
+    "search": {
+      "placeholder": "Buscar productos...",
+      "clear": "Limpiar"
+    },
+    "settings": {
+      "search": {
+        "placeholder": "Buscar en configuración..."
+      },
+      "sections": {
+        "label": "Secciones de configuración"
+      }
     }
-  }
-  ,
+  },
   "shop": {
     "guest": {
       "badge": "Tienda digital",
@@ -728,6 +1115,56 @@
       },
       "since": "Desde {{date}}",
       "visit": "Visitar tienda"
+    },
+    "cart": {
+      "title": "Tu pedido",
+      "itemsCount": "{{count}} {{count, plural, one {artículo} other {artículos}}}",
+      "closeAria": "Cerrar carrito",
+      "emptyTitle": "Tu carrito está vacío",
+      "emptySubtitle": "Empieza agregando productos deliciosos.",
+      "noImage": "Sin imagen",
+      "decrementAria": "Restar cantidad",
+      "incrementAria": "Sumar cantidad",
+      "remove": "Eliminar",
+      "total": "Total",
+      "clear": "Vaciar",
+      "checkoutNow": "Pagar ahora",
+      "taxesIncluded": "Impuestos incluidos donde aplique.",
+      "emptyAction": "Añade productos para poder pagar.",
+      "dialogAria": "Carrito"
+    },
+    "product": {
+      "noImage": "Imagen",
+      "stockLabel": "Stock: {{count}}",
+      "add": "Añadir"
+    },
+    "nav": {
+      "storeBadge": "Tienda",
+      "searchPlaceholder": "Buscar en la tienda",
+      "searchClearAria": "Limpiar búsqueda",
+      "searchMobileAria": "Buscar productos",
+      "notificationsAria": "Notificaciones",
+      "cart": {
+        "badge": "Carrito",
+        "emptyTitle": "Tu carrito",
+        "itemsTitle": "{{count}} artículo{{count, plural, one {} other {s}}}",
+        "emptySubtitle": "Aún sin productos",
+        "readyToPay": "Listo para pagar",
+        "openAria": "Abrir carrito"
+      }
+    },
+    "sidebar": {
+      "sectionsAria": "Secciones de compra",
+      "home": "Inicio",
+      "grocery": "Despensa",
+      "retail": "Retail",
+      "convenience": "Conveniencia",
+      "beauty": "Belleza",
+      "gifts": "Tarjetas de regalo",
+      "cbd": "CBD/THC",
+      "party": "Fiesta",
+      "browseAll": "Ver todo",
+      "authCta": "Crear cuenta o iniciar sesión"
     }
   }
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
+import { useTranslation } from "../../hooks/useTranslation";
 
 const currencyFormatter = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -13,6 +14,7 @@ const currencyFormatter = new Intl.NumberFormat("es-MX", {
 export default function CartSlide() {
   const { open, toggleOpen, items, total, updateQty, removeFromCart, clearCart } = useCart();
   const [isMobile, setIsMobile] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -46,11 +48,12 @@ export default function CartSlide() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
           </span>
           <div>
-            <h3 className="text-base font-semibold leading-tight text-slate-900 dark:text-white">Tu pedido</h3>
-            <p className="text-xs text-gray-500 dark:text-slate-400">{count} {count === 1 ? 'artículo' : 'artículos'}</p>
+            <h3 className="text-base font-semibold leading-tight text-slate-900 dark:text-white">{t("shop.cart.title")}</h3>
+            <p className="text-xs text-gray-500 dark:text-slate-400">{t("shop.cart.itemsCount", { count })}</p>
           </div>
         </div>
-        <button onClick={() => toggleOpen(false)} aria-label="Cerrar carrito" className="rounded-full p-2 hover:bg-black/5 dark:text-slate-300 dark:hover:bg-white/10">
+        <button onClick={() => toggleOpen(false)} aria-label={t("shop.cart.closeAria")}
+          className="rounded-full p-2 hover:bg-black/5 dark:text-slate-300 dark:hover:bg-white/10">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
       </div>
@@ -67,8 +70,8 @@ export default function CartSlide() {
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border border-[var(--fc-border-soft)] bg-gradient-to-br from-[var(--fc-teal-50)] to-[var(--fc-brand-50)] transition-colors dark:border-white/12 dark:bg-[color:rgba(12,18,32,0.72)]">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-400 transition-colors dark:text-slate-400"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" /><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
           </div>
-          <p className="mt-3 text-sm font-medium text-gray-700 transition-colors dark:text-white">Tu carrito está vacío</p>
-          <p className="text-xs text-gray-500 transition-colors dark:text-white/60">Empieza agregando productos deliciosos.</p>
+          <p className="mt-3 text-sm font-medium text-gray-700 transition-colors dark:text-white">{t("shop.cart.emptyTitle")}</p>
+          <p className="text-xs text-gray-500 transition-colors dark:text-white/60">{t("shop.cart.emptySubtitle")}</p>
         </div>
       ) : (
         items.map((item) => (
@@ -78,7 +81,7 @@ export default function CartSlide() {
                 {item.imagen ? (
                   <Image src={item.imagen} alt={item.nombre} fill className="object-cover" sizes="64px" unoptimized />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400 transition-colors dark:text-white/45">Sin imagen</div>
+                  <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400 transition-colors dark:text-white/45">{t("shop.cart.noImage")}</div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -88,16 +91,16 @@ export default function CartSlide() {
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <div className="inline-flex items-center rounded-full border border-[var(--fc-border-soft)] transition-colors dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.35)]">
-                    <button className="flex h-7 w-7 items-center justify-center rounded-l-full text-slate-700 hover:bg-slate-50 dark:text-white/80 dark:hover:bg-white/10" onClick={() => updateQty(item.id, item.cantidad - 1)} aria-label="Restar">
+                    <button className="flex h-7 w-7 items-center justify-center rounded-l-full text-slate-700 hover:bg-slate-50 dark:text-white/80 dark:hover:bg-white/10" onClick={() => updateQty(item.id, item.cantidad - 1)} aria-label={t("shop.cart.decrementAria")}>
                       −
                     </button>
                     <span className="w-8 select-none text-center text-sm font-medium text-slate-900 dark:text-white">{item.cantidad}</span>
-                    <button className="flex h-7 w-7 items-center justify-center rounded-r-full bg-[var(--fc-brand-600)] text-white hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]" onClick={() => updateQty(item.id, item.cantidad + 1)} aria-label="Sumar">
+                    <button className="flex h-7 w-7 items-center justify-center rounded-r-full bg-[var(--fc-brand-600)] text-white hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]" onClick={() => updateQty(item.id, item.cantidad + 1)} aria-label={t("shop.cart.incrementAria")}>
                       +
                     </button>
                   </div>
                   <button className="ml-1 text-[12px] text-gray-500 transition hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400" onClick={() => removeFromCart(item.id)}>
-                    Eliminar
+                    {t("shop.cart.remove")}
                   </button>
                 </div>
               </div>
@@ -113,7 +116,7 @@ export default function CartSlide() {
       {items.length > 0 ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 transition-colors dark:text-slate-400">Total</span>
+            <span className="text-sm text-gray-600 transition-colors dark:text-slate-400">{t("shop.cart.total")}</span>
             <span className="text-lg font-bold text-slate-900 dark:text-white">{currencyFormatter.format(total)}</span>
           </div>
           <div className="flex gap-2">
@@ -121,20 +124,20 @@ export default function CartSlide() {
               className="flex-1 h-10 rounded-lg border border-[var(--fc-border-soft)] text-sm font-medium transition hover:bg-slate-50 dark:border-white/12 dark:text-white/80 dark:hover:bg-white/5"
               onClick={() => { clearCart(); toggleOpen(false); }}
             >
-              Vaciar
+              {t("shop.cart.clear")}
             </button>
             <Link
               href="/checkout"
               onClick={() => toggleOpen(false)}
               className="flex-1 inline-flex h-10 items-center justify-center rounded-lg bg-[var(--fc-brand-600)] text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
             >
-              Pagar ahora
+              {t("shop.cart.checkoutNow")}
             </Link>
           </div>
-          <p className="text-[11px] text-gray-500 transition-colors dark:text-white/50">Impuestos incluidos donde aplique.</p>
+          <p className="text-[11px] text-gray-500 transition-colors dark:text-white/50">{t("shop.cart.taxesIncluded")}</p>
         </div>
       ) : (
-        <div className="text-center text-xs text-gray-500 transition-colors dark:text-white/60">Añade productos para poder pagar.</div>
+        <div className="text-center text-xs text-gray-500 transition-colors dark:text-white/60">{t("shop.cart.emptyAction")}</div>
       )}
     </div>
   );
@@ -145,7 +148,7 @@ export default function CartSlide() {
       <aside
         className={`fixed inset-y-0 right-0 z-40 hidden w-full max-w-[92vw] transform rounded-none border-l border-[var(--fc-border-soft)] bg-white/95 shadow-xl backdrop-blur-xl transition-transform duration-300 sm:block sm:w-[420px] sm:rounded-tl-3xl sm:rounded-bl-3xl dark:border-white/12 dark:bg-[color:rgba(4,7,16,0.98)] dark:shadow-[0_40px_120px_-60px_rgba(2,4,10,0.92)] ${open ? "translate-x-0" : "translate-x-full"}`}
         role="dialog"
-        aria-label="Carrito"
+        aria-label={t("shop.cart.dialogAria")}
         aria-modal="true"
       >
         {header}
@@ -159,7 +162,7 @@ export default function CartSlide() {
           className={`fixed inset-0 z-40 flex items-end justify-center px-3 pb-6 transition ${open ? "pointer-events-auto" : "pointer-events-none"}`}
           role="dialog"
           aria-modal="true"
-          aria-label="Carrito"
+          aria-label={t("shop.cart.dialogAria")}
         >
           <div className={`w-full max-w-md transform transition-all duration-300 ${open ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}>
             <div className="overflow-hidden rounded-3xl border border-[var(--fc-border-soft)] bg-white shadow-[0_24px_55px_-28px_rgba(15,23,42,0.75)] dark:border-white/12 dark:bg-[color:rgba(5,8,18,0.98)] dark:shadow-[0_38px_120px_-65px_rgba(2,4,10,0.95)]">

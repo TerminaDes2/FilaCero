@@ -1,6 +1,8 @@
+"use client";
 import React from 'react';
 import Image from 'next/image';
 import { useCart } from './CartContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export type Product = {
   id_producto: number | string;
@@ -14,6 +16,7 @@ export type Product = {
 
 export default function ProductCard({ product, showPrice = true }: { product: Product; showPrice?: boolean }) {
   const { addToCart } = useCart();
+  const { t } = useTranslation();
 
   const handleAdd = () => {
     addToCart({
@@ -32,7 +35,7 @@ export default function ProductCard({ product, showPrice = true }: { product: Pr
           {product.imagen ? (
             <Image src={product.imagen} alt={product.nombre} fill className="object-cover" sizes="96px" unoptimized />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">Imagen</div>
+            <div className="w-full h-full flex items-center justify-center text-gray-400">{t("shop.product.noImage")}</div>
           )}
         </div>
         <div className="flex-1">
@@ -41,14 +44,14 @@ export default function ProductCard({ product, showPrice = true }: { product: Pr
           <div className="mt-2 flex items-center justify-between">
             <div>
               <span className="inline-block px-2 py-1 rounded text-xs" style={{ background: 'var(--pos-badge-stock-bg)' }}>
-                Stock: {product.cantidad_actual ?? '-'}
+                {t("shop.product.stockLabel", { count: product.cantidad_actual ?? '-' })}
               </span>
               {product.categoria && <span className="ml-2 text-xs text-gray-500">· {product.categoria}</span>}
             </div>
             <div className="flex items-center gap-2">
               {showPrice && <div className="text-sm font-bold text-pos-text-heading">{Number(product.precio).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</div>}
               <button onClick={handleAdd} className="fc-btn-primary" style={{ background: 'var(--pos-accent-green)' }}>
-                Añadir
+                {t("shop.product.add")}
               </button>
             </div>
           </div>

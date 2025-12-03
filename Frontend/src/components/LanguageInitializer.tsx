@@ -4,11 +4,15 @@ import { useLanguageStore } from '../state/languageStore';
 
 export default function LanguageInitializer() {
   useEffect(() => {
-    // Forzamos siempre el español como predeterminado al iniciar la app.
-    // Esto sobrescribe una preferencia previa en localStorage (p.ej. 'en-US').
-    useLanguageStore.setState({ locale: 'es-MX' });
+    // After mount, restore user's saved preference if any
     try {
-      localStorage.setItem('language-locale', 'es-MX');
+      const stored = localStorage.getItem('language-locale');
+      if (stored === 'es-MX' || stored === 'en-US') {
+        useLanguageStore.setState({ locale: stored });
+      } else {
+        // If no valid stored value, set default
+        localStorage.setItem('language-locale', 'es-MX');
+      }
     } catch {}
   }, []);
 

@@ -118,13 +118,15 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ category, search, view
   if (error) return <div className='text-center py-24 text-red-500'>{error}</div>;
   if (filtered.length === 0) {
     return (
-      <div className='text-center py-16 px-4'>
-        <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
-          <circle cx='12' cy='12' r='7' />
-          <path d='M8 12h8' />
-        </svg>
-        <p className='text-sm font-medium text-slate-600 mt-3'>No hay resultados</p>
-        <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
+      <div className='flex items-center justify-center py-20'>
+        <div className='rounded-2xl px-6 py-6 text-center shadow-sm' style={{ background: 'var(--pos-bg-white)', boxShadow: 'inset 0 0 0 1px var(--pos-border-soft)' }}>
+          <svg viewBox='0 0 24 24' className='w-12 h-12 mx-auto text-slate-300' fill='none' stroke='currentColor' strokeWidth='1.4'>
+            <circle cx='12' cy='12' r='7' />
+            <path d='M8 12h8' />
+          </svg>
+          <p className='text-sm font-semibold text-slate-700 mt-3'>No hay resultados</p>
+          <p className='text-[13px] text-slate-600 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
+        </div>
       </div>
     );
   }

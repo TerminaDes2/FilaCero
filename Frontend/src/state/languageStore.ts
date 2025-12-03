@@ -10,11 +10,13 @@ interface LanguageState {
 }
 
 function getInitialLocale(): LocaleCode {
+  // Always return 'es-MX' for SSR to match the client initial render
+  // Client-side hydration will preserve this until useEffect runs
   if (typeof window === 'undefined') {
     return 'es-MX';
   }
-  const stored = window.localStorage.getItem('language-locale') as LocaleCode | null;
-  if (stored === 'es-MX' || stored === 'en-US') return stored;
+  // On client, also start with 'es-MX' to avoid hydration mismatch
+  // The actual stored value will be applied after mount
   return 'es-MX';
 }
 

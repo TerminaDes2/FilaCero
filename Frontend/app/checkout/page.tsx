@@ -11,6 +11,7 @@ import { useCart } from "../../src/components/shop/CartContext";
 import { useUserStore } from "../../src/state/userStore";
 import { useThemeStore } from "../../src/state/themeStore";
 import DeliveryTime from "../../src/components/checkout/deliveryTime";
+import { useTranslation } from "../../src/hooks/useTranslation";
 import { api, activeBusiness } from "../../src/lib/api";
 
 // Stripe init
@@ -167,6 +168,7 @@ const steps = [
 ];
 
 export default function CheckoutPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { items, total, updateQty, removeFromCart, clearCart } = useCart();
   const { isAuthenticated, user, loading: userLoading } = useUserStore();
@@ -398,7 +400,7 @@ export default function CheckoutPage() {
                     onError={(err: any) => setSubmitError(err?.message ?? String(err))}
                     clearCartAndRedirect={() => {
                       clearCart();
-                      setSuccessMessage('Pago procesado. Pedido enviado a cocina.');
+                      setSuccessMessage(t('checkout.payment.success'));
                       setTimeout(() => router.push('/shop?order=confirmed'), 900);
                     }}
                     onReady={(ref: any) => setCardFormRef(ref)}
@@ -406,7 +408,7 @@ export default function CheckoutPage() {
                 </Elements>
               ) : (
                 <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 transition-colors dark:border-rose-500/60 dark:bg-[color:rgba(136,19,55,0.28)] dark:text-rose-200">
-                  Stripe no está configurado en el frontend (falta NEXT_PUBLIC_STRIPE_PK).
+                  {t('checkout.payment.stripeNotConfigured')}
                 </div>
               )}
             </div>
@@ -425,16 +427,16 @@ export default function CheckoutPage() {
           <div className="flex flex-col gap-3 pb-6">
             <Link href="/shop" className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
               <ChevronLeft className="h-4 w-4" />
-              Volver a la tienda
+              {t('checkout.header.backToShop')}
             </Link>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Checkout guiado</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Resuelve en tres pasos y envía la venta directo al POS.</p>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white">{t('checkout.header.title')}</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('checkout.header.subtitle')}</p>
               </div>
               <span className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-50)] px-4 py-2 text-xs font-semibold text-[var(--fc-brand-600)] dark:bg-[color:rgba(30,64,175,0.25)] dark:text-[color:rgba(195,243,255,0.92)]">
                 <Sparkles className="h-4 w-4" />
-                Sin filas, sin terminal compartida
+                {t('checkout.header.badge')}
               </span>
             </div>
           </div>
@@ -445,13 +447,13 @@ export default function CheckoutPage() {
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--fc-brand-50)] text-[var(--fc-brand-600)] dark:bg-[color:rgba(30,64,175,0.25)] dark:text-[color:rgba(190,227,248,0.92)]">
                   <Sparkles className="h-6 w-6" />
                 </div>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Tu carrito está vacío</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Explora la tienda para elegir productos antes de confirmar el pedido.</p>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t('checkout.empty.title')}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('checkout.empty.subtitle')}</p>
                 <Link
                   href="/shop"
                   className="inline-flex items-center gap-2 rounded-full bg-[var(--fc-brand-600)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--fc-brand-500)] dark:bg-[var(--fc-brand-500)] dark:hover:bg-[var(--fc-brand-400)]"
                 >
-                  Volver a la tienda
+                  {t('checkout.header.backToShop')}
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -462,8 +464,8 @@ export default function CheckoutPage() {
                 <header className="border-b border-white/70 px-6 py-5 dark:border-white/10">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-500">Flujo</p>
-                      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Paso {activeStep} de {steps.length}</h2>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-500">{t('checkout.flow.badge')}</p>
+                      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t('checkout.flow.title', { current: activeStep, total: steps.length })}</h2>
                     </div>
                     <span className="text-xs text-slate-500 dark:text-slate-400">{paymentSummary}</span>
                   </div>
@@ -518,7 +520,7 @@ export default function CheckoutPage() {
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-700 dark:border-white/12 dark:text-slate-300 dark:hover:border-white/20 dark:hover:text-white"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Volver a la tienda
+                      {t('checkout.header.backToShop')}
                     </Link>
                   ) : (
                     <button
@@ -527,7 +529,7 @@ export default function CheckoutPage() {
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-700 dark:border-white/12 dark:text-slate-300 dark:hover:border-white/20 dark:hover:text-white"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Paso anterior
+                      {t('checkout.flow.prev')}
                     </button>
                   )}
 

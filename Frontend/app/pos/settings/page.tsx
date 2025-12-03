@@ -13,6 +13,7 @@ import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
 import { useUserStore } from '../../../src/state/userStore';
 import { useConfirm } from '../../../src/components/system/ConfirmProvider';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 import {
 	useSettingsStore,
 	SettingsSnapshot,
@@ -202,6 +203,7 @@ export default function POSSettingsPage() {
 	const router = useRouter();
 	const { logout, user } = useUserStore();
 	const confirm = useConfirm();
+	const { t } = useTranslation();
 	const [active, setActive] = useState<SectionKey>('business');
 	const [filter, setFilter] = useState('');
 
@@ -325,7 +327,7 @@ export default function POSSettingsPage() {
 									<input
 										value={filter}
 										onChange={(event) => setFilter(event.target.value)}
-										placeholder="Buscar en configuración..."
+										placeholder={t('pos.settings.search.placeholder')}
 										className="w-full rounded-lg px-3 py-2 text-[13px] outline-none"
 										style={{ background: 'rgba(255,255,255,0.9)', color: '#4b1c23', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)' }}
 									/>
@@ -334,7 +336,7 @@ export default function POSSettingsPage() {
 									</span>
 								</div>
 							</div>
-							<nav aria-label="Secciones de configuración" className="flex-1 overflow-y-auto custom-scroll-area pr-1">
+							<nav aria-label={t('pos.settings.sections.label')} className="flex-1 overflow-y-auto custom-scroll-area pr-1">
 								<ul className="space-y-1">
 									{visibleSections.map((section) => {
 										const isActive = section.key === active;

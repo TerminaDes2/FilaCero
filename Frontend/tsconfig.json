@@ -31,10 +31,10 @@
     "next-env.d.ts",
     "global.d.ts",
     "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
+    "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next"
   ]
 }

@@ -4,12 +4,15 @@ import { PosSidebar } from '../../../src/components/pos/sidebar';
 import { SearchBox } from '../../../src/components/pos/controls/SearchBox';
 import { ViewToggle } from '../../../src/components/pos/controls/ViewToggle';
 import { TopRightInfo } from '../../../src/components/pos/header/TopRightInfo';
+import LanguageSelector from '../../../src/components/LanguageSelector';
 import { EmployeesAdminPanel } from '../../../src/components/pos/employees/EmployeesAdminPanel';
 import { NewEmployeePanel } from '../../../src/components/pos/employees/NewEmployeePanel';
 import { useSettingsStore } from '../../../src/state/settingsStore';
 import { useBusinessStore } from '../../../src/state/businessStore';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
 export default function EmployeesPage() {
+  const { t } = useTranslation();
   const settings = useSettingsStore();
   const { activeBusiness } = useBusinessStore();
   const [search, setSearch] = useState('');
@@ -77,7 +80,10 @@ export default function EmployeesPage() {
             <span style={{ color: 'var(--fc-brand-600)' }}>Fila</span>
             <span style={{ color: 'var(--fc-teal-500)' }}>Cero</span>
           </h1>
-          <TopRightInfo showLogout />
+          <div className='flex items-center gap-4'>
+            <LanguageSelector variant="compact" theme="light" />
+            <TopRightInfo showLogout />
+          </div>
         </div>
 
         {/* Panel area */}
@@ -100,7 +106,7 @@ export default function EmployeesPage() {
                     }`}
                     style={statusFilter === 'all' ? { background: 'var(--fc-brand-600)' } : {}}
                   >
-                    Todos
+                    {t('pos.employees.filters.all')}
                   </button>
                   <button
                     onClick={() => setStatusFilter('activo')}
@@ -109,7 +115,7 @@ export default function EmployeesPage() {
                     }`}
                     style={statusFilter === 'activo' ? { background: '#16a34a' } : {}}
                   >
-                    Activos
+                    {t('pos.employees.filters.active')}
                   </button>
                   <button
                     onClick={() => setStatusFilter('inactivo')}
@@ -118,7 +124,7 @@ export default function EmployeesPage() {
                     }`}
                     style={statusFilter === 'inactivo' ? { background: '#6b7280' } : {}}
                   >
-                    Inactivos
+                    {t('pos.employees.filters.inactive')}
                   </button>
                 </div>
 
@@ -130,7 +136,7 @@ export default function EmployeesPage() {
                     className='h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2'
                     style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
                   >
-                    Nuevo empleado
+                    {t('pos.employees.actions.new')}
                   </button>
                 </div>
               </div>
@@ -139,10 +145,10 @@ export default function EmployeesPage() {
             {/* Keyboard hints */}
             <div className='flex gap-2 text-xs opacity-50'>
               <span className='px-2 py-1 rounded' style={{ background: 'var(--pos-bg-white)' }}>
-                <kbd className='font-mono font-bold'>N</kbd> Nuevo empleado
+                <kbd className='font-mono font-bold'>N</kbd> {t('pos.employees.keyboard.newEmployee')}
               </span>
               <span className='px-2 py-1 rounded' style={{ background: 'var(--pos-bg-white)' }}>
-                <kbd className='font-mono font-bold'>V</kbd> Cambiar vista
+                <kbd className='font-mono font-bold'>V</kbd> {t('pos.employees.keyboard.changeView')}
               </span>
             </div>
           </header>

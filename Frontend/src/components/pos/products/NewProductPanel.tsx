@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCategoriesStore } from "../../../pos/categoriesStore";
 import { api, activeBusiness } from "../../../lib/api";
+import { useTranslation } from "../../../hooks/useTranslation";
 
 interface NewProductPanelProps {
   onClose: () => void;
@@ -12,6 +13,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
   onClose,
   onProductCreated,
 }) => {
+  const { t } = useTranslation();
   const [nombre, setNombre] = useState("");
   const [precio, setPrecio] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
@@ -63,7 +65,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
     } catch (err) {
       console.error("Error al cargar categorías:", err);
       if (isMounted.current) {
-        setCategoriesError("No se pudieron cargar las categorías. Intenta nuevamente.");
+        setCategoriesError(t("pos.products.categories.error"));
       }
       throw err;
     } finally {
@@ -106,7 +108,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
     async () => {
       setError("");
       if (!nombre.trim() || precio <= 0) {
-        setError("El nombre y el precio son obligatorios.");
+        setError(t("pos.products.form.required"));
         return;
       }
       setSaving(true);
@@ -165,11 +167,11 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
 
         onProductCreated();
       } catch (err: any) {
-        let msg = err?.message || "Ocurrió un error al guardar el producto.";
-        if (err?.status === 401) msg = "No autenticado. Inicia sesión para crear productos.";
-        if (err?.status === 403) msg = "No tienes permisos para crear productos (requiere rol admin).";
+        let msg = err?.message || t("pos.products.errors.generic");
+        if (err?.status === 401) msg = t("pos.products.errors.unauthorized");
+        if (err?.status === 403) msg = t("pos.products.errors.forbidden");
         if (err?.status === 400)
-          msg = "Datos inválidos (JSON) o error de archivo (ej. no es imagen).";
+          msg = t("pos.products.errors.badRequest");
         setError(msg);
         console.error("Error al crear producto:", err);
       } finally {
@@ -215,7 +217,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
     <>
       {/* Overlay */}
       <button
-        aria-label="Cerrar editor"
+        aria-label={t("pos.products.actions.closeEditor")}
         onClick={onClose}
         className="fixed inset-0 bg-black/35 backdrop-blur-[1px] cursor-default z-[90]"
       />
@@ -259,13 +261,13 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
               className="text-[11px] font-semibold uppercase tracking-wide"
               style={{ color: "var(--pos-text-muted)" }}
             >
-              Nuevo
+              {t("pos.products.header.badge")}
             </div>
             <h2
               className="text-xl font-extrabold truncate"
               style={{ color: "var(--pos-text-heading)" }}
             >
-              {nombre || "Producto"}
+              {nombre || t("pos.products.fallbackName")}
             </h2>
           </div>
 
@@ -299,7 +301,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                 className="text-sm font-extrabold"
                 style={{ color: "var(--pos-text-heading)" }}
               >
-                Información básica
+                {t("pos.products.sections.basicInfo")}
               </h3>
               <span
                 className="px-2 py-0.5 rounded-md text-[11px] font-medium"
@@ -307,8 +309,8 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                   background: "var(--pos-badge-stock-bg)",
                   color: "var(--pos-chip-text)",
                 }}
-              >
-                {selectedCategoryName || "Categoría"}
+                >
+                  {selectedCategoryName || t("pos.products.labels.category")}
               </span>
             </div>
 
@@ -318,7 +320,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                 className="block text-xs mb-1 font-semibold"
                 style={{ color: "var(--pos-text-heading)" }}
               >
-                Nombre
+                {t("pos.products.labels.name")}
               </label>
               <input
                 ref={nameInputRef}
@@ -342,7 +344,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                   className="block text-xs mb-1 font-semibold"
                   style={{ color: "var(--pos-text-heading)" }}
                 >
-                  SKU
+                    {t("pos.products.labels.sku")}
                 </label>
                 <div className="flex gap-2 items-center flex-nowrap">
                   <input
@@ -368,8 +370,8 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                       border: "1px solid var(--pos-card-border)",
                       color: "var(--pos-text-heading)",
                     }}
-                  >
-                    Generar
+                    >
+                    {t("pos.products.actions.generateSku")}
                   </button>
                 </div>
               </div>
@@ -381,7 +383,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                     className="block text-xs mb-1 font-semibold"
                     style={{ color: "var(--pos-text-heading)" }}
                   >
-                    Categoría
+                    {t("pos.products.labels.category")}
                   </label>
                   <button
                     type="button"
@@ -391,7 +393,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                     className="text-[11px] font-semibold text-[var(--pos-text-muted)] hover:text-[var(--pos-text-heading)] transition-colors"
                     disabled={loadingCategories}
                   >
-                    Actualizar
+                    {t("pos.products.actions.refreshCategories")}
                   </button>
                 </div>
 
@@ -412,11 +414,11 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                     }}
                     disabled={loadingCategories && categories.length === 0}
                   >
-                    <option value="">Sin categoría</option>
+                    <option value="">{t("pos.products.categories.none")}</option>
 
                     {loadingCategories && categories.length === 0 && (
                       <option value="" disabled>
-                        Cargando categorías…
+                        {t("pos.products.categories.loading")}
                       </option>
                     )}
 
@@ -455,7 +457,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
             style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}
           >
             <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>
-              Imagen del producto
+              {t('pos.products.sections.image')}
             </h3>
             
             {/* Vista previa de la imagen */}
@@ -464,7 +466,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={imagePreview} 
-                  alt="Vista previa del producto" 
+                  alt={t('pos.products.image.previewAlt')} 
                   className='w-full h-48 object-cover rounded-lg border' 
                   style={{ borderColor: 'var(--pos-card-border)' }} 
                 />
@@ -475,7 +477,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                     setImagePreview(null);
                   }}
                   className='absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none'
-                  aria-label="Quitar imagen"
+                  aria-label={t('pos.products.image.remove')}
                 >
                   ✕
                 </button>
@@ -489,8 +491,8 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                 style={{ borderColor: 'var(--pos-card-border)', color: 'var(--pos-text-muted)' }}
               >
                 <svg className='w-8 h-8' fill='none' stroke='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' /></svg>
-                <span className='mt-2 text-sm font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Subir una imagen</span>
-                <span className='text-xs'>Click para seleccionar</span>
+                <span className='mt-2 text-sm font-semibold' style={{ color: 'var(--pos-text-heading)' }}>{t('pos.products.image.uploadTitle')}</span>
+                <span className='text-xs'>{t('pos.products.image.uploadSubtitle')}</span>
                 <input 
                   type='file' 
                   className='hidden' 
@@ -513,7 +515,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
               className="text-sm font-extrabold"
               style={{ color: "var(--pos-text-heading)" }}
             >
-              Precio y stock
+              {t("pos.products.sections.priceStock")}
             </h3>
 
             <div className="grid grid-cols-2 gap-3 items-end">
@@ -523,7 +525,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                   className="block text-xs mb-1 font-semibold"
                   style={{ color: "var(--pos-text-heading)" }}
                 >
-                  Precio
+                  {t("pos.products.labels.price")}
                 </label>
                 <div className="relative">
                   <span
@@ -558,7 +560,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                   className="block text-xs mb-1 font-semibold"
                   style={{ color: "var(--pos-text-heading)" }}
                 >
-                  Stock
+                  {t("pos.products.labels.stock")}
                 </label>
                 <input
                   type="number"
@@ -582,7 +584,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                 className="text-xs font-semibold"
                 style={{ color: "var(--pos-text-heading)" }}
               >
-                Estado
+                {t("pos.products.labels.status")}
               </span>
 
               <button
@@ -601,7 +603,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                       }
                 }
               >
-                {active ? "Activo" : "Inactivo"}
+                {active ? t("pos.products.status.active") : t("pos.products.status.inactive")}
               </button>
             </div>
           </section>
@@ -620,13 +622,13 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                   className="text-xs font-semibold uppercase tracking-wide"
                   style={{ color: "var(--pos-text-muted)" }}
                 >
-                  Vista previa
+                  {t("pos.products.sections.preview")}
                 </div>
                 <h4
                   className="text-base font-extrabold truncate"
                   style={{ color: "var(--pos-text-heading)" }}
                 >
-                  {nombre || "Producto"}
+                  {nombre || t("pos.products.fallbackName")}
                 </h4>
                 <div className="mt-1 flex items-center gap-2">
                   <span
@@ -635,8 +637,8 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
                       background: "var(--pos-badge-stock-bg)",
                       color: "var(--pos-chip-text)",
                     }}
-                  >
-                    {selectedCategoryName || "Categoría"}
+                    >
+                    {selectedCategoryName || t("pos.products.labels.category")}
                   </span>
 
                   <span
@@ -667,7 +669,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
           style={{ borderColor: "var(--pos-card-border)" }}
         >
           <div className="text-[11px] text-[var(--pos-text-muted)] hidden sm:block">
-            Esc para cerrar
+            {t("pos.products.hints.escapeToClose")}
           </div>
 
           <div className="ml-auto flex items-center gap-2">
@@ -683,7 +685,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
               }}
               disabled={saving}
             >
-              Cancelar
+              {t("common.actions.cancel")}
             </button>
 
             <button
@@ -692,7 +694,7 @@ export const NewProductPanel: React.FC<NewProductPanelProps> = ({
               style={{ height: "var(--pos-control-h)", background: "var(--pos-accent-green)" }}
               disabled={saving}
             >
-              {saving ? "Creando…" : "Crear →"}
+              {saving ? t("pos.products.actions.creating") : t("pos.products.actions.create")}
             </button>
           </div>
         </div>

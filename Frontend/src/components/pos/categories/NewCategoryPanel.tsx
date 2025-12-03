@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useCategoriesStore, CategoryColor } from '../../../pos/categoriesStore';
 import { api } from '../../../lib/api';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface NewCategoryPanelProps {
   onClose: () => void;
@@ -17,6 +18,7 @@ const colorTokens: Record<CategoryColor, { bg: string; fg: string; ring: string;
 };
 
 export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onCreated }) => {
+  const { t } = useTranslation();
   const { add, categories } = useCategoriesStore();
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<string>('');
@@ -30,7 +32,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
 
   // UX: focus and Esc key
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       nameInputRef.current?.focus();
       nameInputRef.current?.select();
     }, 60);
@@ -42,7 +44,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
     };
     window.addEventListener('keydown', onKey);
     return () => {
-      clearTimeout(t);
+      clearTimeout(timeoutId);
       window.removeEventListener('keydown', onKey);
     };
   }, [onClose]);
@@ -67,22 +69,22 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
     setError('');
     const n = name.trim();
     if (!n) {
-      setError('El nombre es obligatorio.');
+      setError(t('pos.categories.form.errors.nameRequired'));
       return;
     }
     const duplicate = categories.some(c => c.name.toLowerCase() === n.toLowerCase());
     if (duplicate) {
-      setError('Ya existe una categoría con ese nombre.');
+      setError(t('pos.categories.form.errors.nameDuplicate'));
       return;
     }
     if (icon && icon.length > 2) {
-      setError('El emoji debe tener máximo 2 caracteres.');
+      setError(t('pos.categories.form.errors.emojiLength'));
       return;
     }
     
     // Validaciones negocio / aplicarTodos
     if (businesses.length > 1 && !applyAll && !selectedBusiness) {
-      setError('Selecciona una sucursal o marca "Aplicar a todos".');
+      setError(t('pos.categories.form.errors.branchOrAll'));
       return;
     }
     setSaving(true);
@@ -95,7 +97,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
       onCreated?.();
       onClose();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Ocurrió un error inesperado.';
+      const message = e instanceof Error ? e.message : t('pos.categories.form.errors.generic');
       setError(message);
     } finally {
       setSaving(false);
@@ -103,7 +105,7 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
   };
   // --- FIN DEL CÓDIGO MODIFICADO ---
 
-  const t = colorTokens[color];
+  const tokens = colorTokens[color];
 
   return (
     <>
@@ -121,8 +123,8 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
             </svg>
           </div>
           <div className='flex-1 min-w-0'>
-            <div className='text-[11px] font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Nueva</div>
-            <h2 className='text-xl font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{icon ? `${icon} ` : ''}{name || 'Categoría'}</h2>
+            <div className='text-[11px] font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>{t('pos.categories.form.badge.new')}</div>
+            <h2 className='text-xl font-extrabold truncate' style={{ color: 'var(--pos-text-heading)' }}>{icon ? `${icon} ` : ''}{name || t('pos.categories.form.fallbackName')}</h2>
           </div>
           <button onClick={onClose} className='w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none focus-visible:ring-2 transition-colors' style={{ background: 'var(--pos-accent-green)' }}>✕</button>
         </div>
@@ -137,14 +139,14 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
 
           {/* Información básica */}
           <section className='rounded-2xl p-4 space-y-3' style={{ background: 'var(--pos-bg-sand)', border: '1px solid var(--pos-border-soft)' }}>
-            <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>Información básica</h3>
+            <h3 className='text-sm font-extrabold' style={{ color: 'var(--pos-text-heading)' }}>{t('pos.categories.form.sections.basicInfo')}</h3>
             <div>
-              <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Nombre</label>
+              <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>{t('pos.categories.form.fields.name')}</label>
               <input ref={nameInputRef} value={name} onChange={e => setName(e.target.value)} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
             </div>
             <div className='grid grid-cols-2 gap-3'>
               <div>
-                <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Color</label>
+                <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>{t('pos.categories.form.fields.color')}</label>
                 <div className='relative'>
                   <select value={color} onChange={e => setColor(e.target.value as CategoryColor)} className='appearance-none w-full rounded-lg pl-3 pr-8 text-sm focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}>
                     {Object.keys(colorTokens).map(c => (
@@ -157,17 +159,17 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
                 </div>
               </div>
               <div>
-                <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Emoji (opcional)</label>
+                <label className='block text-xs mb-1 font-semibold' style={{ color: 'var(--pos-text-heading)' }}>{t('pos.categories.form.fields.emoji')}</label>
                 <input value={icon} onChange={e => setIcon(e.target.value)} className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2' placeholder='🍹' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} />
               </div>
             </div>
             {/* Negocio / Aplicar a todos */}
             <div className='space-y-2'>
               <div className='flex items-center justify-between'>
-                <label className='block text-xs font-semibold' style={{ color: 'var(--pos-text-heading)' }}>Sucursal</label>
+                <label className='block text-xs font-semibold' style={{ color: 'var(--pos-text-heading)' }}>{t('pos.categories.form.fields.branch')}</label>
                 <label className='inline-flex items-center gap-2 text-xs'>
                   <input type='checkbox' className='accent-[var(--pos-accent-green)]' checked={applyAll} onChange={e => setApplyAll(e.target.checked)} />
-                  <span style={{ color: 'var(--pos-text-muted)' }}>Aplicar a todos</span>
+                  <span style={{ color: 'var(--pos-text-muted)' }}>{t('pos.categories.form.fields.applyAll')}</span>
                 </label>
               </div>
               <select
@@ -177,36 +179,38 @@ export const NewCategoryPanel: React.FC<NewCategoryPanelProps> = ({ onClose, onC
                 className='w-full rounded-lg px-3 text-sm focus:outline-none focus-visible:ring-2'
                 style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }}
               >
-                {businesses.length === 0 && <option value=''>Sin negocios</option>}
+                {businesses.length === 0 && <option value=''>{t('pos.categories.form.business.none')}</option>}
                 {businesses.length === 1 && <option value={String(businesses[0].id_negocio)}>{businesses[0].nombre}</option>}
-                {businesses.length > 1 && !applyAll && <option value=''>Selecciona…</option>}
+                {businesses.length > 1 && !applyAll && <option value=''>{t('pos.categories.form.business.select')}</option>}
                 {businesses.map(b => (
                   <option key={b.id_negocio} value={String(b.id_negocio)}>{b.nombre}</option>
                 ))}
               </select>
               {businesses.length > 1 && !applyAll && !selectedBusiness && (
-                <p className='text-[11px] text-amber-600'>Requerido si no aplicas a todos.</p>
+                <p className='text-[11px] text-amber-600'>{t('pos.categories.form.business.requiredIfNotAll')}</p>
               )}
             </div>
           </section>
 
           {/* Vista previa */}
           <section className='rounded-2xl p-4 space-y-3' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)' }}>
-            <div className='text-xs font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>Vista previa</div>
-            <div className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 ring-1 ${t.ring} ${t.bg}`}>
-              <span className={`inline-block w-2 h-2 rounded-full ${t.dot}`} />
-              <span className={`text-sm font-medium ${t.fg}`}>{icon ? `${icon} ` : ''}{name || 'Categoría'}</span>
+            <div className='text-xs font-semibold uppercase tracking-wide' style={{ color: 'var(--pos-text-muted)' }}>{t('pos.categories.form.preview.title')}</div>
+            <div className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 ring-1 ${tokens.ring} ${tokens.bg}`}>
+              <span className={`inline-block w-2 h-2 rounded-full ${tokens.dot}`} />
+              <span className={`text-sm font-medium ${tokens.fg}`}>{icon ? `${icon} ` : ''}{name || t('pos.categories.form.fallbackName')}</span>
             </div>
           </section>
         </div>
 
         {/* Footer */}
         <div className='p-5 border-t flex items-center justify-between gap-2' style={{ borderColor: 'var(--pos-card-border)' }}>
-          <div className='text-[11px] text-[var(--pos-text-muted)] hidden sm:block'>Esc para cerrar</div>
+          <div className='text-[11px] text-[var(--pos-text-muted)] hidden sm:block'>{t('pos.common.hints.escToClose')}</div>
           <div className='ml-auto flex items-center gap-2'>
-            <button onClick={onClose} className='px-4 rounded-lg text-sm font-semibold transition-colors' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>Cancelar</button>
+            <button onClick={onClose} className='px-4 rounded-lg text-sm font-semibold transition-colors' style={{ height: 'var(--pos-control-h)', borderRadius: 'var(--pos-control-radius)', background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color: 'var(--pos-text-heading)' }} disabled={saving}>
+              {t('common.actions.cancel')}
+            </button>
             <button onClick={handleSubmit} className='px-5 rounded-full text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2' style={{ height: 'var(--pos-control-h)', background: 'var(--pos-accent-green)' }} disabled={saving}>
-              {saving ? 'Creando…' : 'Crear →'}
+              {saving ? t('pos.categories.form.actions.creating') : t('pos.categories.form.actions.create')}
             </button>
           </div>
         </div>

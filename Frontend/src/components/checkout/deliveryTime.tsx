@@ -1,6 +1,7 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import { Clock3, Sparkles } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface Props {
   deliveryTime: string;
@@ -44,6 +45,7 @@ function computeSlots() {
 }
 
 export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMode = "standalone" }: Props) {
+  const { t } = useTranslation();
   const [manualTime, setManualTime] = useState(() => (deliveryTime && deliveryTime !== "asap" ? deliveryTime : ""));
   const slots = useMemo(() => computeSlots(), []);
 
@@ -74,10 +76,10 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
           <Clock3 className="h-5 w-5" />
         </span>
         <div className={copyClasses}>
-          <p className={`${isStandalone ? "text-xs" : "text-[11px]"} font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-[color:rgba(190,227,248,0.95)]`}>Paso 1</p>
-          <h2 className={`${isStandalone ? "text-xl" : "text-lg"} font-bold text-slate-900 dark:text-white`}>Define la ventana de retiro</h2>
+          <p className={`${isStandalone ? "text-xs" : "text-[11px]"} font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-[color:rgba(190,227,248,0.95)]`}>{t("checkout.delivery.stepBadge")}</p>
+          <h2 className={`${isStandalone ? "text-xl" : "text-lg"} font-bold text-slate-900 dark:text-white`}>{t("checkout.delivery.title")}</h2>
           <p className={`${isStandalone ? "text-sm" : "text-xs"} text-slate-500 dark:text-slate-400`}>
-            Elige entre los horarios sugeridos o marca la hora exacta en la que pasarás por tu pedido.
+            {t("checkout.delivery.subtitle")}
           </p>
         </div>
       </div>
@@ -107,8 +109,8 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
         <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-4 transition-colors dark:border-white/10 dark:bg-[color:rgba(6,10,22,0.9)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-white">¿Prefieres un horario exacto?</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Ingresa la hora para que cocina lo sincronice con su kanban.</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-white">{t("checkout.delivery.manualTitle")}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t("checkout.delivery.manualSubtitle")}</p>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -128,7 +130,7 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
                 onClick={() => handleSelect("asap")}
                 className="text-xs font-medium text-[var(--fc-brand-600)] transition hover:underline dark:text-[color:rgba(190,227,248,0.95)]"
               >
-                Resetear
+                {t("checkout.delivery.reset")}
               </button>
             </div>
           </div>
@@ -136,7 +138,7 @@ export default function DeliveryTime({ deliveryTime, setDeliveryTime, displayMod
 
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Sparkles className="h-4 w-4 text-[var(--fc-brand-500)] dark:text-[color:rgba(190,227,248,0.95)]" />
-          Cocina recibirá este horario junto con la venta para organizar la producción.
+          {t("checkout.delivery.note")}
         </div>
       </div>
     </section>

@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { SignupForm } from '../../auth/SignupForm';
 import { useUserStore } from '../../../state/userStore';

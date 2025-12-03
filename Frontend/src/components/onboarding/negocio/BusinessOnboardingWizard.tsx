@@ -87,13 +87,13 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
 
   const validationMessages = useMemo(
     () => ({
-      nombre: !nameValid ? 'Ingresa un nombre con al menos 2 caracteres.' : undefined,
-      correo: !emailValid ? 'Correo inválido.' : undefined,
-      telefono: !phoneValid ? 'Teléfono demasiado corto.' : undefined,
-      logoUrl: !logoValid ? 'Proporciona una URL válida.' : undefined,
-      heroImageUrl: !heroValid ? 'Proporciona una URL válida.' : undefined,
+      nombre: !nameValid ? t('onboarding.business.validation.name') : undefined,
+      correo: !emailValid ? t('onboarding.business.validation.email') : undefined,
+      telefono: !phoneValid ? t('onboarding.business.validation.phone') : undefined,
+      logoUrl: !logoValid ? t('onboarding.business.validation.logoUrl') : undefined,
+      heroImageUrl: !heroValid ? t('onboarding.business.validation.heroImageUrl') : undefined,
     }),
-    [nameValid, emailValid, phoneValid, logoValid, heroValid]
+    [nameValid, emailValid, phoneValid, logoValid, heroValid, t]
   );
 
   const formValid = nameValid && emailValid && phoneValid && logoValid && heroValid;
@@ -137,7 +137,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
     event.preventDefault();
     markAllTouched();
     if (!formValid) {
-      setError('Revisa los campos resaltados antes de continuar.');
+      setError(t('onboarding.business.errors.invalidForm'));
       return;
     }
 
@@ -152,7 +152,7 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         typeof window !== 'undefined' ? window.localStorage.getItem('auth_token') : null;
       if (!refreshedToken) {
         setSubmitting(false);
-        setError('Tu sesión expiró. Inicia sesión nuevamente para crear un negocio.');
+        setError(t('onboarding.business.errors.sessionExpired'));
         router.push('/login?redirect=/onboarding/negocio');
         return;
       }
@@ -208,8 +208,8 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         <CheckCircle2 className="h-12 w-12 text-brand-600" />
       </div>
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">¡Tu negocio está listo!</h2>
-        <p className="mt-1 text-sm text-gray-600">Ya puedes crear productos y comenzar a cobrar.</p>
+        <h2 className="text-xl font-semibold text-gray-900">{t('onboarding.business.success.inlineTitle')}</h2>
+        <p className="mt-1 text-sm text-gray-600">{t('onboarding.business.success.inlineSubtitle')}</p>
       </div>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <button
@@ -217,17 +217,17 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
           onClick={() => router.push('/')}
           className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:text-gray-900"
         >
-          Volver al inicio
+          {t('onboarding.business.success.goHome')}
         </button>
         <button
           type="button"
           onClick={() => router.push('/pos')}
           className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
         >
-          Ir al POS
+          {t('onboarding.business.success.goPOS')}
         </button>
       </div>
-      <p className="text-xs text-gray-500">Podrás editar los datos del negocio en cualquier momento.</p>
+      <p className="text-xs text-gray-500">{t('onboarding.business.success.note')}</p>
     </div>
   );
 
@@ -237,48 +237,48 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         <div className="flex flex-col rounded-2xl border border-white/60 bg-white/92 p-5 shadow-sm backdrop-blur">
           <div className="mb-4 text-left">
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] text-brand-600">
-              Perfil del negocio
+              {t('onboarding.business.identity.badge')}
             </span>
-            <h2 className="mt-3 text-lg font-semibold text-gray-900">Datos básicos</h2>
-            <p className="mt-1 text-xs text-gray-500">Esta información se mostrará en tu catálogo y tickets.</p>
+            <h2 className="mt-3 text-lg font-semibold text-gray-900">{t('onboarding.business.identity.title')}</h2>
+            <p className="mt-1 text-xs text-gray-500">{t('onboarding.business.identity.description')}</p>
           </div>
           <div className="flex flex-col gap-3 lg:gap-4">
             <FancyInput
-              label="Nombre comercial"
+              label={t('onboarding.business.form.name.label')}
               value={form.nombre}
               onChange={handleChange('nombre')}
               onBlur={handleBlur('nombre')}
               error={touched.nombre ? validationMessages.nombre : undefined}
               leftIcon={<Store className="h-4 w-4" />}
-              placeholder="Ej. Café Aurora"
+              placeholder={t('onboarding.business.form.name.placeholder')}
               required
             />
             <FancyInput
-              label="Correo de contacto"
+              label={t('onboarding.business.form.email.label')}
               type="email"
               value={form.correo}
               onChange={handleChange('correo')}
               onBlur={handleBlur('correo')}
               error={touched.correo ? validationMessages.correo : undefined}
-              placeholder="contacto@tu-negocio.com"
-              hint="Usaremos este correo para comunicaciones administrativas."
+              placeholder={t('onboarding.business.form.email.placeholder')}
+              hint={t('onboarding.business.form.email.hint')}
             />
             <div className="grid gap-3 xl:grid-cols-2">
               <FancyInput
-                label="Teléfono"
+                label={t('onboarding.business.form.phone.label')}
                 value={form.telefono}
                 onChange={handleChange('telefono')}
                 onBlur={handleBlur('telefono')}
                 error={touched.telefono ? validationMessages.telefono : undefined}
-                placeholder="Ej. +52 55 1234 5678"
+                placeholder={t('onboarding.business.form.phone.placeholder')}
               />
               <FancyInput
-                label="Dirección"
+                label={t('onboarding.business.form.address.label')}
                 value={form.direccion}
                 onChange={handleChange('direccion')}
                 onBlur={handleBlur('direccion')}
-                placeholder="Calle, número y ciudad"
-                hint="Opcional"
+                placeholder={t('onboarding.business.form.address.placeholder')}
+                hint={t('onboarding.business.form.address.hint')}
               />
             </div>
           </div>
@@ -287,10 +287,10 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
         <div className="flex flex-col rounded-2xl border border-white/60 bg-white/92 p-5 shadow-sm backdrop-blur">
           <div className="mb-4 text-left">
             <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-              Imagen de marca
+              {t('onboarding.business.branding.badge')}
             </span>
-            <h2 className="mt-3 text-lg font-semibold text-gray-900">Personaliza tu presencia</h2>
-            <p className="mt-1 text-xs text-gray-500">Usa URLs públicas (Cloudinary, Drive con acceso público, etc.).</p>
+            <h2 className="mt-3 text-lg font-semibold text-gray-900">{t('onboarding.business.branding.title')}</h2>
+            <p className="mt-1 text-xs text-gray-500">{t('onboarding.business.branding.description')}</p>
           </div>
           <h1 className="text-xl font-bold mb-1">{t('onboarding.business.success.title')}</h1>
           <p className="text-sm text-gray-600 mb-4">{t('onboarding.business.success.subtitle')}</p>
@@ -322,10 +322,10 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
               </svg>
             </span>
           )}
-          {submitting ? 'Creando negocio…' : 'Crear mi negocio'}
+          {submitting ? t('onboarding.business.navigation.creating') : t('onboarding.business.navigation.confirm')}
         </button>
       </div>
-      <p className="text-center text-[11px] text-gray-500">Podrás editar cualquiera de estos datos desde Configuración.</p>
+      <p className="text-center text-[11px] text-gray-500">{t('onboarding.business.form.footerNote')}</p>
     </form>
   );
 
@@ -334,8 +334,8 @@ export default function BusinessOnboardingWizard({ embed = false }: { embed?: bo
       <LoginCard
         brandMark={<Store className="h-6 w-6" />}
         brandFull
-        title="Completa tu negocio"
-        subtitle="Añade los datos básicos para comenzar"
+        title={t('onboarding.business.card.title')}
+        subtitle={t('onboarding.business.card.subtitle')}
         size="wide"
         compact
       >

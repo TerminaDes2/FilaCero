@@ -4,6 +4,7 @@ import { useCategoriesStore, CategoryItem, CategoryColor } from '../../../pos/ca
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, MoreVertical } from 'lucide-react';
 import EditCategoryPanel from './EditCategoryPanel';
 import { SearchBox } from '../../pos/controls/SearchBox';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface CategoriesAdminPanelProps {
   onNewCategory?: () => void;
@@ -18,6 +19,7 @@ const colorTokens: Record<CategoryColor, { bg: string; fg: string; ring: string;
 };
 
 export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNewCategory }) => {
+  const { t } = useTranslation();
   // --- 👇 CÓDIGO MODIFICADO ---
   // Obtenemos 'fetchCategories' y ya no necesitamos 'bootstrap'
   const { categories, fetchCategories, update, remove, moveUp, moveDown } = useCategoriesStore();
@@ -55,7 +57,7 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNe
           className="h-9 px-3 rounded-lg text-sm font-semibold focus:outline-none focus-visible:ring-2"
           style={{ background: 'var(--pos-accent-green)', color: '#fff' }}
         >
-          Nueva categoría
+          {t('pos.categories.actions.new')}
         </button>
       </div>
 
@@ -70,8 +72,8 @@ export const CategoriesAdminPanel: React.FC<CategoriesAdminPanelProps> = ({ onNe
               <circle cx='12' cy='12' r='7' />
               <path d='M8 12h8' />
             </svg>
-            <p className='text-sm font-medium text-slate-600 mt-3'>No hay resultados</p>
-            <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
+            <p className='text-sm font-semibold text-slate-700 mt-3'>No hay resultados</p>
+            <p className='text-[13px] text-slate-600 mt-1'>Ajusta filtros o agrega nuevos elementos.</p>
           </div>
         )}
         {!loading && filtered.map(c => {

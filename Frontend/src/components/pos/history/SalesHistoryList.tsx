@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../../../lib/api';
 import { SearchBox } from '../controls/SearchBox';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { TopRightInfo } from '../header/TopRightInfo';
 
 interface SaleItem {
@@ -19,6 +20,7 @@ interface SaleItem {
 }
 
 export const SalesHistoryList: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -33,7 +35,7 @@ export const SalesHistoryList: React.FC = () => {
     setError(null);
     api.getSales({ estado: status || undefined, desde: from || undefined, hasta: to || undefined })
       .then((data) => { if (!aborted) setSales(data || []); })
-      .catch((err) => { if (!aborted) setError(err?.message || 'No se pudo cargar el historial.'); })
+      .catch((err) => { if (!aborted) setError(err?.message || t('pos.history.error')); })
       .finally(() => { if (!aborted) setLoading(false); });
     return () => { aborted = true; };
   }, [status, from, to]);
@@ -59,10 +61,10 @@ export const SalesHistoryList: React.FC = () => {
           </div>
           <div className='flex items-center flex-wrap gap-2'>
             <select value={status} onChange={e=> setStatus(e.target.value)} className='h-9 px-3 rounded-lg text-sm' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color:'var(--pos-text-heading)' }}>
-              <option value=''>Todas</option>
-              <option value='pagada'>Pagadas</option>
-              <option value='abierta'>Abiertas</option>
-              <option value='cancelada'>Canceladas</option>
+              <option value=''>{t('pos.history.filters.status.all')}</option>
+              <option value='pagada'>{t('pos.history.filters.status.paid')}</option>
+              <option value='abierta'>{t('pos.history.filters.status.open')}</option>
+              <option value='cancelada'>{t('pos.history.filters.status.cancelled')}</option>
             </select>
             <input type='date' value={from} onChange={e=> setFrom(e.target.value)} className='h-9 px-3 rounded-lg text-sm' style={{ background: 'var(--pos-card-bg)', border: '1px solid var(--pos-card-border)', color:'var(--pos-text-heading)' }} />
             <span className='text-sm' style={{ color: 'var(--pos-text-muted)' }}>→</span>
@@ -72,7 +74,7 @@ export const SalesHistoryList: React.FC = () => {
       </header>
 
       <div className='flex-1 min-h-0 overflow-y-auto pr-1 pb-4 custom-scroll-area'>
-        {loading && <div className='text-center py-10 text-[var(--pos-text-muted)] text-sm'>Cargando historial…</div>}
+        {loading && <div className='text-center py-10 text-[var(--pos-text-muted)] text-sm'>{t('pos.history.loading')}</div>}
         {error && !loading && <div className='text-center py-24 text-red-500'>{error}</div>}
         {!loading && !error && filtered.length === 0 && (
           <div className='text-center py-16 px-4'>
@@ -80,8 +82,8 @@ export const SalesHistoryList: React.FC = () => {
               <circle cx='12' cy='12' r='7' />
               <path d='M8 12h8' />
             </svg>
-            <p className='text-sm font-medium text-slate-600 mt-3'>Sin ventas en el rango</p>
-            <p className='text-[12px] text-slate-500 mt-1'>Ajusta filtros o periodo.</p>
+            <p className='text-sm font-medium text-slate-600 mt-3'>{t('pos.history.empty.title')}</p>
+            <p className='text-[12px] text-slate-500 mt-1'>{t('pos.history.empty.subtitle')}</p>
           </div>
         )}
 
@@ -103,11 +105,11 @@ export const SalesHistoryList: React.FC = () => {
                   <div className='flex items-start gap-3'>
                     <div className='flex-1 min-w-0'>
                       <div className='flex items-center gap-2'>
-                        <span className='text-[11px] px-1.5 py-0.5 rounded-full' style={{ background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)' }}>Folio #{id}</span>
+                        <span className='text-[11px] px-1.5 py-0.5 rounded-full' style={{ background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)' }}>{t('pos.history.saleId', { id })}</span>
                         <span className='text-[10px] px-1.5 py-0.5 rounded-full' style={{ background:'var(--pos-badge-stock-bg)', color:'var(--pos-chip-text)' }}>{estado}</span>
                       </div>
-                      <p className='text-sm font-semibold mt-1' style={{ color:'var(--pos-text-heading)' }}>{date ? date.toLocaleString() : 'Sin fecha'}</p>
-                      <p className='text-[12px] mt-0.5' style={{ color:'var(--pos-text-muted)' }}>{s.usuarios?.nombre || '—'} · {s.tipo_pago?.tipo || '—'}</p>
+                      <p className='text-sm font-semibold mt-1' style={{ color:'var(--pos-text-heading)' }}>{date ? date.toLocaleString() : t('pos.history.noDate')}</p>
+                      <p className='text-[12px] mt-0.5' style={{ color:'var(--pos-text-muted)' }}>{s.usuarios?.nombre || t('pos.history.noCustomer')} · {s.tipo_pago?.tipo || t('pos.history.noPaymentType')}</p>
                     </div>
                     <div className='text-right'>
                       <p className='text-[13px] font-semibold tabular-nums' style={{ color:'var(--pos-text-heading)' }}>${Number.isFinite(total) ? total.toFixed(2) : '0.00'}</p>
@@ -118,7 +120,7 @@ export const SalesHistoryList: React.FC = () => {
                       <ul className='text-[12px] space-y-1' style={{ color:'var(--pos-text-muted)' }}>
                         {items.map((d, idx) => (
                           <li key={idx} className='flex justify-between'>
-                            <span className='truncate'>{d.cantidad}× {d.producto?.nombre || 'Producto'}</span>
+                            <span className='truncate'>{d.cantidad}× {d.producto?.nombre || t('pos.history.itemFallback')}</span>
                             <span className='tabular-nums'>${(typeof d.precio_unitario === 'number' ? d.precio_unitario : parseFloat(String(d.precio_unitario || 0))).toFixed(2)}</span>
                           </li>
                         ))}

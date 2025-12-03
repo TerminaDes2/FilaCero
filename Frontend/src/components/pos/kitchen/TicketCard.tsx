@@ -3,18 +3,19 @@ import React from 'react';
 import { KitchenStatus, Ticket } from '../../../state/kitchenBoardStore';
 import { Clock, Loader2, CheckCircle2, UtensilsCrossed, User, StickyNote } from 'lucide-react';
 import { useConfirm } from '../../system/ConfirmProvider';
+import { useTranslation } from '../../../hooks/useTranslation';
 
-const statusMeta: Record<KitchenStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  pending: { label: 'Pendiente', color: 'border-sky-400 bg-sky-50', icon: <Clock className="w-4 h-4 text-sky-500" /> },
-  prepping: { label: 'En preparación', color: 'border-amber-400 bg-amber-50', icon: <Loader2 className="w-4 h-4 text-amber-500 animate-spin" /> },
-  ready: { label: 'Listo', color: 'border-emerald-400 bg-emerald-50', icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" /> },
-  served: { label: 'Entregado', color: 'border-slate-300 bg-slate-50', icon: <UtensilsCrossed className="w-4 h-4 text-slate-500" /> },
+const statusMetaBase: Record<KitchenStatus, { color: string; icon: React.ReactNode }> = {
+  pending: { color: 'border-sky-400 bg-sky-50', icon: <Clock className="w-4 h-4 text-sky-500" /> },
+  prepping: { color: 'border-amber-400 bg-amber-50', icon: <Loader2 className="w-4 h-4 text-amber-500 animate-spin" /> },
+  ready: { color: 'border-emerald-400 bg-emerald-50', icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" /> },
+  served: { color: 'border-slate-300 bg-slate-50', icon: <UtensilsCrossed className="w-4 h-4 text-slate-500" /> },
 };
 
-const actions: Partial<Record<KitchenStatus, { label: string; to: KitchenStatus }>> = {
-  pending: { label: 'Iniciar prep.', to: 'prepping' },
-  prepping: { label: 'Marcar listo', to: 'ready' },
-  ready: { label: 'Entregar', to: 'served' },
+const actionsTo: Partial<Record<KitchenStatus, KitchenStatus>> = {
+  pending: 'prepping',
+  prepping: 'ready',
+  ready: 'served',
 };
 
 const currencyFormatter = typeof Intl !== 'undefined'
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
+  const { t } = useTranslation();
   let confirm = async (opts: any) => window.confirm(opts?.description ?? opts?.title ?? '¿Confirmar?');
   try {
     const h = useConfirm();
@@ -49,8 +51,13 @@ export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
     // Provider missing; fallback to window.confirm
     // No-op, confirm already set to fallback above
   }
-  const meta = statusMeta[ticket.status];
-  const action = actions[ticket.status];
+  const metaBase = statusMetaBase[ticket.status];
+  const meta = {
+    ...metaBase,
+    label: t(`pos.kitchen.board.status.${ticket.status}`),
+  };
+  const actionTo = actionsTo[ticket.status];
+  const actionLabel = actionTo ? t(`pos.kitchen.board.actions.${ticket.status}`) : undefined;
   const draggable = ticket.status !== 'served';
   const itemsPreview = ticket.items.slice(0, 4);
   const remaining = ticket.items.length - itemsPreview.length;
@@ -76,7 +83,7 @@ export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
         </div>
         <div className="flex items-center gap-2 text-xs text-gray-600">
           {ticket.priority === 'high' && (
-            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 font-semibold uppercase tracking-wide text-[10px]">Prioridad</span>
+            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 font-semibold uppercase tracking-wide text-[10px]">{t('pos.kitchen.board.priority')}</span>
           )}
           {totalLabel && <span className="font-medium text-gray-700">{totalLabel}</span>}
         </div>
@@ -84,7 +91,7 @@ export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
 
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
         {ticket.code && <span className="px-2 py-0.5 rounded bg-white/70 border font-medium">{ticket.code}</span>}
-        {ticket.table && <span className="px-2 py-0.5 rounded bg-white/60 border">Mesa {ticket.table}</span>}
+        {ticket.table && <span className="px-2 py-0.5 rounded bg-white/60 border">{t('pos.kitchen.board.tableLabel', { table: ticket.table })}</span>}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -95,7 +102,7 @@ export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
           </div>
         ))}
         {remaining > 0 && (
-          <span className="px-2 py-1 rounded bg-white/60 border text-xs text-gray-600">+{remaining}</span>
+          <span className="px-2 py-1 rounded bg-white/60 border text-xs text-gray-600">{t('pos.kitchen.board.moreItems', { count: remaining })}</span>
         )}
       </div>
 
@@ -116,28 +123,34 @@ export const TicketCard: React.FC<Props> = ({ ticket, onMove, onCancel }) => {
           <span className="inline-flex items-center gap-1"><User className="w-3 h-3" />{ticket.customer}</span>
         ) : <span />}
         {ticket.updatedAt && ticket.status !== 'pending' && (
-          <span>Últ. mov {formatSince(ticket.updatedAt)}</span>
+          <span>{t('pos.kitchen.board.lastMove', { time: formatSince(ticket.updatedAt) })}</span>
         )}
       </div>
 
-      {action && (
+      {actionTo && actionLabel && (
         <div className="flex gap-2 flex-wrap mt-2 items-center">
           <button
-            onClick={() => void onMove(action.to)}
+            onClick={() => void onMove(actionTo)}
             className="text-xs px-3 py-1.5 rounded border bg-white font-medium text-gray-700 hover:bg-gray-100 active:scale-[.97] transition"
           >
-            {action.label}
+            {actionLabel}
           </button>
           {onCancel && (ticket.status === 'pending' || ticket.status === 'prepping') && (
             <button
               onClick={() => {
                 void (async () => {
                   try {
-                    const ok = await confirm({ title: 'Cancelar pedido', description: '¿Deseas cancelar este pedido? Se enviará un correo al cliente.', confirmText: 'Cancelar', cancelText: 'Mantener', tone: 'danger' });
+                    const ok = await confirm({
+                      title: t('pos.kitchen.board.cancel.title'),
+                      description: t('pos.kitchen.board.cancel.description'),
+                      confirmText: t('pos.kitchen.board.cancel.confirm'),
+                      cancelText: t('pos.kitchen.board.cancel.keep'),
+                      tone: 'danger',
+                    });
                     if (ok) await onCancel();
                   } catch (e) {
                     console.error('Confirm modal failed', e);
-                    const ok = window.confirm('¿Cancelar pedido? Esta acción enviará un correo al cliente.');
+                    const ok = window.confirm(t('pos.kitchen.board.cancel.fallback'));
                     if (ok) await onCancel();
                   }
                 })();

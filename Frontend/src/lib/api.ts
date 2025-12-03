@@ -261,25 +261,57 @@ function buildProductFormData(productData: any, imageFile?: File | null) {
   return fd;
 }
 
-export async function uploadFileToCloudinary(file: File) {
-  if (!file) throw new Error('No file provided to uploadFileToCloudinary');
-  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-  if (!CLOUD_NAME || !UPLOAD_PRESET) {
-    throw new Error('Falta la configuración de Cloudinary (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME o NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET)');
+export async function uploadFileToCloudinary(file: File, folder?: string) {
+  if (!file) {
+    throw new Error('No file provided to uploadFileToCloudinary');
   }
-  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('upload_preset', UPLOAD_PRESET);
-  const res = await fetch(url, { method: 'POST', body: fd });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`Error subiendo a Cloudinary: ${res.status} ${txt}`);
+
+  try {
+    // 1. Obtener signature del backend
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signatureResponse = await apiFetch('cloudinary/signature', {
+      method: 'POST',
+      body: JSON.stringify({ timestamp, folder: folder || 'products' }),
+    });
+
+    const { signature, api_key, cloud_name, folder: cloudFolder } = signatureResponse;
+
+    if (!signature || !api_key || !cloud_name) {
+      throw new Error('Respuesta inválida del servidor al generar signature');
+    }
+
+    // 2. Subir archivo a Cloudinary con signed upload
+    const url = `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', api_key);
+    formData.append('timestamp', timestamp.toString());
+    formData.append('signature', signature);
+    
+    if (cloudFolder) {
+      formData.append('folder', cloudFolder);
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error subiendo a Cloudinary: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (!data?.secure_url) {
+      throw new Error('Cloudinary no devolvió secure_url');
+    }
+
+    return data.secure_url as string;
+  } catch (error) {
+    console.error('[uploadFileToCloudinary] Error:', error);
+    throw error;
   }
-  const data = await res.json();
-  if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
-  return data.secure_url as string;
 }
 
 

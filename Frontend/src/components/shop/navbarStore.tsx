@@ -9,6 +9,7 @@ import UserDropdown from "../UserDropdown";
 import { useCart } from "./CartContext";
 import ThemeToggle from "../ThemeToggle";
 import LanguageSelector from "../LanguageSelector";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface NavbarStoreProps {
   onToggleCart?: (open: boolean) => void;
@@ -26,6 +27,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const overlayInputRef = useRef<HTMLInputElement | null>(null);
   const [canRenderPortal, setCanRenderPortal] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -133,8 +135,12 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
 
   const showControls = isAuthenticated;
 
-  const cartTitle = items.length === 0 ? "Tu carrito" : `${items.length} artículo${items.length === 1 ? "" : "s"}`;
-  const cartSubtitle = items.length === 0 ? "Aún sin productos" : "Listo para pagar";
+  const cartTitle = items.length === 0
+    ? t("shop.nav.cart.emptyTitle")
+    : t("shop.nav.cart.itemsTitle", { count: items.length });
+  const cartSubtitle = items.length === 0
+    ? t("shop.nav.cart.emptySubtitle")
+    : t("shop.nav.cart.readyToPay");
 
   const floatingCartButton = showControls && !open && canRenderPortal
     ? createPortal(
@@ -142,14 +148,14 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
           type="button"
           onClick={openCart}
           className="md:hidden fixed bottom-6 right-4 z-50 group"
-          aria-label="Abrir carrito"
+          aria-label={t("shop.nav.cart.openAria")}
         >
           <div className="relative flex items-center gap-3 rounded-[26px] border border-white/60 bg-white/90 px-4 py-3 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-all duration-200 group-active:scale-95 dark:border-white/15 dark:bg-[color:rgba(6,10,28,0.88)] dark:shadow-[0_22px_60px_-36px_rgba(2,6,23,0.92)]">
             <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--fc-brand-600)] via-[var(--fc-brand-500)] to-[var(--fc-teal-500)] text-white shadow-[0_12px_20px_-10px_rgba(15,23,42,0.55)]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             </span>
             <span className="min-w-[110px] text-left">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-200">Carrito</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-200">{t("shop.nav.cart.badge")}</span>
               <span className="block text-sm font-semibold text-[var(--fc-text-primary)] dark:text-white">{cartTitle}</span>
               <span className="block text-[11px] text-[var(--fc-text-secondary)] dark:text-slate-300">{cartSubtitle}</span>
             </span>
@@ -239,7 +245,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
             href="/shop"
             className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fc-text-secondary)] hover:text-[var(--fc-brand-600)] hover:border-[var(--fc-brand-200)] transition dark:border-white/12 dark:text-[var(--fc-text-secondary)] dark:hover:text-[var(--fc-brand-200)]"
           >
-            Tienda
+            {t("shop.nav.storeBadge")}
           </Link>
         </div>
 
@@ -253,7 +259,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
               <input
                 value={query}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Buscar en la tienda"
+                placeholder={t("shop.nav.searchPlaceholder")}
                 className="w-full h-10 pl-8 pr-8 rounded-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-slate-300 outline-none text-sm text-[var(--fc-text-primary)] placeholder:text-slate-400 transition dark:bg-[color:rgba(15,23,42,0.92)] dark:text-[var(--fc-text-primary)] dark:border-white/12 dark:focus:border-[var(--fc-brand-300)] dark:placeholder:text-slate-400"
               />
               {query && (
@@ -265,7 +271,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
                     setQuery("");
                     applySearch("");
                   }}
-                  aria-label="Limpiar búsqueda"
+                  aria-label={t("shop.nav.searchClearAria")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-100"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -306,7 +312,7 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
                 type="button"
                 onClick={() => setShowSearchOverlay(true)}
                 className="inline-flex md:hidden items-center justify-center w-10 h-10 rounded-full border border-slate-200 text-slate-600 bg-white/80 backdrop-blur hover:border-[var(--fc-brand-200)] hover:text-[var(--fc-brand-600)] transition dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.8)] dark:text-[var(--fc-text-secondary)] dark:hover:border-[var(--fc-brand-300)] dark:hover:text-[var(--fc-brand-200)]"
-                aria-label="Buscar productos"
+                aria-label={t("shop.nav.searchMobileAria")}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </button>
@@ -319,13 +325,13 @@ export default function NavbarStore({ onToggleCart }: NavbarStoreProps) {
                 href="/auth/login"
                 className="inline-flex h-10 items-center px-3 rounded-full text-sm font-medium text-[var(--fc-text-primary)] border border-slate-200 bg-white/85 backdrop-blur transition hover:border-[var(--fc-brand-200)] hover:text-[var(--fc-brand-600)] dark:border-white/12 dark:bg-[color:rgba(15,23,42,0.8)] dark:text-[var(--fc-text-primary)] dark:hover:text-[var(--fc-brand-200)]"
               >
-                Iniciar sesión
+                {t("navbar.login")}
               </Link>
               <Link
                 href="/auth/register"
                 className="inline-flex h-10 items-center px-3 rounded-full text-sm font-semibold text-white bg-[var(--fc-brand-600)] hover:bg-[var(--fc-brand-500)] shadow-sm"
               >
-                Crear cuenta
+                {t("navbar.signup")}
               </Link>
             </div>
           )}
