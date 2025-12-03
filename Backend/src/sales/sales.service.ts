@@ -463,11 +463,24 @@ export class SalesService {
       (tx as any).negocio_producto.findMany({ where: { id_negocio: negocioId, id_producto: { in: ids } }, select: { id_producto: true, precio: true, activo: true } }),
     ]);
   
-    const productosMap = new Map(productos.map((p) => [p.id_producto, p]));
-    const inventarioMap = new Map(inventarios.map((inv) => [inv.id_producto, inv]));
+    const productosMap = new Map<string, (typeof productos)[number]>(
+      productos.map((p) => [p.id_producto?.toString() ?? '', p]),
+    );
+    const inventarioMap = new Map<string, (typeof inventarios)[number]>(
+      inventarios.map((inv) => [inv.id_producto?.toString() ?? '', inv]),
+    );
+    const overrideRecords = (negocioOverrides ?? []) as Array<{
+      id_producto: bigint | null;
+      precio: Prisma.Decimal | number | null;
+      activo: boolean | null;
+    }>;
+    const overrideMap = new Map<string, (typeof overrideRecords)[number]>(
+      overrideRecords.map((ov) => [ov.id_producto?.toString() ?? '', ov]),
+    );
   
     return items.map((item) => {
-      const producto = productosMap.get(item.idProducto);
+      const key = item.idProducto.toString();
+      const producto = productosMap.get(key);
       if (!producto) {
         throw new NotFoundException(`Producto ${item.idProducto.toString()} no encontrado`);
       }
@@ -476,15 +489,14 @@ export class SalesService {
         throw new BadRequestException(`El producto ${producto.nombre} no está disponible para la venta`);
       }
 
-      // Check negocio override
-      const override = negocioOverrides.find((o: any) => o.id_producto === item.idProducto);
+      const override = overrideMap.get(key);
       if (override) {
         if (override.activo === false) {
           throw new BadRequestException(`El producto ${producto.nombre} está desactivado en este negocio`);
         }
       }
   
-      const inventario = inventarioMap.get(item.idProducto);
+      const inventario = inventarioMap.get(key);
       if (!inventario) {
         throw new BadRequestException(
           `No existe inventario registrado para ${producto.nombre} en el negocio ${negocioId.toString()}. Configura stock antes de vender este producto.`,
